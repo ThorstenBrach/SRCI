@@ -21,3 +21,6 @@ I declare that the software I developed is based on the SRCI technology of "PROF
 The use of PI technology only serves to ensure the interoperability and functionality of the SRCI interface. There is no connection or partnership between this project and the PI organization.
 
 This project is provided without any guarantee and can be used for private and commercial purposes. Any commercial use is at the user’s own risk and responsibility.
+
+
+[![Donate with PayPal](https://raw.githubusercontent.com/stefan-niedermann/paypal-donate-button/master/paypal-donate-button.png)](https://www.paypal.com/donate/?hosted_button_id=ERN6VH9WA95J6)
