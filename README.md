@@ -11,7 +11,7 @@ The development is still in a very early stage and the implementation is not yet
 and also not yet tested against an SRCI interpreter (Robot)
 
 # Softare delivery:
-The software is delived as a not compiled library (visible source code) usable for Codesys and TwinCat.  
+The software is delivered as a not compiled library (visible source code) usable for Codesys and TwinCat.  
 And in addition also availabel as PLCopen XML, which can be imported in different PLC IDE.
 
 # Disclaimer and Delimitation
