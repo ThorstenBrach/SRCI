@@ -10,7 +10,7 @@ More information about SRCI : https://www.profibus.com/technologies/robotics-src
 The development is still in a very early stage and the implementation is not yet complete 
 and also not yet tested against an SRCI interpreter (Robot)
 
-# Softare delivery:
+# Software delivery:
 The software is delivered as a not compiled library (visible source code) usable for Codesys and TwinCat.  
 And in addition also availabel as PLCopen XML, which can be imported in different PLC IDE.
 
