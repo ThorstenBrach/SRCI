@@ -14,6 +14,9 @@ and also not yet tested against an SRCI interpreter (Robot)
 The software is delivered as a not compiled library (visible source code) usable for Codesys and TwinCat.  
 And in addition also availabel as PLCopen XML, which can be imported in different PLC IDE.
 
+# License
+The library is licensed under the GPL-3.0 license.
+
 # Disclaimer and Delimitation
 
 I declare that the software I developed is based on the SRCI technology of "PROFIBUS and PROFINET International" (PI), but it is not an official publication of PI. It is a private project that is created and maintained exclusively by me.
