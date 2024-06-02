@@ -1,7 +1,7 @@
 # SRCI
 Standard Robot Command Interface
 
-This is an open PLC client implementation of the SRCI interface for IEC61131 based on SRCI specification V1.3 (March 2023).
+This is an open PLC client implementation of the SRCI interface for IEC61131-3 based on SRCI specification V1.3 (March 2023).
 
 More information about SRCI : https://www.profibus.com/technologies/robotics-srci
 
