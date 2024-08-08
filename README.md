@@ -1,7 +1,7 @@
 # SRCI
 Standard Robot Command Interface
 
-This is an open PLC client implementation of the SRCI interface for IEC61131-3 based on SRCI specification V1.3 (March 2023).
+This is an open PLC client implementation of the SRCI interface for IEC61131-3, based on SRCI specification V1.3 (March 2023).
 
 More information about SRCI : https://www.profibus.com/technologies/robotics-srci
 
@@ -23,7 +23,7 @@ The developed software is based on the SRCI technology of "PROFIBUS and PROFINET
 
 The use of PI technology only serves to ensure the interoperability and functionality of the SRCI interface. There is no connection or partnership between this project and the PI organization.
 
-This project is provided without any guarantee and can be used for private and commercial purposes. Any commercial use is at the user’s own risk and responsibility.
+This project is provided without any guarantee and can be used for private and commercial purposes. Any use is at the user’s own risk and responsibility.
 
 
 [![Donate with PayPal](https://raw.githubusercontent.com/stefan-niedermann/paypal-donate-button/master/paypal-donate-button.png)](https://www.paypal.com/donate/?hosted_button_id=ERN6VH9WA95J6)
