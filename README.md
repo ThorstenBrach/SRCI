@@ -15,7 +15,7 @@ The software is delivered as a not compiled library (visible source code) usable
 And in addition also availabel as PLCopen XML, which can be imported in different PLC IDE.
 
 # License
-The library is licensed under the GPL-3.0 license.
+The library is licensed under the LGPL-3.0 license.
 
 # Disclaimer and Delimitation
 
