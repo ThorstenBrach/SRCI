@@ -1,13 +1,13 @@
 [
   {
-    "Name": "Tc2_Standard",
-    "Version": "*",
-    "DistributorName": "Beckhoff Automation GmbH",
+    "Name": "RobotLibrarySysDep",
+    "Version": "0.0.0.1",
+    "DistributorName": "Thorsten Brach",
     "Namespace": null
   },
   {
-    "Name": "Tc2_System",
-    "Version": "*",
+    "Name": "Tc2_Standard",
+    "Version": "3.4.5.0",
     "DistributorName": "Beckhoff Automation GmbH",
     "Namespace": null
   }
