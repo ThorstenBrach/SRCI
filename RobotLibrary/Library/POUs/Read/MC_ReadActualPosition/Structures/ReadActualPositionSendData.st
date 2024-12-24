@@ -40,12 +40,12 @@ STRUCT
   /// •     -1: Currently used tool on RC
   /// •      0: Flange (default)
   /// • 1..254: Tool frames
-  ToolNo             : INT;
+  ToolNo             : USINT;
   /// Index of frame of returned position
   /// •     -1: Currently used frame on RC
   /// •      0: WCS (default)
   /// • 1..254: User frames
-  FrameNo            : INT;
+  FrameNo            : USINT;
 END_STRUCT
 END_TYPE
 

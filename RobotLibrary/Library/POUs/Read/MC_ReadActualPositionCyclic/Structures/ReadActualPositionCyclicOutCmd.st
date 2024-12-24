@@ -33,14 +33,18 @@ STRUCT
   /// Tool and frame index of currently used tool and frame according to Table 6-40
   CurrentCoordinateSystem     : CoordinateSystem;
   /// Cyclically returned, absolute coordinates of current position in selected coordinate systems (see input parameters ToolNo and FrameNo) 
-  CartesianPosition           : RobotCartesianPositionShort;
+  CartesianPosition           : RobotCartesianPosition;
+  /// Cyclically returned, absolute coordinates of current position in selected coordinate systems (see input parameters ToolNo and FrameNo) 
+  CartesianPositionShort      : RobotCartesianPositionShort;
   /// Cyclically returned, absolute cartesian position of the external axes of the robot
   CartesianPositionExt        : RobotCartesianPositionExt;
   /// Tool and frame index of returned position according to Table 6-40
   CoordinateSystem            : CoordinateSystem;
-  /// Cyclically returned, absolute position of the robot in Joint position
+  /// Cyclically returned, absolute joint position of the robot in Joint position
   JointPosition               : RobotJointPositionShort;
-  /// Cyclically returned, absolute joint position of the external axes of the robot
+  /// Cyclically returned, absolute short joint position of the robot in Joint position
+  JointPositionShort          : RobotJointPositionShort;
+  /// Cyclically returned, absolute extended joint position of the external axes of the robot
   JointPositionExt            : RobotJointPositionExt;
 END_STRUCT
 END_TYPE

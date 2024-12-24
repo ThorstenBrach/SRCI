@@ -91,10 +91,10 @@ END_VAR
   OutCmd.ReadingJointPositionExt     := Enabled AND _parCmd.ReadCartesianPosition;
   
   // Update values
-  OutCmd.CartesianPosition    := AxesGroup.CyclicOptional.RobToPlc.CartesianPosition;        
-  OutCmd.CartesianPositionExt := AxesGroup.CyclicOptional.RobToPlc.CartesianPositionExt;         
-  OutCmd.JointPosition        := AxesGroup.CyclicOptional.RobToPlc.JointPosition;        
-  OutCmd.JointPositionExt     := AxesGroup.CyclicOptional.RobToPlc.JointPositionExt;
+  OutCmd.CartesianPositionShort := AxesGroup.CyclicOptional.RobToPlc.CartesianPosition;        
+  OutCmd.CartesianPositionExt   := AxesGroup.CyclicOptional.RobToPlc.CartesianPositionExt;         
+  OutCmd.JointPosition          := AxesGroup.CyclicOptional.RobToPlc.JointPosition;        
+  OutCmd.JointPositionExt       := AxesGroup.CyclicOptional.RobToPlc.JointPositionExt;
 
 END_METHOD
 

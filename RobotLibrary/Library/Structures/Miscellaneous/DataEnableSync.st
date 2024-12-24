@@ -4,7 +4,7 @@ TYPE DataEnableSync :
 //  SRCI Robot Library                                                
 // ------------------------------------------------------------------------- 
 //                                                                           
-//  Object:      ToDoStruct                                       
+//  Object:      DataEnableSync                                       
 //  Author:      Thorsten Brach                                                
 //  Date:        2024-06-22
 //

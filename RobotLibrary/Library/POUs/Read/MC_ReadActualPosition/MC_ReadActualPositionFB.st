@@ -126,8 +126,8 @@ METHOD INTERNAL CreateCommandPayload : SendData
   _command.EmitterID[3] := 0;
   _command.Reserve      := 0;
   _command.ListenerID   := _parCmd.ListenerID;
-  _command.ToolNo       := _parCmd.ToolNo;
-  _command.FrameNo      := _parCmd.FrameNo;
+  _command.ToolNo       := INT_TO_USINT(_parCmd.ToolNo);
+  _command.FrameNo      := INT_TO_USINT(_parCmd.FrameNo);
   
   
   // copy command data to header
@@ -148,9 +148,9 @@ METHOD INTERNAL CreateCommandPayload : SendData
   // add command.Reserve
   CreateCommandPayload.AddByte(_command.Reserve);
   // add command.Index[0]
-  CreateCommandPayload.AddInt(_command.ToolNo);
+  CreateCommandPayload.AddUsint(_command.ToolNo);
   // add command.Index[1]
-  CreateCommandPayload.AddInt(_command.FrameNo);
+  CreateCommandPayload.AddUsint(_command.FrameNo);
 
 END_METHOD
 
@@ -274,18 +274,6 @@ METHOD INTERNAL ParseResponsePayload : DINT
 // Byte 01 : SINT    - AlarmMessageSeverity    
 // Byte 02 : UINT    - AlarmMessageCode HB
 // Byte 03 :         - AlarmMessageCode LB
-// --------------------------
-// Datablock
-// --------------------------
-// Byte 04 : USINT   - InvocationCounter
-// Byte 05 : SINT    - Reserved
-// Byte 06 : INT     - Origin ID HB
-// Byte 07 : INT       Origin ID LB
-// Byte 08 : BYTE    - Values[0]
-// Byte 09 : BYTE    - Values[1]
-// Byte 10 : BYTE    - Values[2]
-// Byte 11 : BYTE    - Values[3]
-// Byte 12 : BYTE    - Values[4]
 // --------------------------
 // Datablock
 // --------------------------

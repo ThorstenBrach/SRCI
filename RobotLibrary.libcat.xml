@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LibraryCategories xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="LibraryCategories.xsd">
+    <LibraryCategory>
+        <Id>D9F02BB6-05B0-4F02-B823-D42D9E8B7DCB</Id>
+        <Version>1.0.0.0</Version>
+        <DefaultName>Robotics</DefaultName>
+    </LibraryCategory>
+    <LibraryCategory>
+        <Id>CB0EAA13-206B-4591-AD5F-7798F6948721</Id>
+        <Version>1.0.0.0</Version>
+        <ParentCategory>
+            <Id>D9F02BB6-05B0-4F02-B823-D42D9E8B7DCB</Id>
+        </ParentCategory>
+        <DefaultName>SRCI</DefaultName>
+    </LibraryCategory>
+</LibraryCategories>

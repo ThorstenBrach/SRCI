@@ -13,7 +13,7 @@ VAR_INPUT
   bInCopyCode  : BOOL;  
 END_VAR
 
-  MyType := 'ToDo';
+  MyType := 'MC_ReadServerLogFB';
 
 END_METHOD
 

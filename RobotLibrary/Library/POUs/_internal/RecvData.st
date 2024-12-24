@@ -39,13 +39,43 @@ VAR
   /// temporary byte
  _tmpByte : BYTE;
 END_VAR
+// Table 5-17: Meaning of “Config” byte
+// BIT 0 Shoulder TRUE : Shoulder is Back
+//                FALSE: Shoulder is Front
+// BIT 1 Elbow    TRUE : Elbow is Down
+//                FALSE: Elbow is Up
+// BIT 2 Wrist    TRUE : Wrist is Flip
+//                FALSE: Wrist is Non-Flip
+// BIT 3 Spare Not used
+// BIT 4 Spare Not Used
+// BIT 5 Spare Not Used
+// BIT 6 Spare Not Used
+// BIT 7 Spare Not Used
 
   // get 1st Byte
   _tmpByte := GetByte();
   
-  GetArmConfig.Shoulder.0 := _tmpByte.0;
-  GetArmConfig.Elbow.0    := _tmpByte.1;
-  GetArmConfig.Wrist.0    := _tmpByte.2;
+  IF ( _tmpByte.0 ) 
+  THEN
+    GetArmConfig.Shoulder := ArmConfigShoulder.BACK;
+  ELSE
+    GetArmConfig.Shoulder := ArmConfigShoulder.FRONT;
+  END_IF
+  
+  IF ( _tmpByte.1 ) 
+  THEN
+    GetArmConfig.Elbow := ArmConfigElbow.DOWN;
+  ELSE
+    GetArmConfig.Elbow := ArmConfigElbow.UP;
+  END_IF
+  
+  IF ( _tmpByte.2 ) 
+  THEN
+    GetArmConfig.Wrist := ArmConfigWrist.FLIP;
+  ELSE
+    GetArmConfig.Wrist := ArmConfigWrist.NON_FLIP;
+  END_IF
+  
   
   // get 2nd byte to inc the PayloadPointer
   _tmpByte := GetByte();

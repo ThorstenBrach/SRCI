@@ -38,9 +38,9 @@ VAR_INPUT
   /// Flag for clear error
   ErrorClear        : BOOL;
   /// Debug falg
-  Debug               : BOOL;
+  Debug             : BOOL;
   /// Configuration parameter
-  ParCfg              : RobotTaskParCfg;
+  ParCfg            : RobotTaskParCfg;
 END_VAR
 
 VAR_IN_OUT
@@ -78,7 +78,7 @@ VAR_OUTPUT
   /// Interface is initialized (RI state: "Initialized").
   /// For more information on RI states refer to chapter 5.5.3.1.
   Initialized       : BOOL;
-  /// Server and client were successfully synchronized (RI state: "Synchronized).
+  /// Server and client were successfully synchronized (RI state: "Synchronized").
   /// For more information on the synchronization mechanism refer to chapter 5.6.7.
   Synchronized      : BOOL;
   /// An error occurred
@@ -273,37 +273,37 @@ VAR_IN_OUT
 END_VAR
 
   // Cartesian position {{{
-  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.Active                   := AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.Active;
-  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.X                        :=                Telegram.RobToPlc.CyclicOptional.CartesianPosition.X;
-  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.Y                        :=                Telegram.RobToPlc.CyclicOptional.CartesianPosition.Y;
-  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.Z                        :=                Telegram.RobToPlc.CyclicOptional.CartesianPosition.Z;
-  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.Rx                       :=                Telegram.RobToPlc.CyclicOptional.CartesianPosition.Rx;
-  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.Ry                       :=                Telegram.RobToPlc.CyclicOptional.CartesianPosition.Ry;
-  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.Rz                       :=                Telegram.RobToPlc.CyclicOptional.CartesianPosition.Rz;
-  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.Config.Shoulder          :=    BOOL_TO_INT(Telegram.RobToPlc.CyclicOptional.CartesianPosition.Config.0); {warning 'ToDo: Enum more than bool'}
-  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.Config.Elbow             :=    BOOL_TO_INT(Telegram.RobToPlc.CyclicOptional.CartesianPosition.Config.1); {warning 'ToDo: Enum more than bool'}
-  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.Config.Wrist             :=    BOOL_TO_INT(Telegram.RobToPlc.CyclicOptional.CartesianPosition.Config.3); {warning 'ToDo: Enum more than bool'}
-  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.J1Turns       := GetHalfeByteLo(Telegram.RobToPlc.CyclicOptional.CartesianPosition.Turns_J2_J1);
-  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.J2Turns       := GetHalfeByteHi(Telegram.RobToPlc.CyclicOptional.CartesianPosition.Turns_J2_J1);
-  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.J3Turns       := GetHalfeByteLo(Telegram.RobToPlc.CyclicOptional.CartesianPosition.Turns_J4_J3);
-  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.J4Turns       := GetHalfeByteHi(Telegram.RobToPlc.CyclicOptional.CartesianPosition.Turns_J4_J3);
-  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.J5Turns       := GetHalfeByteLo(Telegram.RobToPlc.CyclicOptional.CartesianPosition.Turns_J6_J5);
-  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.J6Turns       := GetHalfeByteHi(Telegram.RobToPlc.CyclicOptional.CartesianPosition.Turns_J6_J5);
-  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.E1Turns       :=                Telegram.RobToPlc.CyclicOptional.CartesianPosition.Turns_E1;
-  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.E1                       :=                Telegram.RobToPlc.CyclicOptional.CartesianPosition.E1;
-  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.CoordinateSystem.ToolNo  :=                Telegram.RobToPlc.CyclicOptional.CartesianPosition.CurrentlyUsedToolNo;
-  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.CoordinateSystem.FrameNo :=                Telegram.RobToPlc.CyclicOptional.CartesianPosition.CurrentlyUsedFrameNo;
+  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.Active                   :=                                     AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.Active;
+  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.X                        :=                                      Telegram.RobToPlc.CyclicOptional.CartesianPosition.X;
+  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.Y                        :=                                      Telegram.RobToPlc.CyclicOptional.CartesianPosition.Y;
+  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.Z                        :=                                      Telegram.RobToPlc.CyclicOptional.CartesianPosition.Z;
+  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.Rx                       :=                                      Telegram.RobToPlc.CyclicOptional.CartesianPosition.Rx;
+  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.Ry                       :=                                      Telegram.RobToPlc.CyclicOptional.CartesianPosition.Ry;
+  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.Rz                       :=                                      Telegram.RobToPlc.CyclicOptional.CartesianPosition.Rz;
+  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.Config.Shoulder          :=              WordToArmConfigShoulder(Telegram.RobToPlc.CyclicOptional.CartesianPosition.Config);
+  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.Config.Elbow             :=              WordToArmConfigElbow   (Telegram.RobToPlc.CyclicOptional.CartesianPosition.Config);
+  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.Config.Wrist             :=              WordToArmConfigWrist   (Telegram.RobToPlc.CyclicOptional.CartesianPosition.Config);
+  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.J1Turns       := BYTE_TO_SINT(GetHalfeByteLo         (Telegram.RobToPlc.CyclicOptional.CartesianPosition.Turns_J2_J1));
+  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.J2Turns       := BYTE_TO_SINT(GetHalfeByteHi         (Telegram.RobToPlc.CyclicOptional.CartesianPosition.Turns_J2_J1));
+  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.J3Turns       := BYTE_TO_SINT(GetHalfeByteLo         (Telegram.RobToPlc.CyclicOptional.CartesianPosition.Turns_J4_J3));
+  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.J4Turns       := BYTE_TO_SINT(GetHalfeByteHi         (Telegram.RobToPlc.CyclicOptional.CartesianPosition.Turns_J4_J3));
+  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.J5Turns       := BYTE_TO_SINT(GetHalfeByteLo         (Telegram.RobToPlc.CyclicOptional.CartesianPosition.Turns_J6_J5));
+  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.J6Turns       := BYTE_TO_SINT(GetHalfeByteHi         (Telegram.RobToPlc.CyclicOptional.CartesianPosition.Turns_J6_J5));
+  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.E1Turns       := BYTE_TO_SINT                        (Telegram.RobToPlc.CyclicOptional.CartesianPosition.Turns_E1);
+  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.E1                       :=                                      Telegram.RobToPlc.CyclicOptional.CartesianPosition.E1;
+  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.CoordinateSystem.ToolNo  :=                                      Telegram.RobToPlc.CyclicOptional.CartesianPosition.CurrentlyUsedToolNo;
+  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.CoordinateSystem.FrameNo :=                                      Telegram.RobToPlc.CyclicOptional.CartesianPosition.CurrentlyUsedFrameNo;
   // }}}
   
   // Joint position {{{
   AxesGroup.CyclicOptional.RobToPlc.JointPosition.Active := AxesGroup.CyclicOptional.RobToPlc.JointPosition.Active;
-  AxesGroup.CyclicOptional.RobToPlc.JointPosition.J1     := Telegram.RobToPlc.CyclicOptional.JointPosition.J1;
-  AxesGroup.CyclicOptional.RobToPlc.JointPosition.J2     := Telegram.RobToPlc.CyclicOptional.JointPosition.J2;
-  AxesGroup.CyclicOptional.RobToPlc.JointPosition.J3     := Telegram.RobToPlc.CyclicOptional.JointPosition.J3;
-  AxesGroup.CyclicOptional.RobToPlc.JointPosition.J4     := Telegram.RobToPlc.CyclicOptional.JointPosition.J4;
-  AxesGroup.CyclicOptional.RobToPlc.JointPosition.J5     := Telegram.RobToPlc.CyclicOptional.JointPosition.J5;
-  AxesGroup.CyclicOptional.RobToPlc.JointPosition.J6     := Telegram.RobToPlc.CyclicOptional.JointPosition.J6;
-  AxesGroup.CyclicOptional.RobToPlc.JointPosition.E1     := Telegram.RobToPlc.CyclicOptional.JointPosition.E1;
+  AxesGroup.CyclicOptional.RobToPlc.JointPosition.J1     :=  Telegram.RobToPlc.CyclicOptional.JointPosition.J1;
+  AxesGroup.CyclicOptional.RobToPlc.JointPosition.J2     :=  Telegram.RobToPlc.CyclicOptional.JointPosition.J2;
+  AxesGroup.CyclicOptional.RobToPlc.JointPosition.J3     :=  Telegram.RobToPlc.CyclicOptional.JointPosition.J3;
+  AxesGroup.CyclicOptional.RobToPlc.JointPosition.J4     :=  Telegram.RobToPlc.CyclicOptional.JointPosition.J4;
+  AxesGroup.CyclicOptional.RobToPlc.JointPosition.J5     :=  Telegram.RobToPlc.CyclicOptional.JointPosition.J5;
+  AxesGroup.CyclicOptional.RobToPlc.JointPosition.J6     :=  Telegram.RobToPlc.CyclicOptional.JointPosition.J6;
+  AxesGroup.CyclicOptional.RobToPlc.JointPosition.E1     :=  Telegram.RobToPlc.CyclicOptional.JointPosition.E1;
   // }}}
   
   // Force {{{
@@ -1031,8 +1031,21 @@ VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup;
 END_VAR
+VAR
+  /// index of lifesign in footer
+  _lifeSignIdxFooter : DINT;
+END_VAR
 
-  SendData.Payload[255] :=  AxesGroup.Cyclic.PlcToRob.LifeSign;
+  {warning 'ToDo: changed but no yet tested'}
+  
+  IF (( _parCfg.Com.TelegramLengthPlcToRob    >= 1                                          ) AND 
+      ( _parCfg.Com.TelegramLengthPlcToRob -1 <= RobotLibraryParameter.TELEGRAM_PAYLOAD_MAX ))
+  THEN
+    // set index of life sign byte
+   _lifeSignIdxFooter := _parCfg.Com.TelegramLengthPlcToRob -1;
+   
+    SendData.Payload[_lifeSignIdxFooter] := AxesGroup.Cyclic.PlcToRob.LifeSign;
+  END_IF
 
 END_METHOD
 
@@ -1344,7 +1357,12 @@ VAR_IN_OUT
    /// Robot assignment of function
   AxesGroup : AxesGroup;
 END_VAR 
-
+VAR
+  /// index of lifesign in header
+  _lifeSignIdxHeader : DINT;
+  /// index of lifesign in footer
+  _lifeSignIdxFooter : DINT;
+END_VAR
 VAR_INST
   /// Timeout for invalid frames counter check
  _invalidFrameCounterCheck_D : TON;
@@ -1352,14 +1370,27 @@ VAR_INST
  _lastInvalidFrames          : UDINT;
 END_VAR
 
+  IF (( _parCfg.Com.TelegramLengthRobToPlc     < 1                                       ) AND 
+      ( _parCfg.Com.TelegramLengthRobToPlc - 1 > RobotLibraryParameter.ROBOT_IN_DATA_MAX ))
+  THEN
+    // no valid telegram length settings 
+    RETURN;
+  END_IF
+  
+  
   RETURN; {warning 'ToDo: Remove this line to enable function again'}
+  
+  
+  // set index of last byte
+  _lifeSignIdxHeader := 1;
+  _lifeSignIdxFooter := _parCfg.Com.TelegramLengthRobToPlc -1;
   
   // Timer for invalid frame(s) message
   _invalidFrameCounterCheck_D( IN := TRUE , PT := RobotLibraryParameter.INVALID_FRAMES_CHECK_TIMEOUT);
   
   // Check Frame is valid : 
   // ----------------------
-  IF ( GetHalfeByteHi( RobotInData[1]) <> GetHalfeByteHi(RobotInData[255]))  {warning 'ToDo: variable '}
+  IF ( GetHalfeByteHi( RobotInData[_lifeSignIdxHeader]) <> GetHalfeByteHi(RobotInData[_lifeSignIdxFooter]))
   THEN
     InvalidFrames := InvalidFrames + 1;
   END_IF
@@ -1952,8 +1983,6 @@ VAR
  _seqCount        : DINT;
 END_VAR
 
-  IF (TRUE)
-  THEN
   // Reset payload
   RecvData.Reset();
   // Copy inputs to payload  
@@ -1976,235 +2005,7 @@ END_VAR
   
   
   AxesGroup.InternalData.LastACK[0] := Telegram.RobToPlc.Sequence[0].Header.SEQ_ACK; 
-  AxesGroup.InternalData.LastACK[1] := Telegram.RobToPlc.Sequence[1].Header.SEQ_ACK; 
-  
-  RETURN;
-  END_IF
-  
-  // delete old telegram data 
-  SysDepMemSet(pDest := ADR(Telegram.RobToPlc), Value := 0 , DataLen := SIZEOF(Telegram.RobToPlc));
-  // Reset payload
-  RecvData.Reset();
-  // Copy inputs to payload  
-  SysDepMemCpy( pDest := ADR(RecvData.Payload) , pSrc  := ADR(RobotInData), DataLen := RobotLibraryParameter.TELEGRAM_PAYLOAD_MAX +1);
-  
-  
-  // Version
-  Telegram.RobToPlc.Header.SRCIVersion := ByteToVersion(RecvData.GetByte());
-  // Connection alive signal
-  Telegram.RobToPlc.Header.LifeSign    := RecvData.GetHalfeByte2(IncPayloadPtr := TRUE);
-  
-  
-  
-  // Reserved byte
-  Telegram.RobToPlc.Header.Reserved       := RecvData.GetByte();
-  // Initialization and Telegram control state
-  Telegram.RobToPlc.Header.TelegramState  := RecvData.GetUsint();
-  // Combination of various RA related states.
-  Telegram.RobToPlc.Header.StatusRobotArm := RecvData.GetDword();
-  // Actual override in percentage encoding 
-  Telegram.RobToPlc.Header.Override       := RecvData.GetUint();
-  
-  
-  // AxesGroup.OptionalCyclic {{{
-  
-  // AxesGroup.OptionalCyclic.RobToPlc.SubProgramData {{{
-  IF ( AxesGroup.CyclicOptional.RobToPlc.SubProgramData.Active )
-  THEN
-    FOR _idx := 0 TO 25 {warning 'Add contant for DataMax'}
-    DO
-      Telegram.RobToPlc.CyclicOptional.SubProgramData.Data[_idx] := RecvData.GetByte(); 
-    END_FOR
-  END_IF
-  // }}}
-    
-  // AxesGroup.OptionalCyclic.RobToPlc.CartesianPos {{{
-  IF ( AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.Active )
-  THEN
-    Telegram.RobToPlc.CyclicOptional.CartesianPosition.X                    := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.CartesianPosition.Y                    := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.CartesianPosition.Z                    := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.CartesianPosition.Rx                   := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.CartesianPosition.Ry                   := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.CartesianPosition.Rz                   := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.CartesianPosition.Config               := RecvData.GetWord();
-    Telegram.RobToPlc.CyclicOptional.CartesianPosition.Turns_J2_J1          := RecvData.GetByte();
-    Telegram.RobToPlc.CyclicOptional.CartesianPosition.Turns_J4_J3          := RecvData.GetByte();
-    Telegram.RobToPlc.CyclicOptional.CartesianPosition.Turns_J6_J5          := RecvData.GetByte();
-    Telegram.RobToPlc.CyclicOptional.CartesianPosition.Turns_E1             := RecvData.GetByte();  
-    Telegram.RobToPlc.CyclicOptional.CartesianPosition.E1                   := RecvData.GetReal();  
-    Telegram.RobToPlc.CyclicOptional.CartesianPosition.ToolNo               := RecvData.GetUsint();
-    Telegram.RobToPlc.CyclicOptional.CartesianPosition.FrameNo              := RecvData.GetUsint();
-    Telegram.RobToPlc.CyclicOptional.CartesianPosition.CurrentlyUsedToolNo  := RecvData.GetUsint();
-    Telegram.RobToPlc.CyclicOptional.CartesianPosition.CurrentlyUsedFrameNo := RecvData.GetUsint();
-    Telegram.RobToPlc.CyclicOptional.CartesianPosition.Reserve_1            := RecvData.GetByte();
-    Telegram.RobToPlc.CyclicOptional.CartesianPosition.Reserve_2            := RecvData.GetByte();  
-  END_IF
-  // }}}
-  
-  // AxesGroup.OptionalCyclic.RobToPlc.JointPosition {{{
-  IF ( AxesGroup.CyclicOptional.RobToPlc.JointPosition.Active )
-  THEN
-    Telegram.RobToPlc.CyclicOptional.JointPosition.J1         := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.JointPosition.J2         := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.JointPosition.J3         := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.JointPosition.J4         := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.JointPosition.J5         := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.JointPosition.J6         := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.JointPosition.E1         := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.JointPosition.E1_Reserve := RecvData.GetWord();
-  END_IF  
-  // }}}
-  
-  // AxesGroup.OptionalCyclic.RobToPlc.CartesianForce {{{
-  IF ( AxesGroup.CyclicOptional.RobToPlc.Force.Active )
-  THEN
-    Telegram.RobToPlc.CyclicOptional.Force.X  := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.Force.Y  := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.Force.Z  := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.Force.Rx := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.Force.Ry := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.Force.Rz := RecvData.GetReal();
-  END_IF  
-  // }}}    
-    
-  // AxesGroup.OptionalCyclic.RobToPlc.Current {{{
-  IF ( AxesGroup.CyclicOptional.RobToPlc.Current.Active )
-  THEN
-    Telegram.RobToPlc.CyclicOptional.Current.J1  := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.Current.J2  := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.Current.J3  := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.Current.J4  := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.Current.J5  := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.Current.J6  := RecvData.GetReal();
-  END_IF    
-    
-  // AxesGroup.OptionalCyclic.RobToPlc.CartesianPosExt {{{
-  IF ( AxesGroup.CyclicOptional.RobToPlc.CartesianPositionExt.Active )
-  THEN
-    Telegram.RobToPlc.CyclicOptional.CartesianPositionExt.E2 := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.CartesianPositionExt.E3 := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.CartesianPositionExt.E4 := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.CartesianPositionExt.E5 := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.CartesianPositionExt.E6 := RecvData.GetReal();
-  END_IF  
-  // }}}       
-    
-  // AxesGroup.OptionalCyclic.RobToPlc.JointPosition {{{
-  IF ( AxesGroup.CyclicOptional.RobToPlc.JointPositionExt.Active )
-  THEN
-    Telegram.RobToPlc.CyclicOptional.JointPositionExt.E2 := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.JointPositionExt.E3 := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.JointPositionExt.E4 := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.JointPositionExt.E5 := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.JointPositionExt.E6 := RecvData.GetReal();  
-  END_IF  
-  // }}}    
-        
-  // AxesGroup.OptionalCyclic.RobToPlc.CartesianForceExt {{{
-  IF ( AxesGroup.CyclicOptional.RobToPlc.ForceExt.Active )
-  THEN
-    Telegram.RobToPlc.CyclicOptional.ForceExt.E1  := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.ForceExt.E2  := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.ForceExt.E3  := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.ForceExt.E4  := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.ForceExt.E5  := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.ForceExt.E6  := RecvData.GetReal();
-  END_IF
-  // }}}    
-  
-  // }}}    
-    
-  // AxesGroup.OptionalCyclic.RobToPlc.CurrentExt {{{
-  IF ( AxesGroup.CyclicOptional.RobToPlc.CurrentExt.Active )
-  THEN
-    Telegram.RobToPlc.CyclicOptional.CurrentExt.E1  := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.CurrentExt.E2  := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.CurrentExt.E3  := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.CurrentExt.E4  := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.CurrentExt.E5  := RecvData.GetReal();
-    Telegram.RobToPlc.CyclicOptional.CurrentExt.E6  := RecvData.GetReal();
-  END_IF
-  // }}}
-      
-  // }}}    
-  
-  // Sequence Data
-  Telegram.RobToPlc.Sequence[0].Header.SEQ_ACK       := RecvData.GetUint();
-  Telegram.RobToPlc.Sequence[0].Header.PayloadLength := RecvData.GetUint();
-  
-  // check new data ? 
-  IF ( Telegram.RobToPlc.Sequence[0].Header.SEQ_ACK <> AxesGroup.InternalData.LastACK[0]) {warning 'ToDo Handle 2nd sequence'} 
-  THEN
-  
-    IF (Telegram.RobToPlc.Sequence[0].Header.PayloadLength > 0)
-    THEN
-      // Create log entry
-      CreateLogMessagePara4 ( Timestamp   := SystemTime,
-                              MessageType := MessageType.CMD,
-                              Severity    := Severity.DEBUG,
-                              MessageCode := 0,
-                              MessageText := 'RecvData: ACK = {1}, received Sequence [{2}] with PayloadLength = {3}, Lifesign = {4}',
-                              Para1       :=  UINT_TO_STRING(Telegram.RobToPlc.Sequence[0].Header.SEQ_ACK),
-                              Para2       :=  DINT_TO_STRING(0), {warning 'Add seqIdx'}
-                              Para3       :=  UINT_TO_STRING(Telegram.RobToPlc.Sequence[0].Header.PayloadLength),
-                              Para4       :=  BYTE_TO_STRING(Telegram.RobToPlc.Header.LifeSign));
-      
-      Telegram.RobToPlc.Sequence[0].Fragment[0].Header.CmdID               := RecvData.GetUint();
-      Telegram.RobToPlc.Sequence[0].Fragment[0].Header.Reserve             := RecvData.GetByte();
-      Telegram.RobToPlc.Sequence[0].Fragment[0].Header.FragmentAction      := RecvData.GetByte();
-      Telegram.RobToPlc.Sequence[0].Fragment[0].Header.PayloadPointer      := RecvData.GetUint();
-      Telegram.RobToPlc.Sequence[0].Fragment[0].Header.PayloadLength       := RecvData.GetUint();
-      
-      
-      IF (Telegram.RobToPlc.Sequence[0].Fragment[0].Header.PayloadLength > 0)
-      THEN
-        // Fill Respone payload
-        FOR _idx := Telegram.RobToPlc.Sequence[0].Fragment[0].Header.PayloadPointer TO Telegram.RobToPlc.Sequence[0].Fragment[0].Header.PayloadLength
-        DO
-          Telegram.RobToPlc.Sequence[0].Fragment[0].Command.Payload[_idx] := RecvData.GetByte();
-        END_FOR
-        
-        // Add Response to ACR
-        AxesGroup.Acyclic.ActiveCommandRegister.AddRsp(Telegram.RobToPlc.Sequence[0].Fragment[0]);
-      
-        // Only for debugging
-        Telegram.RobToPlc.Sequence[0].Fragment[0].Command.Header.State                 := GetHalfeByteLo(Telegram.RobToPlc.Sequence[0].Fragment[0].Command.Payload[0]);
-        Telegram.RobToPlc.Sequence[0].Fragment[0].Command.Header.ParSeq                := GetHalfeByteHi(Telegram.RobToPlc.Sequence[0].Fragment[0].Command.Payload[0]);
-        Telegram.RobToPlc.Sequence[0].Fragment[0].Command.Header.AlarmMessageSeverity  :=  BYTE_TO_SINT(Telegram.RobToPlc.Sequence[0].Fragment[0].Command.Payload[1]);
-        Telegram.RobToPlc.Sequence[0].Fragment[0].Command.Header.AlarmMessageCode      :=  CombineBytesToUint( HiByte := Telegram.RobToPlc.Sequence[0].Fragment[0].Command.Payload[2],
-                                                                                                               LoByte := Telegram.RobToPlc.Sequence[0].Fragment[0].Command.Payload[3]);
-        // Create log entry
-        CreateLogMessagePara5 ( Timestamp   := SystemTime,
-                                MessageType := MessageType.CMD,
-                                Severity    := Severity.DEBUG,
-                                MessageCode := 0,
-                                MessageText := 'RecvData: received Fragment [{1}] with PayloadLength = {2}, CmdID <{3}> , CmdState: {4}, Fragment-Action Bits: {5}',
-                                Para1       :=  DINT_TO_STRING(0), {warning 'Add seqIdx'}
-                                Para2       :=  UINT_TO_STRING            (Telegram.RobToPlc.Sequence[0].Fragment[0].Header.PayloadLength),
-                                Para3       :=  DINT_TO_STRING            (Telegram.RobToPlc.Sequence[0].Fragment[0].Header.CmdID),
-                                Para4       :=  CmdMessageStateToString   (Telegram.RobToPlc.Sequence[0].Fragment[0].Command.Header.State),
-                                Para5       :=  ByteToFragmentActionString(Telegram.RobToPlc.Sequence[0].Fragment[0].Header.FragmentAction));
-                                //Para6       :=  BYTE_TO_STRING(Telegram.RobToPlc.Header.LifeSign)
-      END_IF    
-    END_IF
-  END_IF  
-  
-  
-  {warning 'ToDo'}
-  Telegram.RobToPlc.Footer.Reserve_LifeSign.0 := RecvData.Payload[255].4;
-  Telegram.RobToPlc.Footer.Reserve_LifeSign.1 := RecvData.Payload[255].5;
-  Telegram.RobToPlc.Footer.Reserve_LifeSign.2 := RecvData.Payload[255].6;
-  Telegram.RobToPlc.Footer.Reserve_LifeSign.3 := RecvData.Payload[255].7;
-  
-  
-  
-  IF ( RobotLibraryParameter.TWO_SEQUENCES )
-  THEN
-   _seqCount := _seqCount + 1;
-  END_IF
-  
-  AxesGroup.InternalData.LastACK[0] := Telegram.RobToPlc.Sequence[0].Header.SEQ_ACK; {warning 'ToDo Handle 2nd sequence'}
+  AxesGroup.InternalData.LastACK[1] := Telegram.RobToPlc.Sequence[1].Header.SEQ_ACK;
 
 END_METHOD
 
@@ -2353,11 +2154,22 @@ VAR_IN_OUT
   AxesGroup : AxesGroup;
 END_VAR
 
-  {warning 'ToDo: use index from ParCfg'}
-  Telegram.RobToPlc.Footer.Reserve_LifeSign.0 := RecvData.Payload[255].4;
-  Telegram.RobToPlc.Footer.Reserve_LifeSign.1 := RecvData.Payload[255].5;
-  Telegram.RobToPlc.Footer.Reserve_LifeSign.2 := RecvData.Payload[255].6;
-  Telegram.RobToPlc.Footer.Reserve_LifeSign.3 := RecvData.Payload[255].7;
+VAR
+  /// index of lifesign in footer
+  _lifeSignIdxFooter : DINT;
+END_VAR
+
+  IF (( _parCfg.Com.TelegramLengthRobToPlc    >= 1                                          ) AND 
+      ( _parCfg.Com.TelegramLengthRobToPlc -1 <= RobotLibraryParameter.TELEGRAM_PAYLOAD_MAX ))
+  THEN
+    // set index of last byte
+   _lifeSignIdxFooter := _parCfg.Com.TelegramLengthRobToPlc -1;
+   
+    Telegram.RobToPlc.Footer.Reserve_LifeSign.0 := RecvData.Payload[_lifeSignIdxFooter].4;
+    Telegram.RobToPlc.Footer.Reserve_LifeSign.1 := RecvData.Payload[_lifeSignIdxFooter].5;
+    Telegram.RobToPlc.Footer.Reserve_LifeSign.2 := RecvData.Payload[_lifeSignIdxFooter].6;
+    Telegram.RobToPlc.Footer.Reserve_LifeSign.3 := RecvData.Payload[_lifeSignIdxFooter].7;
+  END_IF
 
 END_METHOD
 

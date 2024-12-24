@@ -140,8 +140,8 @@ END_VAR
   _tmpByte.3 := Value.EnableSyncWorkArea;
   _tmpByte.4 := Value.EnableSyncSWLimits;
   _tmpByte.5 := Value.EnableSyncDefaultDynamics;
-  _tmpByte.5 := Value.EnableSyncReferenceDynamics;
-  _tmpByte.6 := Value.AllowDynamicBlending;
+  _tmpByte.6 := Value.EnableSyncReferenceDynamics;
+  _tmpByte.7 := Value.AllowDynamicBlending;
   
   
   
@@ -171,7 +171,8 @@ END_VAR
   _tmpByte.3 := Value.WorkAreasInSync;
   _tmpByte.4 := Value.SoftwareLimitsInSync;
   _tmpByte.5 := Value.DefaultDynamicsInSync;
-  _tmpByte.5 := Value.ReferenceDynamicsInSync;
+  _tmpByte.6 := Value.ReferenceDynamicsInSync;
+  _tmpByte.7 := FALSE;
   
   AddByte(_tmpByte);
   
