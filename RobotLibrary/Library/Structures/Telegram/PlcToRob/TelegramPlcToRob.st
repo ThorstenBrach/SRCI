@@ -31,7 +31,7 @@ STRUCT
   /// Sequence Data
   Sequence       : ARRAY[0..1] OF TelegramPlcToRobSequence;
   /// Footer
-  Footer         : TelegramFooter;
+  Footer         : TelegramPlcToRobFooter;
 END_STRUCT
 END_TYPE
 

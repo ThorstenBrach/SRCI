@@ -3,7 +3,7 @@
 //  SRCI Robot Library                                                
 // ------------------------------------------------------------------------- 
 //                                                                           
-//  Object:      TelegramFooter                                       
+//  Object:      TelegramPlcToRobFooter                                       
 //  Author:      Thorsten Brach                                                
 //  Date:        2024-06-01
 //
@@ -20,10 +20,12 @@
 //    own risk and responsibility.
 //
 // -------------------------------------------------------------------------
-TYPE TelegramFooter :
+TYPE TelegramRobToPlcFooter :
 STRUCT
-  /// Reserve |Life Sign
-  Reserve_LifeSign : BYTE;
+  /// Reserve
+  Reserve  : BYTE;
+  /// Life Sign
+  LifeSign : BYTE;
 END_STRUCT
 END_TYPE
 

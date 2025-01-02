@@ -272,6 +272,10 @@ VAR_IN_OUT
   AxesGroup: AxesGroup;
 END_VAR
 
+  // Sub ProgramData {{{
+  AxesGroup.CyclicOptional.RobToPlc.SubProgramData.Data := Telegram.RobToPlc.CyclicOptional.SubProgramData.Data;
+  // }}}
+  
   // Cartesian position {{{
   AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.Active                   :=                                     AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.Active;
   AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.X                        :=                                      Telegram.RobToPlc.CyclicOptional.CartesianPosition.X;
@@ -518,7 +522,7 @@ VAR_IN_OUT
   AxesGroup : AxesGroup;
 END_VAR
 
-  Telegram.PlcToRob.Footer.Reserve_LifeSign := Telegram.PlcToRob.Header.FastStop_LifeSign AND LIFESIGN_BIT_MASK;
+  Telegram.PlcToRob.Footer.LifeSign := GetHalfeByteLo(Telegram.PlcToRob.Header.FastStop_LifeSign);
 
 END_METHOD
 
@@ -536,8 +540,8 @@ END_VAR
   Telegram.PlcToRob.Header.Reserved                  := 0;
   Telegram.PlcToRob.Header.TelegramNumberPlcToRob    :=     PlcOptionalCyclicToUint(AxesGroup.Parameter.Plc.OptionalCyclic);
   Telegram.PlcToRob.Header.TelegramNumberRobToPlc    :=     RobOptionalCyclicToUint(AxesGroup.Parameter.Rob.OptionalCyclic);
-  Telegram.PlcToRob.Header.ClientDate                := DATE_TO_IEC_DATE(DT_TO_DATE(AxesGroup.InternalData.SystemTime));
-  Telegram.PlcToRob.Header.ClientTime                := TIME_TO_IEC_TIME(DT_TO_TOD (AxesGroup.InternalData.SystemTime));
+  Telegram.PlcToRob.Header.ClientDate                := AxesGroup.Cyclic.PlcToRob.ClientDate;
+  Telegram.PlcToRob.Header.ClientTime                := AxesGroup.Cyclic.PlcToRob.ClientTime;
 
 END_METHOD
 
@@ -1599,6 +1603,10 @@ END_VAR
   
   // Set External logger 
   AxesGroup.MessageLog.ExternalLogger := ExternalLogger;
+  
+  // Convert System Date/Time to IEC Date/Time
+  AxesGroup.Cyclic.PlcToRob.ClientDate :=  DATE_TO_IEC_DATE(DT_TO_DATE(AxesGroup.InternalData.SystemTime));
+  AxesGroup.Cyclic.PlcToRob.ClientTime :=  TIME_TO_IEC_TIME(DT_TO_TOD (AxesGroup.InternalData.SystemTime));
 
 END_METHOD
 
@@ -1733,8 +1741,6 @@ END_VAR
           _enable_R();       
            // reset the falling edge
           _enable_F();
-           // take configuration parameter
-          _parCfg := ParCfg;
            // set busy flag
            Busy := TRUE;
            // set timeout
@@ -1742,6 +1748,10 @@ END_VAR
            // inc step counter
           _stepCmd := _stepCmd + 1; 
          END_IF
+  
+         // take configuration parameter if not yet enabled
+        _parCfg := ParCfg;
+  
        
     01:  CASE AxesGroup.Cyclic.RobToPlc.TelegramState  OF
   
@@ -2165,10 +2175,7 @@ END_VAR
     // set index of last byte
    _lifeSignIdxFooter := _parCfg.Com.TelegramLengthRobToPlc -1;
    
-    Telegram.RobToPlc.Footer.Reserve_LifeSign.0 := RecvData.Payload[_lifeSignIdxFooter].4;
-    Telegram.RobToPlc.Footer.Reserve_LifeSign.1 := RecvData.Payload[_lifeSignIdxFooter].5;
-    Telegram.RobToPlc.Footer.Reserve_LifeSign.2 := RecvData.Payload[_lifeSignIdxFooter].6;
-    Telegram.RobToPlc.Footer.Reserve_LifeSign.3 := RecvData.Payload[_lifeSignIdxFooter].7;
+    Telegram.RobToPlc.Footer.LifeSign := GetHalfeByteHi(RecvData.Payload[_lifeSignIdxFooter]);
   END_IF
 
 END_METHOD
