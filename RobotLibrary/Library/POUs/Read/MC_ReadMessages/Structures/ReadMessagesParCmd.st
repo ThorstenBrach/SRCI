@@ -24,8 +24,6 @@ TYPE ReadMessagesParCmd :
 STRUCT
   /// ID for function specific acknowledgement mechanism
   MsgID        : USINT;
-  /// TRUE when function is returning messages from RC
-  Enable       : BOOL;
   /// Defines up to which level of severity messages will be transmitted to the PLC’s message buffer
   MessageLevel : MessageLevel;
 END_STRUCT

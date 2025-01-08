@@ -22,8 +22,6 @@
 // -------------------------------------------------------------------------
 TYPE ReadMessagesOutCmd :
 STRUCT
-  /// Set TRUE to read messages from RC.
-  Enabled                : BOOL;
   /// ID for function specific acknowledgement mechanism
   MsgId                  : USINT;
   /// Number of pending errors on RC

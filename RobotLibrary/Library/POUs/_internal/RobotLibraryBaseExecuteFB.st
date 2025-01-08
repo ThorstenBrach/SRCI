@@ -181,6 +181,13 @@ END_VAR
   
   // call state machine
   FSM();
+  
+  // Abort execution 
+  IF (Busy) AND (_execute_F.Q) 
+  THEN
+    // try to remove cmd
+    AxesGroup.Acyclic.ActiveCommandRegister.RemoveCmd(_uniqueID);
+  END_IF
 
 END_METHOD
 

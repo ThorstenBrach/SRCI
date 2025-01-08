@@ -27,7 +27,7 @@ STRUCT
   /// parameter
   Parameter           : RobotTaskParCfgPlcParameter;  
   /// Configuration of optional cyclic data send to the Robot
-  OptionalCyclic      : AxesGroupParameterPlcOptionalCyclic;
+  OptionalCyclic      : AxesGroupParameterPlcOptionalCyclic; {warning 'Remove - this is already part of RobotTaskParCfgPlcParameter'}
 END_STRUCT
 END_TYPE
 

@@ -26,17 +26,17 @@ VAR_GLOBAL CONSTANT
   /// Maximal amount of output data
   ROBOT_OUT_DATA_MAX                  : UINT := 255;
   /// Maximal amount of tools
-  TOOL_MAX                            : DINT := 255;
+  TOOL_MAX                            : DINT := 16;
   /// Maximal amount of frames
-  FRAME_MAX                           : DINT := 255;
+  FRAME_MAX                           : DINT := 16;
   /// Maximal amount of loads
-  LOAD_MAX                            : DINT := 255;  
+  LOAD_MAX                            : DINT := 16;  
   /// Maximal amount of work areas
-  WORK_AREAS_MAX                      : DINT := 255;  
+  WORK_AREAS_MAX                      : DINT := 16;  
   /// Maximal amount of system logs
   SYSTEM_LOG_MAX                      : DINT := 32;  
   /// Maximal amount of message logs
-  MESSAGE_LOG_MAX                     : DINT := 32;  
+  MESSAGE_LOG_MAX                     : DINT := 100;  
   /// Maximal amount of List entries 
   LIST_ENTRIES_MAX                    : DINT := 100;
   /// Maximal amount of bytes for the telegram payload

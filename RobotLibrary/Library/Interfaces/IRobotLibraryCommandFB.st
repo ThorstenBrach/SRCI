@@ -9,7 +9,7 @@ END_VAR
 
 END_METHOD
 
-PROPERTY CommandData : SendData
+PROPERTY CommandData : RobotLibrarySendDataFB
 
 
 GET

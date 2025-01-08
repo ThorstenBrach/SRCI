@@ -1,5 +1,5 @@
 /// Read error codes of pending errors and move them into user data block "RobotData"
-FUNCTION_BLOCK MC_ReadMessagesFB EXTENDS RobotLibraryBaseExecuteFB
+FUNCTION_BLOCK MC_ReadMessagesFB EXTENDS RobotLibraryBaseEnableFB
 // ------------------------------------------------------------------------- 
 //  SRCI Robot Library                                                
 // ------------------------------------------------------------------------- 
@@ -32,7 +32,7 @@ VAR_OUTPUT
   /// Command is transferred and confirmed by the RC
   CommandBuffered : BOOL;
   /// command outputs
-  OutCmd          : ReadMessagesOutCmd;       
+  OutCmd          : ReadMessagesOutCmd;  
 END_VAR
 
 VAR
@@ -77,7 +77,7 @@ END_VAR
 
 END_METHOD
 
-METHOD INTERNAL CreateCommandPayload : SendData
+METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
 // Table 6-107: Sent CMD payload (PLC to RC) of "ReadMessages"
 // --------------------------
 // Header
@@ -100,7 +100,7 @@ METHOD INTERNAL CreateCommandPayload : SendData
   _command.ParSeq       := _command.ParSeq;
   _command.Priority     :=  Priority;
   _command.MsgID        := _parCmd.MsgID;
-  _command.Enable       := _parCmd.Enable;
+  _command.Enable       :=  Enable;
   _command.MessageLevel := _parCmd.MessageLevel;
   
   
@@ -138,13 +138,22 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
+VAR
+  /// internal index for loops
+ _idx : DINT;
+END_VAR
+
   // call base implementation
   SUPER^.OnCall(AxesGroup := AxesGroup);
   
   CASE _stepCmd OF
     
-    00:  IF ( _execute_R.Q ) 
+    00:  IF ( _enable_R.Q ) 
          THEN
+           // reset the rising edge
+          _enable_R();       
+           // reset the falling edge
+          _enable_F();     
            // set busy flag
            Busy := TRUE;
            // Reset command outputs
@@ -177,12 +186,11 @@ END_VAR
            CASE  _response.State 
            OF
              CmdMessageState.BUFFERED : CommandBuffered := TRUE;
-             CmdMessageState.DONE     : Done            := TRUE;
              CmdMessageState.ERROR    : Error           := TRUE;
              CmdMessageState.ACTIVE   :
   
              // Update results
-             OutCmd.Enabled                := _response.Enabled;
+             Enabled                       := _response.Enabled;
              OutCmd.MsgId                  := _response.MsgId;
              OutCmd.NumberOfActiveErrors   := _response.NumberOfActiveErrors;
              OutCmd.NumberOfActiveWarnings := _response.NumberOfActiveWarnings;
@@ -192,8 +200,8 @@ END_VAR
              OutCmd.ErrorCode              := _response.ErrorCode;
              OutCmd.Text                   := _response.Text;
   
-             ParCmd.Enable := OutCmd.Enabled; 
-             ParCmd.MsgId  := OutCmd.MsgId;
+             // Add message to message buffer           
+             AxesGroup.MessageLog.AddMessage(_response);
            END_CASE
   
            // Done, Aborted or Error ?
@@ -208,28 +216,21 @@ END_VAR
            END_IF
          END_IF
   
-    03: IF ( NOT Execute)
+    03: IF (NOT Enable)
         THEN
-          Reset();
-        END_IF     
+          Reset();   
+        END_IF
   ELSE
     // invalid step
     ErrorID := RobotLibraryEvents.ERR_INVALID_STEP;
   END_CASE
   
   
-  // Cancel 
-  IF (Busy) AND (NOT Execute) 
-  THEN
-    // try to remove cmd
-    AxesGroup.Acyclic.ActiveCommandRegister.RemoveCmd(_uniqueID);
-  END_IF
-  
-  
   // Reset FB
-  IF ( NOT Execute )
+  IF (( _enable_R.Q ) OR
+      ( _enable_F.Q ))
   THEN
-    Reset(); 
+    Reset();
   END_IF
 
 END_METHOD
@@ -415,7 +416,7 @@ METHOD INTERNAL ParseResponsePayload : DINT
 // --------------------------
 VAR_INPUT
   /// Response data
-  ResponseData : RecvData;
+  ResponseData : RobotLibraryRecvDataFB;
 END_VAR
 
   // call base implementation to parse the header from payload buffer
@@ -456,7 +457,6 @@ END_VAR
 
   Reset := SUPER^.Reset();
   
-  Done               := FALSE;
   Busy               := FALSE;
   Valid              := FALSE; 
   CommandBuffered    := FALSE;

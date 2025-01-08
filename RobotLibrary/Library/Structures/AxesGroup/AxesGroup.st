@@ -27,7 +27,7 @@ STRUCT
   /// RI state information (see chapter 5.5.3) 
   State          : AxesGroupState;
   /// RC, RA, RI, and CMD warnings and errors (see chapter 5.5.11)
-  MessageLog     : AxesGroupMessageLog;
+  MessageLog     : AxesGroupMessageLogFB;
   /// Cyclic data exchanged between server and client (see chapter 5.6.6.5) 
   Cyclic         : AxesGroupCyclic;
   /// Optional cyclic data exchanged between server and client (see chapter 5.6.6.2)

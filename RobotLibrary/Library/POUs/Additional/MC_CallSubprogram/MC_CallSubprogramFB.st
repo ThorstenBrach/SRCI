@@ -93,7 +93,7 @@ END_VAR
 
 END_METHOD
 
-METHOD INTERNAL CreateCommandPayload : SendData
+METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
 // Table 6-687: Sent CMD payload (PLC to RC) of "CallSubprogram"
 // --------------------------
 // Header
@@ -451,13 +451,6 @@ END_VAR
   END_CASE
   
   
-  // Cancel 
-  IF (Busy) AND (NOT Execute) 
-  THEN
-    // try to remove cmd
-    AxesGroup.Acyclic.ActiveCommandRegister.RemoveCmd(_uniqueID);
-  END_IF
-  
   
   // Reset FB
   IF ( NOT Execute )
@@ -678,7 +671,7 @@ METHOD INTERNAL ParseResponsePayload : DINT
 // Byte 200: BYTE  ReturnData[189];
 VAR_INPUT
   /// Response data
-  ResponseData : RecvData;
+  ResponseData : RobotLibraryRecvDataFB;
 END_VAR
 
 VAR

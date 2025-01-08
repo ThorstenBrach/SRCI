@@ -83,7 +83,7 @@ END_VAR
 
 END_METHOD
 
-METHOD INTERNAL CreateCommandPayload : SendData
+METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
 // Table 6-464: Sent CMD payload (PLC to RC) of "MoveSuperImposed"
 // --------------------------
 // Header
@@ -350,14 +350,6 @@ END_VAR
   END_CASE
   
   
-  // Cancel 
-  IF (Busy) AND (NOT Execute) 
-  THEN
-    // try to remove cmd
-    AxesGroup.Acyclic.ActiveCommandRegister.RemoveCmd(_uniqueID);
-  END_IF
-  
-  
   // Reset FB
   IF ( NOT Execute )
   THEN
@@ -390,7 +382,7 @@ METHOD INTERNAL ParseResponsePayload : DINT
 // Byte 13 :            - RemainingDistance LW LB
 VAR_INPUT
   /// Response data
-  ResponseData : RecvData;
+  ResponseData : RobotLibraryRecvDataFB;
 END_VAR
 
   // call base implementation to parse the header from payload buffer

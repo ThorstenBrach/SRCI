@@ -59,6 +59,8 @@ VAR_GLOBAL CONSTANT
   RUNNING              : DINT := 1;
   /// Null pointer
   XNULL                : DWORD := 0;
+  /// Null pointer
+  NULL_POINTER         : POINTER TO BYTE := 0;
   
   /// Real conversion factor ( REAL * 100 -> TO_INT )
   REAL_CONVERSION_FACTOR  : REAL := 100;

@@ -77,7 +77,7 @@ VAR
   /// internal command type 
  _cmdType    : CmdType;
   /// log message
- _messageLog         : AlarmMessage;  
+ _messageLog : AlarmMessage;  
 END_VAR
 
   FOR _regIdx := 1 TO RobotLibraryParameter.ACTIVE_CMD_REGISTER_ENTRIES_MAX
@@ -89,7 +89,7 @@ END_VAR
       Register[_regIdx].pCommandFB                   := pCommandFB;
   
       // check pointer to command FB
-      IF ( Register[_regIdx].pCommandFB <> RobotLibraryConstants.XNULL )
+      IF ( Register[_regIdx].pCommandFB <> RobotLibraryConstants.NULL_POINTER )
       THEN
         Register[_regIdx].Command[RobotLibraryConstants.ACTIVE_CMD].Timestamp  := SystemTime;
         Register[_regIdx].Command[RobotLibraryConstants.ACTIVE_CMD].Payload    := pCommandFB^.CommandData.Payload;
@@ -131,12 +131,16 @@ VAR
  _fragmentAction  :  FragmentAction;
   /// internal command message state
  _cmdMessageState : CmdMessageState;
+  /// internal flag for CmdID found
+ _found           : BOOL;
 END_VAR
 
   FOR _regIdx := 1 TO RobotLibraryParameter.ACTIVE_CMD_REGISTER_ENTRIES_MAX
   DO
     IF ( Register[_regIdx].UniqueID = Rsp.Header.CmdID )
     THEN
+      // CmdID was found in the ARC
+     _found := TRUE;
       // convert to fragment action 
      _fragmentAction := ByteToFragmentAction(Rsp.Header.FragmentAction);
   
@@ -191,6 +195,20 @@ END_VAR
       EXIT;
     END_IF
   END_FOR
+  
+  
+  // Check CmdID was found in the ARC ? 
+  IF ( NOT _found )
+  THEN
+    // Create log entry
+    CreateLogMessagePara2 ( Timestamp   := SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Rsp <{1}> with State = {2} received, but no matching ARC entry found',
+                            Para1       :=  UINT_TO_STRING(Rsp.Header.CmdID),
+                            Para2       :=  CmdMessageStateToString(_cmdMessageState));
+  END_IF
 
 END_METHOD
 
@@ -224,7 +242,7 @@ END_VAR
   FOR _regIdx := 1 TO RobotLibraryParameter.ACTIVE_CMD_REGISTER_ENTRIES_MAX
   DO
     // Check pointer to command FB is valid ? 
-    IF ( Register[_regIdx].pCommandFB = RobotLibraryConstants.XNULL)
+    IF ( Register[_regIdx].pCommandFB = RobotLibraryConstants.NULL_POINTER)
     THEN
       RETURN;
     END_IF
@@ -283,7 +301,7 @@ END_VAR
           ( Register[_regIdx].Command[ACTIVE_CMD].State <> BufferStateCmd.PROCESSED ))
       THEN
         // Check pointer is valid ? 
-        IF ( Register[_regIdx].pCommandFB <> RobotLibraryConstants.XNULL )
+        IF ( Register[_regIdx].pCommandFB <> RobotLibraryConstants.NULL_POINTER )
         THEN
           // add to send register
           Register[_regIdx].Command[ACTIVE_CMD].Timestamp  := SystemTime;
@@ -302,7 +320,7 @@ END_VAR
         END_IF
       ELSE
         // Check pointer is valid ? 
-        IF ( Register[_regIdx].pCommandFB <> RobotLibraryConstants.XNULL )
+        IF ( Register[_regIdx].pCommandFB <> RobotLibraryConstants.NULL_POINTER )
         THEN
           // add to buffer register
           Register[_regIdx].Command[BUFFER_CMD].Timestamp  := SystemTime;
@@ -343,7 +361,7 @@ END_VAR
   OnOnlineChange := -1;
   
   // Check command FB pointer is valid ?
-  IF ( pCommandFB <> RobotLibraryConstants.XNULL)
+  IF ( pCommandFB <> RobotLibraryConstants.NULL_POINTER)
   THEN
     FOR _regIdx := 1 TO RobotLibraryParameter.ACTIVE_CMD_REGISTER_ENTRIES_MAX
     DO

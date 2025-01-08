@@ -83,7 +83,7 @@ END_VAR
 
 END_METHOD
 
-METHOD INTERNAL CreateCommandPayload : SendData
+METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
 // Table 6-236: Sent CMD payload (PLC to RC) of "GroupJog"
 // --------------------------
 // Header
@@ -315,7 +315,7 @@ METHOD INTERNAL ParseResponsePayload : DINT
 // --------------------------
 VAR_INPUT
   /// Response data
-  ResponseData : RecvData;
+  ResponseData : RobotLibraryRecvDataFB;
 END_VAR
 
   // call base implementation to parse the header from payload buffer

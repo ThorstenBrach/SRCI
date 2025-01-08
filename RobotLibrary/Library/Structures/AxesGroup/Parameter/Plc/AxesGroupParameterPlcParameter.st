@@ -34,9 +34,9 @@ STRUCT
   InterfaceVersion     : STRING(8);
   /// Synchronization Modes
   SynchronizationModes : SynchronizationModes;  
-  
+  /// Optional Cyclic values
   OptionalCyclic       : AxesGroupParameterPlcOptionalCyclic;
-END_STRUCT
+END_STRUCT               
 END_TYPE
 
 

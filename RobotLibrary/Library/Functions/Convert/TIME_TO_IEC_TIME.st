@@ -24,10 +24,6 @@ VAR_INPUT
   Value : TOD;
 END_VAR
 
-VAR
-  test : DT;
-END_VAR
-
   TIME_TO_IEC_TIME := Value;
 
 END_FUNCTION

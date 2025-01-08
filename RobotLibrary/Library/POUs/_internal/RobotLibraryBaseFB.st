@@ -30,9 +30,9 @@ VAR_INPUT
 END_VAR
 VAR_OUTPUT
   /// Command data
-  CommandData  : SendData;
+  CommandData  : RobotLibrarySendDataFB;
   /// response data
-  ResponseData : RecvData;
+  ResponseData : RobotLibraryRecvDataFB;
   /// An error occurred during the execution of the command
   Error        : BOOL;
   /// ErrorID reported by RC for error identification according to Table 7-1
@@ -122,7 +122,7 @@ END_VAR
 
 END_METHOD
 
-METHOD INTERNAL CreateCommandPayload : SendData
+METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
 
   // Reset all variables
   CreateCommandPayload.Reset();
@@ -208,7 +208,7 @@ END_METHOD
 METHOD INTERNAL ParseResponsePayload : DINT
 VAR_INPUT
   /// Response data
-  ResponseData : RecvData;
+  ResponseData : RobotLibraryRecvDataFB;
 END_VAR
 
   // reset message IDs 

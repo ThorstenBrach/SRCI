@@ -74,7 +74,7 @@ END_VAR
 
 END_METHOD
 
-METHOD INTERNAL CreateCommandPayload : SendData
+METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
 // Table 6-185: Sent CMD payload (PLC to RC) of "WriteRobotSWLimits"
 // --------------------------
 // Header
@@ -323,14 +323,6 @@ END_VAR
   END_CASE
   
   
-  // Cancel 
-  IF (Busy) AND (NOT Execute) 
-  THEN
-    // try to remove cmd
-    AxesGroup.Acyclic.ActiveCommandRegister.RemoveCmd(_uniqueID);
-  END_IF
-  
-  
   // Reset FB
   IF ( NOT Execute )
   THEN
@@ -354,7 +346,7 @@ METHOD INTERNAL ParseResponsePayload : DINT
 // Byte 04 : BOOL       - RestartRequested
 VAR_INPUT
   /// Response data
-  ResponseData : RecvData;
+  ResponseData : RobotLibraryRecvDataFB;
 END_VAR
 
   // call base implementation to parse the header from payload buffer

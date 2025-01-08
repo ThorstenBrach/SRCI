@@ -30,17 +30,17 @@ VAR
  _initDate : DATE := DATE#1990-01-01;
  END_VAR
 
-  /// Siemens Dateformat is Day since 01.01.1990
-  /// TwinCat Dateformat is seconds sinde 01.01.1970
-  /// Calculation : 
-  /// ( [TwinCat current date] - [ TwinCat 01.01.1970] ) / [Seconds a Day] = Days sinde 01.01.1990 (Siemens Format)
+  // Siemens Dateformat is Day since 01.01.1990
+  // TwinCat Dateformat is seconds sinde 01.01.1970
+  // Calculation : 
+  // ( [TwinCat current date] - [ TwinCat 01.01.1970] ) / [Seconds a Day] = Days sinde 01.01.1990 (Siemens Format)
   
-  /// copy date to dword
+  // copy date to dword
   SysDepMemCpy( pDest := ADR(_tmpDate1), pSrc := ADR( Value   ), DataLen := SIZEOF( Value   ));
-  /// copy date to dword
+  // copy date to dword
   SysDepMemCpy( pDest := ADR(_tmpDate2), pSrc := ADR(_initDate), DataLen := SIZEOF(_initDate));
   
-  /// calculate IEC Date :  
+  // calculate IEC Date :  
   DATE_TO_IEC_DATE := UDINT_TO_UINT((_tmpDate1 - _tmpDate2) / 86400); // 86400 Seconds = 1 day
 
 END_FUNCTION
