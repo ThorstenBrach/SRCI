@@ -23,7 +23,7 @@
 TYPE AlarmMessage :
 STRUCT
   /// Timestamp
-  Timestamp   : DT;
+  Timestamp   : SystemTime;
   /// Type of message according to Table 5-46:
   MessageType : MessageType;
   /// Severity of message according to Table 5-47: Debug, Info, Warning, Error, Fatal error
@@ -31,7 +31,7 @@ STRUCT
   /// Code of messages
   MessageCode : DWORD;
   /// Static text of message
-  MessageText : STRING(150);  
+  MessageText : STRING(255);  
 END_STRUCT
 END_TYPE
 

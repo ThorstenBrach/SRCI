@@ -37,7 +37,8 @@ STRUCT
   /// ErrorCode
   ErrorCode              : DWORD;
   /// Test
-  Text                   : STRING(150);END_STRUCT
+  Text                   : STRING(255);
+END_STRUCT
 END_TYPE
 
 

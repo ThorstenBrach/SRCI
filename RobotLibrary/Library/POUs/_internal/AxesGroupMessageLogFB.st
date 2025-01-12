@@ -102,11 +102,12 @@ END_VAR
     END_FOR
   
     // Add new message 
-    Messages[0].Timestamp   := IEC_TIMESTAMP_TO_DT(Message.Timestamp);           
-    Messages[0].MessageType :=                     Message.MsgType;
-    Messages[0].Severity    :=                     Message.Severity;
-    Messages[0].MessageText :=                     Message.Text;
-    Messages[0].MessageCode :=                     Message.ErrorCode;
+    Messages[0].Timestamp.SystemDate := IEC_DATE_TO_DATE(Message.Timestamp.IEC_DATE);           
+    Messages[0].Timestamp.SystemTime := IEC_TIME_TO_TIME(Message.Timestamp.IEC_TIME);           
+    Messages[0].MessageType          :=                  Message.MsgType;
+    Messages[0].Severity             :=                  Message.Severity;
+    Messages[0].MessageText          :=                  Message.Text;
+    Messages[0].MessageCode          :=                  Message.ErrorCode;
     
     // inc message counter
     MessagesEntries := DINT_TO_UINT(LIMIT(0, MessagesEntries + 1, RobotLibraryParameter.MESSAGE_LOG_MAX));

@@ -38,7 +38,7 @@ END_FUNCTION_BLOCK
 METHOD CreateLogMessage
 VAR_INPUT
   /// Timestamp
-  Timestamp   : DT;
+  Timestamp   : SystemTime;
   /// Type of message according to Table 5-46:
   MessageType : MessageType;
   /// Severity of message according to Table 5-47: Debug, Info, Warning, Error, Fatal error
@@ -73,7 +73,7 @@ END_METHOD
 METHOD CreateLogMessagePara1
 VAR_INPUT
   /// Timestamp
-  Timestamp   : DT;
+  Timestamp   : SystemTime;
   /// Type of message according to Table 5-46:
   MessageType : MessageType;
   /// Severity of message according to Table 5-47: Debug, Info, Warning, Error, Fatal error
@@ -103,7 +103,7 @@ END_METHOD
 METHOD CreateLogMessagePara2 : BOOL
 VAR_INPUT
   /// Timestamp
-  Timestamp   : DT;
+  Timestamp   : SystemTime;
   /// Type of message according to Table 5-46:
   MessageType : MessageType;
   /// Severity of message according to Table 5-47: Debug, Info, Warning, Error, Fatal error
@@ -136,7 +136,7 @@ END_METHOD
 METHOD CreateLogMessagePara3
 VAR_INPUT
   /// Timestamp
-  Timestamp   : DT;
+  Timestamp   : SystemTime;
   /// Type of message according to Table 5-46:
   MessageType : MessageType;
   /// Severity of message according to Table 5-47: Debug, Info, Warning, Error, Fatal error
@@ -172,7 +172,7 @@ END_METHOD
 METHOD CreateLogMessagePara4 : BOOL
 VAR_INPUT
   /// Timestamp
-  Timestamp   : DT;
+  Timestamp   : SystemTime;
   /// Type of message according to Table 5-46:
   MessageType : MessageType;
   /// Severity of message according to Table 5-47: Debug, Info, Warning, Error, Fatal error
@@ -211,7 +211,7 @@ END_METHOD
 METHOD CreateLogMessagePara5 
 VAR_INPUT
   /// Timestamp
-  Timestamp   : DT;
+  Timestamp   : SystemTime;
   /// Type of message according to Table 5-46:
   MessageType : MessageType;
   /// Severity of message according to Table 5-47: Debug, Info, Warning, Error, Fatal error

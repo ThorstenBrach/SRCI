@@ -24,7 +24,7 @@ VAR_INPUT
   /// Active Command Register
   Register            : ARRAY [1..RobotLibraryParameter.ACTIVE_CMD_REGISTER_ENTRIES_MAX] OF AxesGroupAcyclicAcrEntry;
   /// System Time
-  SystemTime          : DT;
+  SystemTime          : SystemTime;
 END_VAR
 
 VAR_OUTPUT
@@ -127,6 +127,8 @@ VAR
  _Idx             : DINT;
   /// internal registen index
  _regIdx          : DINT;
+  /// internal command type
+ _cmdType         : CmdType;
   /// internal FragmentAction
  _fragmentAction  :  FragmentAction;
   /// internal command message state
@@ -160,16 +162,20 @@ END_VAR
       END_FOR
   
       // Get current message state 
-     _cmdMessageState := GetHalfeByteLo(Register[_regIdx].Response[1].Payload[0]);
+     _cmdMessageState := GetHalfeByteLo    (Value  := Register[_regIdx].Response[ACTIVE_CMD].Payload[0]);
+      // Get command type from payload
+     _cmdType         := CombineBytesToUint(HiByte := Register[_regIdx].Command [ACTIVE_CMD].Payload[0],
+                                            LoByte := Register[_regIdx].Command [ACTIVE_CMD].Payload[1]);
   
       // Create log entry
-      CreateLogMessagePara2 ( Timestamp   := SystemTime,
+      CreateLogMessagePara3 ( Timestamp   := SystemTime,
                               MessageType := MessageType.CMD,
                               Severity    := Severity.DEBUG,
                               MessageCode := 0,
-                              MessageText := 'Added Rsp <{1}> with State = {2} to ACR',
+                              MessageText := 'Added Response of CmdID <{1}>, CmdType <{2}> with State = {3} to ACR',
                               Para1       :=  UINT_TO_STRING(Rsp.Header.CmdID),
-                              Para2       :=  CmdMessageStateToString(_cmdMessageState));
+                              Para2       :=  CmdTypeToString(_cmdType),
+                              Para3       :=  CmdMessageStateToString(_cmdMessageState));
   
       IF ( _fragmentAction.Complete )
       THEN
@@ -181,13 +187,20 @@ END_VAR
         THEN
           Register[_regIdx].State := ActiveCommandRegisterState.IS_FINAL;
           
+          // get command type from payload
+         _cmdType := CombineBytesToUint(HiByte := Register[_regIdx].Command[ACTIVE_CMD].Payload[0],
+                                        LoByte := Register[_regIdx].Command[ACTIVE_CMD].Payload[1]);
+  
           // Create log entry
-          CreateLogMessagePara1( Timestamp   := SystemTime,
+          CreateLogMessagePara3( Timestamp   := SystemTime,
                                  MessageType := MessageType.CMD,
                                  Severity    := Severity.DEBUG,
                                  MessageCode := 0,
-                                 MessageText := 'ARC Register for Rsp <{1}> has reached Final State',
-                                 Para1       :=  UINT_TO_STRING(Rsp.Header.CmdID));
+                                 MessageText := 'ARC Register [{1}] : Response of CmdID <{2}>, CmdType <{3}> has reached Final State',
+                                 Para1       :=  DINT_TO_STRING(_regIdx),
+                                 Para2       :=  UINT_TO_STRING(Rsp.Header.CmdID),
+                                 Para3       :=  CmdTypeToString(_cmdType));
+                                 
           // Exit the loop
         END_IF      
       END_IF
@@ -203,7 +216,7 @@ END_VAR
     // Create log entry
     CreateLogMessagePara2 ( Timestamp   := SystemTime,
                             MessageType := MessageType.CMD,
-                            Severity    := Severity.DEBUG,
+                            Severity    := Severity.WARNING,
                             MessageCode := 0,
                             MessageText := 'Rsp <{1}> with State = {2} received, but no matching ARC entry found',
                             Para1       :=  UINT_TO_STRING(Rsp.Header.CmdID),
@@ -236,7 +249,9 @@ END_METHOD
 METHOD PRIVATE ManageRegister
 VAR
   /// internal index
- _regIdx     : DINT;  
+ _regIdx     : DINT;
+  /// internal command type
+ _cmdType    : CmdType;
 END_VAR
 
   FOR _regIdx := 1 TO RobotLibraryParameter.ACTIVE_CMD_REGISTER_ENTRIES_MAX
@@ -253,6 +268,21 @@ END_VAR
     THEN
       Register[_regIdx].Command[ACTIVE_CMD] := Register[_regIdx].Command[BUFFER_CMD];
       Register[_regIdx].Command[BUFFER_CMD] := EMPTY_CMD_ENTRY;
+  
+      // get command type from payload
+     _cmdType := CombineBytesToUint(HiByte := Register[_regIdx].Command[ACTIVE_CMD].Payload[0],
+                                    LoByte := Register[_regIdx].Command[ACTIVE_CMD].Payload[1]);
+  
+      // Create log entry
+      CreateLogMessagePara3 ( Timestamp   := SystemTime,
+                              MessageType := MessageType.CMD,
+                              Severity    := Severity.DEBUG,
+                              MessageCode := 0,
+                              MessageText := 'ARC Register [{1}] : Moved BUFFER_CMD to ACTIVE_CMD, CmdID <{2}> , CmdType <{3}>',
+                              Para1       :=  DINT_TO_STRING(_regIdx),
+                              Para2       :=  UINT_TO_STRING(Register[_regIdx].UniqueID),
+                              Para3       :=  CmdTypeToString(_cmdType));
+  
     END_IF
     
     // Check Response received ? 
@@ -267,14 +297,21 @@ END_VAR
     // delete entries with State.IS_Final 
     IF ( Register[_regIdx].State = ActiveCommandRegisterState.IS_FINAL )
     THEN
+    
+      // get command type from payload
+     _cmdType := CombineBytesToUint(HiByte := Register[_regIdx].Command[ACTIVE_CMD].Payload[0],
+                                    LoByte := Register[_regIdx].Command[ACTIVE_CMD].Payload[1]);
+  
       // Create log entry
-      CreateLogMessagePara2( Timestamp   := SystemTime,
+      CreateLogMessagePara3( Timestamp   := SystemTime,
                              MessageType := MessageType.CMD,
                              Severity    := Severity.DEBUG,
                              MessageCode := 0,
-                             MessageText := 'Deleted ID <{1}> from ARC Register Idx <{2}> because of Final State was reached',
-                             Para1       :=  UINT_TO_STRING(Register[_regIdx].UniqueID),  
-                             Para2       :=  DINT_TO_STRING(_regIdx) );
+                             MessageText := 'ARC Register [{1}} : Deleted CmdID <{2}> , CmdType <{3}> from ARC, because of Final-State was reached',
+                             Para1       :=  DINT_TO_STRING(_regIdx),
+                             Para2       :=  UINT_TO_STRING(Register[_regIdx].UniqueID),  
+                             Para3       :=  CmdTypeToString(_cmdType));
+  
                              
       Register[_regIdx] := EMPTY_ARC_ENTRY;                           
     END_IF
@@ -425,8 +462,10 @@ END_VAR
   
   FOR i := 1 TO RobotLibraryParameter.ACTIVE_CMD_REGISTER_ENTRIES_MAX
   DO
-    // add only entries which are not in status free  
-    IF ( Register[i].State >  ActiveCommandRegisterState.IS_FREE )  
+    // add only entries which are not in status free and where datas must be processed
+    IF (( Register[i].State                      > ActiveCommandRegisterState.IS_FREE ) AND
+        ( Register[i].Command[ACTIVE_CMD].State <> BufferStateCmd.EMPTY               ) AND
+        ( Register[i].Command[ACTIVE_CMD].State <> BufferStateCmd.PROCESSED           ))
     THEN
       // copy register entry 
       TmpRegister[j] := Register[i];
@@ -476,8 +515,13 @@ END_VAR
         EXIT; 
       END_IF  
   
+         // Priority is higher
       IF (( TmpRegister[j].Command[ACTIVE_CMD].Payload[PRIORITY_IDX] AND PRIORITY_BIT_MASK ) >= ( TmpRegister[j+1].Command[ACTIVE_CMD].Payload[PRIORITY_IDX] AND PRIORITY_BIT_MASK )) AND
-         (( TmpRegister[j].Command[ACTIVE_CMD].Timestamp )                                   >  ( TmpRegister[j+1].Command[ACTIVE_CMD].Timestamp ))
+         // Date is greater 
+         (( TmpRegister[j].Command[ACTIVE_CMD].Timestamp.SystemDate                          >    TmpRegister[j+1].Command[ACTIVE_CMD].Timestamp.SystemDate                         ) OR 
+         // Date is the same, but Time is greater
+         (( TmpRegister[j].Command[ACTIVE_CMD].Timestamp.SystemDate                          =    TmpRegister[j+1].Command[ACTIVE_CMD].Timestamp.SystemDate                         ) AND 
+          ( TmpRegister[j].Command[ACTIVE_CMD].Timestamp.SystemTime                          >    TmpRegister[j+1].Command[ACTIVE_CMD].Timestamp.SystemTime                         )))
       THEN    
         // swap position of register entry  
         TmpRegisterEntry := TmpRegister[j];         

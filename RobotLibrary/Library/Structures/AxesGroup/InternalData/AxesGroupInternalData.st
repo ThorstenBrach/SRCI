@@ -23,7 +23,7 @@
 TYPE AxesGroupInternalData :
 STRUCT
   /// Current System Time
-  SystemTime        : DT;
+  SystemTime        : SystemTime;
   /// Online Change detected
   OnlineChange      : BOOL;  
   /// Rising edge for Online Change detected
@@ -41,9 +41,9 @@ STRUCT
   /// Counter of sequences received
   SequenceCountRecv : DINT;
   /// Counter of fragments to send
-  FragmentCountSend : DINT;
+  FragmentCountSend : ARRAY[0..1] OF DINT;
   /// Counter of fragments received
-  FragmentCountRecv : DINT;
+  FragmentCountRecv : ARRAY[0..1] OF DINT;
   /// Current Sequence ID
   CurrentSEQ        : ARRAY[0..1] OF UINT;
   /// Current acknowledge ID

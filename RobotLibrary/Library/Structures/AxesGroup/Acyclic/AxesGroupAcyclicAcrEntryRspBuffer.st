@@ -23,7 +23,7 @@
 TYPE AxesGroupAcyclicAcrEntryRspBuffer :
 STRUCT
   /// Timestamp
-  Timestamp         : DT;
+  Timestamp         : SystemTime;
   ///
   State             : BufferStateRsp;
   /// Payload defined by type per CMD definition. Processed by Appl. Layer Task.

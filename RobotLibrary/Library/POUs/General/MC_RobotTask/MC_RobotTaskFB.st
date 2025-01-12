@@ -29,7 +29,7 @@ VAR_INPUT
   /// User defined robot name
   RobotName         : STRING(20);
   /// Current System Time
-  SystemTime        : DT;
+  SystemTime        : SystemTime;
   /// Online Change detected
   OnlineChange      : BOOL;
   /// Axes Group ID -> is used to uniquely identify each RA on a per RC basis.
@@ -39,8 +39,6 @@ VAR_INPUT
   AxesGroupID       : BYTE;
   /// Flag for clear error
   ErrorClear        : BOOL;
-  /// Debug falg
-  Debug             : BOOL;
   /// Configuration parameter
   ParCfg            : RobotTaskParCfg;
 END_VAR
@@ -108,13 +106,7 @@ VAR
   /// FB for read robot data
   ReadRobotData         : MC_ReadRobotDataFB;
   /// FB for read messaged
-  ReadMessages          : MC_ReadMessagesFB;
-  
-  
-  /// debug data
-  DebugData             : RobotLibrarySendDataFB;
-  /// debug telegram 
-  DebugTelegram         : Telegram; 
+  ReadMessages          : MC_ReadMessagesFB;  
   /// Send Buffer
   SendData              : RobotLibrarySendDataFB;
   /// Recv Buffer
@@ -580,20 +572,21 @@ END_VAR
                                 Para3       :=  UINT_TO_STRING(Telegram.PlcToRob.Sequence[_seqIdx].Header.PayloadLength));
       END_IF
       
-      FOR _fragIdx := 0 TO AxesGroup.InternalData.FragmentCountSend
+      FOR _fragIdx := 0 TO AxesGroup.InternalData.FragmentCountSend[_seqIdx]
       DO
         IF ( Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadLength > 0 )
         THEN
           // Create log entry
-          CreateLogMessagePara4 ( Timestamp   := SystemTime,
+          CreateLogMessagePara5 ( Timestamp   := SystemTime,
                                   MessageType := MessageType.CMD,
                                   Severity    := Severity.DEBUG,
                                   MessageCode := 0,
-                                  MessageText := 'SendData: added Fragment [{1}] with PayloadLength = {2} Cmd <{3}>, Fragment-Action Bits:{4}' ,
+                                  MessageText := 'SendData: added Fragment [{1}] with PayloadLength = {2}, CmdID <{3}>, Cmd <{4}> Fragment-Action Bits:{5}' ,
                                   Para1       := DINT_TO_STRING(_fragIdx),
                                   Para2       := UINT_TO_STRING            (Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadLength),
-                                  Para3       := CmdTypeToString           (Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.CmdType),
-                                  Para4       := ByteToFragmentActionString(Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.FragmentAction)); 
+                                  Para3       := UINT_TO_STRING            (Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.CmdID),
+                                  Para4       := CmdTypeToString           (Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.CmdType),
+                                  Para5       := ByteToFragmentActionString(Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.FragmentAction)); 
         END_IF
       END_FOR
     END_IF
@@ -628,153 +621,157 @@ VAR
   SEQUENCE_MAX_PAYLOAD_SIZE : UDINT;
 END_VAR
 
-  AxesGroup.InternalData.SequenceCountSend := 0;
-  AxesGroup.InternalData.FragmentCountSend := 0;
-  
   // set current SEQ / ACk index
   Telegram.PlcToRob.Sequence[0].Header.SEQ_ACK := AxesGroup.InternalData.CurrentSEQ[0];
   Telegram.PlcToRob.Sequence[1].Header.SEQ_ACK := AxesGroup.InternalData.CurrentSEQ[1];
   
-  IF ( NOT AxesGroup.InternalData.NewSEQ[0] ) {warning 'Handle 2nd sequence'}
+  
+  // only update telegram content if a new sequence SEQ is set
+  IF ( AxesGroup.InternalData.NewSEQ[0] ) {warning 'Handle 2nd sequence'}
   THEN
-    RETURN;
-  END_IF
+    // only reset counters in case of new telegram to send  
+    AxesGroup.InternalData.SequenceCountSend := 0;
+    AxesGroup.InternalData.FragmentCountSend[_seqIdx] := 0;
   
-  
-  IF ( RobotLibraryParameter.TWO_SEQUENCES )
-  THEN
-    SEQUENCE_MAX_PAYLOAD_SIZE := RobotLibraryParameter.TELEGRAM_PAYLOAD_MAX - FOOTER_SIZE - Telegram.PlcToRob.Header.TelegramLengthPlcToRob  / 2;
-  ELSE
-    SEQUENCE_MAX_PAYLOAD_SIZE := RobotLibraryParameter.TELEGRAM_PAYLOAD_MAX - FOOTER_SIZE - Telegram.PlcToRob.Header.TelegramLengthPlcToRob  / 1;
-  END_IF  
-  
-  // calc current telegram payload length
-  Telegram.PlcToRob.Header.TelegramLengthPlcToRob := CalcTelegramLengthPlcToRob(AxesGroup := AxesGroup);
-  
-  // Bedingung anpassen und TWO_SEQUENCES berücksichtigen
-  WHILE (( RobotLibraryParameter.TELEGRAM_PAYLOAD_MAX - Telegram.PlcToRob.Header.TelegramLengthPlcToRob ) >= FRAGMENT_HEADER_SIZE + MIN_PAYLOAD_SIZE ) 
-  DO
-    // Check command in Execution-Order-List available ?
-    IF ( AxesGroup.Acyclic.ActiveCommandRegister.ExecutionOrderList[_listIdx] > EMPTY_EOL_ENTRY)
+    IF ( RobotLibraryParameter.TWO_SEQUENCES )
     THEN
-      // set current SEQ / ACk index
-      Telegram.PlcToRob.Sequence[_seqIdx].Header.SEQ_ACK := AxesGroup.InternalData.CurrentSEQ[_seqIdx];
-      
-      // get active command register index
-     _regIdx := AxesGroup.Acyclic.ActiveCommandRegister.ExecutionOrderList[_listIdx];
-  
-      // check State of the current ACR entry ?
-      IF (( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].State >= BufferStateCmd.CREATED  ) AND
-          ( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].State <= BufferStateCmd.SENDING  ))
+      SEQUENCE_MAX_PAYLOAD_SIZE := RobotLibraryParameter.TELEGRAM_PAYLOAD_MAX - FOOTER_SIZE - Telegram.PlcToRob.Header.TelegramLengthPlcToRob  / 2;
+    ELSE
+      SEQUENCE_MAX_PAYLOAD_SIZE := RobotLibraryParameter.TELEGRAM_PAYLOAD_MAX - FOOTER_SIZE - Telegram.PlcToRob.Header.TelegramLengthPlcToRob  / 1;
+    END_IF  
+    
+    // calc current telegram payload length
+    Telegram.PlcToRob.Header.TelegramLengthPlcToRob := CalcTelegramLengthPlcToRob(AxesGroup := AxesGroup);
+    
+    // Bedingung anpassen und TWO_SEQUENCES berücksichtigen
+    WHILE (( RobotLibraryParameter.TELEGRAM_PAYLOAD_MAX - Telegram.PlcToRob.Header.TelegramLengthPlcToRob ) >= FRAGMENT_HEADER_SIZE + MIN_PAYLOAD_SIZE ) 
+    DO
+      // Check command in Execution-Order-List available ?
+      IF ( AxesGroup.Acyclic.ActiveCommandRegister.ExecutionOrderList[_listIdx] > EMPTY_EOL_ENTRY)
       THEN
-        // add size of fragement header      
-        Telegram.PlcToRob.Sequence[_seqIdx].Header.PayloadLength :=
-          Telegram.PlcToRob.Sequence[_seqIdx].Header.PayloadLength + SIZEOF(Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header); 
-          
-          
-        Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.CmdID          := AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].UniqueID;
-        Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.Reserve        := 
-        Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.FragmentAction := 0; // will be set below
-        Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadPointer := DWORD_TO_UINT(AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr); {warning 'ToDo: change data type'}
+        // set current SEQ / ACk index
+        Telegram.PlcToRob.Sequence[_seqIdx].Header.SEQ_ACK := AxesGroup.InternalData.CurrentSEQ[_seqIdx];
         
-        // The 1st message resets the ARC entry on the server side  
-       _fragmentAction.Reset := (( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].State      = BufferStateCmd.CREATED ) AND
-                                 ( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr = 0                      ));
-                                 
-        // Update messages must clear the ARC entry on the server side  
-       _fragmentAction.Clear := (( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].State      = BufferStateCmd.UPDATE_AVAILABLE  ) AND
-                                 ( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr = 0                                )); 
-  
-        
-        // fill telegramm header - just for later debugging ( the header is part of the command payload itselfy ) {{{
-        Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.CmdType       := CombineBytesToUint ( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[0],
-                                                                                                                    AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[1]);
-        Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.ExecMode.0    :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[2].0;
-        Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.ExecMode.1    :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[2].1;
-        Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.ExecMode.2    :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[2].2;
-        Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.ExecMode.3    :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[2].3;
-        Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.Prio.0        :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[3].0;
-        Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.Prio.1        :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[3].1;
-        Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.Prio.2        :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[3].2;
-        Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.Prio.3        :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[3].3;
-        Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.ParSequence.0 :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[3].4;
-        Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.ParSequence.1 :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[3].5;
-        Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.ParSequence.2 :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[3].6;
-        Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.ParSequence.3 :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[3].7;
-        // }}}
-        debug := TRUE;
-        // loop through the payload
-        FOR _payLoadPtr := AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr TO AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayloadLen -1  
-        DO
-          // copy payload
-          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Payload[_payLoadPtr] 
-            := AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[_payLoadPtr];
-      
-          // inc current sequence payload length
-          Telegram.PlcToRob.Sequence[_seqIdx].Header.PayloadLength
-            := Telegram.PlcToRob.Sequence[_seqIdx].Header.PayloadLength + 1;  
-      
-          // inc current fragment payload length
-          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadLength 
-            := Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadLength + 1;
-      
-          // inc payload pointer in active command register
-          AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr 
-            := AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr + 1;
-        
-          // set command state
-          IF ( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr >= AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadLen) 
-          THEN
-            AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].State := BufferStateCmd.PROCESSED;
-          ELSE
-            AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].State := BufferStateCmd.SENDING;  
-          END_IF 
-  
-          // calc current telegram payload length
-          Telegram.PlcToRob.Header.TelegramLengthPlcToRob := CalcTelegramLengthPlcToRob(AxesGroup := AxesGroup);
+        // get active command register index
+       _regIdx := AxesGroup.Acyclic.ActiveCommandRegister.ExecutionOrderList[_listIdx];
     
-          // check limit reached ?
-          IF ( Telegram.PlcToRob.Header.TelegramLengthPlcToRob >= RobotLibraryParameter.TELEGRAM_PAYLOAD_MAX) 
-          THEN  
-            EXIT; // -> abort for loop 
-          END_IF  
-        END_FOR
-  
-        // check payload complete ?
-       _fragmentAction.Complete := AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr 
-                                   >= AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayloadLen;
-  
-        // just for brakepoint
-        IF (_fragmentAction.Complete)
+        // check State of the current ACR entry ?
+        IF (( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].State >= BufferStateCmd.CREATED  ) AND
+            ( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].State <= BufferStateCmd.SENDING  ))
         THEN
-         _fragmentAction.Complete := _fragmentAction.Complete; 
-        END_IF
-  
-        // set fragment action
-        Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.FragmentAction := FragmentActionToByte(_fragmentAction);
-      END_IF
-    END_IF
+          // add size of fragement header      
+          Telegram.PlcToRob.Sequence[_seqIdx].Header.PayloadLength :=
+            Telegram.PlcToRob.Sequence[_seqIdx].Header.PayloadLength + SIZEOF(Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header); 
+            
+            
+          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.CmdID          := AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].UniqueID;
+          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.Reserve        := 
+          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.FragmentAction := 0; // will be set below
+          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadPointer := DWORD_TO_UINT(AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr); {warning 'ToDo: change data type'}
+          
+          // The 1st message resets the ARC entry on the server side  
+         _fragmentAction.Reset := (( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].State      = BufferStateCmd.CREATED ) AND
+                                   ( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr = 0                      ));
+                                   
+          // Update messages must clear the ARC entry on the server side  
+         _fragmentAction.Clear := (( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].State      = BufferStateCmd.UPDATE_AVAILABLE  ) AND
+                                   ( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr = 0                                )); 
     
-    // inc execution order list index 
-   _listIdx := _listIdx + 1;
-    // inc fragment index 
-   _fragIdx := _fragIdx + 1;
+          
+          // fill telegramm header - just for later debugging ( the header is part of the command payload itselfy ) {{{
+          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.CmdType       := CombineBytesToUint ( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[0],
+                                                                                                                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[1]);
+          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.ExecMode.0    :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[2].0;
+          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.ExecMode.1    :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[2].1;
+          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.ExecMode.2    :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[2].2;
+          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.ExecMode.3    :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[2].3;
+          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.Prio.0        :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[3].0;
+          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.Prio.1        :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[3].1;
+          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.Prio.2        :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[3].2;
+          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.Prio.3        :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[3].3;
+          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.ParSequence.0 :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[3].4;
+          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.ParSequence.1 :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[3].5;
+          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.ParSequence.2 :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[3].6;
+          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.ParSequence.3 :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[3].7;
+          // }}}
+          // loop through the payload
+          FOR _payLoadPtr := AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr TO AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayloadLen -1  
+          DO
+            // copy payload
+            Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Payload[_payLoadPtr] 
+              := AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[_payLoadPtr];
+        
+            // inc current sequence payload length
+            Telegram.PlcToRob.Sequence[_seqIdx].Header.PayloadLength
+              := Telegram.PlcToRob.Sequence[_seqIdx].Header.PayloadLength + 1;  
+        
+            // inc current fragment payload length
+            Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadLength 
+              := Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadLength + 1;
+        
+            // inc payload pointer in active command register
+            AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr 
+              := AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr + 1;
+          
+            // set command state
+            IF ( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr >= AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadLen) 
+            THEN
+              AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].State := BufferStateCmd.PROCESSED;
+            ELSE
+              AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].State := BufferStateCmd.SENDING;  
+            END_IF 
+    
+            // calc current telegram payload length
+            Telegram.PlcToRob.Header.TelegramLengthPlcToRob := CalcTelegramLengthPlcToRob(AxesGroup := AxesGroup);
       
-    // check abort conditions
-    IF (( Telegram.PlcToRob.Header.TelegramLengthPlcToRob                       >= RobotLibraryParameter.TELEGRAM_PAYLOAD_MAX ) OR  // Payload limit reached 
-        ( _fragIdx                                                              >= RobotLibraryParameter.FRAGMENT_MAX         ) OR  // Max fragment limit reached
-        (  AxesGroup.Acyclic.ActiveCommandRegister.ExecutionOrderList[_listIdx]  = EMPTY_EOL_ENTRY                            ))    // No entry in ExecutionOrderList left
-    THEN
-      EXIT;// -> Abort while loop
-    END_IF         
-  END_WHILE  
+            // check limit reached ?
+            IF ( Telegram.PlcToRob.Header.TelegramLengthPlcToRob >= RobotLibraryParameter.TELEGRAM_PAYLOAD_MAX) 
+            THEN  
+              EXIT; // -> abort for loop 
+            END_IF  
+          END_FOR
+    
+          // check payload complete ?
+         _fragmentAction.Complete := AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr 
+                                     >= AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayloadLen;
+    
+          // just for brakepoint
+          IF (_fragmentAction.Complete)
+          THEN
+           _fragmentAction.Complete := _fragmentAction.Complete; 
+          END_IF
+    
+          // set fragment action
+          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.FragmentAction := FragmentActionToByte(_fragmentAction);
+        END_IF
+      END_IF
+      
+      // inc execution order list index 
+     _listIdx := _listIdx + 1;
+      // inc fragment index 
+     _fragIdx := _fragIdx + 1;
   
-  AxesGroup.InternalData.SequenceCountSend := _seqIdx;
-  AxesGroup.InternalData.FragmentCountSend := _fragIdx;
-  
-  {warning 'ToDo: take a loacal var for length and do not overwrite header telegram length'}
-  Telegram.PlcToRob.Header.TelegramLengthPlcToRob := ParCfg.Com.TelegramLengthPlcToRob;
-  Telegram.PlcToRob.Header.TelegramLengthRobToPlc := ParCfg.Com.TelegramLengthRobToPlc;
+      IF (_fragIdx > 1)
+      THEN
+      _fragIdx := _fragIdx;
+      END_IF    
+    
+      // check abort conditions
+      IF (( Telegram.PlcToRob.Header.TelegramLengthPlcToRob                       >= RobotLibraryParameter.TELEGRAM_PAYLOAD_MAX ) OR  // Payload limit reached 
+          ( _fragIdx                                                              >= RobotLibraryParameter.FRAGMENT_MAX         ) OR  // Max fragment limit reached
+          (  AxesGroup.Acyclic.ActiveCommandRegister.ExecutionOrderList[_listIdx]  = EMPTY_EOL_ENTRY                            ))    // No entry in ExecutionOrderList left
+      THEN
+        EXIT;// -> Abort while loop
+      END_IF         
+    END_WHILE  
+    
+    AxesGroup.InternalData.SequenceCountSend          := _seqIdx;
+    AxesGroup.InternalData.FragmentCountSend[_seqIdx] := _fragIdx;
+    
+    {warning 'ToDo: take a loacal var for length and do not overwrite header telegram length'}
+    Telegram.PlcToRob.Header.TelegramLengthPlcToRob := ParCfg.Com.TelegramLengthPlcToRob;
+    Telegram.PlcToRob.Header.TelegramLengthRobToPlc := ParCfg.Com.TelegramLengthRobToPlc;
+  END_IF
 
 END_METHOD
 
@@ -905,14 +902,6 @@ END_VAR
   
   // reset NewSEQ flag
   AxesGroup.InternalData.NewSEQ[0] := FALSE; {warning 'Test'}
-  
-  
-  IF ( Debug )
-  THEN
-    DebugData := SendData;
-    DebugTelegram := Telegram;
-    debug := FALSE;
-  END_IF
 
 END_METHOD
 
@@ -1125,8 +1114,9 @@ END_VAR
       END_IF
       
       // PlcToRob.Sequence[x].Fragment[x] {{{
-      FOR _fragIdx := 0 TO AxesGroup.InternalData.FragmentCountSend
+      FOR _fragIdx := 0 TO AxesGroup.InternalData.FragmentCountSend[_seqIdx]  
       DO
+   
         IF (Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadLength > 0)
         THEN  
           // PlcToRob.Sequence[x].Fragment[x].Header {{{        
@@ -1172,6 +1162,15 @@ END_VAR
   // inc global instance counter
   RobotLibraryDefines.AxesGroupInstances 
     := RobotLibraryDefines.AxesGroupInstances + 1;
+    
+  
+  
+  // Create log entry
+  CreateLogMessage ( Timestamp   := SystemTime,
+                     MessageType := MessageType.CMD,
+                     Severity    := Severity.DEBUG,
+                     MessageCode := 0,
+                     MessageText := 'PLC started / restarted');
 
 END_METHOD
 
@@ -1253,8 +1252,8 @@ END_VAR
   // Set Version
   AxesGroup.Cyclic.PlcToRob.SRCIVersion := RobotLibraryConstants.SRCIVersion;
   // Set Date + Time
-  AxesGroup.Cyclic.PlcToRob.ClientDate  := DATE_TO_IEC_DATE(DT_TO_DATE(SystemTime));
-  AxesGroup.Cyclic.PlcToRob.ClientTime  := TIME_TO_IEC_TIME(DT_TO_TOD (SystemTime));
+  AxesGroup.Cyclic.PlcToRob.ClientDate  := DATE_TO_IEC_DATE(SystemTime.SystemDate);
+  AxesGroup.Cyclic.PlcToRob.ClientTime  := TIME_TO_IEC_TIME(SystemTime.SystemTime);
 
 END_METHOD
 
@@ -1332,12 +1331,31 @@ VAR_IN_OUT
   AxesGroup : AxesGroup;
 END_VAR
 
-  AxesGroup.Parameter.Plc.Parameter                    := ParCfg.Plc.Parameter;      
-  AxesGroup.Parameter.Plc.OptionalCyclic               := ParCfg.Plc.OptionalCyclic; {warning 'ToDo: '}
+  AxesGroup.Parameter.Plc.Parameter                           := ParCfg.Plc.Parameter;      
+  AxesGroup.Parameter.Plc.OptionalCyclic                      := ParCfg.Plc.OptionalCyclic; {warning 'ToDo: '}
   
-  AxesGroup.Parameter.Rob.OptionalCyclic               := ParCfg.Rob.OptionalCyclic; {warning 'ToDo'}
-  AxesGroup.Parameter.Rob.Parameter.LengthACR          := ExchangeConfiguration.OutCmd.LengthACR;
-  AxesGroup.Parameter.Rob.Parameter.HighestFrameIndex  := ExchangeConfiguration.OutCmd.HighestFrameIndex;
+  AxesGroup.Parameter.Rob.OptionalCyclic                      := ParCfg.Rob.OptionalCyclic; {warning 'ToDo'}
+  AxesGroup.Parameter.Rob.Parameter.LengthACR                 := ExchangeConfiguration.OutCmd.LengthACR;
+  AxesGroup.Parameter.Rob.Parameter.HighestToolIndex          := ExchangeConfiguration.OutCmd.HighestToolIndex;
+  AxesGroup.Parameter.Rob.Parameter.HighestFrameIndex         := ExchangeConfiguration.OutCmd.HighestFrameIndex;
+  AxesGroup.Parameter.Rob.Parameter.HighestLoadIndex          := ExchangeConfiguration.OutCmd.HighestLoadIndex;
+  AxesGroup.Parameter.Rob.Parameter.HighestWorkAreaIndex      := ExchangeConfiguration.OutCmd.HighestWorkAreaIndex;
+  AxesGroup.Parameter.Rob.Parameter.DataInSync                := ExchangeConfiguration.OutCmd.DataInSync;
+  AxesGroup.Parameter.Rob.Parameter.ChangeIndexTool           := ExchangeConfiguration.OutCmd.ChangeIndexTool;
+  AxesGroup.Parameter.Rob.Parameter.ChangeIndexFrame          := ExchangeConfiguration.OutCmd.ChangeIndexFrame;
+  AxesGroup.Parameter.Rob.Parameter.ChangeIndexLoad           := ExchangeConfiguration.OutCmd.ChangeIndexLoad;
+  AxesGroup.Parameter.Rob.Parameter.ChangeIndexWorkArea       := ExchangeConfiguration.OutCmd.ChangeIndexWorkArea;
+  AxesGroup.Parameter.Rob.Parameter.RAWorkingHours            := ExchangeConfiguration.OutCmd.RAWorkingHours;
+  AxesGroup.Parameter.Rob.Parameter.BrakeTestRequired         := ExchangeConfiguration.OutCmd.BrakeTestRequired;
+  AxesGroup.Parameter.Rob.Parameter.StepModeExactStopActive   := ExchangeConfiguration.OutCmd.StepModeExactStopActive;
+  AxesGroup.Parameter.Rob.Parameter.StepModeBlendingActive    := ExchangeConfiguration.OutCmd.StepModeBlendingActive;
+  AxesGroup.Parameter.Rob.Parameter.PathAccuracyMode          := ExchangeConfiguration.OutCmd.PathAccuracyMode;
+  AxesGroup.Parameter.Rob.Parameter.AvoidSingularity          := ExchangeConfiguration.OutCmd.AvoidSingularity;
+  AxesGroup.Parameter.Rob.Parameter.CollisionDetectionEnabled := ExchangeConfiguration.OutCmd.CollisionDetectionEnabled;
+  AxesGroup.Parameter.Rob.Parameter.AcceleratingSupported     := ExchangeConfiguration.OutCmd.AcceleratingSupported;
+  AxesGroup.Parameter.Rob.Parameter.DecceleratingSupported    := ExchangeConfiguration.OutCmd.DecceleratingSupported;
+  AxesGroup.Parameter.Rob.Parameter.ConstantVelocitySupported := ExchangeConfiguration.OutCmd.ConstantVelocitySupported;
+  AxesGroup.Parameter.Rob.Parameter.RCWorkingHours            := ExchangeConfiguration.OutCmd.RCWorkingHours;
 
 END_METHOD
 
@@ -1407,7 +1425,7 @@ END_VAR
   END_IF
   
   
-  RETURN; {warning 'ToDo: Remove this line to enable function again'}
+  //RETURN; {warning 'ToDo: Remove this line to enable function again'}
   
   
   // set index of last byte
@@ -1493,7 +1511,7 @@ END_VAR
   
   
   // increment LifeSign counter
-  IF ( _lifeSignToggle_R.Q) OR ( _lifeSignToggle_F.Q) OR ( NOT STAUBLI_SIMULATOR )
+  IF ( _lifeSignToggle_R.Q) OR ( _lifeSignToggle_F.Q) OR ( NOT STAUBLI_SIMULATOR)
   THEN
    _toggle := NOT _toggle;
    
@@ -1782,13 +1800,14 @@ END_VAR
     01:  CASE AxesGroup.Cyclic.RobToPlc.TelegramState  OF
   
            TelegramState.UNDEFINED : ;
+           
+           TelegramState.ERROR_161..TelegramState.ERROR_172:
   
-           TelegramState.ERROR_161..TelegramState.ERROR_172:  
              // clear error
              AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.ACK_ERROR;        
-             
-           TelegramState.READY_TO_RESUME : 
-             // resume 
+  
+           TelegramState.READY_TO_RESUME : ; 
+             // clear error
              AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.RESUME;        
            
            TelegramState.READY_FOR_INITIALIZATION: 
@@ -1826,6 +1845,7 @@ END_VAR
             ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
           END_IF
         END_IF    
+  
   
     03: IF (( NOT ExchangeConfiguration.Busy  ) AND 
             ( NOT ExchangeConfiguration.Error ))
@@ -1912,6 +1932,7 @@ END_VAR
              ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
            END_IF
          END_IF
+  
          
     06: IF (( NOT ReadRobotData.Busy  ) AND 
             ( NOT ReadRobotData.Error )) 
@@ -1937,7 +1958,7 @@ END_VAR
           END_IF
         END_IF
     
-    07: IF ( ReadRobotData.Busy )
+    07: IF ( ReadRobotData.Busy ) 
         THEN
           // set timeout
           SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
@@ -2359,7 +2380,7 @@ END_VAR
                                 Para3       :=  UINT_TO_STRING(Telegram.RobToPlc.Sequence[_seqIdx].Header.PayloadLength),
                                 Para4       :=  BYTE_TO_STRING(Telegram.RobToPlc.Header.LifeSign));
     
-        FOR _fragIdx := 0 TO AxesGroup.InternalData.FragmentCountRecv 
+        FOR _fragIdx := 0 TO AxesGroup.InternalData.FragmentCountRecv[_seqIdx] 
         DO
           // Check fragment payload > 0 ?    
           IF (Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadLength > 0)

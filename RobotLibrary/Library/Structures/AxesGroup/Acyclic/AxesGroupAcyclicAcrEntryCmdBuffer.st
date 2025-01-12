@@ -23,7 +23,7 @@
 TYPE AxesGroupAcyclicAcrEntryCmdBuffer :
 STRUCT
   /// Timestamp
-  Timestamp         : DT;
+  Timestamp         : SystemTime;
   /// Buffer state
   State             : BufferStateCmd;
   /// Payload defined by type per CMD definition. Processed by Appl. Layer Task.
