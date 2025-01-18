@@ -48,13 +48,29 @@ END_VAR
 
 END_FUNCTION_BLOCK
 
-METHOD CheckParameterChanged : BOOL
+METHOD PROTECTED CheckFunctionSupported : BOOL
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+  CheckFunctionSupported := AxesGroup.InternalData.RCSupportedFunctions.FreeDrive;
+  
+  IF ( NOT CheckFunctionSupported )
+  THEN
+    // call base implementation for set error and create log entry
+    SUPER^.CheckFunctionSupported(AxesGroup := AxesGroup);
+  END_IF
+
+END_METHOD
+
+METHOD PROTECTED CheckParameterChanged : BOOL
 VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup    : AxesGroup; 
 END_VAR
 
-  // Check ParCmd Size is > 0, becaue MemCmp does not work correctly with size = 0
+  // Check ParCmd Size is > 0, because MemCmp does not work correctly with size = 0
   IF (SIZEOF(ParCmd) = 0) 
   THEN 
     RETURN;
@@ -138,31 +154,33 @@ END_VAR
            // reset the rising edge
           _enable_R();       
            // reset the falling edge
-          _enable_F();       
-           // set busy flag
-           Busy := TRUE;
-           // Reset command outputs
-           SysDepMemSet(pDest := ADR(OutCmd), Value := 0, DataLen := SIZEOF(OutCmd));         
-           // apply command parameter
-          _parCmd := ParCmd;
-           // init parameter sequence
-          _command.ParSeq := 1;
-           // set timeout
-           SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
-           // inc step counter
-          _stepCmd := _stepCmd + 1; 
+          _enable_F();    
+   
+           // Check function is supported and parameter are valid ?
+           IF (( CheckFunctionSupported( AxesGroup := AxesGroup )) AND
+               ( CheckParameterValid   ( AxesGroup := AxesGroup )))      
+           THEN
+             // set busy flag
+             Busy := TRUE;
+             // Reset command outputs
+             SysDepMemSet(pDest := ADR(OutCmd), Value := 0, DataLen := SIZEOF(OutCmd));         
+             // apply command parameter
+            _parCmd := ParCmd;
+             // init parameter sequence
+            _command.ParSeq := 1;
+             // create command data
+             CommandData := CreateCommandPayload();
+             // Add command to active command register
+            _uniqueID := AxesGroup.Acyclic.ActiveCommandRegister.AddCmd( pCommandFB := ADR(THIS^ ));     
+             // set timeout
+             SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
+             // inc step counter
+            _stepCmd := _stepCmd + 1; 
+           END_IF
          END_IF
-       
-    01:  // create command data
-         CommandData := CreateCommandPayload();
-         // Add command to active command register
-        _uniqueID := AxesGroup.Acyclic.ActiveCommandRegister.AddCmd( pCommandFB := ADR(THIS^ ));     
-         // set timeout
-         SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
-         // inc step counter
-        _stepCmd := _stepCmd + 1; 
-  
-    02:  // Wait for responce received
+   
+      
+    01:  // Wait for responce received
          IF ( _responseReceived )
          THEN
            // reset response received flag
@@ -199,7 +217,8 @@ END_VAR
           _enable_F();       
         END_IF
   
-    03: IF (NOT Enable)
+  
+    02: IF (NOT Enable)
         THEN
           Reset();   
         END_IF

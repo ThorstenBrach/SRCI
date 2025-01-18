@@ -8,6 +8,8 @@ VAR_GLOBAL
   ERR_INVALID_AXES_GROUP_ID    : WORD := 3;
   /// Program fault : Invalid amount of axes groups 
   ERR_INVALID_AXES_GROUP_COUNT : WORD := 4;
+  
+  ERR_FUNCTION_NOT_SUPPORTED   : WORD := 5;
   /// Program fault : Timeout during command execution 
   ERR_TIMEOUT_CMD              : WORD := 4;
 END_VAR

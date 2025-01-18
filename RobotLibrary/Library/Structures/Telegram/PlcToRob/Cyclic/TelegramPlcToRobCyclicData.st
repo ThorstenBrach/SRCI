@@ -23,9 +23,9 @@
 TYPE TelegramPlcToRobCyclicData :
 STRUCT
   /// Current Tool
-  Tool  : BYTE;
+  ToolNo  : BYTE;
   /// Current Frame
-  Frame : BYTE;      
+  FrameNo : BYTE;      
 END_STRUCT
 END_TYPE
 

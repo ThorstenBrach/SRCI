@@ -40,6 +40,73 @@ END_VAR
 
 END_FUNCTION_BLOCK
 
+METHOD PROTECTED CheckFunctionSupported : BOOL
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+  CheckFunctionSupported := AxesGroup.InternalData.RCSupportedFunctions.ReadActualPositionCyclic;
+  
+  IF ( NOT CheckFunctionSupported )
+  THEN
+    // call base implementation for set error and create log entry
+    SUPER^.CheckFunctionSupported(AxesGroup := AxesGroup);
+  END_IF
+
+END_METHOD
+
+METHOD PROTECTED CheckParameterChanged : BOOL
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+  // Check ParCmd Size is > 0, because MemCmp does not work correctly with size = 0
+  IF (SIZEOF(ParCmd) = 0) 
+  THEN 
+    RETURN;
+  END_IF
+  
+  // compare memory 
+  CheckParameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
+  
+  IF (( CheckParameterChanged                          )  AND 
+      ( CheckParameterValid   ( AxesGroup := AxesGroup ))) 
+  THEN  
+    // Set busy flag
+    Busy := TRUE;
+    // reset enable flag
+    Enabled := FALSE;
+    // update internal copy of parameters 
+   _parCmd := ParCmd;
+    // update tool number 
+    AxesGroup.Cyclic.PlcToRob.ToolNo  := _parCmd.ToolNo;
+    // update frame number 
+    AxesGroup.Cyclic.PlcToRob.FrameNo := _parCmd.FrameNo;  
+  END_IF
+
+END_METHOD
+
+METHOD PROTECTED CheckParameterValid : BOOL
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+  CheckParameterValid := TRUE;
+  
+  // Check ParCmd are valid ? 
+  IF (( ParCmd.ReadCartesianPosition    ) AND ( NOT AxesGroup.CyclicOptional.RobToPlc.CartesianPosition   .Active) OR
+      ( ParCmd.ReadCartesianPositionExt ) AND ( NOT AxesGroup.CyclicOptional.RobToPlc.CartesianPositionExt.Active) OR
+      ( ParCmd.ReadJointPosition        ) AND ( NOT AxesGroup.CyclicOptional.RobToPlc.JointPosition       .Active) OR
+      ( ParCmd.ReadJointPositionExt     ) AND ( NOT AxesGroup.CyclicOptional.RobToPlc.JointPositionExt    .Active))
+  THEN
+    CheckParameterValid := FALSE;
+  END_IF
+
+END_METHOD
+
 METHOD FB_init : BOOL
 VAR_INPUT
   /// if TRUE, the retain variables are initialized (warm start / cold start)
@@ -58,43 +125,134 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
-  // call base implementation
   SUPER^.OnCall(AxesGroup := AxesGroup);
   
-  IF ( _enable_R.Q )  
+  CASE _stepCmd OF
+    
+    00:  IF ( _enable_R.Q ) 
+         THEN
+           // reset the rising edge
+          _enable_R();       
+           // reset the falling edge
+          _enable_F();
+          
+           // Check function is supported and parameter are valid ?
+           IF (( CheckFunctionSupported( AxesGroup := AxesGroup )) AND
+               ( CheckParameterValid   ( AxesGroup := AxesGroup )))      
+           THEN
+             // set busy flag
+             Busy := TRUE;
+             // Reset command outputs
+             SysDepMemSet(pDest := ADR(OutCmd), Value := 0, DataLen := SIZEOF(OutCmd));         
+             // apply command parameter
+            _parCmd := ParCmd;
+             // set parameter
+             AxesGroup.Cyclic.PlcToRob.ToolNo  := _parCmd.ToolNo;
+             AxesGroup.Cyclic.PlcToRob.FrameNo := _parCmd.FrameNo;     
+             // set timeout
+             SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
+             // inc step counter
+            _stepCmd := _stepCmd + 1; 
+           END_IF 
+         END_IF
+       
+  
+    01:  // Wait for FrameNo and ToolNo set
+         IF ((  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.CoordinateSystem.FrameNo = _parCmd.FrameNo )  AND
+             (  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.CoordinateSystem.ToolNo  = _parCmd.ToolNo  )) OR
+             ( _parCmd.ReadCartesianPosition                                                 = FALSE           ) 
+         THEN
+           // busy 
+           Busy := FALSE;
+           // reset busy flag
+           Enabled := TRUE;          
+           // Reset command outputs
+           SysDepMemSet(pDest := ADR(OutCmd), Value := 0, DataLen := SIZEOF(OutCmd));         
+           // set ToolNo and FrameNo
+           OutCmd.CurrentCoordinateSystem.FrameNo := AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.CoordinateSystem.FrameNo;
+           OutCmd.CurrentCoordinateSystem.ToolNo  := AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.CoordinateSystem.ToolNo;
+           
+           // Set cartesian position
+           IF ( _parCmd.ReadCartesianPosition )  
+           THEN
+              OutCmd.ReadingCartesianPosition     := TRUE;
+              OutCmd.CartesianPosition.X          := OutCmd.CartesianPositionShort.X          := AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.X;
+              OutCmd.CartesianPosition.Y          := OutCmd.CartesianPositionShort.Y          := AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.Y;         
+              OutCmd.CartesianPosition.Z          := OutCmd.CartesianPositionShort.Z          := AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.Z;
+              OutCmd.CartesianPosition.Rx         := OutCmd.CartesianPositionShort.Rx         := AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.Rx;
+              OutCmd.CartesianPosition.Ry         := OutCmd.CartesianPositionShort.Ry         := AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.Ry;
+              OutCmd.CartesianPosition.Rz         := OutCmd.CartesianPositionShort.Rz         := AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.Rz;
+              OutCmd.CartesianPosition.Config     := OutCmd.CartesianPositionShort.Config     := AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.Config;
+              OutCmd.CartesianPosition.TurnNumber := OutCmd.CartesianPositionShort.TurnNumber := AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber;            
+              OutCmd.CartesianPosition.E1         := OutCmd.CartesianPositionShort.E1         := AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.E1;
+           END_IF
+           
+           // Set extended cartesian position
+           IF ( _parCmd.ReadCartesianPositionExt )  
+           THEN
+              OutCmd.ReadingCartesianPositionExt  := TRUE;
+              OutCmd.CartesianPosition.E2         := OutCmd.CartesianPositionExt.E2           := AxesGroup.CyclicOptional.RobToPlc.CartesianPositionExt.E2;
+              OutCmd.CartesianPosition.E3         := OutCmd.CartesianPositionExt.E3           := AxesGroup.CyclicOptional.RobToPlc.CartesianPositionExt.E3;
+              OutCmd.CartesianPosition.E4         := OutCmd.CartesianPositionExt.E4           := AxesGroup.CyclicOptional.RobToPlc.CartesianPositionExt.E4;
+              OutCmd.CartesianPosition.E5         := OutCmd.CartesianPositionExt.E5           := AxesGroup.CyclicOptional.RobToPlc.CartesianPositionExt.E5;
+              OutCmd.CartesianPosition.E6         := OutCmd.CartesianPositionExt.E6           := AxesGroup.CyclicOptional.RobToPlc.CartesianPositionExt.E6;    
+           END_IF      
+  
+           // Set joint position
+           IF ( _parCmd.ReadJointPosition )  
+           THEN
+              OutCmd.ReadingJointPosition         := TRUE;         
+              OutCmd.JointPosition.J1             := OutCmd.JointPositionShort.J1             := AxesGroup.CyclicOptional.RobToPlc.JointPosition.J1;
+              OutCmd.JointPosition.J2             := OutCmd.JointPositionShort.J2             := AxesGroup.CyclicOptional.RobToPlc.JointPosition.J2;
+              OutCmd.JointPosition.J3             := OutCmd.JointPositionShort.J3             := AxesGroup.CyclicOptional.RobToPlc.JointPosition.J3;
+              OutCmd.JointPosition.J4             := OutCmd.JointPositionShort.J4             := AxesGroup.CyclicOptional.RobToPlc.JointPosition.J4;
+              OutCmd.JointPosition.J5             := OutCmd.JointPositionShort.J5             := AxesGroup.CyclicOptional.RobToPlc.JointPosition.J5;
+              OutCmd.JointPosition.J6             := OutCmd.JointPositionShort.J6             := AxesGroup.CyclicOptional.RobToPlc.JointPosition.J6;    
+           END_IF    
+    
+           // Set extended joint position
+           IF ( _parCmd.ReadJointPositionExt )  
+           THEN         
+              OutCmd.ReadingCartesianPositionExt  := TRUE;         
+              OutCmd.JointPosition.E2             := OutCmd.JointPositionExt.E2               := AxesGroup.CyclicOptional.RobToPlc.JointPositionExt.E2;
+              OutCmd.JointPosition.E3             := OutCmd.JointPositionExt.E3               := AxesGroup.CyclicOptional.RobToPlc.JointPositionExt.E3;
+              OutCmd.JointPosition.E4             := OutCmd.JointPositionExt.E4               := AxesGroup.CyclicOptional.RobToPlc.JointPositionExt.E4;
+              OutCmd.JointPosition.E5             := OutCmd.JointPositionExt.E5               := AxesGroup.CyclicOptional.RobToPlc.JointPositionExt.E5;
+              OutCmd.JointPosition.E6             := OutCmd.JointPositionExt.E6               := AxesGroup.CyclicOptional.RobToPlc.JointPositionExt.E6;    
+           END_IF
+         END_IF
+         
+         IF ( NOT Enable)
+         THEN
+           // reset the rising edge
+          _enable_R();       
+           // reset the falling edge
+          _enable_F();       
+           // set timeout
+           SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
+           // inc step counter
+          _stepCmd := _stepCmd + 1; 
+         END_IF
+  
+  
+    02:  IF (NOT Enable)
+         THEN
+           Reset();  
+         END_IF
+  
+  ELSE
+    // invalid step
+    ErrorID := RobotLibraryEvents.ERR_INVALID_STEP;
+  END_CASE
+  
+  
+  
+  // Reset FB
+  IF (( _enable_R.Q ) OR
+      ( _enable_F.Q ))
   THEN
-   _parCmd := ParCmd;
-    AxesGroup.Parameter.Rob.OptionalCyclic.UseCartesianPosition    := _parCmd.ReadCartesianPosition;
-    AxesGroup.Parameter.Rob.OptionalCyclic.UseCartesianPositionExt := _parCmd.ReadCartesianPositionExt;
-    AxesGroup.Parameter.Rob.OptionalCyclic.UseJointPosition        := _parCmd.ReadJointPosition;
-    AxesGroup.Parameter.Rob.OptionalCyclic.UseJointPositionExt     := _parCmd.ReadJointPositionExt;
+    Reset();
   END_IF
-  
-  IF ( _enable_F.Q )  
-  THEN
-    AxesGroup.Parameter.Rob.OptionalCyclic.UseCartesianPosition    := FALSE;
-    AxesGroup.Parameter.Rob.OptionalCyclic.UseCartesianPositionExt := FALSE;
-    AxesGroup.Parameter.Rob.OptionalCyclic.UseJointPosition        := FALSE;
-    AxesGroup.Parameter.Rob.OptionalCyclic.UseJointPositionExt     := FALSE;
-  END_IF
-  
-   
-  Enabled := AxesGroup.State.ConfigExchanged; {warning 'ToDo'}
-  
-  Busy := (Enabled <> Enable); 
-  
-  
-  // update flags
-  OutCmd.ReadingCartesianPosition    := Enabled AND _parCmd.ReadCartesianPosition;
-  OutCmd.ReadingCartesianPositionExt := Enabled AND _parCmd.ReadCartesianPosition;
-  OutCmd.ReadingJointPosition        := Enabled AND _parCmd.ReadCartesianPosition;
-  OutCmd.ReadingJointPositionExt     := Enabled AND _parCmd.ReadCartesianPosition;
-  
-  // Update values
-  OutCmd.CartesianPositionShort := AxesGroup.CyclicOptional.RobToPlc.CartesianPosition;        
-  OutCmd.CartesianPositionExt   := AxesGroup.CyclicOptional.RobToPlc.CartesianPositionExt;         
-  OutCmd.JointPosition          := AxesGroup.CyclicOptional.RobToPlc.JointPosition;        
-  OutCmd.JointPositionExt       := AxesGroup.CyclicOptional.RobToPlc.JointPositionExt;
 
 END_METHOD
 
@@ -102,9 +260,10 @@ METHOD PROTECTED Reset : DINT
 VAR_INPUT
 END_VAR
 
-  SUPER^.Reset();
+  Reset := SUPER^.Reset();
   
-  Busy := FALSE;
+  // Reset command outputs
+  SysDepMemSet(pDest := ADR(OutCmd), Value := 0, DataLen := SIZEOF(OutCmd));
 
 END_METHOD
 

@@ -110,7 +110,7 @@ END_VAR
                               Severity    := Severity.DEBUG,
                               MessageCode := 0,
                               MessageText := 'Added Cmd <{1}> to active command register',
-                              Para1       :=  CmdTypeToString(SwapUint(_cmdType)));
+                              Para1       :=  CMD_TYPE_TO_STRING(SwapUint(_cmdType)));
       EXIT;
     END_IF
   END_FOR
@@ -174,8 +174,8 @@ END_VAR
                               MessageCode := 0,
                               MessageText := 'Added Response of CmdID <{1}>, CmdType <{2}> with State = {3} to ACR',
                               Para1       :=  UINT_TO_STRING(Rsp.Header.CmdID),
-                              Para2       :=  CmdTypeToString(_cmdType),
-                              Para3       :=  CmdMessageStateToString(_cmdMessageState));
+                              Para2       :=  CMD_TYPE_TO_STRING(_cmdType),
+                              Para3       :=  CMD_MESSAGE_STATE_TO_STRING(_cmdMessageState));
   
       IF ( _fragmentAction.Complete )
       THEN
@@ -199,7 +199,7 @@ END_VAR
                                  MessageText := 'ARC Register [{1}] : Response of CmdID <{2}>, CmdType <{3}> has reached Final State',
                                  Para1       :=  DINT_TO_STRING(_regIdx),
                                  Para2       :=  UINT_TO_STRING(Rsp.Header.CmdID),
-                                 Para3       :=  CmdTypeToString(_cmdType));
+                                 Para3       :=  CMD_TYPE_TO_STRING(_cmdType));
                                  
           // Exit the loop
         END_IF      
@@ -220,7 +220,7 @@ END_VAR
                             MessageCode := 0,
                             MessageText := 'Rsp <{1}> with State = {2} received, but no matching ARC entry found',
                             Para1       :=  UINT_TO_STRING(Rsp.Header.CmdID),
-                            Para2       :=  CmdMessageStateToString(_cmdMessageState));
+                            Para2       :=  CMD_MESSAGE_STATE_TO_STRING(_cmdMessageState));
   END_IF
 
 END_METHOD
@@ -281,7 +281,7 @@ END_VAR
                               MessageText := 'ARC Register [{1}] : Moved BUFFER_CMD to ACTIVE_CMD, CmdID <{2}> , CmdType <{3}>',
                               Para1       :=  DINT_TO_STRING(_regIdx),
                               Para2       :=  UINT_TO_STRING(Register[_regIdx].UniqueID),
-                              Para3       :=  CmdTypeToString(_cmdType));
+                              Para3       :=  CMD_TYPE_TO_STRING(_cmdType));
   
     END_IF
     
@@ -310,7 +310,7 @@ END_VAR
                              MessageText := 'ARC Register [{1}} : Deleted CmdID <{2}> , CmdType <{3}> from ARC, because of Final-State was reached',
                              Para1       :=  DINT_TO_STRING(_regIdx),
                              Para2       :=  UINT_TO_STRING(Register[_regIdx].UniqueID),  
-                             Para3       :=  CmdTypeToString(_cmdType));
+                             Para3       :=  CMD_TYPE_TO_STRING(_cmdType));
   
                              
       Register[_regIdx] := EMPTY_ARC_ENTRY;                           

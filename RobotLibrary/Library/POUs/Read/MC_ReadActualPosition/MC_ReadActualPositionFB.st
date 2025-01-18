@@ -62,13 +62,29 @@ END_VAR
 
 END_FUNCTION_BLOCK
 
-METHOD CheckParameterChanged : BOOL
+METHOD PROTECTED CheckFunctionSupported : BOOL
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+  CheckFunctionSupported := AxesGroup.InternalData.RCSupportedFunctions.ReadActualPosition;
+  
+  IF ( NOT CheckFunctionSupported )
+  THEN
+    // call base implementation for set error and create log entry
+    SUPER^.CheckFunctionSupported(AxesGroup := AxesGroup);
+  END_IF
+
+END_METHOD
+
+METHOD PROTECTED CheckParameterChanged : BOOL
 VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup    : AxesGroup; 
 END_VAR
 
-  // Check ParCmd Size is > 0, becaue MemCmp does not work correctly with size = 0
+  // Check ParCmd Size is > 0, because MemCmp does not work correctly with size = 0
   IF (SIZEOF(ParCmd) = 0) 
   THEN 
     RETURN;
@@ -181,30 +197,31 @@ END_VAR
     
     00:  IF ( _execute_R.Q )  
          THEN
-           // set busy flag
-           Busy := TRUE;
-           // Reset command outputs
-           SysDepMemSet(pDest := ADR(OutCmd), Value := 0, DataLen := SIZEOF(OutCmd));         
-           // apply command parameter
-          _parCmd := ParCmd;
-           // init parameter sequence
-          _command.ParSeq := 1;
-           // set timeout
-           SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
-           // inc step counter
-          _stepCmd := _stepCmd + 1; 
+           // Check function is supported and parameter are valid ?
+           IF (( CheckFunctionSupported( AxesGroup := AxesGroup )) AND
+               ( CheckParameterValid   ( AxesGroup := AxesGroup )))      
+           THEN
+             // set busy flag
+             Busy := TRUE;
+             // Reset command outputs
+             SysDepMemSet(pDest := ADR(OutCmd), Value := 0, DataLen := SIZEOF(OutCmd));         
+             // apply command parameter
+            _parCmd := ParCmd;
+             // init parameter sequence
+            _command.ParSeq := 1;
+             // create command data
+             CommandData := CreateCommandPayload();
+             // Add command to active command register
+            _uniqueID := AxesGroup.Acyclic.ActiveCommandRegister.AddCmd( pCommandFB := ADR(THIS^ ));     
+             // set timeout
+             SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
+             // inc step counter
+            _stepCmd := _stepCmd + 1;
+           END_IF 
          END_IF
        
-    01:  // create command data
-         CommandData := CreateCommandPayload();
-         // Add command to active command register
-        _uniqueID := AxesGroup.Acyclic.ActiveCommandRegister.AddCmd( pCommandFB := ADR(THIS^ ));     
-         // set timeout
-         SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
-         // inc step counter
-        _stepCmd := _stepCmd + 1; 
   
-    02:  // Wait for responce received
+    01:  // Wait for responce received
          IF ( _responseReceived )
          THEN
            // reset response received flag
@@ -239,10 +256,12 @@ END_VAR
            END_IF
          END_IF
   
-    03: IF ( NOT Execute)
+  
+    02: IF ( NOT Execute)
         THEN
           Reset();
         END_IF     
+        
   ELSE
     // invalid step
     ErrorID := RobotLibraryEvents.ERR_INVALID_STEP;
@@ -419,6 +438,8 @@ END_VAR
   _response.ActualCartesianPosition.Config := ResponseData.GetArmConfig();
   // Get Response.ActualCartesianPosition.TurnNumber
   _response.ActualCartesianPosition.TurnNumber := ResponseData.GetTurnNumbers();
+  // Get Response.ActualCartesianPosition.E1
+  _response.ActualCartesianPosition.E1 := ResponseData.GetReal();
   // Get Response.ActualJointPosition.J1
   _response.ActualJointPosition.J1 := ResponseData.GetReal();
   // Get Response.ActualJointPosition.J2
@@ -431,8 +452,6 @@ END_VAR
   _response.ActualJointPosition.J5 := ResponseData.GetReal();
   // Get Response.ActualJointPosition.J6
   _response.ActualJointPosition.J6 := ResponseData.GetReal();
-  // Get Response.ActualCartesianPosition.E1
-  _response.ActualCartesianPosition.E1 := ResponseData.GetReal();
   // Get Response.ActualCartesianPosition.E2
   _response.ActualCartesianPosition.E2 := ResponseData.GetReal();
   // Get Response.ActualCartesianPosition.E3

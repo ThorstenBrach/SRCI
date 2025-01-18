@@ -22,10 +22,26 @@
 // -------------------------------------------------------------------------
 TYPE ReadRobotReferenceDynamicsRecvData EXTENDS RspHeader :
 STRUCT
-  /// Reference dynamics values according to Table 6-109.
-  DynamicValues      : ReferenceDynamics;
+  /// Timestamp
+  Timestamp             : IEC_TIMESTAMP;
+  /// Path velocity [mm/s](tangent) at 100%
+  /// • <0: (default) - Do not change values
+  /// • ≥0: Change values according to input value
+  VelocityReference     : UINT;
+  /// Path acceleration [mm/s2] at 100%
+  /// • <0: (default) - Do not change values
+  /// • ≥0: Change values according to input value
+  AccelerationReference : UINT;
+  /// Path deceleration [mm/s2] at 100%
+  /// • <0: (default) - Do not change values
+  /// • ≥0: Change values according to input value
+  DecelerationReference : UINT;
+  /// Jerk [mm/s3] at 100%
+  /// • <0: (default) - Do not change values
+  /// • ≥0: Change values according to input value
+  JerkReference        : UINT;  
   /// ToDo
-  DataChanged : BOOL;
+  DataChanged          : BOOL;
 END_STRUCT
 END_TYPE
 

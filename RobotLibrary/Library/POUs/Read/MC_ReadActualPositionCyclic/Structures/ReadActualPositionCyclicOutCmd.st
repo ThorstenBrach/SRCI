@@ -41,7 +41,7 @@ STRUCT
   /// Tool and frame index of returned position according to Table 6-40
   CoordinateSystem            : CoordinateSystem;
   /// Cyclically returned, absolute joint position of the robot in Joint position
-  JointPosition               : RobotJointPositionShort;
+  JointPosition               : RobotJointPosition;
   /// Cyclically returned, absolute short joint position of the robot in Joint position
   JointPositionShort          : RobotJointPositionShort;
   /// Cyclically returned, absolute extended joint position of the external axes of the robot

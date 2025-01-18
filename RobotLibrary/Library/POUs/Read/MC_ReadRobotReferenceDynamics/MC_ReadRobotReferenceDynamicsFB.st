@@ -46,13 +46,29 @@ END_VAR
 
 END_FUNCTION_BLOCK
 
-METHOD CheckParameterChanged : BOOL
+METHOD PROTECTED CheckFunctionSupported : BOOL
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+  CheckFunctionSupported := AxesGroup.InternalData.RCSupportedFunctions.ReadRobotReferenceDynamics;
+  
+  IF ( NOT CheckFunctionSupported )
+  THEN
+    // call base implementation for set error and create log entry
+    SUPER^.CheckFunctionSupported(AxesGroup := AxesGroup);
+  END_IF
+
+END_METHOD
+
+METHOD PROTECTED CheckParameterChanged : BOOL
 VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup    : AxesGroup; 
 END_VAR
 
-  // Check ParCmd Size is > 0, becaue MemCmp does not work correctly with size = 0
+  // Check ParCmd Size is > 0, because MemCmp does not work correctly with size = 0
   IF (SIZEOF(ParCmd) = 0) 
   THEN 
     RETURN;
@@ -125,30 +141,31 @@ END_VAR
     
     00:  IF ( _execute_R.Q ) 
          THEN
-           // set busy flag
-           Busy := TRUE;
-           // Reset command outputs
-           SysDepMemSet(pDest := ADR(OutCmd), Value := 0, DataLen := SIZEOF(OutCmd));         
-           // apply command parameter
-          _parCmd := ParCmd;
-           // init parameter sequence
-          _command.ParSeq := 1;
-           // set timeout
-           SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
-           // inc step counter
-          _stepCmd := _stepCmd + 1; 
+           // Check function is supported and parameter are valid ?
+           IF (( CheckFunctionSupported( AxesGroup := AxesGroup )) AND
+               ( CheckParameterValid   ( AxesGroup := AxesGroup )))
+           THEN      
+             // set busy flag
+             Busy := TRUE;
+             // Reset command outputs
+             SysDepMemSet(pDest := ADR(OutCmd), Value := 0, DataLen := SIZEOF(OutCmd));         
+             // apply command parameter
+            _parCmd := ParCmd;
+             // init parameter sequence
+            _command.ParSeq := 1;
+             // create command data
+             CommandData := CreateCommandPayload();
+             // Add command to active command register
+            _uniqueID := AxesGroup.Acyclic.ActiveCommandRegister.AddCmd( pCommandFB := ADR(THIS^ ));     
+             // set timeout
+             SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
+             // inc step counter
+            _stepCmd := _stepCmd + 1;
+           END_IF 
          END_IF
        
-    01:  // create command data
-         CommandData := CreateCommandPayload();
-         // Add command to active command register
-        _uniqueID := AxesGroup.Acyclic.ActiveCommandRegister.AddCmd( pCommandFB := ADR(THIS^ ));     
-         // set timeout
-         SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
-         // inc step counter
-        _stepCmd := _stepCmd + 1; 
   
-    02:  // Wait for responce received
+    01:  // Wait for responce received
          IF ( _responseReceived )
          THEN
            // reset response received flag
@@ -166,8 +183,36 @@ END_VAR
            THEN
              // Reset Busy flag
              Busy := FALSE;
+             
              // Update results
-             OutCmd.DynamicValues := _response.DynamicValues;
+             IF ( _response.VelocityReference  <> 16#FFFF ) // Robot returns 16#FFFF ( -1 ) for not supported values 
+             THEN
+               OutCmd.DynamicValues.VelocityReference     := INT_TO_REAL(UINT_TO_INT(_response.VelocityReference )) / RobotLibraryConstants.REAL_CONVERSION_FACTOR; {warning 'ToDo: check conversation is correct ?'}
+             ELSE
+               OutCmd.DynamicValues.VelocityReference     := INT_TO_REAL(UINT_TO_INT(_response.VelocityReference ));
+  					 END_IF
+  
+             IF ( _response.AccelerationReference <> 16#FFFF ) // Robot returns 16#FFFF ( -1 ) for not supported values
+             THEN
+               OutCmd.DynamicValues.AccelerationReference := INT_TO_REAL(UINT_TO_INT(_response.AccelerationReference )) / RobotLibraryConstants.REAL_CONVERSION_FACTOR; {warning 'ToDo: check conversation is correct ?'}
+             ELSE
+               OutCmd.DynamicValues.AccelerationReference := INT_TO_REAL(UINT_TO_INT(_response.AccelerationReference ));
+  					 END_IF
+  
+             IF ( _response.DecelerationReference <> 16#FFFF ) // Robot returns 16#FFFF ( -1 ) for not supported values
+             THEN
+               OutCmd.DynamicValues.DecelerationReference := INT_TO_REAL(UINT_TO_INT(_response.DecelerationReference )) / RobotLibraryConstants.REAL_CONVERSION_FACTOR; {warning 'ToDo: check conversation is correct ?'}
+             ELSE
+               OutCmd.DynamicValues.DecelerationReference := INT_TO_REAL(UINT_TO_INT(_response.DecelerationReference ));
+  					 END_IF
+  
+             IF ( _response.JerkReference <> 16#FFFF ) // Robot returns 16#FFFF ( -1 ) for not supported values
+             THEN
+               OutCmd.DynamicValues.JerkReference := INT_TO_REAL(UINT_TO_INT(_response.JerkReference )) / RobotLibraryConstants.REAL_CONVERSION_FACTOR; {warning 'ToDo: check conversation is correct ?'}
+             ELSE
+               OutCmd.DynamicValues.JerkReference := INT_TO_REAL(UINT_TO_INT(_response.JerkReference ));
+  					 END_IF
+  
              // set timeout
              SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
              // inc step counter
@@ -175,10 +220,12 @@ END_VAR
            END_IF
          END_IF
   
-    03: IF ( NOT Execute)
+  
+    02: IF ( NOT Execute)
         THEN
           Reset(); 
         END_IF     
+  
   ELSE
     // invalid step
     ErrorID := RobotLibraryEvents.ERR_INVALID_STEP;
@@ -236,17 +283,17 @@ END_VAR
   _response.AlarmMessageCode     := _rspHeader.AlarmMessageCode;
   
   // Get Response.DynamicValues.Timestamp.IEC_DATE
-  _response.DynamicValues.Timestamp.IEC_DATE := ResponseData.GetIecDate();
+  _response.Timestamp.IEC_DATE := ResponseData.GetIecDate();
   // Get Response.DynamicValues.Timestamp.IEC_TIME
-  _response.DynamicValues.Timestamp.IEC_TIME := ResponseData.GetIecTime();
+  _response.Timestamp.IEC_TIME := ResponseData.GetIecTime();
   // Get Response.DynamicValues.VelocityRate
-  _response.DynamicValues.VelocityReference := ResponseData.GetReal();
+  _response.VelocityReference := ResponseData.GetUint();
   // Get Response.DynamicValues.AccelerationRate
-  _response.DynamicValues.AccelerationReference := ResponseData.GetReal();
+  _response.AccelerationReference := ResponseData.GetUint();
   // Get Response.DynamicValues.DecelerationRate
-  _response.DynamicValues.DecelerationReference := ResponseData.GetReal();
+  _response.DecelerationReference := ResponseData.GetUint();
   // Get Response.DynamicValues.JerkRate
-  _response.DynamicValues.JerkReference := ResponseData.GetReal();
+  _response.JerkReference := ResponseData.GetUint();
   // Get Response.DataChanged
   _response.DataChanged := ResponseData.GetBool();
 

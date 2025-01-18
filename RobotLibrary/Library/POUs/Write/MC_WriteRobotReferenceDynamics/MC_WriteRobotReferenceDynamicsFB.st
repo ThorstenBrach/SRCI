@@ -51,13 +51,29 @@ END_VAR
 
 END_FUNCTION_BLOCK
 
-METHOD CheckParameterChanged : BOOL
+METHOD PROTECTED CheckFunctionSupported : BOOL
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+  CheckFunctionSupported := AxesGroup.InternalData.RCSupportedFunctions.WriteRobotReferenceDynamics;
+  
+  IF ( NOT CheckFunctionSupported )
+  THEN
+    // call base implementation for set error and create log entry
+    SUPER^.CheckFunctionSupported(AxesGroup := AxesGroup);
+  END_IF
+
+END_METHOD
+
+METHOD PROTECTED CheckParameterChanged : BOOL
 VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup    : AxesGroup; 
 END_VAR
 
-  // Check ParCmd Size is > 0, becaue MemCmp does not work correctly with size = 0
+  // Check ParCmd Size is > 0, because MemCmp does not work correctly with size = 0
   IF (SIZEOF(ParCmd) = 0) 
   THEN 
     RETURN;
@@ -117,11 +133,34 @@ METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
 // --------------------------
 
   // set command parameter 
-  _command.CmdTyp        :=  CmdType.WriteRobotReferenceDynamics;
-  _command.ExecMode      :=  ExecMode;
-  _command.ParSeq        := _command.ParSeq;
-  _command.Priority      :=  Priority;
-  _command.DynamicValues := _parCmd.DynamicValues;
+  _command.CmdTyp                :=  CmdType.WriteRobotReferenceDynamics;
+  _command.ExecMode              :=  ExecMode;
+  _command.ParSeq                := _command.ParSeq;
+  _command.Priority              :=  Priority;
+  
+  _command.DynamicValues         := _parCmd.DynamicValues;
+  
+  (*
+  
+  _command.Timestamp             := _parCmd.DynamicValues.Timestamp;
+  _command.VelocityReference     := REAL_TO_UINT(_parCmd.DynamicValues.VelocityReference     * RobotLibraryConstants.REAL_CONVERSION_FACTOR);
+  _command.AccelerationReference := REAL_TO_UINT(_parCmd.DynamicValues.AccelerationReference * RobotLibraryConstants.REAL_CONVERSION_FACTOR);
+  
+  IF (_parCmd.DynamicValues.JerkReference  <> -1 ) 
+  THEN
+   _command.JerkReference := REAL_TO_UINT(_parCmd.DynamicValues.JerkReference * RobotLibraryConstants.REAL_CONVERSION_FACTOR);
+  ELSE
+   _command.JerkReference := 16#FFFF;  // Robot needs 16#FFFF ( -1 ) for not supported values
+  END_IF
+  
+  IF (_parCmd.DynamicValues.DecelerationReference <> -1 ) 
+  THEN
+   _command.DecelerationReference := REAL_TO_UINT(_parCmd.DynamicValues.DecelerationReference * RobotLibraryConstants.REAL_CONVERSION_FACTOR);
+  ELSE
+   _command.DecelerationReference := 16#FFFF;  // Robot needs 16#FFFF ( -1 ) for not supported values
+  END_IF
+  *)
+  
   
   // copy command data to header
   _cmdHeader := _command;
@@ -170,18 +209,6 @@ END_VAR
     
     00:  IF ( _execute_R.Q )  
          THEN
-           // set busy flag
-           Busy := TRUE;
-           // Reset command outputs
-           SysDepMemSet(pDest := ADR(OutCmd), Value := 0, DataLen := SIZEOF(OutCmd));         
-           // apply command parameter
-          _parCmd := ParCmd;
-           // init parameter sequence
-          _command.ParSeq := 1;
-           // set timeout
-           SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
-           // inc step counter
-          _stepCmd := _stepCmd + 1; 
          END_IF
        
     01:  // create command data

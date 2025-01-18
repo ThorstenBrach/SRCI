@@ -26,7 +26,7 @@ STRUCT
   /// • -1: Currently used load on RC
   /// •  0: Not possible to read
   /// •  1 (default)..254: Load data
-  LoadNo             : INT;
+  LoadNo             : USINT;
 END_STRUCT
 END_TYPE
 

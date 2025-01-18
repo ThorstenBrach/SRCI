@@ -52,12 +52,8 @@ STRUCT
   /// Bit 07:
   /// RA power state
   Enabled                  : BOOL;
-  /// Bit 08:
-  /// RA sequence states: Idle, Interrupt active, Axes controlled
-  Executing                : BOOL;
-  /// Bit 09:
-  /// Interrupted
-  Interrupted              : BOOL;
+  /// Bit 08 - 09: RA sequence states: Idle, Interrupt active, Axes controlled
+  RaSequenceState          : RaSequenceState;
   /// Bit 10 - Bit 12:
   /// Operation Mode: T1 Local, T2 Local, Auto, Auto Ext, T1 Ext, T2 Ext
   OperationMode            : OperationMode;

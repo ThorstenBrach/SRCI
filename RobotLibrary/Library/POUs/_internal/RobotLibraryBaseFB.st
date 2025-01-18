@@ -109,7 +109,26 @@ END_VAR
 
 END_METHOD
 
-METHOD CheckParameterChanged : BOOL
+METHOD PROTECTED CheckFunctionSupported : BOOL
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+  Error   := TRUE;
+  ErrorID := RobotLibraryEvents.ERR_FUNCTION_NOT_SUPPORTED;
+  
+  // Create log entry
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Execution canceled, because function <{1}> is not supported by the robot controller',
+                          Para1       :=  _myType);
+
+END_METHOD
+
+METHOD PROTECTED CheckParameterChanged : BOOL
 VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup    : AxesGroup; 
@@ -119,6 +138,16 @@ END_VAR
   THEN
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
   END_IF
+
+END_METHOD
+
+METHOD PROTECTED CheckParameterValid : BOOL
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+  CheckParameterValid := TRUE;
 
 END_METHOD
 

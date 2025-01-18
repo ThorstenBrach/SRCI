@@ -23,35 +23,37 @@
 TYPE AxesGroupInternalData :
 STRUCT
   /// Current System Time
-  SystemTime        : SystemTime;
+  SystemTime           : SystemTime;
+    /// • TRUE: Function is supported by RC • FALSE: Function is not supported by RC See Table 6-14 for bit assignment.
+  RCSupportedFunctions : RCSupportedFunctions;
   /// Online Change detected
-  OnlineChange      : BOOL;  
+  OnlineChange         : BOOL;  
   /// Rising edge for Online Change detected
-  OnlineChange_R    : R_TRIG;  
+  OnlineChange_R       : R_TRIG;  
   /// Falling edge for Online Change detected
-  OnlineChange_F    : F_TRIG;  
+  OnlineChange_F       : F_TRIG;  
   /// GroupReset active
-  GroupReset        : BOOL; 
+  GroupReset           : BOOL; 
   /// Rising edge for GroupReset
-  GroupReset_R      : R_TRIG;  
+  GroupReset_R         : R_TRIG;  
   /// Falling edge for GroupReset
-  GroupReset_F      : F_TRIG;
+  GroupReset_F         : F_TRIG;
   /// Counter of sequences to send
-  SequenceCountSend : DINT;
+  SequenceCountSend    : DINT;
   /// Counter of sequences received
-  SequenceCountRecv : DINT;
+  SequenceCountRecv    : DINT;
   /// Counter of fragments to send
-  FragmentCountSend : ARRAY[0..1] OF DINT;
+  FragmentCountSend    : ARRAY[0..1] OF DINT;
   /// Counter of fragments received
-  FragmentCountRecv : ARRAY[0..1] OF DINT;
+  FragmentCountRecv    : ARRAY[0..1] OF DINT;
   /// Current Sequence ID
-  CurrentSEQ        : ARRAY[0..1] OF UINT;
+  CurrentSEQ           : ARRAY[0..1] OF UINT;
   /// Current acknowledge ID
-  CurrentACK        : ARRAY[0..1] OF UINT;  
+  CurrentACK           : ARRAY[0..1] OF UINT;  
   /// Current Sequence ID has changed -> send new data 
-  NewSEQ            : ARRAY[0..1] OF BOOL;
+  NewSEQ               : ARRAY[0..1] OF BOOL;
   /// Last received acknowledge ID
-  LastACK           : ARRAY[0..1] OF UINT;  
+  LastACK              : ARRAY[0..1] OF UINT;  
 END_STRUCT
 END_TYPE
 

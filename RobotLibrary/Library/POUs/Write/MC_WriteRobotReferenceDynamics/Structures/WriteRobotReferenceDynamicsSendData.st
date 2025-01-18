@@ -22,8 +22,28 @@
 // -------------------------------------------------------------------------
 TYPE WriteRobotReferenceDynamicsSendData EXTENDS CmdHeader: 
 STRUCT
-  /// Reference dynamics values according TO Table 6-134.
+  
   DynamicValues : ReferenceDynamics;
+(*
+  /// Timestamp
+  Timestamp             : IEC_TIMESTAMP;
+  /// Path velocity [mm/s](tangent) at 100%
+  /// • <0: (default) - Do not change values
+  /// • ≥0: Change values according to input value
+  VelocityReference     : UINT;
+  /// Path acceleration [mm/s2] at 100%
+  /// • <0: (default) - Do not change values
+  /// • ≥0: Change values according to input value
+  AccelerationReference : UINT;
+  /// Path deceleration [mm/s2] at 100%
+  /// • <0: (default) - Do not change values
+  /// • ≥0: Change values according to input value
+  DecelerationReference : UINT;
+  /// Jerk [mm/s3] at 100%
+  /// • <0: (default) - Do not change values
+  /// • ≥0: Change values according to input value
+  JerkReference        : UINT;
+*)
 END_STRUCT
 END_TYPE
 

@@ -35,6 +35,22 @@ END_VAR
 
 END_FUNCTION_BLOCK
 
+METHOD PROTECTED CheckFunctionSupported : BOOL
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+  CheckFunctionSupported := AxesGroup.InternalData.RCSupportedFunctions.WriteCallSubprogramCyclic;
+  
+  IF ( NOT CheckFunctionSupported )
+  THEN
+    // call base implementation for set error and create log entry
+    SUPER^.CheckFunctionSupported(AxesGroup := AxesGroup);
+  END_IF
+
+END_METHOD
+
 METHOD FB_init : BOOL
 VAR_INPUT
   /// if TRUE, the retain variables are initialized (warm start / cold start)

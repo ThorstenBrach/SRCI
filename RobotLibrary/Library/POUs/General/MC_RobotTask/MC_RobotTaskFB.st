@@ -1,4 +1,6 @@
 /// Handles multiple mechanisms required for operation of the interface.
+/// For maximal performance, this FB must be called after the function FB's, 
+/// so that the data can be written to the fieldbus in the same cycle as the start of FB occours 
 FUNCTION_BLOCK MC_RobotTaskFB EXTENDS RobotLibraryLogFB
 // ------------------------------------------------------------------------- 
 //  SRCI Robot Library                                                
@@ -414,8 +416,19 @@ VAR_IN_OUT
   AxesGroup : AxesGroup;
 END_VAR
 
-  Telegram.PlcToRob.Cyclic.Tool  := 0; {warning 'ToDo'} 
-  Telegram.PlcToRob.Cyclic.Frame := 0; {warning 'ToDo'}
+  IF (AxesGroup.Cyclic.PlcToRob.ToolNo = -1 )
+  THEN
+    Telegram.PlcToRob.Cyclic.ToolNo  := 16#FF;
+  ELSE
+    Telegram.PlcToRob.Cyclic.ToolNo  := INT_TO_BYTE(AxesGroup.Cyclic.PlcToRob.ToolNo); 
+  END_IF
+  
+  IF (AxesGroup.Cyclic.PlcToRob.FrameNo = -1 )
+  THEN
+    Telegram.PlcToRob.Cyclic.FrameNo  := 16#FF;
+  ELSE
+    Telegram.PlcToRob.Cyclic.FrameNo  := INT_TO_BYTE(AxesGroup.Cyclic.PlcToRob.FrameNo); 
+  END_IF
 
 END_METHOD
 
@@ -585,8 +598,8 @@ END_VAR
                                   Para1       := DINT_TO_STRING(_fragIdx),
                                   Para2       := UINT_TO_STRING            (Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadLength),
                                   Para3       := UINT_TO_STRING            (Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.CmdID),
-                                  Para4       := CmdTypeToString           (Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.CmdType),
-                                  Para5       := ByteToFragmentActionString(Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.FragmentAction)); 
+                                  Para4       := CMD_TYPE_TO_STRING        (Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.CmdType),
+                                  Para5       := FRAGMENT_ACTION_TO_STRING (Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.FragmentAction)); 
         END_IF
       END_FOR
     END_IF
@@ -911,8 +924,8 @@ VAR_IN_OUT
   AxesGroup : AxesGroup;
 END_VAR
 
-  SendData.AddByte(Telegram.PlcToRob.Cyclic.Tool);  
-  SendData.AddByte(Telegram.PlcToRob.Cyclic.Frame);
+  SendData.AddByte(Telegram.PlcToRob.Cyclic.ToolNo);  
+  SendData.AddByte(Telegram.PlcToRob.Cyclic.FrameNo);
 
 END_METHOD
 
@@ -1303,6 +1316,9 @@ END_VAR
   // Create rising and falling edges for GroupReset
   AxesGroup.InternalData.GroupReset_R(CLK := AxesGroup.InternalData.GroupReset);
   AxesGroup.InternalData.GroupReset_F(CLK := AxesGroup.InternalData.GroupReset);
+  
+  // Copy supported Functions 
+  AxesGroup.InternalData.RCSupportedFunctions := ReadRobotData.OutCmd.RCSupportedFunctions;
 
 END_METHOD
 
@@ -1582,8 +1598,8 @@ END_VAR
                             Severity    := Severity.INFO,
                             MessageCode := 0,
                             MessageText := 'SRCI Interface control changed from {1} to {2}',
-                            Para1       := TelegramControlToString(_lastTelegramControl),
-                            Para2       := TelegramControlToString(GetHalfeByteLo(Telegram.PlcToRob.Header.AxesGroupID_Control)));
+                            Para1       := TELEGRAM_CONTROL_TO_STRING(_lastTelegramControl),
+                            Para2       := TELEGRAM_CONTROL_TO_STRING(GetHalfeByteLo(Telegram.PlcToRob.Header.AxesGroupID_Control)));
   
     _lastTelegramControl := GetHalfeByteLo(Telegram.PlcToRob.Header.AxesGroupID_Control);
   END_IF
@@ -1599,8 +1615,8 @@ END_VAR
                             Severity    := Severity.INFO,
                             MessageCode := 0,
                             MessageText := 'SRCI Interface state changed from {1} to {2}',
-                            Para1       := TelegramStateToString(_lastTelegramState),
-                            Para2       := TelegramStateToString(Telegram.RobToPlc.Header.TelegramState));
+                            Para1       := TELEGRAM_STATE_TO_STRING(_lastTelegramState),
+                            Para2       := TELEGRAM_STATE_TO_STRING(Telegram.RobToPlc.Header.TelegramState));
   
     _lastTelegramState := Telegram.RobToPlc.Header.TelegramState;
   END_IF
@@ -2392,10 +2408,10 @@ END_VAR
                                     MessageCode := 0,
                                     MessageText := 'RecvData: received Fragment [{1}] with PayloadLength = {2}, CmdID <{3}> , CmdState: {4}, Fragment-Action Bits: {5}',
                                     Para1       :=  DINT_TO_STRING(0), {warning 'Add seqIdx'}
-                                    Para2       :=  UINT_TO_STRING            (Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadLength),
-                                    Para3       :=  DINT_TO_STRING            (Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Header.CmdID),
-                                    Para4       :=  CmdMessageStateToString   (Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.State),
-                                    Para5       :=  ByteToFragmentActionString(Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Header.FragmentAction));
+                                    Para2       :=  UINT_TO_STRING              (Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadLength),
+                                    Para3       :=  DINT_TO_STRING              (Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Header.CmdID),
+                                    Para4       :=  CMD_MESSAGE_STATE_TO_STRING (Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.State),
+                                    Para5       :=    FRAGMENT_ACTION_TO_STRING (Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Header.FragmentAction));
           END_IF
         END_FOR    
       END_IF
@@ -2483,10 +2499,10 @@ END_VAR
                                 MessageCode := 0,
                                 MessageText := 'RecvData: received Fragment [{1}] with PayloadLength = {2}, CmdID <{3}> , CmdState: {4}, Fragment-Action Bits: {5}',
                                 Para1       :=  DINT_TO_STRING(0), {warning 'Add seqIdx'}
-                                Para2       :=  UINT_TO_STRING            (Telegram.RobToPlc.Sequence[0].Fragment[0].Header.PayloadLength),
-                                Para3       :=  DINT_TO_STRING            (Telegram.RobToPlc.Sequence[0].Fragment[0].Header.CmdID),
-                                Para4       :=  CmdMessageStateToString   (Telegram.RobToPlc.Sequence[0].Fragment[0].Command.Header.State),
-                                Para5       :=  ByteToFragmentActionString(Telegram.RobToPlc.Sequence[0].Fragment[0].Header.FragmentAction));
+                                Para2       :=  UINT_TO_STRING              (Telegram.RobToPlc.Sequence[0].Fragment[0].Header.PayloadLength),
+                                Para3       :=  DINT_TO_STRING              (Telegram.RobToPlc.Sequence[0].Fragment[0].Header.CmdID),
+                                Para4       :=  CMD_MESSAGE_STATE_TO_STRING (Telegram.RobToPlc.Sequence[0].Fragment[0].Command.Header.State),
+                                Para5       :=    FRAGMENT_ACTION_TO_STRING (Telegram.RobToPlc.Sequence[0].Fragment[0].Header.FragmentAction));
                                 //Para6       :=  BYTE_TO_STRING(Telegram.RobToPlc.Header.LifeSign)
       END_IF    
     END_IF

@@ -25,7 +25,7 @@ STRUCT
   /// Byte 00 - Bit 0  
   Reserved                   : BOOL;
   /// Byte 00 - Bit 1 
-  ReadRobotData              : BOOL;
+  ReadRobotData              : BOOL := TRUE; // must be true because it is part of the interface initialization
   /// Byte 00 - Bit 2  
   EnableRobot                : BOOL;
   /// Byte 00 - Bit 3  
@@ -35,14 +35,14 @@ STRUCT
   /// Byte 00 - Bit 5 
   ReadActualPositionCyclic   : BOOL;
   /// Byte 00 - Bit 6  
-  ExchangeConfiguration      : BOOL;
+  ExchangeConfiguration      : BOOL := TRUE; // must be true because it is part of the interface initialization
   /// Byte 00 - Bit 7  
   SetSequence                : BOOL;
   
   /// Byte 01 - Bit 0  
   ChangeSpeedOverride        : BOOL;
   /// Byte 01 - Bit 1  
-  ReadMessages               : BOOL;
+  ReadMessages               : BOOL := TRUE; // must be true because it is part of the interface initialization
   /// Byte 01 - Bit 2  
   ReadRobotReferenceDynamics : BOOL;
   /// Byte 01 - Bit 3  
