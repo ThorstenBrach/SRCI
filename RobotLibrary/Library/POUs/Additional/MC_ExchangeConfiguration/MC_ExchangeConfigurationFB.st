@@ -86,7 +86,7 @@ END_VAR
     // inc parameter sequence
    _command.ParSeq := _command.ParSeq + 1;
     // update command data  
-    CommandData := CreateCommandPayload(); // ( Access via reference to rCommandFB in ACR )
+    CommandData := CreateCommandPayload(AxesGroup := AxesGroup); // ( Access via reference to rCommandFB in ACR )
     // notify active command register 
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
     // Reset parameter accepted flag
@@ -96,6 +96,10 @@ END_VAR
 END_METHOD
 
 METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
 // Table 6-86: Sent CMD payload (PLC to RC) of "ExchangeConfiguration"
 // --------------------------
 // Header
@@ -149,7 +153,7 @@ METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
   // copy command data to header
   _cmdHeader := _command;
   // call base implementation to copy header to payload buffer
-  CreateCommandPayload := SUPER^.CreateCommandPayload();
+  CreateCommandPayload := SUPER^.CreateCommandPayload(AxesGroup := AxesGroup);
   
   // add command.LogLevel
   CreateCommandPayload.AddUsint(_command.LogLevel);
@@ -173,6 +177,112 @@ METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
   CreateCommandPayload.AddDataEnableSync(_command.DataEnableSync);
   // add command.Reserve2
   CreateCommandPayload.AddByte(_command.Reserve2);
+  
+  // Create logging
+  CreateCommandPayloadLog(AxesGroup := AxesGroup);
+
+END_METHOD
+
+METHOD INTERNAL CreateCommandPayloadLog
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'CreateCommandPayload with the following parameter(s) :');
+    
+  // Create log entry for LogLevel
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.LogLevel = {1}',
+                          Para1       :=  LOG_LEVEL_TO_STRING(_command.LogLevel));
+  
+  // Create log entry for CtrlByte
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.CtrlByte = {1}',
+                          Para1       :=  BYTE_TO_STRING(_command.CtrlByte));
+  
+  // Create log entry for DelayTime
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.DelayTime = {1}',
+                          Para1       :=  UINT_TO_STRING(_command.DelayTime));
+  
+  // Create log entry for WaitForNrOfCmd
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WaitForNrOfCmd = {1}',
+                          Para1       :=  UINT_TO_STRING(_command.WaitForNrOfCmd));
+  
+  // Create log entry for LifeSignTimeOut
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.LifeSignTimeOut = {1}',
+                          Para1       :=  UINT_TO_STRING(_command.LifeSignTimeOut));
+  
+  // Create log entry for SyncDelay
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.SyncDelay = {1}',
+                          Para1       :=  UINT_TO_STRING(_command.SyncDelay));
+  
+  // Create log entry for SyncReaction
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.SyncReaction = {1}',
+                          Para1       :=  SYNC_REACTION_TO_STRING(_command.SyncReaction));
+  
+  // Create log entry for DataInSync
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.DataInSync = {1}',
+                          Para1       :=  DATA_IN_SYNC_TO_STRING(_command.DataInSync));
+  
+  // Create log entry for Reserve1
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.Reserve1 = {1}',
+                          Para1       :=  BYTE_TO_STRING(_command.Reserve1));
+  
+  // Create log entry for DataEnableSync
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.DataEnableSync = {1}',
+                          Para1       :=  DATA_ENABLE_SYNC_TO_STRING(_command.DataEnableSync));
+  
+  // Create log entry for Reserve2
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.Reserve2 = {1}',
+                          Para1       :=  BYTE_TO_STRING(_command.Reserve2));
 
 END_METHOD
 
@@ -221,7 +331,7 @@ END_VAR
              // init parameter sequence
             _command.ParSeq := 1;
              // create command data
-             CommandData := CreateCommandPayload();
+             CommandData := CreateCommandPayload(AxesGroup := AxesGroup);
              // Add command to active command register
             _uniqueID := AxesGroup.Acyclic.ActiveCommandRegister.AddCmd( pCommandFB := ADR(THIS^ ));     
              // set timeout
@@ -313,6 +423,12 @@ END_VAR
 END_METHOD
 
 METHOD INTERNAL ParseResponsePayload : DINT
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
 // Table 6-87: Received CMD payload (RC to PLC) of "ExchangeConfiguration"
 // --------------------------
 // Header
@@ -348,16 +464,10 @@ METHOD INTERNAL ParseResponsePayload : DINT
 // Byte 25 :            - RC WorkingHours HW LB
 // Byte 26 :            - RC WorkingHours LW HB
 // Byte 27 :            - RC WorkingHours LW LB
-
-
 // --------------------------
-VAR_INPUT
-  /// Response data
-  ResponseData : RobotLibraryRecvDataFB;
-END_VAR
 
   // call base implementation to parse the header from payload buffer
-  ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData);
+  ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
   
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;

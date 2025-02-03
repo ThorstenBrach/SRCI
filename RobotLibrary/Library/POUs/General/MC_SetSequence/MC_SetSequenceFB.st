@@ -84,7 +84,7 @@ END_VAR
     // inc parameter sequence
    _command.ParSeq := _command.ParSeq + 1;
     // update command data  
-    CommandData := CreateCommandPayload(); // ( Access via reference to rCommandFB in ACR )
+    CommandData := CreateCommandPayload(AxesGroup := AxesGroup); // ( Access via reference to rCommandFB in ACR )
     // notify active command register 
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
   END_IF
@@ -92,6 +92,10 @@ END_VAR
 END_METHOD
 
 METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
 // Table 6-92: Sent CMD payload (PLC to RC) of "SetSequence"
 // --------------------------
 // Header
@@ -103,101 +107,7 @@ METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
 // --------------------------
 // Datablock
 // --------------------------
- // Byte 04 : UINT  VelocityRate;
- // Byte 05 :       VelocityRate;
- // Byte 06 : UINT  AccelerationRate;
- // Byte 07 :       AccelerationRate;
- // Byte 08 : UINT  DecelerationRate;
- // Byte 09 :       DecelerationRate;
- // Byte 10 : UINT  JerkRate;
- // Byte 11 :       JerkRate;
- // Byte 12 : USINT ToolNo;
- // Byte 13 : USINT FrameNo;
- // Byte 14 : REAL  Position.X;
- // Byte 15 :       Position.X;
- // Byte 16 :       Position.X;
- // Byte 17 :       Position.X;
- // Byte 18 : REAL  Position.Y;
- // Byte 19 :       Position.Y;
- // Byte 20 :       Position.Y;
- // Byte 21 :       Position.Y;
- // Byte 22 : REAL  Position.Z;
- // Byte 23 :       Position.Z;
- // Byte 24 :       Position.Z;
- // Byte 25 :       Position.Z;
- // Byte 26 : REAL  Position.RX;
- // Byte 27 :       Position.RX;
- // Byte 28 :       Position.RX;
- // Byte 29 :       Position.RX;
- // Byte 30 : REAL  Position.RY;
- // Byte 31 :       Position.RY;
- // Byte 32 :       Position.RY;
- // Byte 33 :       Position.RY;
- // Byte 34 : REAL  Position.RZ;
- // Byte 35 :       Position.RZ;
- // Byte 36 :       Position.RZ;
- // Byte 37 :       Position.RZ;
- // Byte 38 : BYTE  - - - - - W E S;
- // Byte 39 : BYTE  Reserved;
- // Byte 40 : BYTE  Position.TurnNumber[0];
- // Byte 41 : BYTE  Position.TurnNumber[1];
- // Byte 42 : BYTE  Position.TurnNumber[2];
- // Byte 43 : BYTE  Position.TurnNumber[3];
- // Byte 44 : REAL  Position.E1;
- // Byte 45 :       Position.E1;
- // Byte 46 :       Position.E1;
- // Byte 47 :       Position.E1;
- // Byte 48 : USINT OriMode;
- // Byte 49 : USINT DetectionMode;
- // Byte 50 : BOOL  Manipulation;
- // Byte 51 : BYTE  Reserved;
- // Byte 52 : REAL  DetectionVector[0];
- // Byte 53 :       DetectionVector[0];
- // Byte 54 :       DetectionVector[0];
- // Byte 55 :       DetectionVector[0];
- // Byte 56 : REAL  DetectionVector[1];
- // Byte 57 :       DetectionVector[1];
- // Byte 58 :       DetectionVector[1];
- // Byte 59 :       DetectionVector[1];
- // Byte 60 : REAL  DetectionVector[2];
- // Byte 61 :       DetectionVector[2];
- // Byte 62 :       DetectionVector[2];
- // Byte 63 :       DetectionVector[2];
- // Byte 64 : REAL  DetectionVector[3];
- // Byte 65 :       DetectionVector[3];
- // Byte 66 :       DetectionVector[3];
- // Byte 67 :       DetectionVector[3];
- // Byte 68 : REAL  DetectionVector[4];
- // Byte 69 :       DetectionVector[4];
- // Byte 70 :       DetectionVector[4];
- // Byte 71 :       DetectionVector[4];
- // Byte 72 : REAL  DetectionVector[5];
- // Byte 73 :       DetectionVector[5];
- // Byte 74 :       DetectionVector[5];
- // Byte 75 :       DetectionVector[5];
- // Byte 76 : BYTE  ConfigMode[0];
- // Byte 77 : BYTE  ConfigMode[1];
- // Byte 78 : USINT TurnMode;
- // Byte 79 : REAL  Position.E2;
- // Byte 80 :       Position.E2;
- // Byte 81 :       Position.E2;
- // Byte 82 :       Position.E2;
- // Byte 83 : REAL  Position.E3;
- // Byte 84 :       Position.E3;
- // Byte 85 :       Position.E3;
- // Byte 86 :       Position.E3;
- // Byte 87 : REAL  Position.E4;
- // Byte 88 :       Position.E4;
- // Byte 89 :       Position.E4;
- // Byte 90 :       Position.E4;
- // Byte 91 : REAL  Position.E5;
- // Byte 92 :       Position.E5;
- // Byte 93 :       Position.E5;
- // Byte 94 :       Position.E5;
- // Byte 95 : REAL  Position.E6;
- // Byte 96 :       Position.E6;
- // Byte 97 :       Position.E6;
- // Byte 98 :       Position.E6;
+// Byte 04 : UINT  TargetSequence;
 
   // set command parameter 
   _command.CmdTyp         :=  CmdType.SetSequence;
@@ -209,10 +119,36 @@ METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
   // copy command data to header
   _cmdHeader := _command;
   // call base implementation to copy header to payload buffer
-  CreateCommandPayload := SUPER^.CreateCommandPayload();
+  CreateCommandPayload := SUPER^.CreateCommandPayload(AxesGroup := AxesGroup);
   
   // add command.TargetSequence
   CreateCommandPayload.AddUsint(_command.TargetSequence);
+  
+  // Create logging
+  CreateCommandPayloadLog(AxesGroup := AxesGroup);
+
+END_METHOD
+
+METHOD INTERNAL CreateCommandPayloadLog 
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'CreateCommandPayload with the following parameter(s) :');
+  
+  // Create log entry for TargetSequence
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.TargetSequence = {1}',
+                          Para1       :=  USINT_TO_STRING(_command.TargetSequence));
 
 END_METHOD
 
@@ -256,7 +192,7 @@ END_VAR
              // init parameter sequence
             _command.ParSeq := 1;
              // create command data
-             CommandData := CreateCommandPayload();
+             CommandData := CreateCommandPayload(AxesGroup := AxesGroup);
              // Add command to active command register
             _uniqueID := AxesGroup.Acyclic.ActiveCommandRegister.AddCmd( pCommandFB := ADR(THIS^ ));     
              // set timeout
@@ -313,6 +249,12 @@ END_VAR
 END_METHOD
 
 METHOD INTERNAL ParseResponsePayload : DINT
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
 // Table 6-93: Received CMD payload (RC to PLC) of "SetSequence"
 // --------------------------
 // Header
@@ -321,13 +263,9 @@ METHOD INTERNAL ParseResponsePayload : DINT
 // Byte 01 : SINT    - AlarmMessageSeverity    
 // Byte 02 : UINT    - AlarmMessageCode HB
 // Byte 03 :         - AlarmMessageCode LB
-VAR_INPUT
-  /// Response data
-  ResponseData : RobotLibraryRecvDataFB;
-END_VAR
 
   // call base implementation to parse the header from payload buffer
-  ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData);
+  ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
   
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;

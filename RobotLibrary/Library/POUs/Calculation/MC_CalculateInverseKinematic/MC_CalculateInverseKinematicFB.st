@@ -82,7 +82,7 @@ END_VAR
     // inc parameter sequence
    _command.ParSeq := _command.ParSeq + 1;
     // update command data  
-    CommandData := CreateCommandPayload(); // ( Access via reference to rCommandFB in ACR )
+    CommandData := CreateCommandPayload(AxesGroup := AxesGroup); // ( Access via reference to rCommandFB in ACR )
     // notify active command register 
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
   END_IF
@@ -90,6 +90,10 @@ END_VAR
 END_METHOD
 
 METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
 // Table 6-638: Sent CMD payload (PLC to RC) of "CalculateInverseKinematic"
 // --------------------------
 // Header
@@ -171,7 +175,7 @@ METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
   // copy command data to header
   _cmdHeader := _command;
   // call base implementation to copy header to payload buffer
-  CreateCommandPayload := SUPER^.CreateCommandPayload();
+  CreateCommandPayload := SUPER^.CreateCommandPayload(AxesGroup := AxesGroup);
   
   // add command.TargetFrameNo
   CreateCommandPayload.AddUsint(_command.ToolNo);
@@ -205,6 +209,179 @@ METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
   CreateCommandPayload.AddReal(_command.CartesianPosition.E5);
   // add command.CartesianPosition.E6
   CreateCommandPayload.AddReal(_command.CartesianPosition.E6);
+  
+  // Create logging
+  CreateCommandPayloadLog(AxesGroup := AxesGroup);
+
+END_METHOD
+
+METHOD INTERNAL CreateCommandPayloadLog 
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'CreateCommandPayload with the following parameter(s) :');
+  
+  // Create log entry for ToolNo
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ToolNo = {1}',
+                          Para1       :=  USINT_TO_STRING(_command.ToolNo));
+  
+  // Create log entry for FrameNo
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.FrameNo = {1}',
+                          Para1       :=  USINT_TO_STRING(_command.FrameNo));
+  
+  // Create log entry for CartesianPosition.X
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.CartesianPosition.X = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.CartesianPosition.X));
+  
+  // Create log entry for CartesianPosition.Y
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.CartesianPosition.Y = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.CartesianPosition.Y));
+  
+  // Create log entry for CartesianPosition.Z
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.CartesianPosition.Z = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.CartesianPosition.Z));
+  
+  // Create log entry for CartesianPosition.Rx
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.CartesianPosition.Rx = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.CartesianPosition.Rx));
+  
+  // Create log entry for CartesianPosition.Ry
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.CartesianPosition.Ry = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.CartesianPosition.Ry));
+  
+  // Create log entry for CartesianPosition.Rz
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.CartesianPosition.Rz = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.CartesianPosition.Rz));
+  
+  // Create log entry for CartesianPosition.Config
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.CartesianPosition.Config = {1}',
+                          Para1       :=  ARM_CONFIG_TO_STRING(_command.CartesianPosition.Config));
+  
+  // Create log entry for CartesianPosition.TurnNumber[0]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.CartesianPosition.TurnNumber[0] = {1}',
+                          Para1       :=  BYTE_TO_STRING(CombineHalfSints(HalfSintHi := _command.CartesianPosition.TurnNumber.J2Turns, 
+                                                                          HalfSintLo := _command.CartesianPosition.TurnNumber.J1Turns)));
+  
+  // Create log entry for CartesianPosition.TurnNumber[1]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.CartesianPosition.TurnNumber[1] = {1}',
+                          Para1       :=  BYTE_TO_STRING(CombineHalfSints(HalfSintHi := _command.CartesianPosition.TurnNumber.J4Turns, 
+                                                                          HalfSintLo := _command.CartesianPosition.TurnNumber.J3Turns)));
+  
+  // Create log entry for CartesianPosition.TurnNumber[2]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.CartesianPosition.TurnNumber[2] = {1}',
+                          Para1       :=  BYTE_TO_STRING(CombineHalfSints(HalfSintHi := _command.CartesianPosition.TurnNumber.J6Turns, 
+                                                                          HalfSintLo := _command.CartesianPosition.TurnNumber.J5Turns)));
+  
+  // Create log entry for CartesianPosition.TurnNumber[3]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.CartesianPosition.TurnNumber[3] = {1}',
+                          Para1       :=  SINT_TO_STRING(_command.CartesianPosition.TurnNumber.E1Turns));
+  
+  // Create log entry for CartesianPosition.E1
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.CartesianPosition.E1 = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.CartesianPosition.E1));
+  
+  // Create log entry for CartesianPosition.E2
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.CartesianPosition.E2 = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.CartesianPosition.E2));
+  
+  // Create log entry for CartesianPosition.E3
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.CartesianPosition.E3 = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.CartesianPosition.E3));
+  
+  // Create log entry for CartesianPosition.E4
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.CartesianPosition.E4 = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.CartesianPosition.E4));
+  
+  // Create log entry for CartesianPosition.E5
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.CartesianPosition.E5 = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.CartesianPosition.E5));
+  
+  // Create log entry for CartesianPosition.E6
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.CartesianPosition.E6 = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.CartesianPosition.E6));
 
 END_METHOD
 
@@ -248,7 +425,7 @@ END_VAR
              // init parameter sequence
             _command.ParSeq := 1;
              // create command data
-             CommandData := CreateCommandPayload();
+             CommandData := CreateCommandPayload(AxesGroup := AxesGroup);
              // Add command to active command register
             _uniqueID := AxesGroup.Acyclic.ActiveCommandRegister.AddCmd( pCommandFB := ADR(THIS^ ));     
              // set timeout
@@ -307,6 +484,12 @@ END_VAR
 END_METHOD
 
 METHOD INTERNAL ParseResponsePayload : DINT
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
 // Table 6-639: Received CMD payload (RC to PLC) of "CalculateInverseKinematic"
 // --------------------------
 // Header
@@ -367,13 +550,9 @@ METHOD INTERNAL ParseResponsePayload : DINT
 // Byte 50 :       - JointPosition.E6  LW HB
 // Byte 51 :       - JointPosition.E6  LW LB
 // --------------------------
-VAR_INPUT
-  /// Response data
-  ResponseData : RobotLibraryRecvDataFB;
-END_VAR
 
   // call base implementation to parse the header from payload buffer
-  ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData);
+  ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
   
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;

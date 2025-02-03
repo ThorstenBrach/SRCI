@@ -25,13 +25,13 @@ STRUCT
   /// Index of source frame
   /// • 0: WCS (default)
   /// • 1..254: User frames
-  FrameNo       : USINT;
+  FrameNo           : USINT;
   /// Index of target frame
   /// • 0: WCS (default)
   /// • 1..254: User frames
-  TargetFrameNo : USINT;
+  TargetFrameNo     : USINT;
   /// Robot cartesian position.
-  CartesianPosition      : RobotCartesianPosition;
+  CartesianPosition : RobotCartesianPosition;
 END_STRUCT
 END_TYPE
 

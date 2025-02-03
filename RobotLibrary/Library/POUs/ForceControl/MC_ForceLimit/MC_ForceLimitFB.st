@@ -97,7 +97,7 @@ END_VAR
     // inc parameter sequence
    _command.ParSeq := _command.ParSeq + 1;
     // update command data  
-    CommandData := CreateCommandPayload(); // ( Access via reference to rCommandFB in ACR )
+    CommandData := CreateCommandPayload(AxesGroup := AxesGroup); // ( Access via reference to rCommandFB in ACR )
     // notify active command register 
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
     // Reset parameter accepted flag
@@ -107,6 +107,10 @@ END_VAR
 END_METHOD
 
 METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
 // Table 6-727: Sent CMD payload (PLC to RC) of "ForceLimit"
 // --------------------------
 // Header
@@ -229,7 +233,7 @@ METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
   // copy command data to header
   _cmdHeader := _command;
   // call base implementation to copy header to payload buffer
-  CreateCommandPayload := SUPER^.CreateCommandPayload();
+  CreateCommandPayload := SUPER^.CreateCommandPayload(AxesGroup := AxesGroup);
   
   
   // add command.EmitterID[0]
@@ -293,6 +297,256 @@ METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
   CreateCommandPayload.AddReal(_command.ForceLimit[4]);
   // add command.ForceLimit[5]
   CreateCommandPayload.AddReal(_command.ForceLimit[5]);
+  
+  // Create logging
+  CreateCommandPayloadLog(AxesGroup := AxesGroup);
+
+END_METHOD
+
+METHOD INTERNAL CreateCommandPayloadLog 
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+VAR 
+  /// internal index for loops
+ _idx : DINT;
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'CreateCommandPayload with the following parameter(s) :');
+  
+  // Create log entry for EmitterID[0]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.EmitterID[0] = {1}',
+                          Para1       :=  SINT_TO_STRING(_command.EmitterID[0]));
+  
+  // Create log entry for EmitterID[x]
+  FOR _idx := 0 TO 3
+  DO
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.EmitterID[{2}] = {1}',
+                            Para1       :=  SINT_TO_STRING(_command.EmitterID[_idx]),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  END_FOR
+  
+  // Create log entry for ListenerID
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ListenerID = {1}',
+                          Para1       :=  SINT_TO_STRING(_command.ListenerID));
+                          
+  // Create log entry for Reserve
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.Reserve = {1}',
+                          Para1       :=  BYTE_TO_STRING(_command.Reserve));
+  
+  // Create log entry for ToolNo
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ToolNo = {1}',
+                          Para1       :=  USINT_TO_STRING(_command.ToolNo));
+                          
+  // Create log entry for FrameNo
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.FrameNo = {1}',
+                          Para1       :=  USINT_TO_STRING(_command.FrameNo));
+                          
+  // Create log entry for ConnectionMode
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ConnectionMode = {1}',
+                          Para1       :=  SENSOR_CONNECTION_MODE_TO_STRING(_command.ConnectionMode));
+  
+  // Create log entry for FixedSensor
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.FixedSensor = {1}',
+                          Para1       :=  BYTE_TO_STRING(_command.FixedSensor));
+  
+  // Create log entry for SensorFrame[0]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.SensorFrame[0] = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.SensorFrame[0]));
+  
+  // Create log entry for SensorFrame[1]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.SensorFrame[1] = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.SensorFrame[1]));
+  
+  // Create log entry for SensorFrame[2]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.SensorFrame[2] = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.SensorFrame[2]));
+  
+  // Create log entry for SensorFrame[3]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.SensorFrame[3] = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.SensorFrame[3]));
+                                                  
+  // Create log entry for SensorFrame[4]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.SensorFrame[4] = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.SensorFrame[4]));
+                                                  
+  // Create log entry for SensorFrame[5]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.SensorFrame[5] = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.SensorFrame[5]));
+  
+  // Create log entry for CalibrationData
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.CalibrationData = {1}',
+                          Para1       :=  USINT_TO_STRING(_command.CalibrationData));
+                          
+  // Create log entry for ReferenceType
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ReferenceType = {1}',
+                          Para1       :=  REFERENCE_TYPE_TO_STRING(_command.ReferenceType));                        
+                                                  
+  // Create log entry for SensorValue[0]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.SensorValue[0] = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.SensorValue[0]));
+  
+  // Create log entry for SensorValue[1]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.SensorValue[1] = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.SensorValue[1]));
+  
+  // Create log entry for SensorValue[2]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.SensorValue[2] = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.SensorValue[2]));
+  
+  // Create log entry for SensorValue[3]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.SensorValue[3] = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.SensorValue[3]));
+                                                  
+  // Create log entry for SensorValue[4]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.SensorValue[4] = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.SensorValue[4]));
+                                                  
+  // Create log entry for SensorValue[5]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.SensorValue[5] = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.SensorValue[5]));
+                                                  
+  // Create log entry for ForceLimit[0]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ForceLimit[0] = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.ForceLimit[0]));
+  
+  // Create log entry for ForceLimit[1]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ForceLimit[1] = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.ForceLimit[1]));
+  
+  // Create log entry for ForceLimit[2]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ForceLimit[2] = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.ForceLimit[2]));
+  
+  // Create log entry for ForceLimit[3]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ForceLimit[3] = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.ForceLimit[3]));
+                                                  
+  // Create log entry for ForceLimit[4]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ForceLimit[4] = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.ForceLimit[4]));
+                                                  
+  // Create log entry for ForceLimit[5]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ForceLimit[5] = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.ForceLimit[5]));
 
 END_METHOD
 
@@ -343,7 +597,7 @@ END_VAR
              // init parameter sequence
             _command.ParSeq := 1;
              // create command data
-             CommandData := CreateCommandPayload();
+             CommandData := CreateCommandPayload(AxesGroup := AxesGroup);
              // Add command to active command register
             _uniqueID := AxesGroup.Acyclic.ActiveCommandRegister.AddCmd( pCommandFB := ADR(THIS^ ));     
              // set timeout
@@ -419,6 +673,12 @@ END_VAR
 END_METHOD
 
 METHOD INTERNAL ParseResponsePayload : DINT
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
 // Table 6-728: Received CMD payload (RC to PLC) of "ForceLimit"
 // --------------------------
 // Header
@@ -436,13 +696,9 @@ METHOD INTERNAL ParseResponsePayload : DINT
 // Byte 07 :            - OriginID LW LB 
 // Byte 08 : BYTE       - ForceStatus 
 // --------------------------
-VAR_INPUT
-  /// Response data
-  ResponseData : RobotLibraryRecvDataFB;
-END_VAR
 
   // call base implementation to parse the header from payload buffer
-  ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData);
+  ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
   
   // copy parsed header to response
   _response.ParSeq                := _rspHeader.ParSeq;

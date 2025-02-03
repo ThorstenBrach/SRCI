@@ -83,7 +83,7 @@ END_VAR
     // inc parameter sequence
    _command.ParSeq := _command.ParSeq + 1;
     // update command data  
-    CommandData := CreateCommandPayload(); // ( Access via reference to rCommandFB in ACR )
+    CommandData := CreateCommandPayload(AxesGroup := AxesGroup); // ( Access via reference to rCommandFB in ACR )
     // notify active command register 
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
   END_IF
@@ -91,6 +91,10 @@ END_VAR
 END_METHOD
 
 METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
 // Table 6-185: Sent CMD payload (PLC to RC) of "WriteRobotSWLimits"
 // --------------------------
 // Header
@@ -195,7 +199,7 @@ METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
   // copy command data to header
   _cmdHeader := _command;
   // call base implementation to copy header to payload buffer
-  CreateCommandPayload := SUPER^.CreateCommandPayload();
+  CreateCommandPayload := SUPER^.CreateCommandPayload(AxesGroup := AxesGroup);
   
   // add command.LimitValues.Timestamp.IEC_DATE
   CreateCommandPayload.AddUint(_command.LimitValues.Timestamp.IEC_DATE);
@@ -249,6 +253,232 @@ METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
   CreateCommandPayload.AddReal(_command.LimitValues.E5UpperLimit);
   // add command.LimitValues.E6UpperLimit
   CreateCommandPayload.AddReal(_command.LimitValues.E6UpperLimit);
+  
+  // Create logging
+  CreateCommandPayloadLog(AxesGroup := AxesGroup);
+
+END_METHOD
+
+METHOD INTERNAL CreateCommandPayloadLog
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'CreateCommandPayload with the following parameter(s) :');
+    
+  // Create log entry for LimitValues.Timestamp.IEC_DATE
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.LimitValues.Timestamp.IEC_DATE = {1}',
+                          Para1       :=  IEC_DATE_TO_STRING(_command.LimitValues.Timestamp.IEC_DATE));
+  
+  // Create log entry for LimitValues.Timestamp.IEC_TIME
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.LimitValues.Timestamp.IEC_TIME = {1}',
+                          Para1       :=  IEC_TIME_TO_STRING(_command.LimitValues.Timestamp.IEC_TIME));
+  
+  // Create log entry for LimitValues.J1LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.LimitValues.J1LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.LimitValues.J1LowerLimit));
+  
+  // Create log entry for LimitValues.J2LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.LimitValues.J2LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.LimitValues.J2LowerLimit));
+                          
+  // Create log entry for LimitValues.J3LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.LimitValues.J3LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.LimitValues.J3LowerLimit));
+                          
+  // Create log entry for LimitValues.J4LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.LimitValues.J4LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.LimitValues.J4LowerLimit));
+  
+  // Create log entry for LimitValues.J5LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.LimitValues.J5LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.LimitValues.J5LowerLimit));
+  
+  // Create log entry for LimitValues.J6LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.LimitValues.J6LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.LimitValues.J6LowerLimit));
+  
+  // Create log entry for LimitValues.E1LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.LimitValues.E1LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.LimitValues.E1LowerLimit));
+  
+  // Create log entry for LimitValues.J1UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.LimitValues.J1UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.LimitValues.J1UpperLimit));
+  
+  // Create log entry for LimitValues.J2UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.LimitValues.J2UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.LimitValues.J2UpperLimit));
+  
+  // Create log entry for LimitValues.J3UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.LimitValues.J3UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.LimitValues.J3UpperLimit));
+  
+  // Create log entry for LimitValues.J4UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.LimitValues.J4UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.LimitValues.J4UpperLimit));
+  
+  // Create log entry for LimitValues.J5UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.LimitValues.J5UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.LimitValues.J5UpperLimit));
+  
+  // Create log entry for LimitValues.J6UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.LimitValues.J6UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.LimitValues.J6UpperLimit));
+  
+  // Create log entry for LimitValues.E1UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.LimitValues.E1UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.LimitValues.E1UpperLimit));
+  
+  // Create log entry for LimitValues.E2LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.LimitValues.E2LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.LimitValues.E2LowerLimit));
+  
+  // Create log entry for LimitValues.E3LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.LimitValues.E3LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.LimitValues.E3LowerLimit));
+  
+  // Create log entry for LimitValues.E4LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.LimitValues.E4LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.LimitValues.E4LowerLimit));
+  
+  // Create log entry for LimitValues.E5LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.LimitValues.E5LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.LimitValues.E5LowerLimit));
+  
+  // Create log entry for LimitValues.E6LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.LimitValues.E6LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.LimitValues.E6LowerLimit));
+  
+  // Create log entry for LimitValues.E2UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.LimitValues.E2UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.LimitValues.E2UpperLimit));
+  
+  // Create log entry for LimitValues.E3UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.LimitValues.E3UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.LimitValues.E3UpperLimit));                        
+                          
+  // Create log entry for LimitValues.E4UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.LimitValues.E4UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.LimitValues.E4UpperLimit));                                                
+                          
+  // Create log entry for LimitValues.E5UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.LimitValues.E5UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.LimitValues.E5UpperLimit));                                                                        
+                          
+  // Create log entry for LimitValues.E6UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.LimitValues.E6UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.LimitValues.E6UpperLimit));
 
 END_METHOD
 
@@ -292,7 +522,7 @@ END_VAR
              // init parameter sequence
             _command.ParSeq := 1;
              // create command data
-             CommandData := CreateCommandPayload();
+             CommandData := CreateCommandPayload(AxesGroup := AxesGroup);
              // Add command to active command register
             _uniqueID := AxesGroup.Acyclic.ActiveCommandRegister.AddCmd( pCommandFB := ADR(THIS^ ));     
              // set timeout
@@ -351,6 +581,12 @@ END_VAR
 END_METHOD
 
 METHOD INTERNAL ParseResponsePayload : DINT
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
 // Table 6-186: Received CMD payload (RC to PLC) of "WriteRobotSWLimits"
 // --------------------------
 // Header
@@ -363,13 +599,9 @@ METHOD INTERNAL ParseResponsePayload : DINT
 // Datablock
 // --------------------------
 // Byte 04 : BOOL       - RestartRequested
-VAR_INPUT
-  /// Response data
-  ResponseData : RobotLibraryRecvDataFB;
-END_VAR
 
   // call base implementation to parse the header from payload buffer
-  ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData);
+  ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
   
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;

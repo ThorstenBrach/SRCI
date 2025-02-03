@@ -80,7 +80,7 @@ STRUCT
   /// For more information see chapter 5.5.9.5
   Manipulation       : BOOL;
   /// Defines the usage of the config byte inside the position according to Table 6-238
-  ConfigMode         : ArmConfigParameter;
+  ConfigMode         : ARRAY[0..1] OF BYTE;
   /// Defines type of reference coordinate system of the offset position
   ReferenceType      : USINT;
   /// Defines the usage of the TurnNumber byte inside the position.

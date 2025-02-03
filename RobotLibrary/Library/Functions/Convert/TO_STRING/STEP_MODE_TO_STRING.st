@@ -28,9 +28,9 @@ END_VAR
   CASE Value 
   OF
     
-    StepMode.DEACTIVATE : STEP_MODE_TO_STRING := 'DEACTIVATE (0)';
-    StepMode.BLENDING   : STEP_MODE_TO_STRING := 'BLENDING (1)';
-    StepMode.EXACT_STOP : STEP_MODE_TO_STRING := 'EXACT_STOP (2)';
+    StepMode.DEACTIVATE : StrReplace('DEACTIVATE ({0})' ,'{0}' , USINT_TO_STRING(Value));
+    StepMode.BLENDING   : StrReplace('BLENDING ({0})'   ,'{0}' , USINT_TO_STRING(Value));
+    StepMode.EXACT_STOP : StrReplace('EXACT_STOP ({0})' ,'{0}' , USINT_TO_STRING(Value));
   
   END_CASE
 

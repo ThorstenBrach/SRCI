@@ -94,7 +94,7 @@ END_VAR
     // inc parameter sequence
    _command.ParSeq := _command.ParSeq + 1;
     // update command data  
-    CommandData := CreateCommandPayload(); // ( Access via reference to rCommandFB in ACR )
+    CommandData := CreateCommandPayload(AxesGroup := AxesGroup); // ( Access via reference to rCommandFB in ACR )
     // notify active command register 
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
   END_IF
@@ -102,6 +102,10 @@ END_VAR
 END_METHOD
 
 METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
 // Table 6-326: Sent CMD payload (PLC to RC) of "MoveCircularAbsolute"
 // --------------------------
 // Header
@@ -297,7 +301,7 @@ METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
   _command.Angle                     := _parCmd.Angle;
   _command.PathChoice                := _parCmd.PathChoice.0;
   _command.Manipulation              := _parCmd.Manipulation;
-  _command.ConfigMode                := _parCmd.ConfigMode;
+  _command.ConfigMode                :=  ArmConfigParameterToBytes(_parCmd.ConfigMode);
   _command.TurnMode                  := _parCmd.TurnMode;
   _command.TurnMode                  := _parCmd.TurnMode;
   _command.MoveTime                  := TIME_TO_UINT(_parCmd.MoveTime);
@@ -307,7 +311,7 @@ METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
   // copy command data to header
   _cmdHeader := _command;
   // call base implementation to copy header to payload buffer
-  CreateCommandPayload := SUPER^.CreateCommandPayload();
+  CreateCommandPayload := SUPER^.CreateCommandPayload(AxesGroup := AxesGroup);
   
   // add command.EmitterID[0]
   CreateCommandPayload.AddSint(_command.EmitterID[0]);
@@ -320,7 +324,7 @@ METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
   // add command.ListenerID
   CreateCommandPayload.AddSint(_command.ListenerID);
   // add command.Reserve
-  CreateCommandPayload.AddByte(_command.Reserve);
+  CreateCommandPayload.AddSint(_command.Reserve);
   // add command.VelocityRate
   CreateCommandPayload.AddUint(_command.VelocityRate);
   // add command.AccelerationRate
@@ -411,6 +415,518 @@ METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
   CreateCommandPayload.AddReal(_command.EndPoint.E5);
   // add command.EndPoint.E6
   CreateCommandPayload.AddReal(_command.EndPoint.E6);
+  
+  // Create logging
+  CreateCommandPayloadLog(AxesGroup := AxesGroup);
+
+END_METHOD
+
+METHOD INTERNAL CreateCommandPayloadLog
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+VAR 
+  /// internal index for loops
+ _idx : DINT;
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'CreateCommandPayload with the following parameter(s) :');
+    
+  // Create log entry for EmitterID[x]
+  FOR _idx := 0 TO 3
+  DO
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.EmitterID[{2}] = {1}',
+                            Para1       :=  SINT_TO_STRING(_command.EmitterID[_idx]),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  END_FOR
+  
+  // Create log entry for ListenerID
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ListenerID = {1}',
+                          Para1       :=  SINT_TO_STRING(_command.ListenerID));
+                          
+  // Create log entry for Reserve
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.Reserve = {1}',
+                          Para1       :=  SINT_TO_STRING(_command.Reserve));
+  
+  // Create log entry for VelocityRate
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.VelocityRate = {1}',
+                          Para1       :=  UINT_TO_STRING(_command.VelocityRate));
+  
+  // Create log entry for AccelerationRate
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.AccelerationRate = {1}',
+                          Para1       :=  UINT_TO_STRING(_command.AccelerationRate));
+                          
+  // Create log entry for DecelerationRate
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.DecelerationRate = {1}',
+                          Para1       :=  UINT_TO_STRING(_command.DecelerationRate));
+  
+  // Create log entry for JerkRate
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.JerkRate = {1}',
+                          Para1       :=  UINT_TO_STRING(_command.JerkRate));
+  
+  // Create log entry for ToolNo
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ToolNo = {1}',
+                          Para1       :=  USINT_TO_STRING(_command.ToolNo));
+  
+  // Create log entry for FrameNo
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.FrameNo = {1}',
+                          Para1       :=  USINT_TO_STRING(_command.FrameNo));
+  
+  // Create log entry for BlendingMode
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.BlendingMode = {1}',
+                          Para1       :=  BLENDING_MODE_TO_STRING(_command.BlendingMode));
+  
+  // Create log entry for OriMode
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.OriMode = {1}',
+                          Para1       :=  ORI_MODE_TO_STRING(_command.OriMode));
+  
+  // Create log entry for BlendingParameter[0]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.BlendingParameter[0] = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.BlendingParameter[0]));
+  
+  // Create log entry for BlendingParameter[1]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.BlendingParameter[1] = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.BlendingParameter[1]));
+  
+  // Create log entry for AuxPoint.X
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.AuxPoint.X = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.AuxPoint.X));
+  
+  // Create log entry for AuxPoint.Y
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.AuxPoint.Y = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.AuxPoint.Y));
+  
+  // Create log entry for AuxPoint.Z
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.AuxPoint.Z = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.AuxPoint.Z));
+  
+  // Create log entry for AuxPoint.Rx
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.AuxPoint.Rx = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.AuxPoint.Rx));
+  
+  // Create log entry for AuxPoint.Ry
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.AuxPoint.Ry = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.AuxPoint.Ry));
+  
+  // Create log entry for AuxPoint.Rz
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.AuxPoint.Rz = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.AuxPoint.Rz));
+  
+  // Create log entry for AuxPoint.Config
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.AuxPoint.Config = {1}',
+                          Para1       :=  ARM_CONFIG_TO_STRING(_command.AuxPoint.Config));
+  
+  // Create log entry for AuxPoint.Reserve
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.AuxPoint.Config = {1}',
+                          Para1       :=  SINT_TO_STRING(_command.Reserve));
+  
+  // Create log entry for AuxPoint.TurnNumber[0]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.AuxPoint.TurnNumber[0] = {1}',
+                          Para1       :=  BYTE_TO_STRING(CombineHalfSints(HalfSintHi := _command.AuxPoint.TurnNumber.J2Turns, 
+                                                                          HalfSintLo := _command.AuxPoint.TurnNumber.J1Turns)));
+  
+  // Create log entry for AuxPoint.TurnNumber[1]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.AuxPoint.TurnNumber[1] = {1}',
+                          Para1       :=  BYTE_TO_STRING(CombineHalfSints(HalfSintHi := _command.AuxPoint.TurnNumber.J4Turns, 
+                                                                          HalfSintLo := _command.AuxPoint.TurnNumber.J3Turns)));
+  
+  // Create log entry for AuxPoint.TurnNumber[2]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.AuxPoint.TurnNumber[2] = {1}',
+                          Para1       :=  BYTE_TO_STRING(CombineHalfSints(HalfSintHi := _command.AuxPoint.TurnNumber.J6Turns, 
+                                                                          HalfSintLo := _command.AuxPoint.TurnNumber.J5Turns)));
+  
+  // Create log entry for AuxPoint.TurnNumber[3]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.AuxPoint.TurnNumber[3] = {1}',
+                          Para1       :=  SINT_TO_STRING(_command.AuxPoint.TurnNumber.E1Turns));
+  
+  // Create log entry for AuxPoint.E1
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.AuxPoint.E1 = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.AuxPoint.E1));
+  
+  // Create log entry for EndPoint.X
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.EndPoint.X = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.EndPoint.X));
+  
+  // Create log entry for EndPoint.Y
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.EndPoint.Y = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.EndPoint.Y));
+  
+  // Create log entry for EndPoint.Z
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.EndPoint.Z = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.EndPoint.Z));
+  
+  // Create log entry for EndPoint.Rx
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.EndPoint.Rx = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.EndPoint.Rx));
+  
+  // Create log entry for EndPoint.Ry
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.EndPoint.Ry = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.EndPoint.Ry));
+  
+  // Create log entry for EndPoint.Rz
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.EndPoint.Rz = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.EndPoint.Rz));
+  
+  // Create log entry for EndPoint.Config
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.EndPoint.Config = {1}',
+                          Para1       :=  ARM_CONFIG_TO_STRING(_command.EndPoint.Config));
+  
+  // Create log entry for EndPoint.Reserve
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.EndPoint.Config = {1}',
+                          Para1       :=  SINT_TO_STRING(_command.Reserve));
+  
+  // Create log entry for EndPoint.TurnNumber[0]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.EndPoint.TurnNumber[0] = {1}',
+                          Para1       :=  BYTE_TO_STRING(CombineHalfSints(HalfSintHi := _command.EndPoint.TurnNumber.J2Turns, 
+                                                                          HalfSintLo := _command.EndPoint.TurnNumber.J1Turns)));
+  
+  // Create log entry for EndPoint.TurnNumber[1]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.AuxPoint.EndPoint[1] = {1}',
+                          Para1       :=  BYTE_TO_STRING(CombineHalfSints(HalfSintHi := _command.EndPoint.TurnNumber.J4Turns, 
+                                                                          HalfSintLo := _command.EndPoint.TurnNumber.J3Turns)));
+  
+  // Create log entry for EndPoint.TurnNumber[2]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.EndPoint.TurnNumber[2] = {1}',
+                          Para1       :=  BYTE_TO_STRING(CombineHalfSints(HalfSintHi := _command.EndPoint.TurnNumber.J6Turns, 
+                                                                          HalfSintLo := _command.EndPoint.TurnNumber.J5Turns)));
+  
+  // Create log entry for EndPoint.TurnNumber[3]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.EndPoint.TurnNumber[3] = {1}',
+                          Para1       :=  SINT_TO_STRING(_command.EndPoint.TurnNumber.E1Turns));
+  
+  // Create log entry for EndPoint.E1
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.EndPoint.E1 = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.EndPoint.E1));
+  
+  // Create log entry for CircMode
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.CircMode = {1}',
+                          Para1       :=  CIRC_MODE_TO_STRING(_command.CircMode));
+  
+  // Create log entry for CircPlane
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.CircPlane = {1}',
+                          Para1       :=  CIRC_PLANE_TO_STRING(_command.CircPlane));
+  
+  // Create log entry for Tolerance
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.Tolerance = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.Tolerance));
+  
+  // Create log entry for Angle
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.Angle = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.Angle));
+  
+  // Create log entry for PathChoice
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.PathChoice = {1}',
+                          Para1       :=  BOOL_TO_STRING(_command.PathChoice));
+  
+  // Create log entry for Manipulation
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.Manipulation = {1}',
+                          Para1       :=  BOOL_TO_STRING(_command.Manipulation));
+  
+  // Create log entry for ConfigMode[0]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ConfigMode[0] = {1}',
+                          Para1       :=  BYTE_TO_STRING_BIN(_command.ConfigMode[0]));
+  
+  // Create log entry for ConfigMode[1]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ConfigMode[1] = {1}',
+                          Para1       :=  BYTE_TO_STRING_BIN(_command.ConfigMode[1]));
+  
+  // Create log entry for TurnMode
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.TurnMode = {1}',
+                          Para1       :=  TURN_MODE_TO_STRING(_command.TurnMode));
+                          
+  // Create log entry for Reserve
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.Reserve = {1}',
+                          Para1       :=  SINT_TO_STRING(_command.Reserve)); 
+                        
+  // Create log entry for MoveTime
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.MoveTime = {1}',
+                          Para1       :=  UINT_TO_STRING(_command.MoveTime));
+                          
+  // Create log entry for AuxPoint.E2
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.AuxPoint.E2 = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.AuxPoint.E2));
+                          
+  // Create log entry for AuxPoint.E3
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.AuxPoint.E3 = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.AuxPoint.E3));
+                          
+  // Create log entry for AuxPoint.E4
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.AuxPoint.E4 = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.AuxPoint.E4));                        
+                          
+  // Create log entry for AuxPoint.E5
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.AuxPoint.E5 = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.AuxPoint.E5));                        
+                          
+  // Create log entry for AuxPoint.E6
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.AuxPoint.E6 = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.AuxPoint.E6));
+  
+  // Create log entry for EndPoint.E2
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.EndPoint.E2 = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.EndPoint.E2));
+                          
+  // Create log entry for EndPoint.E3
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.EndPoint.E3 = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.EndPoint.E3));
+                          
+  // Create log entry for EndPoint.E4
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.EndPoint.E4 = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.EndPoint.E4));                        
+                          
+  // Create log entry for EndPoint.E5
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.EndPoint.E5 = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.EndPoint.E5));                        
+                          
+  // Create log entry for EndPoint.E6
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.EndPoint.E6 = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.EndPoint.E6));
 
 END_METHOD
 
@@ -452,7 +968,7 @@ END_VAR
              // init parameter sequence
             _command.ParSeq := 1;
              // create command data
-             CommandData := CreateCommandPayload();
+             CommandData := CreateCommandPayload(AxesGroup := AxesGroup);
              // Add command to active command register
             _uniqueID := AxesGroup.Acyclic.ActiveCommandRegister.AddCmd( pCommandFB := ADR(THIS^ ));     
              // set timeout
@@ -517,6 +1033,12 @@ END_VAR
 END_METHOD
 
 METHOD INTERNAL ParseResponsePayload : DINT
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
 // Table 6-327: Received CMD payload (RC to PLC) of "MoveCircularAbsolute"
 // --------------------------
 // Header
@@ -539,13 +1061,8 @@ METHOD INTERNAL ParseResponsePayload : DINT
 // Byte 12 :         - RemainingDistance LW HB
 // Byte 13 :         - RemainingDistance LW LB
 
-VAR_INPUT
-  /// Response data
-  ResponseData : RobotLibraryRecvDataFB;
-END_VAR
-
   // call base implementation to parse the header from payload buffer
-  ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData);
+  ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
   
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;

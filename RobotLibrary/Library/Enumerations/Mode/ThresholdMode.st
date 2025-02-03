@@ -23,9 +23,9 @@
 TYPE ThresholdMode :
 (
   /// Automatic.
-  Automatic := 0,
+  AUTOMATIC := 0,
   /// Manual (according to LimitAxis)
-  Manual    := 1
+  MANUAL    := 1
 )USINT;
 END_TYPE
 

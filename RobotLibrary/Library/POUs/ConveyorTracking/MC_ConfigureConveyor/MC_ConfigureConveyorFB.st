@@ -84,7 +84,7 @@ END_VAR
     // inc parameter sequence
    _command.ParSeq := _command.ParSeq + 1;
     // update command data  
-    CommandData := CreateCommandPayload(); // ( Access via reference to rCommandFB in ACR )
+    CommandData := CreateCommandPayload(AxesGroup := AxesGroup); // ( Access via reference to rCommandFB in ACR )
     // notify active command register 
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
   END_IF
@@ -92,6 +92,10 @@ END_VAR
 END_METHOD
 
 METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
 // Table 6-458: Sent CMD payload (PLC to RC) of "ConfigureConveyor"
 // --------------------------
 // Header
@@ -177,7 +181,7 @@ METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
   // copy command data to header
   _cmdHeader := _command;
   // call base implementation to copy header to payload buffer
-  CreateCommandPayload := SUPER^.CreateCommandPayload();
+  CreateCommandPayload := SUPER^.CreateCommandPayload(AxesGroup := AxesGroup);
   
   
   // add command.ConveyorOrigin.Timestamp.IEC_DATE
@@ -216,6 +220,168 @@ METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
   CreateCommandPayload.AddReal(_command.SyncInLength);
   // add command.SyncOutLength
   CreateCommandPayload.AddReal(_command.SyncOutLength);
+  
+  // Create logging
+  CreateCommandPayloadLog(AxesGroup := AxesGroup);
+
+END_METHOD
+
+METHOD INTERNAL CreateCommandPayloadLog 
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'CreateCommandPayload with the following parameter(s) :');
+  
+  // Create log entry for ConveyorOrigin.Timestamp.IEC_DATE
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ConveyorOrigin.Timestamp.IEC_DATE = {1}',
+                          Para1       :=  IEC_DATE_TO_STRING(_command.ConveyorOrigin.Timestamp.IEC_DATE));
+                         
+  // Create log entry for ConveyorOrigin.Timestamp.IEC_TIME
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ConveyorOrigin.Timestamp.IEC_TIME = {1}',
+                          Para1       :=  IEC_TIME_TO_STRING(_command.ConveyorOrigin.Timestamp.IEC_TIME));
+  
+  // Create log entry for ConveyorOrigin.ReferenceFrame
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ConveyorOrigin.ReferenceFrame = {1}',
+                          Para1       :=  USINT_TO_STRING(_command.ConveyorOrigin.ReferenceFrame));
+                          
+  // Create log entry for Reserve
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.Reserve = {1}',
+                          Para1       :=  BYTE_TO_STRING(0));        
+  
+  // Create log entry for ConveyorOrigin.X
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ConveyorOrigin.X = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.ConveyorOrigin.X));
+                          
+  // Create log entry for ConveyorOrigin.Y
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ConveyorOrigin.Y = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.ConveyorOrigin.Y));
+                          
+  // Create log entry for ConveyorOrigin.Z
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ConveyorOrigin.Z = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.ConveyorOrigin.Z));
+  
+  // Create log entry for ConveyorOrigin.Rx
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ConveyorOrigin.Rx = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.ConveyorOrigin.Rx));
+                          
+  // Create log entry for ConveyorOrigin.Ry
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ConveyorOrigin.Ry = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.ConveyorOrigin.Ry));
+                          
+  // Create log entry for ConveyorOrigin.Rz
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ConveyorOrigin.Rz = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.ConveyorOrigin.Rz));                        
+                          
+  // Create log entry for ConveyorOriginAvailable
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ConveyorOriginAvailable = {1}',
+                          Para1       :=  BOOL_TO_STRING(_command.ConveyorOriginAvailable));
+                          
+  // Create log entry for ConveyorNo
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ConveyorNo = {1}',
+                          Para1       :=  USINT_TO_STRING(_command.ConveyorNo));
+                          
+  // Create log entry for ConveyorType
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ConveyorType = {1}',
+                          Para1       :=  CONVEYOR_TYPE_TO_STRING(_command.ConveyorType));                        
+                          
+  // Create log entry for Radius
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.Radius = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.Radius));       
+                          
+  // Create log entry for StartDistance
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.StartDistance = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.StartDistance));       
+      
+  // Create log entry for EndDistance
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.EndDistance = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.EndDistance));           
+  
+  // Create log entry for SyncInLength
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.SyncInLength = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.SyncInLength));           
+  
+  // Create log entry for SyncOutLength
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.SyncOutLength = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.SyncOutLength));
 
 END_METHOD
 
@@ -257,7 +423,7 @@ END_VAR
              // init parameter sequence
             _command.ParSeq := 1;
              // create command data
-             CommandData := CreateCommandPayload();
+             CommandData := CreateCommandPayload(AxesGroup := AxesGroup);
              // Add command to active command register
             _uniqueID := AxesGroup.Acyclic.ActiveCommandRegister.AddCmd( pCommandFB := ADR(THIS^ ));     
              // set timeout
@@ -317,6 +483,12 @@ END_VAR
 END_METHOD
 
 METHOD INTERNAL ParseResponsePayload : DINT
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
 // Table 6-459: Received CMD payload (RC to PLC) of "ConfigureConveyor"
 // --------------------------
 // Header
@@ -326,13 +498,9 @@ METHOD INTERNAL ParseResponsePayload : DINT
 // Byte 02 : UINT       - AlarmMessageCode HB
 // Byte 03 :            - AlarmMessageCode LB
 // --------------------------
-VAR_INPUT
-  /// Response data
-  ResponseData : RobotLibraryRecvDataFB;
-END_VAR
 
   // call base implementation to parse the header from payload buffer
-  ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData);
+  ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
   
   // copy parsed header to response
   _response.ParSeq                := _rspHeader.ParSeq;

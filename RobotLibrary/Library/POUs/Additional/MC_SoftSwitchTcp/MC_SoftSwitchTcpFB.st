@@ -93,7 +93,7 @@ END_VAR
     // inc parameter sequence
    _command.ParSeq := _command.ParSeq + 1;
     // update command data  
-    CommandData := CreateCommandPayload(); // ( Access via reference to rCommandFB in ACR )
+    CommandData := CreateCommandPayload(AxesGroup := AxesGroup); // ( Access via reference to rCommandFB in ACR )
     // notify active command register 
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
   END_IF
@@ -101,6 +101,10 @@ END_VAR
 END_METHOD
 
 METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
 // Table 6-748: Sent CMD payload (PLC to RC) of "SoftSwitchTCP"
 // --------------------------
 // Header
@@ -180,7 +184,7 @@ METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
   // copy command data to header
   _cmdHeader := _command;
   // call base implementation to copy header to payload buffer
-  CreateCommandPayload := SUPER^.CreateCommandPayload();
+  CreateCommandPayload := SUPER^.CreateCommandPayload(AxesGroup := AxesGroup);
   
   // add command.LimitMode
   CreateCommandPayload.AddUsint(_command.LimitMode);
@@ -218,6 +222,168 @@ METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
   CreateCommandPayload.AddReal(_command.VectorData[5]);
   // add command.ResistanceForceMode
   CreateCommandPayload.AddUsint(_command.ResistanceForceMode);
+  
+  // Create logging
+  CreateCommandPayloadLog(AxesGroup := AxesGroup);
+
+END_METHOD
+
+METHOD INTERNAL CreateCommandPayloadLog
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'CreateCommandPayload with the following parameter(s) :');
+    
+  // Create log entry for LimitMode
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.LimitMode = {1}',
+                          Para1       :=  LIMIT_MODE_TO_STRING(_command.LimitMode));
+  
+  // Create log entry for CompliantAxes
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.CompliantAxes = {1}',
+                          Para1       :=  BYTE_TO_STRING(_command.CompliantAxes));
+  
+  // Create log entry for ReferenceType
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ReferenceType = {1}',
+                          Para1       :=  BYTE_TO_STRING_BIN(_command.ReferenceType));
+  
+  // Create log entry for ReferenceNo
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ReferenceNo = {1}',
+                          Para1       :=  USINT_TO_STRING(_command.ReferenceNo));
+  
+  // Create log entry for ResistanceForceTCP
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ResistanceForceTCP = {1}',
+                          Para1       :=  INT_TO_STRING(_command.ResistanceForceTCP));
+  
+  // Create log entry for ResistanceForceAxis[0]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ResistanceForceAxis[0] = {1}',
+                          Para1       :=  UINT_TO_STRING(_command.ResistanceForceAxis[0]));
+  
+  // Create log entry for ResistanceForceAxis[1]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ResistanceForceAxis[1] = {1}',
+                          Para1       :=  UINT_TO_STRING(_command.ResistanceForceAxis[1]));
+  
+  // Create log entry for ResistanceForceAxis[2]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ResistanceForceAxis[2] = {1}',
+                          Para1       :=  UINT_TO_STRING(_command.ResistanceForceAxis[2]));
+  
+  // Create log entry for ResistanceForceAxis[3]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ResistanceForceAxis[3] = {1}',
+                          Para1       :=  UINT_TO_STRING(_command.ResistanceForceAxis[3]));
+  
+  // Create log entry for ResistanceForceAxis[4]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ResistanceForceAxis[4] = {1}',
+                          Para1       :=  UINT_TO_STRING(_command.ResistanceForceAxis[4]));
+  
+  // Create log entry for ResistanceForceAxis[5]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ResistanceForceAxis[5] = {1}',
+                          Para1       :=  UINT_TO_STRING(_command.ResistanceForceAxis[5]));
+  
+  // Create log entry for VectorData[0]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.VectorData[0] = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.VectorData[0]));
+                          
+  // Create log entry for VectorData[1]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.VectorData[1] = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.VectorData[1]));
+  
+  // Create log entry for VectorData[2]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.VectorData[2] = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.VectorData[2]));
+  
+  // Create log entry for VectorData[3]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.VectorData[3] = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.VectorData[3]));
+  
+  // Create log entry for VectorData[4]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.VectorData[4] = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.VectorData[4]));
+  
+  // Create log entry for VectorData[5]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.VectorData[5] = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.VectorData[5]));
+                          
+  // Create log entry for ResistanceForceMode
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ResistanceForceMode = {1}',
+                          Para1       :=  USINT_TO_STRING(_command.ResistanceForceMode));
 
 END_METHOD
 
@@ -259,7 +425,7 @@ END_VAR
              // init parameter sequence
             _command.ParSeq := 1;
              // create command data
-             CommandData := CreateCommandPayload();
+             CommandData := CreateCommandPayload(AxesGroup := AxesGroup);
              // Add command to active command register
             _uniqueID := AxesGroup.Acyclic.ActiveCommandRegister.AddCmd( pCommandFB := ADR(THIS^ ));     
              // set timeout
@@ -322,6 +488,12 @@ END_VAR
 END_METHOD
 
 METHOD INTERNAL ParseResponsePayload : DINT
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
 // Table 6-749: Received CMD payload (RC to PLC) of "SoftSwitchTCP"
 // --------------------------
 // Header
@@ -334,13 +506,9 @@ METHOD INTERNAL ParseResponsePayload : DINT
 // Datablock
 // --------------------------
 // Byte 04  : BOOL - SoftMovement
-VAR_INPUT
-  /// Response data
-  ResponseData : RobotLibraryRecvDataFB;
-END_VAR
 
   // call base implementation to parse the header from payload buffer
-  ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData);
+  ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
   
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;

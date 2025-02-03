@@ -250,6 +250,51 @@ END_VAR
 
 END_METHOD
 
+METHOD CreateLogMessagePara6 
+VAR_INPUT
+  /// Timestamp
+  Timestamp   : SystemTime;
+  /// Type of message according to Table 5-46:
+  MessageType : MessageType;
+  /// Severity of message according to Table 5-47: Debug, Info, Warning, Error, Fatal error
+  Severity    : Severity;
+  /// Code of messages
+  MessageCode : DWORD;
+  /// Static text of message
+  MessageText : STRING(255);  
+  /// sub string which will replace the placeholder {1}
+  Para1       : STRING(255);
+  /// sub string which will replace the placeholder {2}
+  Para2       : STRING(255);
+  /// sub string which will replace the placeholder {3}
+  Para3       : STRING(255);
+  /// sub string which will replace the placeholder {4}
+  Para4       : STRING(255);
+  /// sub string which will replace the placeholder {5}
+  Para5       : STRING(255);
+  /// sub string which will replace the placeholder {6}
+  Para6       : STRING(255);
+END_VAR
+VAR
+  /// internal log message 
+ _logMessage : AlarmMessage;
+END_VAR
+
+  MessageText := StrReplace(MessageText,'{6}', Para6);
+  
+  CreateLogMessagePara5( Timestamp   := Timestamp,
+                         MessageType := MessageType,
+                         Severity    := Severity,
+                         MessageCode := MessageCode,
+                         MessageText := MessageText,
+                         Para1       := Para1,
+                         Para2       := Para2,
+                         Para3       := Para3,
+                         Para4       := Para4,
+                         Para5       := Para5);
+
+END_METHOD
+
 PROPERTY PROTECTED MyType : STRING
 
 

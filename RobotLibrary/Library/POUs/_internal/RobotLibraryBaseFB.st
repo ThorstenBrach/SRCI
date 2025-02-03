@@ -89,19 +89,21 @@ END_FUNCTION_BLOCK
 METHOD PUBLIC CallBack : DINT
 VAR_INPUT
   /// Response data
-  RspData : AxesGroupAcyclicAcrEntryRspBuffer;  
+  RspData   : AxesGroupAcyclicAcrEntryRspBuffer;  
+  /// Timestamp
+  Timestamp : SystemTime;
 END_VAR
 
   ResponseData.Reset();
   ResponseData.Payload    := RspData.Payload; 
   ResponseData.PayloadLen := RspData.PayloadLen;
-  ParseResponsePayload(ResponseData);
+  ParseResponsePayload( ResponseData :=  ResponseData , Timestamp := Timestamp);
   
   // set flag for response received
   _responseReceived := TRUE;
   
   // Create log entry
-  CreateLogMessage ( Timestamp   := AxesGroup.InternalData.SystemTime,
+  CreateLogMessage ( Timestamp   := Timestamp,
                      MessageType := MessageType.CMD,
                      Severity    := Severity.DEBUG,
                      MessageCode := 0,
@@ -152,6 +154,10 @@ END_VAR
 END_METHOD
 
 METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup    : AxesGroup; 
+END_VAR
 
   // Reset all variables
   CreateCommandPayload.Reset();
@@ -238,6 +244,8 @@ METHOD INTERNAL ParseResponsePayload : DINT
 VAR_INPUT
   /// Response data
   ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
 END_VAR
 
   // reset message IDs 
@@ -250,7 +258,7 @@ END_VAR
   // get ParSeq
   _rspHeader.ParSeq               := ResponseData.GetHalfeByte2(IncPayloadPtr := TRUE);
   // get AlarmMessageSeverity
-  _rspHeader.AlarmMessageSeverity := ResponseData.GetByte();
+  _rspHeader.AlarmMessageSeverity := ResponseData.GetSint();
   // get AlarmMessageCode
   _rspHeader.AlarmMessageCode     := ResponseData.GetUint();
   

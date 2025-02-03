@@ -24,8 +24,8 @@ TYPE RCSupportedFunctions :
 STRUCT
   /// Byte 00 - Bit 0  
   Reserved                   : BOOL;
-  /// Byte 00 - Bit 1 
-  ReadRobotData              : BOOL := TRUE; // must be true because it is part of the interface initialization
+  /// Byte 00 - Bit 1 -> must be initialized with true, because this command is part of the interface initialization
+  ReadRobotData              : BOOL := TRUE; 
   /// Byte 00 - Bit 2  
   EnableRobot                : BOOL;
   /// Byte 00 - Bit 3  
@@ -34,15 +34,15 @@ STRUCT
   ReadActualPosition         : BOOL;
   /// Byte 00 - Bit 5 
   ReadActualPositionCyclic   : BOOL;
-  /// Byte 00 - Bit 6  
-  ExchangeConfiguration      : BOOL := TRUE; // must be true because it is part of the interface initialization
+  /// Byte 00 - Bit 6  -> must be initialized with true, because this command is part of the interface initialization
+  ExchangeConfiguration      : BOOL := TRUE; 
   /// Byte 00 - Bit 7  
   SetSequence                : BOOL;
   
   /// Byte 01 - Bit 0  
   ChangeSpeedOverride        : BOOL;
-  /// Byte 01 - Bit 1  
-  ReadMessages               : BOOL := TRUE; // must be true because it is part of the interface initialization
+  /// Byte 01 - Bit 1  ->  must be initialized with true, because this command is part of the interface initialization
+  ReadMessages               : BOOL := TRUE; 
   /// Byte 01 - Bit 2  
   ReadRobotReferenceDynamics : BOOL;
   /// Byte 01 - Bit 3  

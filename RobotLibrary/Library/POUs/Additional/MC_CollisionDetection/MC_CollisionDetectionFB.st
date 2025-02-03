@@ -91,7 +91,7 @@ END_VAR
     // inc parameter sequence
    _command.ParSeq := _command.ParSeq + 1;
     // update command data  
-    CommandData := CreateCommandPayload(); // ( Access via reference to rCommandFB in ACR )
+    CommandData := CreateCommandPayload(AxesGroup := AxesGroup); // ( Access via reference to rCommandFB in ACR )
     // notify active command register 
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
   END_IF
@@ -99,6 +99,10 @@ END_VAR
 END_METHOD
 
 METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
 // Table 6-790: Sent CMD payload (PLC to RC) of "CollisionDetection"
 // --------------------------
 // Header
@@ -191,7 +195,7 @@ METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
   // copy command data to header
   _cmdHeader := _command;
   // call base implementation to copy header to payload buffer
-  CreateCommandPayload := SUPER^.CreateCommandPayload();
+  CreateCommandPayload := SUPER^.CreateCommandPayload(AxesGroup := AxesGroup);
   
   // add command.ActivateMonitoring
   CreateCommandPayload.AddBool(_command.ActivateMonitoring);
@@ -231,6 +235,160 @@ METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
   CreateCommandPayload.AddReal(_command.LimitAxis[5]);
   // add command.LimitAxis[6]
   CreateCommandPayload.AddReal(_command.LimitAxis[6]);
+  
+  // Create logging
+  CreateCommandPayloadLog(AxesGroup := AxesGroup);
+
+END_METHOD
+
+METHOD INTERNAL CreateCommandPayloadLog
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'CreateCommandPayload with the following parameter(s) :');
+    
+  // Create log entry for ActivateMonitoring
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ActivateMonitoring = {1}',
+                          Para1       :=  BOOL_TO_STRING(_command.ActivateMonitoring));
+  
+  // Create log entry for UnitLimitAxis
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.UnitLimitAxis = {1}',
+                          Para1       :=  USINT_TO_STRING(_command.UnitLimitAxis));
+  
+  // Create log entry for ThresholdMode
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ThresholdMode = {1}',
+                          Para1       :=  THRESHOLD_MODE_TO_STRING(_command.ThresholdMode)); 
+  
+  // Create log entry for ReactionMode
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ReactionMode = {1}',
+                          Para1       :=  COLLISION_REACTION_MODE_TO_STRING(_command.ReactionMode)); 
+  
+  // Create log entry for Sensitivity
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.Sensitivity = {1}',
+                          Para1       :=  INT_TO_STRING(_command.Sensitivity)); 
+  
+  // Create log entry for SensitivityAxis[1]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.SensitivityAxis[1] = {1}',
+                          Para1       :=  INT_TO_STRING(_command.SensitivityAxis[1]));
+   
+  // Create log entry for SensitivityAxis[2]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.SensitivityAxis[2] = {1}',
+                          Para1       :=  INT_TO_STRING(_command.SensitivityAxis[2]));
+                          
+  // Create log entry for SensitivityAxis[3]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.SensitivityAxis[3] = {1}',
+                          Para1       :=  INT_TO_STRING(_command.SensitivityAxis[3]));
+                          
+  // Create log entry for SensitivityAxis[4]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.SensitivityAxis[4] = {1}',
+                          Para1       :=  INT_TO_STRING(_command.SensitivityAxis[4])); 
+   
+  // Create log entry for SensitivityAxis[5]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.SensitivityAxis[5] = {1}',
+                          Para1       :=  INT_TO_STRING(_command.SensitivityAxis[5]));
+  
+  // Create log entry for SensitivityAxis[6]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.SensitivityAxis[6] = {1}',
+                          Para1       :=  INT_TO_STRING(_command.SensitivityAxis[6]));
+                          
+  // Create log entry for LimitAxis[1]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.LimitAxis[1] = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.LimitAxis[1]));
+  
+  // Create log entry for LimitAxis[2]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.LimitAxis[2] = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.LimitAxis[2]));
+                          
+  // Create log entry for LimitAxis[3]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.LimitAxis[3] = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.LimitAxis[3]));
+                          
+  // Create log entry for LimitAxis[4]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.LimitAxis[4] = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.LimitAxis[4]));
+  
+  // Create log entry for LimitAxis[5]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.LimitAxis[5] = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.LimitAxis[5]));
+  
+  // Create log entry for LimitAxis[6]
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.LimitAxis[6] = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.LimitAxis[6]));
 
 END_METHOD
 
@@ -274,7 +432,7 @@ END_VAR
              // init parameter sequence
             _command.ParSeq := 1;
              // create command data
-             CommandData := CreateCommandPayload();
+             CommandData := CreateCommandPayload(AxesGroup := AxesGroup);
              // Add command to active command register
             _uniqueID := AxesGroup.Acyclic.ActiveCommandRegister.AddCmd( pCommandFB := ADR(THIS^ ));     
              // set timeout
@@ -331,6 +489,12 @@ END_VAR
 END_METHOD
 
 METHOD INTERNAL ParseResponsePayload : DINT
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
 // Table 6-791: Received CMD payload (RC to PLC) of "CollisionDetection"
 // --------------------------
 // Header
@@ -339,13 +503,9 @@ METHOD INTERNAL ParseResponsePayload : DINT
 // Byte 01 : SINT  - AlarmMessageSeverity    
 // Byte 02 : UINT  - AlarmMessageCode HB
 // Byte 03 :       - AlarmMessageCode LB
-VAR_INPUT
-  /// Response data
-  ResponseData : RobotLibraryRecvDataFB;
-END_VAR
 
   // call base implementation to parse the header from payload buffer
-  ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData);
+  ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
   
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;

@@ -25,11 +25,11 @@ VAR_INPUT
   Register            : ARRAY [1..RobotLibraryParameter.ACTIVE_CMD_REGISTER_ENTRIES_MAX] OF AxesGroupAcyclicAcrEntry;
   /// System Time
   SystemTime          : SystemTime;
+  /// usable size of the arc register
+  RegisterSize        : DINT := RobotLibraryParameter.ACTIVE_CMD_REGISTER_ENTRIES_MAX;
 END_VAR
 
 VAR_OUTPUT
-  /// Size of the register 
-  Size                : UINT := DINT_TO_UINT(RobotLibraryParameter.ACTIVE_CMD_REGISTER_ENTRIES_MAX);
   /// Execution Order List 
   ExecutionOrderList  : ARRAY [1..RobotLibraryParameter.ACTIVE_CMD_REGISTER_ENTRIES_MAX] OF DINT;
 END_VAR
@@ -50,9 +50,9 @@ VAR CONSTANT
   /// Buffered command
   BUFFER_CMD           : UDINT := 2;
   /// Empty ARC entry
-  EMPTY_ARC_ENTRY      : AxesGroupAcyclicAcrEntry;
+  EMPTY_ARC_ENTRY      : AxesGroupAcyclicAcrEntry := (State := ActiveCommandRegisterState.IS_FREE);
   /// Empty command entry
-  EMPTY_CMD_ENTRY      : AxesGroupAcyclicAcrEntryCmdBuffer;
+  EMPTY_CMD_ENTRY      : AxesGroupAcyclicAcrEntryCmdBuffer := (State := BufferStateCmd.EMPTY);
   
   /// constant for byte index of priority in payload 
   PRIORITY_IDX         : BYTE := 3;  /// bitmask to mask the priority out of the halfbyte
@@ -80,12 +80,14 @@ VAR
  _messageLog : AlarmMessage;  
 END_VAR
 
-  FOR _regIdx := 1 TO RobotLibraryParameter.ACTIVE_CMD_REGISTER_ENTRIES_MAX
+  // calculate the used length of the ARC 
+  FOR _regIdx := 1 TO RegisterSize
   DO
     IF ( Register[_regIdx].State = ActiveCommandRegisterState.IS_FREE )
     THEN
       Register[_regIdx].State                        := ActiveCommandRegisterState.IS_PROCESSING;
-      Register[_regIdx].UniqueID                     := CreateUniqueID();
+      //Register[_regIdx].UniqueID                     := CreateUniqueID();
+      Register[_regIdx].UniqueID                     := DINT_TO_UINT(_regIdx);
       Register[_regIdx].pCommandFB                   := pCommandFB;
   
       // check pointer to command FB
@@ -137,7 +139,7 @@ VAR
  _found           : BOOL;
 END_VAR
 
-  FOR _regIdx := 1 TO RobotLibraryParameter.ACTIVE_CMD_REGISTER_ENTRIES_MAX
+  FOR _regIdx := 1 TO RegisterSize
   DO
     IF ( Register[_regIdx].UniqueID = Rsp.Header.CmdID )
     THEN
@@ -226,7 +228,11 @@ END_VAR
 END_METHOD
 
 METHOD PRIVATE CreateUniqueID : UINT
-VAR_INPUT
+VAR
+  /// internal index for loops
+ _idx : DINT;
+  /// length of the ARC
+ _arcLenght : DINT;
 END_VAR
 
   // inc last unique ID 
@@ -254,7 +260,7 @@ VAR
  _cmdType    : CmdType;
 END_VAR
 
-  FOR _regIdx := 1 TO RobotLibraryParameter.ACTIVE_CMD_REGISTER_ENTRIES_MAX
+  FOR _regIdx := 1 TO RegisterSize
   DO
     // Check pointer to command FB is valid ? 
     IF ( Register[_regIdx].pCommandFB = RobotLibraryConstants.NULL_POINTER)
@@ -291,7 +297,7 @@ END_VAR
       // update state
       Register[_regIdx].Response[ACTIVE_CMD].State := BufferStateRsp.PROCESSED;
       // callback CommandFB    
-      Register[_regIdx].pCommandFB^.CallBack(Register[_regIdx].Response[ACTIVE_CMD]);    
+      Register[_regIdx].pCommandFB^.CallBack(RspData := Register[_regIdx].Response[ACTIVE_CMD],TimeStamp := SystemTime);    
     END_IF
   
     // delete entries with State.IS_Final 
@@ -400,7 +406,7 @@ END_VAR
   // Check command FB pointer is valid ?
   IF ( pCommandFB <> RobotLibraryConstants.NULL_POINTER)
   THEN
-    FOR _regIdx := 1 TO RobotLibraryParameter.ACTIVE_CMD_REGISTER_ENTRIES_MAX
+    FOR _regIdx := 1 TO RegisterSize
     DO
       // check unique ID found ?
       IF ( Register[_regIdx].UniqueID = UniqueID ) 
@@ -427,7 +433,7 @@ VAR
  _regIdx : DINT;
 END_VAR
 
-  FOR _regIdx := 1 TO RobotLibraryParameter.ACTIVE_CMD_REGISTER_ENTRIES_MAX
+  FOR _regIdx := 1 TO RegisterSize
   DO
     // check unique ID found and not yet sended ?
     IF (( Register[_regIdx].UniqueID         = UniqueID               ) AND
@@ -460,7 +466,7 @@ END_VAR
   // pre-set temporary register index 
   j := 1;
   
-  FOR i := 1 TO RobotLibraryParameter.ACTIVE_CMD_REGISTER_ENTRIES_MAX
+  FOR i := 1 TO RegisterSize
   DO
     // add only entries which are not in status free and where datas must be processed
     IF (( Register[i].State                      > ActiveCommandRegisterState.IS_FREE ) AND
@@ -477,9 +483,9 @@ END_VAR
   END_FOR  
   
   // Bubble Sort to sort the priorities from the active command register
-  FOR i := 1 TO RobotLibraryParameter.ACTIVE_CMD_REGISTER_ENTRIES_MAX
+  FOR i := 1 TO RegisterSize
   DO
-    FOR j := 1 TO RobotLibraryParameter.ACTIVE_CMD_REGISTER_ENTRIES_MAX - 1
+    FOR j := 1 TO RegisterSize - 1
     DO 
       // check list entry is not empty ? 
       IF (( TmpRegister[i  ].State = ActiveCommandRegisterState.IS_FREE ) OR
@@ -504,9 +510,9 @@ END_VAR
   END_FOR
   
   // Bubble Sort to sort the Timestamp from the pre-sorted active command register
-  FOR i := 1 TO RobotLibraryParameter.ACTIVE_CMD_REGISTER_ENTRIES_MAX
+  FOR i := 1 TO RegisterSize
   DO
-    FOR j := 1 TO RobotLibraryParameter.ACTIVE_CMD_REGISTER_ENTRIES_MAX - 1
+    FOR j := 1 TO RegisterSize - 1
     DO    
       // check list entry is not empty ? 
       IF (( TmpRegister[i  ].State = ActiveCommandRegisterState.IS_FREE ) OR

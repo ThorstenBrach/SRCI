@@ -83,7 +83,7 @@ END_VAR
     // inc parameter sequence
    _command.ParSeq := _command.ParSeq + 1;
     // update command data  
-    CommandData := CreateCommandPayload(); // ( Access via reference to rCommandFB in ACR )
+    CommandData := CreateCommandPayload(AxesGroup := AxesGroup); // ( Access via reference to rCommandFB in ACR )
     // notify active command register 
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
   END_IF
@@ -91,6 +91,10 @@ END_VAR
 END_METHOD
 
 METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
 // Table 6-632: Sent CMD payload (PLC to RC) of "CalculateForwardKinematic"
 // --------------------------
 // Header
@@ -162,41 +166,171 @@ METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
   _command.Priority                   :=  Priority;
   _command.ToolNo                     := _parCmd.ToolNo;
   _command.FrameNo                    := _parCmd.FrameNo;
-  _command.CartesianPosition          := _parCmd.CartesianPosition;
+  _command.JointPosition              := _parCmd.JointPosition;
   
   // copy command data to header
   _cmdHeader := _command;
   // call base implementation to copy header to payload buffer
-  CreateCommandPayload := SUPER^.CreateCommandPayload();
+  CreateCommandPayload := SUPER^.CreateCommandPayload(AxesGroup := AxesGroup);
   
   // add command.ToolNo
   CreateCommandPayload.AddUsint(_command.ToolNo);
   // add command.FrameNo
   CreateCommandPayload.AddUsint(_command.FrameNo);
-  // add command.CartesianPosition.X
-  CreateCommandPayload.AddReal(_command.CartesianPosition.X);
-  // add command.CartesianPosition.Y
-  CreateCommandPayload.AddReal(_command.CartesianPosition.Y);
-  // add command.CartesianPosition.Z
-  CreateCommandPayload.AddReal(_command.CartesianPosition.Z);
-  // add command.CartesianPosition.Rx
-  CreateCommandPayload.AddReal(_command.CartesianPosition.Rx);
-  // add command.CartesianPosition.Ry
-  CreateCommandPayload.AddReal(_command.CartesianPosition.Ry);
-  // add command.CartesianPosition.Rz
-  CreateCommandPayload.AddReal(_command.CartesianPosition.Rz);
-  // add command.CartesianPosition.E1
-  CreateCommandPayload.AddReal(_command.CartesianPosition.E1);
-  // add command.CartesianPosition.E2
-  CreateCommandPayload.AddReal(_command.CartesianPosition.E2);
-  // add command.CartesianPosition.E3
-  CreateCommandPayload.AddReal(_command.CartesianPosition.E3);
-  // add command.CartesianPosition.E4
-  CreateCommandPayload.AddReal(_command.CartesianPosition.E4);
-  // add command.CartesianPosition.E5
-  CreateCommandPayload.AddReal(_command.CartesianPosition.E5);
-  // add command.CartesianPosition.E6
-  CreateCommandPayload.AddReal(_command.CartesianPosition.E6);
+  // add command.JointPosition.J1
+  CreateCommandPayload.AddReal(_command.JointPosition.J1);
+  // add command.JointPosition.J2
+  CreateCommandPayload.AddReal(_command.JointPosition.J2);
+  // add command.JointPosition.J3
+  CreateCommandPayload.AddReal(_command.JointPosition.J3);
+  // add command.JointPosition.J4
+  CreateCommandPayload.AddReal(_command.JointPosition.J4);
+  // add command.JointPosition.J5
+  CreateCommandPayload.AddReal(_command.JointPosition.J5);
+  // add command.JointPosition.J6
+  CreateCommandPayload.AddReal(_command.JointPosition.J6);
+  // add command.JointPosition.E1
+  CreateCommandPayload.AddReal(_command.JointPosition.E1);
+  // add command.JointPosition.E2
+  CreateCommandPayload.AddReal(_command.JointPosition.E2);
+  // add command.JointPosition.E3
+  CreateCommandPayload.AddReal(_command.JointPosition.E3);
+  // add command.JointPosition.E4
+  CreateCommandPayload.AddReal(_command.JointPosition.E4);
+  // add command.JointPosition.E5
+  CreateCommandPayload.AddReal(_command.JointPosition.E5);
+  // add command.JointPosition.E6
+  CreateCommandPayload.AddReal(_command.JointPosition.E6);
+  
+  // Create logging
+  CreateCommandPayloadLog(AxesGroup := AxesGroup);
+
+END_METHOD
+
+METHOD INTERNAL CreateCommandPayloadLog 
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'CreateCommandPayload with the following parameter(s) :');
+  
+  // Create log entry for ToolNo
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ToolNo = {1}',
+                          Para1       :=  USINT_TO_STRING(_command.ToolNo));
+  
+  // Create log entry for FrameNo
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.FrameNo = {1}',
+                          Para1       :=  USINT_TO_STRING(_command.FrameNo));
+  
+  // Create log entry for JointPosition.J1
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.JointPosition.J1 = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.JointPosition.J1));
+  
+  // Create log entry for JointPosition.J2
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.JointPosition.J2 = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.JointPosition.J2));
+  
+  // Create log entry for JointPosition.J3
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.JointPosition.J3 = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.JointPosition.J3));
+  
+  // Create log entry for JointPosition.J4
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.JointPosition.J4 = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.JointPosition.J4));
+  
+  // Create log entry for JointPosition.J5
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.JointPosition.J5 = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.JointPosition.J5));
+  
+  // Create log entry for JointPosition.J6
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.JointPosition.J6 = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.JointPosition.J6));
+  
+  // Create log entry for JointPosition.E1
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.JointPosition.E1 = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.JointPosition.E1));
+  
+  // Create log entry for JointPosition.E2
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.JointPosition.E2 = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.JointPosition.E2));
+  
+  // Create log entry for JointPosition.E3
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.JointPosition.E3 = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.JointPosition.E3));
+  
+  // Create log entry for JointPosition.E4
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.JointPosition.E4 = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.JointPosition.E4));
+  
+  // Create log entry for JointPosition.E5
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.JointPosition.E5 = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.JointPosition.E5));
+  
+  // Create log entry for JointPosition.E6
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.JointPosition.E6 = {1}',
+                          Para1       :=  REAL_TO_STRING(_command.JointPosition.E6));
 
 END_METHOD
 
@@ -240,7 +374,7 @@ END_VAR
              // init parameter sequence
             _command.ParSeq := 1;
              // create command data
-             CommandData := CreateCommandPayload();
+             CommandData := CreateCommandPayload(AxesGroup := AxesGroup);
              // Add command to active command register
             _uniqueID := AxesGroup.Acyclic.ActiveCommandRegister.AddCmd( pCommandFB := ADR(THIS^ ));     
              // set timeout
@@ -302,6 +436,12 @@ END_VAR
 END_METHOD
 
 METHOD INTERNAL ParseResponsePayload : DINT
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
 // Table 6-633: Received CMD payload (RC to PLC) of "CalculateForwardKinematic"
 // --------------------------
 // Header
@@ -370,13 +510,9 @@ METHOD INTERNAL ParseResponsePayload : DINT
 // Byte 58 :            - Position.E6 LW HB
 // Byte 59 :            - Position.E6 LW LB
 // --------------------------
-VAR_INPUT
-  /// Response data
-  ResponseData : RobotLibraryRecvDataFB;
-END_VAR
 
   // call base implementation to parse the header from payload buffer
-  ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData);
+  ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
   
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;

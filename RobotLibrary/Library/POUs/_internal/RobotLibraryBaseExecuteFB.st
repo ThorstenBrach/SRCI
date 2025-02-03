@@ -1,4 +1,4 @@
-FUNCTION_BLOCK RobotLibraryBaseExecuteFB extends RobotLibraryBaseFB
+FUNCTION_BLOCK RobotLibraryBaseExecuteFB EXTENDS RobotLibraryBaseFB
 // ------------------------------------------------------------------------- 
 //  SRCI Robot Library                                                
 // ------------------------------------------------------------------------- 

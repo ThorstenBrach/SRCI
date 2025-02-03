@@ -166,7 +166,7 @@ VAR CONSTANT
   /// Buffered command
   BUFFER_CMD           : UDINT := 2;
   /// Empty command entry
-  EMPTY_CMD_ENTRY      : AxesGroupAcyclicAcrEntryCmdBuffer;
+  EMPTY_CMD_ENTRY      : AxesGroupAcyclicAcrEntryCmdBuffer := (State := BufferStateCmd.EMPTY);
   /// bitmask to mask the LifeSign out of the halfbyte
   LIFESIGN_BIT_MASK    : BYTE := 2#000_1111;   
   /// Primary sequence
@@ -454,13 +454,13 @@ END_VAR
     Telegram.PlcToRob.CyclicOptional.CartesianPosition.Rx          :=                  AxesGroup.CyclicOptional.PlcToRob.CartesianPosition.Rx;  
     Telegram.PlcToRob.CyclicOptional.CartesianPosition.Ry          :=                  AxesGroup.CyclicOptional.PlcToRob.CartesianPosition.Ry;  
     Telegram.PlcToRob.CyclicOptional.CartesianPosition.Rz          :=                  AxesGroup.CyclicOptional.PlcToRob.CartesianPosition.Rz;
-    Telegram.PlcToRob.CyclicOptional.CartesianPosition.Turns_J2_J1 := CombineHalfBytes(AxesGroup.CyclicOptional.PlcToRob.CartesianPosition.TurnNumber.J2Turns, 
+    Telegram.PlcToRob.CyclicOptional.CartesianPosition.Turns_J2_J1 := CombineHalfSints(AxesGroup.CyclicOptional.PlcToRob.CartesianPosition.TurnNumber.J2Turns, 
                                                                                        AxesGroup.CyclicOptional.PlcToRob.CartesianPosition.TurnNumber.J1Turns);
-    Telegram.PlcToRob.CyclicOptional.CartesianPosition.Turns_J4_J3 := CombineHalfBytes(AxesGroup.CyclicOptional.PlcToRob.CartesianPosition.TurnNumber.J4Turns, 
+    Telegram.PlcToRob.CyclicOptional.CartesianPosition.Turns_J4_J3 := CombineHalfSints(AxesGroup.CyclicOptional.PlcToRob.CartesianPosition.TurnNumber.J4Turns, 
                                                                                        AxesGroup.CyclicOptional.PlcToRob.CartesianPosition.TurnNumber.J3Turns);
-    Telegram.PlcToRob.CyclicOptional.CartesianPosition.Turns_J6_J5 := CombineHalfBytes(AxesGroup.CyclicOptional.PlcToRob.CartesianPosition.TurnNumber.J6Turns, 
+    Telegram.PlcToRob.CyclicOptional.CartesianPosition.Turns_J6_J5 := CombineHalfSints(AxesGroup.CyclicOptional.PlcToRob.CartesianPosition.TurnNumber.J6Turns, 
                                                                                        AxesGroup.CyclicOptional.PlcToRob.CartesianPosition.TurnNumber.J5Turns);
-    Telegram.PlcToRob.CyclicOptional.CartesianPosition.Turns_E1    :=                  AxesGroup.CyclicOptional.PlcToRob.CartesianPosition.TurnNumber.E1Turns;
+    Telegram.PlcToRob.CyclicOptional.CartesianPosition.Turns_E1    := SINT_TO_BYTE    (AxesGroup.CyclicOptional.PlcToRob.CartesianPosition.TurnNumber.E1Turns);
   END_IF  
   // }}}
     
@@ -600,6 +600,16 @@ END_VAR
                                   Para3       := UINT_TO_STRING            (Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.CmdID),
                                   Para4       := CMD_TYPE_TO_STRING        (Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.CmdType),
                                   Para5       := FRAGMENT_ACTION_TO_STRING (Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.FragmentAction)); 
+  
+          // Create log entry
+          CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                                  MessageType := MessageType.CMD,
+                                  Severity    := Severity.DEBUG,
+                                  MessageCode := 0,
+                                  MessageText := 'ExecMode = [{1}]' ,
+                                  Para1       := EXECUTION_MODE_TO_STRING(Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.ExecMode));
+  
+  
         END_IF
       END_FOR
     END_IF
@@ -1250,7 +1260,10 @@ VAR_IN_OUT
 END_VAR
 
   // Call active command register FB
-  AxesGroup.Acyclic.ActiveCommandRegister(SystemTime := SystemTime, ExternalLogger := AxesGroup.MessageLog.ExternalLogger, LogLevel := AxesGroup.MessageLog.LogLevel);
+  AxesGroup.Acyclic.ActiveCommandRegister(SystemTime     := SystemTime,
+                                          RegisterSize   := MIN( RobotLibraryParameter.ACTIVE_CMD_REGISTER_ENTRIES_MAX, AxesGroup.Parameter.Rob.Parameter.LengthACR),
+                                          ExternalLogger := AxesGroup.MessageLog.ExternalLogger, 
+                                          LogLevel       := AxesGroup.MessageLog.LogLevel);
 
 END_METHOD
 
@@ -1351,27 +1364,31 @@ END_VAR
   AxesGroup.Parameter.Plc.OptionalCyclic                      := ParCfg.Plc.OptionalCyclic; {warning 'ToDo: '}
   
   AxesGroup.Parameter.Rob.OptionalCyclic                      := ParCfg.Rob.OptionalCyclic; {warning 'ToDo'}
-  AxesGroup.Parameter.Rob.Parameter.LengthACR                 := ExchangeConfiguration.OutCmd.LengthACR;
-  AxesGroup.Parameter.Rob.Parameter.HighestToolIndex          := ExchangeConfiguration.OutCmd.HighestToolIndex;
-  AxesGroup.Parameter.Rob.Parameter.HighestFrameIndex         := ExchangeConfiguration.OutCmd.HighestFrameIndex;
-  AxesGroup.Parameter.Rob.Parameter.HighestLoadIndex          := ExchangeConfiguration.OutCmd.HighestLoadIndex;
-  AxesGroup.Parameter.Rob.Parameter.HighestWorkAreaIndex      := ExchangeConfiguration.OutCmd.HighestWorkAreaIndex;
-  AxesGroup.Parameter.Rob.Parameter.DataInSync                := ExchangeConfiguration.OutCmd.DataInSync;
-  AxesGroup.Parameter.Rob.Parameter.ChangeIndexTool           := ExchangeConfiguration.OutCmd.ChangeIndexTool;
-  AxesGroup.Parameter.Rob.Parameter.ChangeIndexFrame          := ExchangeConfiguration.OutCmd.ChangeIndexFrame;
-  AxesGroup.Parameter.Rob.Parameter.ChangeIndexLoad           := ExchangeConfiguration.OutCmd.ChangeIndexLoad;
-  AxesGroup.Parameter.Rob.Parameter.ChangeIndexWorkArea       := ExchangeConfiguration.OutCmd.ChangeIndexWorkArea;
-  AxesGroup.Parameter.Rob.Parameter.RAWorkingHours            := ExchangeConfiguration.OutCmd.RAWorkingHours;
-  AxesGroup.Parameter.Rob.Parameter.BrakeTestRequired         := ExchangeConfiguration.OutCmd.BrakeTestRequired;
-  AxesGroup.Parameter.Rob.Parameter.StepModeExactStopActive   := ExchangeConfiguration.OutCmd.StepModeExactStopActive;
-  AxesGroup.Parameter.Rob.Parameter.StepModeBlendingActive    := ExchangeConfiguration.OutCmd.StepModeBlendingActive;
-  AxesGroup.Parameter.Rob.Parameter.PathAccuracyMode          := ExchangeConfiguration.OutCmd.PathAccuracyMode;
-  AxesGroup.Parameter.Rob.Parameter.AvoidSingularity          := ExchangeConfiguration.OutCmd.AvoidSingularity;
-  AxesGroup.Parameter.Rob.Parameter.CollisionDetectionEnabled := ExchangeConfiguration.OutCmd.CollisionDetectionEnabled;
-  AxesGroup.Parameter.Rob.Parameter.AcceleratingSupported     := ExchangeConfiguration.OutCmd.AcceleratingSupported;
-  AxesGroup.Parameter.Rob.Parameter.DecceleratingSupported    := ExchangeConfiguration.OutCmd.DecceleratingSupported;
-  AxesGroup.Parameter.Rob.Parameter.ConstantVelocitySupported := ExchangeConfiguration.OutCmd.ConstantVelocitySupported;
-  AxesGroup.Parameter.Rob.Parameter.RCWorkingHours            := ExchangeConfiguration.OutCmd.RCWorkingHours;
+  
+  IF (ExchangeConfiguration.Enabled)
+  THEN  
+    AxesGroup.Parameter.Rob.Parameter.LengthACR                 := ExchangeConfiguration.OutCmd.LengthACR;
+    AxesGroup.Parameter.Rob.Parameter.HighestToolIndex          := ExchangeConfiguration.OutCmd.HighestToolIndex;
+    AxesGroup.Parameter.Rob.Parameter.HighestFrameIndex         := ExchangeConfiguration.OutCmd.HighestFrameIndex;
+    AxesGroup.Parameter.Rob.Parameter.HighestLoadIndex          := ExchangeConfiguration.OutCmd.HighestLoadIndex;
+    AxesGroup.Parameter.Rob.Parameter.HighestWorkAreaIndex      := ExchangeConfiguration.OutCmd.HighestWorkAreaIndex;
+    AxesGroup.Parameter.Rob.Parameter.DataInSync                := ExchangeConfiguration.OutCmd.DataInSync;
+    AxesGroup.Parameter.Rob.Parameter.ChangeIndexTool           := ExchangeConfiguration.OutCmd.ChangeIndexTool;
+    AxesGroup.Parameter.Rob.Parameter.ChangeIndexFrame          := ExchangeConfiguration.OutCmd.ChangeIndexFrame;
+    AxesGroup.Parameter.Rob.Parameter.ChangeIndexLoad           := ExchangeConfiguration.OutCmd.ChangeIndexLoad;
+    AxesGroup.Parameter.Rob.Parameter.ChangeIndexWorkArea       := ExchangeConfiguration.OutCmd.ChangeIndexWorkArea;
+    AxesGroup.Parameter.Rob.Parameter.RAWorkingHours            := ExchangeConfiguration.OutCmd.RAWorkingHours;
+    AxesGroup.Parameter.Rob.Parameter.BrakeTestRequired         := ExchangeConfiguration.OutCmd.BrakeTestRequired;
+    AxesGroup.Parameter.Rob.Parameter.StepModeExactStopActive   := ExchangeConfiguration.OutCmd.StepModeExactStopActive;
+    AxesGroup.Parameter.Rob.Parameter.StepModeBlendingActive    := ExchangeConfiguration.OutCmd.StepModeBlendingActive;
+    AxesGroup.Parameter.Rob.Parameter.PathAccuracyMode          := ExchangeConfiguration.OutCmd.PathAccuracyMode;
+    AxesGroup.Parameter.Rob.Parameter.AvoidSingularity          := ExchangeConfiguration.OutCmd.AvoidSingularity;
+    AxesGroup.Parameter.Rob.Parameter.CollisionDetectionEnabled := ExchangeConfiguration.OutCmd.CollisionDetectionEnabled;
+    AxesGroup.Parameter.Rob.Parameter.AcceleratingSupported     := ExchangeConfiguration.OutCmd.AcceleratingSupported;
+    AxesGroup.Parameter.Rob.Parameter.DecceleratingSupported    := ExchangeConfiguration.OutCmd.DecceleratingSupported;
+    AxesGroup.Parameter.Rob.Parameter.ConstantVelocitySupported := ExchangeConfiguration.OutCmd.ConstantVelocitySupported;
+    AxesGroup.Parameter.Rob.Parameter.RCWorkingHours            := ExchangeConfiguration.OutCmd.RCWorkingHours;
+  END_IF
 
 END_METHOD
 
@@ -1661,8 +1678,11 @@ END_VAR
   END_IF
   
   
-  // Set flag for initialization
-  Initialized := ( AxesGroup.Cyclic.RobToPlc.TelegramState = TelegramState.INITIALIZED);
+  // Reset flag for initialization
+  IF ( AxesGroup.Cyclic.RobToPlc.TelegramState <> TelegramState.INITIALIZED)
+  THEN
+    Initialized := FALSE; 
+  END_IF
   
   
   SystemLog  := AxesGroup.MessageLog.SystemLogs;
@@ -2095,6 +2115,8 @@ END_VAR
   
     12:  // Reset busy flag
          Busy := FALSE;
+         // set initialized flag
+         Initialized := TRUE;
          
          // Wait for task disable
          IF ( NOT Enable)

@@ -25,13 +25,13 @@ STRUCT
   /// Index of target tool
   /// • 0: Flange (default)
   /// • 1..254: Tool frames
-  ToolNo             : USINT;
+  ToolNo        : USINT;
   /// Index of target frame
   /// • 0: WCS (default)
   /// • 1..254: User frames
-  FrameNo            : USINT;
-  /// Calculated cartesian position
-  CartesianPosition  : RobotCartesianPosition;
+  FrameNo        : USINT;
+  /// Calculated joint position
+  JointPosition  : RobotJointPosition;
 END_STRUCT
 END_TYPE
 

@@ -93,7 +93,7 @@ END_VAR
     // inc parameter sequence
    _command.ParSeq := _command.ParSeq + 1;
     // update command data  
-    CommandData := CreateCommandPayload(); // ( Access via reference to rCommandFB in ACR )
+    CommandData := CreateCommandPayload(AxesGroup := AxesGroup); // ( Access via reference to rCommandFB in ACR )
     // notify active command register 
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
   END_IF
@@ -101,6 +101,10 @@ END_VAR
 END_METHOD
 
 METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
 // Table 6-626: Sent CMD payload (PLC to RC) of "WriteSystemVariable"
 // --------------------------
 // Header
@@ -218,7 +222,7 @@ END_VAR
   // copy command data to header
   _cmdHeader := _command;
   // call base implementation to copy header to payload buffer
-  CreateCommandPayload := SUPER^.CreateCommandPayload();
+  CreateCommandPayload := SUPER^.CreateCommandPayload(AxesGroup := AxesGroup);
   
   // add command.EmitterID[0]
   CreateCommandPayload.AddSint(_command.EmitterID[0]);
@@ -251,52 +255,235 @@ END_VAR
     CreateCommandPayload.AddUsint(_command.DataType[_idx]);
   END_FOR
   
-  FOR _idx := 0 TO 7 
+  FOR _idx := 0 TO 3 
   DO
     // add command.Data_0[_idx]
     CreateCommandPayload.AddUsint(_command.Data_0[_idx]);
   END_FOR
   
-  FOR _idx := 0 TO 7 
+  FOR _idx := 0 TO 3 
   DO
     // add command.Data_1[_idx]
     CreateCommandPayload.AddUsint(_command.Data_1[_idx]);
   END_FOR
   
-  FOR _idx := 0 TO 7 
+  FOR _idx := 0 TO 3 
   DO
     // add command.Data_2[_idx]
     CreateCommandPayload.AddUsint(_command.Data_2[_idx]);
   END_FOR
   
-  FOR _idx := 0 TO 7 
+  FOR _idx := 0 TO 3 
   DO
     // add command.Data_3[_idx]
     CreateCommandPayload.AddUsint(_command.Data_3[_idx]);
   END_FOR
   
-  FOR _idx := 0 TO 7 
+  FOR _idx := 0 TO 3 
   DO
     // add command.Data_4[_idx]
     CreateCommandPayload.AddUsint(_command.Data_4[_idx]);
   END_FOR
   
-  FOR _idx := 0 TO 7 
+  FOR _idx := 0 TO 3 
   DO
     // add command.Data_5[_idx]
     CreateCommandPayload.AddUsint(_command.Data_5[_idx]);
   END_FOR
   
-  FOR _idx := 0 TO 7 
+  FOR _idx := 0 TO 3 
   DO
     // add command.Data_6[_idx]
     CreateCommandPayload.AddUsint(_command.Data_6[_idx]);
   END_FOR
   
-  FOR _idx := 0 TO 7 
+  FOR _idx := 0 TO 3 
   DO
     // add command.Data_7[_idx]
     CreateCommandPayload.AddUsint(_command.Data_7[_idx]);
+  END_FOR
+  
+  // Create logging
+  CreateCommandPayloadLog(AxesGroup := AxesGroup);
+
+END_METHOD
+
+METHOD INTERNAL CreateCommandPayloadLog
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+VAR 
+  /// internal index for loops
+ _idx : DINT;
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'CreateCommandPayload with the following parameter(s) :');
+    
+  // Create log entry for EmitterID[x]
+  FOR _idx := 0 TO 3
+  DO
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.EmitterID[{2}] = {1}',
+                            Para1       :=  SINT_TO_STRING(_command.EmitterID[_idx]),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  END_FOR
+  
+  // Create log entry for ListenerID
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.ListenerID = {1}',
+                          Para1       :=  SINT_TO_STRING(_command.ListenerID));
+                          
+  // Create log entry for Reserve
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.Reserve = {1}',
+                          Para1       :=  BYTE_TO_STRING(_command.Reserve));
+                         
+                         
+  // Create log entry for ParameterID[_idx]
+  FOR _idx := 0 TO 7
+  DO
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.ParameterID[{2}] = {1}',
+                            Para1       :=  UINT_TO_STRING(_command.ParameterID[_idx]),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  END_FOR
+  
+  // Create log entry for SubParameterID[_idx]
+  FOR _idx := 0 TO 7
+  DO
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.SubParameterID[{2}] = {1}',
+                            Para1       :=  USINT_TO_STRING(_command.SubParameterID[_idx]),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  END_FOR
+                         
+  // Create log entry for DataType[_idx]
+  FOR _idx := 0 TO 7
+  DO
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.DataType[{2}] = {1}',
+                            Para1       :=  USINT_TO_STRING(_command.DataType[_idx]),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  END_FOR
+  
+  // Create log entry for Data_0[_idx]
+  FOR _idx := 0 TO 3
+  DO
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.Data_0[{2}] = {1}',
+                            Para1       :=  BYTE_TO_STRING(_command.Data_0[_idx]),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  END_FOR
+  
+  // Create log entry for Data_1[_idx]
+  FOR _idx := 0 TO 3
+  DO
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.Data_1[{2}] = {1}',
+                            Para1       :=  BYTE_TO_STRING(_command.Data_1[_idx]),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  END_FOR
+  
+  // Create log entry for Data_2[_idx]
+  FOR _idx := 0 TO 3
+  DO
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.Data_2[{2}] = {1}',
+                            Para1       :=  BYTE_TO_STRING(_command.Data_2[_idx]),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  END_FOR
+  
+  // Create log entry for Data_3[_idx]
+  FOR _idx := 0 TO 3
+  DO
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.Data_3[{2}] = {1}',
+                            Para1       :=  BYTE_TO_STRING(_command.Data_3[_idx]),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  END_FOR
+  
+  // Create log entry for Data_4[_idx]
+  FOR _idx := 0 TO 3
+  DO
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.Data_4[{2}] = {1}',
+                            Para1       :=  BYTE_TO_STRING(_command.Data_4[_idx]),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  END_FOR
+  
+  // Create log entry for Data_5[_idx]
+  FOR _idx := 0 TO 3
+  DO
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.Data_5[{2}] = {1}',
+                            Para1       :=  BYTE_TO_STRING(_command.Data_5[_idx]),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  END_FOR
+  
+  // Create log entry for Data_6[_idx]
+  FOR _idx := 0 TO 3
+  DO
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.Data_6[{2}] = {1}',
+                            Para1       :=  BYTE_TO_STRING(_command.Data_6[_idx]),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  END_FOR
+  
+  // Create log entry for Data_7[_idx]
+  FOR _idx := 0 TO 3
+  DO
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.Data_7[{2}] = {1}',
+                            Para1       :=  BYTE_TO_STRING(_command.Data_7[_idx]),
+                            Para2       :=  DINT_TO_STRING(_idx));
   END_FOR
 
 END_METHOD
@@ -341,7 +528,7 @@ END_VAR
              // init parameter sequence
             _command.ParSeq := 1;
              // create command data
-             CommandData := CreateCommandPayload();
+             CommandData := CreateCommandPayload(AxesGroup := AxesGroup);
              // Add command to active command register
             _uniqueID := AxesGroup.Acyclic.ActiveCommandRegister.AddCmd( pCommandFB := ADR(THIS^ ));     
              // set timeout
@@ -405,6 +592,12 @@ END_VAR
 END_METHOD
 
 METHOD INTERNAL ParseResponsePayload : DINT
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
 // Table 6-627: Received CMD payload (RC to PLC) of "WriteSystemVariable"
 // --------------------------
 // Header
@@ -421,13 +614,9 @@ METHOD INTERNAL ParseResponsePayload : DINT
 // Byte 06 : INT        - OriginID HW HB
 // Byte 07 :            - OriginID HW LB
 // Byte 08 : BOOL       - RestartRequested
-VAR_INPUT
-  /// Response data
-  ResponseData : RobotLibraryRecvDataFB;
-END_VAR
 
   // call base implementation to parse the header from payload buffer
-  ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData);
+  ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
   
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;

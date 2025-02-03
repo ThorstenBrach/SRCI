@@ -83,7 +83,9 @@ END_VAR
     // update tool number 
     AxesGroup.Cyclic.PlcToRob.ToolNo  := _parCmd.ToolNo;
     // update frame number 
-    AxesGroup.Cyclic.PlcToRob.FrameNo := _parCmd.FrameNo;  
+    AxesGroup.Cyclic.PlcToRob.FrameNo := _parCmd.FrameNo;
+    // Create logging
+    CreateCommandParameterLog(AxesGroup := AxesGroup);
   END_IF
 
 END_METHOD
@@ -104,6 +106,69 @@ END_VAR
   THEN
     CheckParameterValid := FALSE;
   END_IF
+
+END_METHOD
+
+METHOD INTERNAL CreateCommandParameterLog
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Update position with the following parameter(s) :');
+                          
+  // Create log entry for _parCmd.ReadCartesianPosition
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := '_parCmd.ReadCartesianPosition = {1}',
+                          Para1       :=  BOOL_TO_STRING(_parCmd.ReadCartesianPosition));
+  
+  // Create log entry for _parCmd.ReadCartesianPositionExt
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := '_parCmd.ReadCartesianPositionExt = {1}',
+                          Para1       :=  BOOL_TO_STRING(_parCmd.ReadCartesianPositionExt));
+  
+  // Create log entry for _parCmd.ToolNo
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := '_parCmd.ToolNo = {1}',
+                          Para1       :=  INT_TO_STRING(_parCmd.ToolNo));
+  
+  // Create log entry for _parCmd.FrameNo
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := '_parCmd.FrameNo = {1}',
+                          Para1       :=  INT_TO_STRING(_parCmd.FrameNo));
+  
+  // Create log entry for _parCmd.ReadJointPosition
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := '_parCmd.ReadJointPosition = {1}',
+                          Para1       :=  BOOL_TO_STRING(_parCmd.ReadJointPosition));
+  
+  // Create log entry for _parCmd.ReadJointPositionExt
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := '_parCmd.ReadJointPositionExt = {1}',
+                          Para1       :=  BOOL_TO_STRING(_parCmd.ReadJointPositionExt));
 
 END_METHOD
 
@@ -148,7 +213,9 @@ END_VAR
             _parCmd := ParCmd;
              // set parameter
              AxesGroup.Cyclic.PlcToRob.ToolNo  := _parCmd.ToolNo;
-             AxesGroup.Cyclic.PlcToRob.FrameNo := _parCmd.FrameNo;     
+             AxesGroup.Cyclic.PlcToRob.FrameNo := _parCmd.FrameNo;   
+             // Create logging
+             CreateCommandParameterLog(AxesGroup := AxesGroup);  
              // set timeout
              SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
              // inc step counter

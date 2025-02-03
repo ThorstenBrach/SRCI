@@ -30,8 +30,8 @@ STRUCT
   /// • 0: WCS (default)
   /// • 1..254: User frames
   FrameNo            : USINT;
-  /// Calculated cartesian position
-  CartesianPosition  : RobotCartesianPosition;
+  /// Calculate joint position
+  JointPosition      : RobotJointPosition;
 END_STRUCT
 END_TYPE
 

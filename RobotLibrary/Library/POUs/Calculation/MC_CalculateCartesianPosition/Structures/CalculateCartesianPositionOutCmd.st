@@ -25,11 +25,11 @@ STRUCT
   /// Index of target tool
   /// • 0: Flange (default)
   /// • 1..254: Tool frames
-  TargetToolNoReturn : USINT;
+  TargetToolNoReturn       : USINT;
   /// Index of target frame
   /// •      0: WCS
   /// • 1..254: User frames
-  TargetFrameNoReturn: USINT;
+  TargetFrameNoReturn      : USINT;
   /// Calculated cartesian position
   CartesianPositionReturn  : RobotCartesianPosition;
 END_STRUCT

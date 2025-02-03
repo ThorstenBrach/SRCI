@@ -25,7 +25,9 @@ STRUCT
   /// User defined robot name
   RobotName                 : STRING(20);
   /// Returns a metric of how many CMDs it can receive and manage at the same time
-  LengthACR                 : UINT;
+  /// must be initialized with a value > 3, because during the interface initialization at least 3 commands are executed
+  /// after ReadRobotData command the value is set to the correct ARC length wich is supported by the RC. 
+  LengthACR                 : UINT := 50;  
   /// Highest index of available tools on the RC.
   HighestToolIndex          : USINT;
   /// Highest index of available frames on the RC.

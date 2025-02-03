@@ -85,7 +85,7 @@ END_VAR
     // inc parameter sequence
    _command.ParSeq := _command.ParSeq + 1;
     // update command data  
-    CommandData := CreateCommandPayload(); // ( Access via reference to rCommandFB in ACR )
+    CommandData := CreateCommandPayload(AxesGroup := AxesGroup); // ( Access via reference to rCommandFB in ACR )
     // notify active command register 
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
   END_IF
@@ -93,6 +93,10 @@ END_VAR
 END_METHOD
 
 METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
 // Table 6-205: Sent CMD payload (PLC to RC) of "WriteWorkArea"
 // --------------------------
 // Header
@@ -270,7 +274,7 @@ METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
   // copy command data to header
   _cmdHeader := _command;
   // call base implementation to copy header to payload buffer
-  CreateCommandPayload := SUPER^.CreateCommandPayload();
+  CreateCommandPayload := SUPER^.CreateCommandPayload(AxesGroup := AxesGroup);
   
   // add command.WorkAreaNo
   CreateCommandPayload.AddUint(_command.WorkAreaNo);
@@ -362,6 +366,376 @@ METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
   CreateCommandPayload.AddReal(_command.WorkAreaData.E6Limit.UpperLimit);
   // add command.DataChanged
   CreateCommandPayload.AddBool(_command.DataChanged);
+  
+  // Create logging
+  CreateCommandPayloadLog(AxesGroup := AxesGroup);
+
+END_METHOD
+
+METHOD INTERNAL CreateCommandPayloadLog
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'CreateCommandPayload with the following parameter(s) :');
+                         
+  // Create log entry for WorkAreaNo
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaNo = {1}',
+                          Para1       :=  UINT_TO_STRING(_command.WorkAreaNo));
+  
+  // Create log entry for WorkAreaData.Timestamp.IEC_DATE
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.Timestamp.IEC_DATE = {1}',
+                          Para1       :=  IEC_DATE_TO_STRING(_command.WorkAreaData.Timestamp.IEC_DATE));
+  
+  // Create log entry for WorkAreaData.Timestamp.IEC_DATE
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.Timestamp.IEC_TIME = {1}',
+                          Para1       :=  IEC_TIME_TO_STRING(_command.WorkAreaData.Timestamp.IEC_TIME));
+  
+  // Create log entry for WorkAreaData.AreaType
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.AreaType = {1}',
+                          Para1       :=  AREA_TYPE_TO_STRING(_command.WorkAreaData.AreaType));
+  
+  // Create log entry for WorkAreaData.AreaMode
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.AreaMode = {1}',
+                          Para1       :=  BOOL_TO_STRING(_command.WorkAreaData.AreaMode));
+  
+  // Create log entry for WorkAreaData.ReactionMode
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.ReactionMode = {1}',
+                          Para1       := WORK_AREA_REACTIONMODE_TO_STRING(_command.WorkAreaData.ReactionMode));
+  
+  // Create log entry for WorkAreaData.ActiveModification
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.ActiveModification = {1}',
+                          Para1       := BOOL_TO_STRING(_command.WorkAreaData.ActiveModification));
+  
+  // Create log entry for WorkAreaData.DefinitionMode
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.DefinitionMode = {1}',
+                          Para1       := DEFINITION_MODE_TO_STRING(_command.WorkAreaData.DefinitionMode));
+  
+  // Create log entry for WorkAreaData.FrameNo
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.FrameNo = {1}',
+                          Para1       := USINT_TO_STRING(_command.WorkAreaData.FrameNo));
+  
+  // Create log entry for WorkAreaData.ZeroPointX
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.ZeroPointX = {1}',
+                          Para1       := REAL_TO_STRING(_command.WorkAreaData.ZeroPointX));
+  
+  // Create log entry for WorkAreaData.ZeroPointY
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.ZeroPointY = {1}',
+                          Para1       := REAL_TO_STRING(_command.WorkAreaData.ZeroPointY));
+  
+  // Create log entry for WorkAreaData.ZeroPointZ
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.ZeroPointZ = {1}',
+                          Para1       := REAL_TO_STRING(_command.WorkAreaData.ZeroPointZ));
+  
+  // Create log entry for WorkAreaData.X.LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.X.LowerLimit = {1}',
+                          Para1       := REAL_TO_STRING(_command.WorkAreaData.X.LowerLimit));
+  
+  // Create log entry for WorkAreaData.X.UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.X.UpperLimit = {1}',
+                          Para1       := REAL_TO_STRING(_command.WorkAreaData.X.UpperLimit));
+  
+  // Create log entry for WorkAreaData.Y.LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.Y.LowerLimit = {1}',
+                          Para1       := REAL_TO_STRING(_command.WorkAreaData.Y.LowerLimit));
+  
+  // Create log entry for WorkAreaData.Y.UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.Y.UpperLimit = {1}',
+                          Para1       := REAL_TO_STRING(_command.WorkAreaData.Y.UpperLimit));
+  
+  // Create log entry for WorkAreaData.Z.LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.Z.LowerLimit = {1}',
+                          Para1       := REAL_TO_STRING(_command.WorkAreaData.Z.LowerLimit));
+  
+  // Create log entry for WorkAreaData.Z.UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.Z.UpperLimit = {1}',
+                          Para1       := REAL_TO_STRING(_command.WorkAreaData.Z.UpperLimit));
+  
+  // Create log entry for WorkAreaData.Radius
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.Radius = {1}',
+                          Para1       := REAL_TO_STRING(_command.WorkAreaData.Radius));
+  
+  // Create log entry for WorkAreaData.J1Limit.LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.J1Limit.LowerLimit = {1}',
+                          Para1       := REAL_TO_STRING(_command.WorkAreaData.J1Limit.LowerLimit));
+  
+  // Create log entry for WorkAreaData.J2Limit.LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.J2Limit.LowerLimit = {1}',
+                          Para1       := REAL_TO_STRING(_command.WorkAreaData.J2Limit.LowerLimit));
+  
+  // Create log entry for WorkAreaData.J3Limit.LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.J3Limit.LowerLimit = {1}',
+                          Para1       := REAL_TO_STRING(_command.WorkAreaData.J3Limit.LowerLimit));
+  
+  // Create log entry for WorkAreaData.J4Limit.LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.J4Limit.LowerLimit = {1}',
+                          Para1       := REAL_TO_STRING(_command.WorkAreaData.J4Limit.LowerLimit));
+  
+  // Create log entry for WorkAreaData.J5Limit.LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.J5Limit.LowerLimit = {1}',
+                          Para1       := REAL_TO_STRING(_command.WorkAreaData.J5Limit.LowerLimit));
+  
+  // Create log entry for WorkAreaData.J6Limit.LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.J6Limit.LowerLimit = {1}',
+                          Para1       := REAL_TO_STRING(_command.WorkAreaData.J6Limit.LowerLimit));
+  
+  // Create log entry for WorkAreaData.E1Limit.LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.E1Limit.LowerLimit = {1}',
+                          Para1       := REAL_TO_STRING(_command.WorkAreaData.E1Limit.LowerLimit));
+  
+  // Create log entry for WorkAreaData.J1Limit.UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.J1Limit.UpperLimit = {1}',
+                          Para1       := REAL_TO_STRING(_command.WorkAreaData.J1Limit.UpperLimit));
+  
+  // Create log entry for WorkAreaData.J2Limit.UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.J2Limit.UpperLimit = {1}',
+                          Para1       := REAL_TO_STRING(_command.WorkAreaData.J2Limit.UpperLimit));
+  
+  // Create log entry for WorkAreaData.J3Limit.UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.J3Limit.UpperLimit = {1}',
+                          Para1       := REAL_TO_STRING(_command.WorkAreaData.J3Limit.UpperLimit));
+  
+  // Create log entry for WorkAreaData.J4Limit.UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.J4Limit.UpperLimit = {1}',
+                          Para1       := REAL_TO_STRING(_command.WorkAreaData.J4Limit.UpperLimit));
+  
+  // Create log entry for WorkAreaData.J5Limit.UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.J5Limit.UpperLimit = {1}',
+                          Para1       := REAL_TO_STRING(_command.WorkAreaData.J5Limit.UpperLimit));
+  
+  // Create log entry for WorkAreaData.J6Limit.UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.J6Limit.UpperLimit = {1}',
+                          Para1       := REAL_TO_STRING(_command.WorkAreaData.J6Limit.UpperLimit));
+  
+  // Create log entry for WorkAreaData.E1Limit.UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.E1Limit.UpperLimit = {1}',
+                          Para1       := REAL_TO_STRING(_command.WorkAreaData.E1Limit.UpperLimit));
+  
+  // Create log entry for WorkAreaData.E2Limit.LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.E2Limit.LowerLimit = {1}',
+                          Para1       := REAL_TO_STRING(_command.WorkAreaData.E2Limit.LowerLimit));
+  
+  // Create log entry for WorkAreaData.E3Limit.LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.E3Limit.LowerLimit = {1}',
+                          Para1       := REAL_TO_STRING(_command.WorkAreaData.E3Limit.LowerLimit));
+  
+  // Create log entry for WorkAreaData.E4Limit.LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.E4Limit.LowerLimit = {1}',
+                          Para1       := REAL_TO_STRING(_command.WorkAreaData.E4Limit.LowerLimit));
+  
+  // Create log entry for WorkAreaData.E5Limit.LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.E5Limit.LowerLimit = {1}',
+                          Para1       := REAL_TO_STRING(_command.WorkAreaData.E5Limit.LowerLimit));
+  
+  // Create log entry for WorkAreaData.E6Limit.LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.E6Limit.LowerLimit = {1}',
+                          Para1       := REAL_TO_STRING(_command.WorkAreaData.E6Limit.LowerLimit));
+  
+  // Create log entry for WorkAreaData.E2Limit.UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.E2Limit.UpperLimit = {1}',
+                          Para1       := REAL_TO_STRING(_command.WorkAreaData.E2Limit.UpperLimit));
+  
+  // Create log entry for WorkAreaData.E3Limit.UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.E3Limit.UpperLimit = {1}',
+                          Para1       := REAL_TO_STRING(_command.WorkAreaData.E3Limit.UpperLimit));
+  
+  // Create log entry for WorkAreaData.E4Limit.UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.E4Limit.UpperLimit = {1}',
+                          Para1       := REAL_TO_STRING(_command.WorkAreaData.E4Limit.UpperLimit));
+  
+  // Create log entry for WorkAreaData.E5Limit.UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.E5Limit.UpperLimit = {1}',
+                          Para1       := REAL_TO_STRING(_command.WorkAreaData.E5Limit.UpperLimit));
+  
+  // Create log entry for WorkAreaData.E6Limit.UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.WorkAreaData.E6Limit.UpperLimit = {1}',
+                          Para1       := REAL_TO_STRING(_command.WorkAreaData.E6Limit.UpperLimit));
+  
+  // Create log entry for DataChanged
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.DataChanged = {1}',
+                          Para1       := BOOL_TO_STRING(_command.DataChanged));
 
 END_METHOD
 
@@ -405,7 +779,7 @@ END_VAR
              // init parameter sequence
             _command.ParSeq := 1;
              // create command data
-             CommandData := CreateCommandPayload();
+             CommandData := CreateCommandPayload(AxesGroup := AxesGroup);
              // Add command to active command register
             _uniqueID := AxesGroup.Acyclic.ActiveCommandRegister.AddCmd( pCommandFB := ADR(THIS^ ));     
              // set timeout
@@ -462,6 +836,12 @@ END_VAR
 END_METHOD
 
 METHOD INTERNAL ParseResponsePayload : DINT
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
 // Table 6-206: Received CMD payload (RC to PLC) of "WriteWorkArea"
 // --------------------------
 // Header
@@ -473,13 +853,9 @@ METHOD INTERNAL ParseResponsePayload : DINT
 // --------------------------
 // Datablock
 // --------------------------
-VAR_INPUT
-  /// Response data
-  ResponseData : RobotLibraryRecvDataFB;
-END_VAR
 
   // call base implementation to parse the header from payload buffer
-  ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData);
+  ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
   
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;

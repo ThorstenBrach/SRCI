@@ -27,16 +27,16 @@ END_VAR
 
   CASE Value
   OF
-    CmdMessageState.EMPTY               : CMD_MESSAGE_STATE_TO_STRING := StrReplace('EMPTY ({0})'              ,'{0}', USINT_TO_STRING(CmdMessageState.EMPTY));
-    CmdMessageState.CREATED             : CMD_MESSAGE_STATE_TO_STRING := StrReplace('CREATED ({0})'            ,'{0}', USINT_TO_STRING(CmdMessageState.CREATED));
-    CmdMessageState.BUFFERED            : CMD_MESSAGE_STATE_TO_STRING := StrReplace('BUFFERED ({0})'           ,'{0}', USINT_TO_STRING(CmdMessageState.BUFFERED));
-    CmdMessageState.BUFFERED_IN_PLANNER : CMD_MESSAGE_STATE_TO_STRING := StrReplace('BUFFERED_IN_PLANNER ({0})','{0}', USINT_TO_STRING(CmdMessageState.BUFFERED_IN_PLANNER));
-    CmdMessageState.ACTIVE              : CMD_MESSAGE_STATE_TO_STRING := StrReplace('ACTIVE ({0})'             ,'{0}', USINT_TO_STRING(CmdMessageState.ACTIVE));
-    CmdMessageState.INTERRUPTED         : CMD_MESSAGE_STATE_TO_STRING := StrReplace('INTERRUPTED ({0})'        ,'{0}', USINT_TO_STRING(CmdMessageState.INTERRUPTED));
-    CmdMessageState.ABORT_REQUEST       : CMD_MESSAGE_STATE_TO_STRING := StrReplace('ABORT_REQUEST ({0})'      ,'{0}', USINT_TO_STRING(CmdMessageState.ABORT_REQUEST));
-    CmdMessageState.DONE                : CMD_MESSAGE_STATE_TO_STRING := StrReplace('DONE ({0})'               ,'{0}', USINT_TO_STRING(CmdMessageState.DONE));
-    CmdMessageState.ABORTED             : CMD_MESSAGE_STATE_TO_STRING := StrReplace('ABORTED ({0})'            ,'{0}', USINT_TO_STRING(CmdMessageState.ABORTED));
-    CmdMessageState.ERROR               : CMD_MESSAGE_STATE_TO_STRING := StrReplace('ERROR ({0})'              ,'{0}', USINT_TO_STRING(CmdMessageState.ERROR));
+    CmdMessageState.EMPTY               : CMD_MESSAGE_STATE_TO_STRING := StrReplace('EMPTY ({0})'              ,'{0}', USINT_TO_STRING(Value));
+    CmdMessageState.CREATED             : CMD_MESSAGE_STATE_TO_STRING := StrReplace('CREATED ({0})'            ,'{0}', USINT_TO_STRING(Value));
+    CmdMessageState.BUFFERED            : CMD_MESSAGE_STATE_TO_STRING := StrReplace('BUFFERED ({0})'           ,'{0}', USINT_TO_STRING(Value));
+    CmdMessageState.BUFFERED_IN_PLANNER : CMD_MESSAGE_STATE_TO_STRING := StrReplace('BUFFERED_IN_PLANNER ({0})','{0}', USINT_TO_STRING(Value));
+    CmdMessageState.ACTIVE              : CMD_MESSAGE_STATE_TO_STRING := StrReplace('ACTIVE ({0})'             ,'{0}', USINT_TO_STRING(Value));
+    CmdMessageState.INTERRUPTED         : CMD_MESSAGE_STATE_TO_STRING := StrReplace('INTERRUPTED ({0})'        ,'{0}', USINT_TO_STRING(Value));
+    CmdMessageState.ABORT_REQUEST       : CMD_MESSAGE_STATE_TO_STRING := StrReplace('ABORT_REQUEST ({0})'      ,'{0}', USINT_TO_STRING(Value));
+    CmdMessageState.DONE                : CMD_MESSAGE_STATE_TO_STRING := StrReplace('DONE ({0})'               ,'{0}', USINT_TO_STRING(Value));
+    CmdMessageState.ABORTED             : CMD_MESSAGE_STATE_TO_STRING := StrReplace('ABORTED ({0})'            ,'{0}', USINT_TO_STRING(Value));
+    CmdMessageState.ERROR               : CMD_MESSAGE_STATE_TO_STRING := StrReplace('ERROR ({0})'              ,'{0}', USINT_TO_STRING(Value));
   ELSE
     CMD_MESSAGE_STATE_TO_STRING := CONCAT('CmdMessageStateToString-Function: Error -> no parsing for value ', USINT_TO_STRING(Value));
   END_CASE

@@ -23,7 +23,7 @@
 TYPE TelegramRobToPlcCyclicOptionalSubProgramData :
 STRUCT
   /// Sub program data
-  Data : ARRAY [0..25] OF BYTE; {warning 'Add contant for DataMax'}
+  Data : ARRAY [0..25] OF BYTE; {warning 'Add constant for DataMax'}
 END_STRUCT
 END_TYPE
 

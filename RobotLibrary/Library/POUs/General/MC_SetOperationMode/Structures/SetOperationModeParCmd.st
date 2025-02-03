@@ -23,7 +23,7 @@
 TYPE SetOperationModeParCmd :
 STRUCT
   /// Limits for joints and external axes according to Table 6-180.
-  OperationMode           : OperationMode;
+  OperationMode : OperationMode;
 END_STRUCT
 END_TYPE
 

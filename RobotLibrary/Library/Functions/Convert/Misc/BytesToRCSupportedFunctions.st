@@ -3,7 +3,7 @@ FUNCTION BytesToRCSupportedFunctions : RCSupportedFunctions
 //  SRCI Robot Library                                                
 // ------------------------------------------------------------------------- 
 //                                                                           
-//  Object:      SwapBytes                                       
+//  Object:      BytesToRCSupportedFunctions                                       
 //  Author:      Thorsten Brach                                                
 //  Date:        2024-12-18
 //

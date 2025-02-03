@@ -38,10 +38,6 @@ STRUCT
   Reserve            : BYTE;
   /// Specifies the desired byte addresses that shall be read
   Index              : ARRAY[0..4] OF USINT;
-  /// Specifies which outputs may be written
-  OutputBitmask      : ARRAY[0..4] OF BYTE;
-  /// Array value of Digital Output
-  Values             : ARRAY[0..4] OF BYTE;
 END_STRUCT
 END_TYPE
 

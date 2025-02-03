@@ -85,7 +85,7 @@ END_VAR
     // inc parameter sequence
    _command.ParSeq := _command.ParSeq + 1;
     // update command data  
-    CommandData := CreateCommandPayload(); // ( Access via reference to rCommandFB in ACR )
+    CommandData := CreateCommandPayload(AxesGroup := AxesGroup); // ( Access via reference to rCommandFB in ACR )
     // notify active command register 
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
   END_IF
@@ -93,6 +93,10 @@ END_VAR
 END_METHOD
 
 METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
 // Table 6-267: Sent CMD payload (PLC to RC) of "GroupStop"
 // --------------------------
 // Header
@@ -113,7 +117,25 @@ METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
   // copy command data to header
   _cmdHeader := _command;
   // call base implementation to copy header to payload buffer
-  CreateCommandPayload := SUPER^.CreateCommandPayload();
+  CreateCommandPayload := SUPER^.CreateCommandPayload(AxesGroup := AxesGroup);
+  
+  // Create logging
+  CreateCommandPayloadLog(AxesGroup := AxesGroup);
+
+END_METHOD
+
+METHOD INTERNAL CreateCommandPayloadLog
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'CreateCommandPayload without additional parameter(s)');
 
 END_METHOD
 
@@ -159,7 +181,7 @@ END_VAR
              // init parameter sequence
             _command.ParSeq := 1;
              // create command data
-             CommandData := CreateCommandPayload();
+             CommandData := CreateCommandPayload(AxesGroup := AxesGroup);
              // Add command to active command register
             _uniqueID := AxesGroup.Acyclic.ActiveCommandRegister.AddCmd( pCommandFB := ADR(THIS^ ));     
              // set timeout
@@ -180,12 +202,12 @@ END_VAR
            OF
              CmdMessageState.BUFFERED : CommandBuffered := TRUE;
              CmdMessageState.DONE     : Done            := TRUE;
+                                       // dec fast stop counter
+                                       AxesGroup.Cyclic.PlcToRob.FastStop 
+                                        := AxesGroup.Cyclic.PlcToRob.FastStop -1;
+  
              CmdMessageState.ERROR    : Error           := TRUE;
-             
-               // dec fast stop counter
-               AxesGroup.Cyclic.PlcToRob.FastStop 
-                 := AxesGroup.Cyclic.PlcToRob.FastStop -1;
-                
+               
            END_CASE
                   
            // Done, Aborted or Error ?
@@ -221,6 +243,12 @@ END_VAR
 END_METHOD
 
 METHOD INTERNAL ParseResponsePayload : DINT
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
 // Table 6-268: Received CMD payload (RC to PLC) of "GroupStop"
 // --------------------------
 // Header
@@ -229,13 +257,9 @@ METHOD INTERNAL ParseResponsePayload : DINT
 // Byte 01 : SINT  - AlarmMessageSeverity    
 // Byte 02 : UINT  - AlarmMessageCode HB
 // Byte 03 :       - AlarmMessageCode LB
-VAR_INPUT
-  /// Response data
-  ResponseData : RobotLibraryRecvDataFB;
-END_VAR
 
   // call base implementation to parse the header from payload buffer
-  ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData);
+  ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
   
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;

@@ -83,7 +83,7 @@ END_VAR
     // inc parameter sequence
    _command.ParSeq := _command.ParSeq + 1;
     // update command data  
-    CommandData := CreateCommandPayload(); // ( Access via reference to rCommandFB in ACR )
+    CommandData := CreateCommandPayload(AxesGroup := AxesGroup); // ( Access via reference to rCommandFB in ACR )
     // notify active command register 
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
   END_IF
@@ -91,6 +91,10 @@ END_VAR
 END_METHOD
 
 METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
 // Table 6-754: Sent CMD payload (PLC to RC) of "CreateSpline"
 // --------------------------
 // Header
@@ -197,7 +201,7 @@ END_VAR
   // copy command data to header
   _cmdHeader := _command;
   // call base implementation to copy header to payload buffer
-  CreateCommandPayload := SUPER^.CreateCommandPayload();
+  CreateCommandPayload := SUPER^.CreateCommandPayload(AxesGroup := AxesGroup);
   
   
   // add command.Mode
@@ -250,6 +254,269 @@ END_VAR
     // add command.SplineData[_idx].Position.E6
     CreateCommandPayload.AddReal(_command.SplineData[_idx].Position.E6);
   END_FOR
+  
+  // Create logging
+  CreateCommandPayloadLog(AxesGroup := AxesGroup);
+
+END_METHOD
+
+METHOD INTERNAL CreateCommandPayloadLog
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+VAR 
+  /// internal index for loops
+ _idx : DINT;
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'CreateCommandPayload with the following parameter(s) :');
+  
+  // Create log entry for Mode
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.Mode = {1}',
+                          Para1       :=  SPLINE_MODE_TO_STRING(_command.Mode));
+  
+  // Create log entry for SplineID
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.SplineID = {1}',
+                          Para1       :=  SINT_TO_STRING(_command.SplineID));
+  
+  // Create log entry for SplineData[x]
+  FOR _idx := 1 TO RobotLibraryParameter.SPLINE_DATA_MAX
+  DO
+    // Create log entry for VelocityRate
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.SplineData[{2}].VelocityRate = {1}',
+                            Para1       :=  UINT_TO_STRING(_command.SplineData[_idx].VelocityRate),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  
+    // Create log entry for AccelerationRate
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.SplineData[{2}].AccelerationRate = {1}',
+                            Para1       :=  UINT_TO_STRING(_command.SplineData[_idx].AccelerationRate),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  
+    // Create log entry for DecelerationRate
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.SplineData[{2}].DecelerationRate = {1}',
+                            Para1       :=  UINT_TO_STRING(_command.SplineData[_idx].DecelerationRate),
+                            Para2       :=  DINT_TO_STRING(_idx));
+                            
+    // Create log entry for JerkRate
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.SplineData[{2}].JerkRate = {1}',
+                            Para1       :=  UINT_TO_STRING(_command.SplineData[_idx].JerkRate),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  
+                            
+    // Create log entry for ToolNo
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.SplineData[{2}].ToolNo = {1}',
+                            Para1       :=  USINT_TO_STRING(_command.SplineData[_idx].ToolNo),
+                            Para2       :=  DINT_TO_STRING(_idx));
+    
+    // Create log entry for FrameNo
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.SplineData[{2}].FrameNo = {1}',
+                            Para1       :=  USINT_TO_STRING(_command.SplineData[_idx].FrameNo),
+                            Para2       :=  DINT_TO_STRING(_idx));
+                            
+    // Create log entry for Position.X
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.SplineData[{2}].Position.X = {1}',
+                            Para1       :=  REAL_TO_STRING(_command.SplineData[_idx].Position.X),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  
+    // Create log entry for Position.Y
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.SplineData[{2}].Position.Y = {1}',
+                            Para1       :=  REAL_TO_STRING(_command.SplineData[_idx].Position.Y),
+                            Para2       :=  DINT_TO_STRING(_idx));
+                            
+    // Create log entry for Position.Z
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.SplineData[{2}].Position.Z = {1}',
+                            Para1       :=  REAL_TO_STRING(_command.SplineData[_idx].Position.Z),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  
+    // Create log entry for Position.Rx
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.SplineData[{2}].Position.Rx = {1}',
+                            Para1       :=  REAL_TO_STRING(_command.SplineData[_idx].Position.Rx),
+                            Para2       :=  DINT_TO_STRING(_idx));
+                            
+    // Create log entry for Position.Ry
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.SplineData[{2}].Position.Ry = {1}',
+                            Para1       :=  REAL_TO_STRING(_command.SplineData[_idx].Position.Ry),
+                            Para2       :=  DINT_TO_STRING(_idx));
+                            
+    // Create log entry for Position.Rz
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.SplineData[{2}].Position.Rz = {1}',
+                            Para1       :=  REAL_TO_STRING(_command.SplineData[_idx].Position.Rz),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  
+    // Create log entry for Position.Config
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.SplineData[{2}].Position.Config = {1}',
+                            Para1       :=  ARM_CONFIG_TO_STRING(_command.SplineData[_idx].Position.Config),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  
+    // Create log entry for Position.TurnNumber[0]
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.SplineData[{2}].Position.TurnNumber[0] = {1}',
+                            Para1       :=  BYTE_TO_STRING(CombineHalfSints(HalfSintHi := _command.SplineData[_idx].Position.TurnNumber.J2Turns,
+                                                                            HalfSintLo := _command.SplineData[_idx].Position.TurnNumber.J1Turns)),                          
+                            Para2       :=  DINT_TO_STRING(_idx));
+  
+    // Create log entry for Position.TurnNumber[1]
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.SplineData[{2}].Position.TurnNumber[1] = {1}',
+                            Para1       :=  BYTE_TO_STRING(CombineHalfSints(HalfSintHi := _command.SplineData[_idx].Position.TurnNumber.J4Turns,
+                                                                            HalfSintLo := _command.SplineData[_idx].Position.TurnNumber.J3Turns)),                          
+                            Para2       :=  DINT_TO_STRING(_idx));
+                            
+    // Create log entry for Position.TurnNumber[2]
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.SplineData[{2}].Position.TurnNumber[2] = {1}',
+                            Para1       :=  BYTE_TO_STRING(CombineHalfSints(HalfSintHi := _command.SplineData[_idx].Position.TurnNumber.J6Turns,
+                                                                            HalfSintLo := _command.SplineData[_idx].Position.TurnNumber.J5Turns)),                          
+                            Para2       :=  DINT_TO_STRING(_idx));
+  
+    // Create log entry for Position.TurnNumber[3]
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.SplineData[{2}].Position.TurnNumber[3] = {1}',
+                            Para1       :=  SINT_TO_STRING(_command.SplineData[_idx].Position.TurnNumber.E1Turns),                          
+                            Para2       :=  DINT_TO_STRING(_idx));
+                            
+    // Create log entry for Position.E1
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.SplineData[{2}].Position.E1 = {1}',
+                            Para1       :=  REAL_TO_STRING(_command.SplineData[_idx].Position.E1),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  
+    // Create log entry for MoveTime
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.SplineData[{2}].MoveTime = {1}',
+                            Para1       :=  UINT_TO_STRING(_command.SplineData[_idx].MoveTime),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  
+    // Create log entry for Position.E2
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.SplineData[{2}].Position.E2 = {1}',
+                            Para1       :=  REAL_TO_STRING(_command.SplineData[_idx].Position.E2),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  
+    // Create log entry for Position.E3
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.SplineData[{2}].Position.E3 = {1}',
+                            Para1       :=  REAL_TO_STRING(_command.SplineData[_idx].Position.E3),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  
+    // Create log entry for Position.E4
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.SplineData[{2}].Position.E4 = {1}',
+                            Para1       :=  REAL_TO_STRING(_command.SplineData[_idx].Position.E4),
+                            Para2       :=  DINT_TO_STRING(_idx));
+                            
+    // Create log entry for Position.E5
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.SplineData[{2}].Position.E5 = {1}',
+                            Para1       :=  REAL_TO_STRING(_command.SplineData[_idx].Position.E5),
+                            Para2       :=  DINT_TO_STRING(_idx));
+                            
+    // Create log entry for Position.E6
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.SplineData[{2}].Position.E6 = {1}',
+                            Para1       :=  REAL_TO_STRING(_command.SplineData[_idx].Position.E6),
+                            Para2       :=  DINT_TO_STRING(_idx));
+                            
+  END_FOR
 
 END_METHOD
 
@@ -293,7 +560,7 @@ END_VAR
              // init parameter sequence
             _command.ParSeq := 1;
              // create command data
-             CommandData := CreateCommandPayload();
+             CommandData := CreateCommandPayload(AxesGroup := AxesGroup);
              // Add command to active command register
             _uniqueID := AxesGroup.Acyclic.ActiveCommandRegister.AddCmd( pCommandFB := ADR(THIS^ ));     
              // set timeout
@@ -350,6 +617,12 @@ END_VAR
 END_METHOD
 
 METHOD INTERNAL ParseResponsePayload : DINT
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
 // Table 6-755: Received CMD payload (RC to PLC) of "CreateSpline"
 // --------------------------
 // Header
@@ -358,13 +631,9 @@ METHOD INTERNAL ParseResponsePayload : DINT
 // Byte 01 : SINT    - AlarmMessageSeverity    
 // Byte 02 : UINT    - AlarmMessageCode HB
 // Byte 03 :         - AlarmMessageCode LB
-VAR_INPUT
-  /// Response data
-  ResponseData : RobotLibraryRecvDataFB;
-END_VAR
 
   // call base implementation to parse the header from payload buffer
-  ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData);
+  ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
   
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;
