@@ -82,10 +82,17 @@ END_VAR
   END_IF
   
   // compare memory 
-  CheckParameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
+  _parameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
   
-  IF ( CheckParameterChanged )
+  // check parameter valid ?
+  _parameterValid   := CheckParameterValid( AxesGroup := AxesGroup );
+  
+  IF ((  _parameterChanged        )  AND 
+      (  _parameterValid          )) OR
+      (  _parameterUpdateInternal )  
   THEN  
+    // reset internal flag for send parameter update
+   _parameterUpdateInternal := FALSE;
     // update internal copy of parameters 
    _parCmd := ParCmd;
     // inc parameter sequence
@@ -174,21 +181,21 @@ END_VAR
   _command.UnitLimitAxis        := _parCmd.UnitLimitAxis;
   _command.ThresholdMode        := _parCmd.ThresholdMode;
   _command.ReactionMode         := _parCmd.ReactionMode;
-  _command.Sensitivity          :=  REAL_TO_INT(_parCmd.Sensitivity        * RobotLibraryConstants.REAL_CONVERSION_FACTOR);
-  _command.SensitivityAxis[0]   :=  REAL_TO_INT(_parCmd.SensitivityAxis[0] * RobotLibraryConstants.REAL_CONVERSION_FACTOR);
-  _command.SensitivityAxis[1]   :=  REAL_TO_INT(_parCmd.SensitivityAxis[1] * RobotLibraryConstants.REAL_CONVERSION_FACTOR);
-  _command.SensitivityAxis[2]   :=  REAL_TO_INT(_parCmd.SensitivityAxis[2] * RobotLibraryConstants.REAL_CONVERSION_FACTOR);
-  _command.SensitivityAxis[3]   :=  REAL_TO_INT(_parCmd.SensitivityAxis[3] * RobotLibraryConstants.REAL_CONVERSION_FACTOR);
-  _command.SensitivityAxis[4]   :=  REAL_TO_INT(_parCmd.SensitivityAxis[4] * RobotLibraryConstants.REAL_CONVERSION_FACTOR);
-  _command.SensitivityAxis[5]   :=  REAL_TO_INT(_parCmd.SensitivityAxis[5] * RobotLibraryConstants.REAL_CONVERSION_FACTOR);
-  _command.SensitivityAxis[6]   :=  REAL_TO_INT(_parCmd.SensitivityAxis[6] * RobotLibraryConstants.REAL_CONVERSION_FACTOR);
-  _command.LimitAxis[0]         :=  _parCmd.LimitAxis[0];
-  _command.LimitAxis[1]         :=  _parCmd.LimitAxis[1];
-  _command.LimitAxis[2]         :=  _parCmd.LimitAxis[2];
-  _command.LimitAxis[3]         :=  _parCmd.LimitAxis[3];
-  _command.LimitAxis[4]         :=  _parCmd.LimitAxis[4];
-  _command.LimitAxis[5]         :=  _parCmd.LimitAxis[5];
-  _command.LimitAxis[6]         :=  _parCmd.LimitAxis[6];
+  _command.Sensitivity          :=  REAL_TO_PERCENT_INT(_parCmd.Sensitivity        , IsOptional := TRUE);
+  _command.SensitivityAxis[0]   :=  REAL_TO_PERCENT_INT(_parCmd.SensitivityAxis[0] , IsOptional := TRUE);
+  _command.SensitivityAxis[1]   :=  REAL_TO_PERCENT_INT(_parCmd.SensitivityAxis[1] , IsOptional := TRUE);
+  _command.SensitivityAxis[2]   :=  REAL_TO_PERCENT_INT(_parCmd.SensitivityAxis[2] , IsOptional := TRUE);
+  _command.SensitivityAxis[3]   :=  REAL_TO_PERCENT_INT(_parCmd.SensitivityAxis[3] , IsOptional := TRUE);
+  _command.SensitivityAxis[4]   :=  REAL_TO_PERCENT_INT(_parCmd.SensitivityAxis[4] , IsOptional := TRUE);
+  _command.SensitivityAxis[5]   :=  REAL_TO_PERCENT_INT(_parCmd.SensitivityAxis[5] , IsOptional := TRUE);
+  _command.SensitivityAxis[6]   :=  REAL_TO_PERCENT_INT(_parCmd.SensitivityAxis[6] , IsOptional := TRUE);
+  _command.LimitAxis[0]         := _parCmd.LimitAxis[0];
+  _command.LimitAxis[1]         := _parCmd.LimitAxis[1];
+  _command.LimitAxis[2]         := _parCmd.LimitAxis[2];
+  _command.LimitAxis[3]         := _parCmd.LimitAxis[3];
+  _command.LimitAxis[4]         := _parCmd.LimitAxis[4];
+  _command.LimitAxis[5]         := _parCmd.LimitAxis[5];
+  _command.LimitAxis[6]         := _parCmd.LimitAxis[6];
   
   
   
@@ -252,7 +259,7 @@ END_VAR
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'CreateCommandPayload with the following parameter(s) :');
+                          MessageText := 'Create command payload with the following parameter(s) :');
     
   // Create log entry for ActivateMonitoring
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
@@ -512,6 +519,33 @@ END_VAR
   _response.State                := _rspHeader.State;
   _response.AlarmMessageSeverity := _rspHeader.AlarmMessageSeverity;
   _response.AlarmMessageCode     := _rspHeader.AlarmMessageCode;
+  
+  // Create logging
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+
+END_METHOD
+
+METHOD INTERNAL ParseResponsePayloadLog
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Parsed the following parameter(s) from response data:');
+                          
+  // Create log entry for no parameter 
+  CreateLogMessage      ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'This command has no parameter to parse...');
 
 END_METHOD
 

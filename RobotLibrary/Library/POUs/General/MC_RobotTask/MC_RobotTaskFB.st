@@ -186,7 +186,8 @@ END_VAR
   HandleAxesGroupState         ( AxesGroup    := AxesGroup);
   
   HandleLifeSign               ( AxesGroup    := AxesGroup);
-  HandleInvalidFrames          ( AxesGroup    := AxesGroup);
+  HandleInvalidFrames          ( AxesGroup    := AxesGroup, 
+                                 RobotInData  := RobotInData);
   HandleTelegramStateCtrl();
   HandleAliveBit               (RobotInData[1]);
   HandleSeqAck                 ( AxesGroup    := AxesGroup);
@@ -690,7 +691,7 @@ END_VAR
           Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.CmdID          := AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].UniqueID;
           Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.Reserve        := 
           Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.FragmentAction := 0; // will be set below
-          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadPointer := DWORD_TO_UINT(AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr); {warning 'ToDo: change data type'}
+          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadPointer := AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr; 
           
           // The 1st message resets the ARC entry on the server side  
          _fragmentAction.Reset := (( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].State      = BufferStateCmd.CREATED ) AND
@@ -1056,8 +1057,6 @@ VAR
   _lifeSignIdxFooter : DINT;
 END_VAR
 
-  {warning 'ToDo: changed but no yet tested'}
-  
   IF (( _parCfg.Com.TelegramLengthPlcToRob    >= 1                                          ) AND 
       ( _parCfg.Com.TelegramLengthPlcToRob -1 <= RobotLibraryParameter.TELEGRAM_PAYLOAD_MAX ))
   THEN
@@ -1435,7 +1434,9 @@ END_METHOD
 METHOD PRIVATE HandleInvalidFrames
 VAR_IN_OUT
    /// Robot assignment of function
-  AxesGroup : AxesGroup;
+  AxesGroup   : AxesGroup;
+    /// Inputs of PLC for communication from RC
+  RobotInData : ARRAY[0..RobotLibraryParameter.ROBOT_IN_DATA_MAX ] OF BYTE;
 END_VAR 
 VAR
   /// index of lifesign in header
@@ -1456,10 +1457,6 @@ END_VAR
     // no valid telegram length settings 
     RETURN;
   END_IF
-  
-  
-  //RETURN; {warning 'ToDo: Remove this line to enable function again'}
-  
   
   // set index of last byte
   _lifeSignIdxHeader := 1;
@@ -1526,22 +1523,17 @@ VAR_INST
  _lifeSignToggle_R           : TON;
   /// Toggle for life sign
  _lifeSignToggle_F           : TON;
-  /// last robot life sign
- _lastRobotlifeSign          : BYTE;
 END_VAR
 
   // call timers for toggle
-  (*
   _lifeSignToggle_R(IN :=     _toggle, PT := ParCfg.Com.LifeSignTimeOut - ParCfg.Plc.CycleTime);
   _lifeSignToggle_F(IN := NOT _toggle, PT := ParCfg.Com.LifeSignTimeOut - ParCfg.Plc.CycleTime);
-  _lifeSignToggle_R(IN :=     _toggle, PT := ParCfg.Plc.CycleTime * ParCfg.Plc.RefreshCyclesOutput);
-  _lifeSignToggle_F(IN := NOT _toggle, PT := ParCfg.Plc.CycleTime * ParCfg.Plc.RefreshCyclesOutput);
-  *)
   
-  _lifeSignToggle_R(IN :=     _toggle, PT := T#40MS); {warning 'ToDo'}
-  _lifeSignToggle_F(IN := NOT _toggle, PT := T#40MS); {warning 'ToDo'}
-  
-  
+  IF (STAUBLI_SIMULATOR)
+  THEN
+   _lifeSignToggle_R(IN :=     _toggle, PT := T#40MS); 
+   _lifeSignToggle_F(IN := NOT _toggle, PT := T#40MS); 
+  END_IF
   
   // increment LifeSign counter
   IF ( _lifeSignToggle_R.Q) OR ( _lifeSignToggle_F.Q) OR ( NOT STAUBLI_SIMULATOR)
@@ -1554,13 +1546,6 @@ END_VAR
     THEN
       AxesGroup.Cyclic.PlcToRob.LifeSign := 0;
     END_IF
-  END_IF
-  
-  
-  // check Robot life sign 
-  IF ( RobotInData[1] <> _lastRobotlifeSign)
-  THEN
-   _lastRobotlifeSign := RobotInData[1];
   END_IF
 
 END_METHOD

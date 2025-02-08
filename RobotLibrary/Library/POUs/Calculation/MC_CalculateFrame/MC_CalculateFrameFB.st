@@ -80,10 +80,17 @@ END_VAR
   END_IF
   
   // compare memory 
-  CheckParameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
+  _parameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
   
-  IF ( CheckParameterChanged )
+  // check parameter valid ?
+  _parameterValid   := CheckParameterValid( AxesGroup := AxesGroup );
+  
+  IF ((  _parameterChanged        )  AND 
+      (  _parameterValid          )) OR
+      (  _parameterUpdateInternal )  
   THEN  
+    // reset internal flag for send parameter update
+   _parameterUpdateInternal := FALSE;
     // update internal copy of parameters 
    _parCmd := ParCmd;
     // inc parameter sequence
@@ -278,7 +285,7 @@ END_VAR
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'CreateCommandPayload with the following parameter(s) :');
+                          MessageText := 'Create command payload with the following parameter(s) :');
   
   // Create log entry for DataIndex
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
@@ -679,6 +686,106 @@ END_VAR
   _response.Position.Ry := ResponseData.GetReal();
   // Get response.Position.Rz
   _response.Position.Rz := ResponseData.GetReal();
+  
+  // Create logging
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+
+END_METHOD
+
+METHOD INTERNAL ParseResponsePayloadLog
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Parsed the following parameter(s) from response data:');
+  
+  // Create log entry for IEC_Date
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.IEC_Date = {1}',
+                          Para1       :=  IEC_DATE_TO_STRING(_response.IEC_Date));
+  
+  // Create log entry for IEC_TIME
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.IEC_TIME = {1}',
+                          Para1       :=  IEC_TIME_TO_STRING(_response.IEC_TIME));
+  
+  // Create log entry for ReferenceFrame
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ReferenceFrame = {1}',
+                          Para1       :=  USINT_TO_STRING(_response.ReferenceFrame));
+  
+  // Create log entry for Reserve
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.Reserve = {1}',
+                          Para1       :=  BYTE_TO_STRING(_response.Reserve));
+  
+  // Create log entry for Position.X
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.Position.X = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.Position.X));
+  
+  // Create log entry for Position.Y
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.Position.Y = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.Position.Y));
+  
+  // Create log entry for Position.Z
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.Position.Z = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.Position.Z));
+  
+  // Create log entry for Position.Rx
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.Position.Rx = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.Position.Rx));
+  
+  // Create log entry for Position.Ry
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.Position.Ry = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.Position.Ry));
+  
+  // Create log entry for Position.Rz
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.Position.Rz = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.Position.Rz));
 
 END_METHOD
 

@@ -91,10 +91,17 @@ END_VAR
   END_IF
   
   // compare memory 
-  CheckParameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
+  _parameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
   
-  IF ( CheckParameterChanged )
+  // check parameter valid ?
+  _parameterValid   := CheckParameterValid( AxesGroup := AxesGroup );
+  
+  IF ((  _parameterChanged        )  AND 
+      (  _parameterValid          )) OR
+      (  _parameterUpdateInternal )  
   THEN  
+    // reset internal flag for send parameter update
+   _parameterUpdateInternal := FALSE;
     // update internal copy of parameters 
    _parCmd := ParCmd;
     // inc parameter sequence
@@ -192,7 +199,7 @@ END_VAR
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'CreateCommandPayload with the following parameter(s) :');
+                          MessageText := 'Create command payload with the following parameter(s) :');
     
   // Create log entry for EmitterID[x]
   FOR _idx := 0 TO 3
@@ -546,6 +553,323 @@ END_VAR
   _response.ActualJointPosition.E5 := ResponseData.GetReal();
   // Get Response.ActualJointPosition.E6
   _response.ActualJointPosition.E6 := ResponseData.GetReal();
+  
+  // Create logging
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+
+END_METHOD
+
+METHOD INTERNAL ParseResponsePayloadLog
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Parsed the following parameter(s) from response data:');
+  
+  // Create log entry for InvocationCounter
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.InvocationCounter = {1}',
+                          Para1       :=  USINT_TO_STRING(_response.InvocationCounter));
+  
+  // Create log entry for Reserve
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.Reserve = {1}',
+                          Para1       :=  SINT_TO_STRING(_response.Reserve));
+  
+  // Create log entry for OriginID
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.OriginID = {1}',
+                          Para1       :=  INT_TO_STRING(_response.OriginID));
+  
+  // Create log entry for ToolNoReturn
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ToolNoReturn = {1}',
+                          Para1       :=  INT_TO_STRING(_response.ToolNoReturn));
+  
+  // Create log entry for FrameNoReturn
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.FrameNoReturn = {1}',
+                          Para1       :=  INT_TO_STRING(_response.FrameNoReturn));
+  
+  // Create log entry for ActualCartesianPosition.X
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ActualCartesianPosition.X = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.ActualCartesianPosition.X));
+  
+  // Create log entry for ActualCartesianPosition.Y
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ActualCartesianPosition.Y = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.ActualCartesianPosition.Y));
+  
+  // Create log entry for ActualCartesianPosition.Z
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ActualCartesianPosition.Z = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.ActualCartesianPosition.Z));
+  
+  // Create log entry for ActualCartesianPosition.Rx
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ActualCartesianPosition.Rx = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.ActualCartesianPosition.Rx));
+                          
+  // Create log entry for ActualCartesianPosition.Ry
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ActualCartesianPosition.Ry = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.ActualCartesianPosition.Ry));
+  
+  // Create log entry for ActualCartesianPosition.Rz
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ActualCartesianPosition.Rz = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.ActualCartesianPosition.Rz));
+  
+  
+  // Create log entry for ActualCartesianPosition.Config
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ActualCartesianPosition.Config = {1}',
+                          Para1       :=  ARM_CONFIG_TO_STRING(_response.ActualCartesianPosition.Config));
+  
+  // Create log entry for ActualCartesianPosition.TurnNumber.J1Turns
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ActualCartesianPosition.TurnNumber.J1Turns = {1}',
+                          Para1       :=  SINT_TO_STRING(_response.ActualCartesianPosition.TurnNumber.J1Turns));
+  
+  // Create log entry for ActualCartesianPosition.TurnNumber.J2Turns
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ActualCartesianPosition.TurnNumber.J2Turns = {1}',
+                          Para1       :=  SINT_TO_STRING(_response.ActualCartesianPosition.TurnNumber.J2Turns));
+  
+  // Create log entry for ActualCartesianPosition.TurnNumber.J3Turns
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ActualCartesianPosition.TurnNumber.J3Turns = {1}',
+                          Para1       :=  SINT_TO_STRING(_response.ActualCartesianPosition.TurnNumber.J3Turns));
+  
+  // Create log entry for ActualCartesianPosition.TurnNumber.J4Turns
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ActualCartesianPosition.TurnNumber.J4Turns = {1}',
+                          Para1       :=  SINT_TO_STRING(_response.ActualCartesianPosition.TurnNumber.J4Turns));
+  
+  // Create log entry for ActualCartesianPosition.TurnNumber.J5Turns
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ActualCartesianPosition.TurnNumber.J5Turns = {1}',
+                          Para1       :=  SINT_TO_STRING(_response.ActualCartesianPosition.TurnNumber.J5Turns));
+  
+  // Create log entry for ActualCartesianPosition.TurnNumber.J6Turns
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ActualCartesianPosition.TurnNumber.J6Turns = {1}',
+                          Para1       :=  SINT_TO_STRING(_response.ActualCartesianPosition.TurnNumber.J6Turns));
+  
+  // Create log entry for ActualCartesianPosition.TurnNumber.E1Turns
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ActualCartesianPosition.TurnNumber.E1Turns = {1}',
+                          Para1       :=  SINT_TO_STRING(_response.ActualCartesianPosition.TurnNumber.E1Turns));
+  
+  // Create log entry for ActualCartesianPosition.E1
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ActualCartesianPosition.E1 = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.ActualCartesianPosition.E1));
+  
+  // Create log entry for ActualJointPosition.J1
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ActualJointPosition.J1 = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.ActualJointPosition.J1));
+  
+  // Create log entry for ActualJointPosition.J2
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ActualJointPosition.J2 = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.ActualJointPosition.J2));
+  
+  // Create log entry for ActualJointPosition.J3
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ActualJointPosition.J3 = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.ActualJointPosition.J3));
+  
+  // Create log entry for ActualJointPosition.J4
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ActualJointPosition.J4 = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.ActualJointPosition.J4));
+  
+  // Create log entry for ActualJointPosition.J5
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ActualJointPosition.J5 = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.ActualJointPosition.J5));
+  
+  // Create log entry for ActualJointPosition.J6
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ActualJointPosition.J6 = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.ActualJointPosition.J6));
+  
+  // Create log entry for ActualJointPosition.E1
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ActualJointPosition.E1 = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.ActualJointPosition.E1));
+  
+  // Create log entry for ActualCartesianPosition.E2
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ActualCartesianPosition.E2 = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.ActualCartesianPosition.E2));
+                          
+  // Create log entry for ActualCartesianPosition.E3
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ActualCartesianPosition.E3 = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.ActualCartesianPosition.E3));
+  
+  // Create log entry for ActualCartesianPosition.E4
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ActualCartesianPosition.E4 = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.ActualCartesianPosition.E4));
+  
+  // Create log entry for ActualCartesianPosition.E5
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ActualCartesianPosition.E5 = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.ActualCartesianPosition.E5));
+  
+  // Create log entry for ActualCartesianPosition.E6
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ActualCartesianPosition.E6 = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.ActualCartesianPosition.E6));           
+  
+  // Create log entry for ActualJointPosition.E2
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ActualJointPosition.E2 = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.ActualJointPosition.E2));
+  
+  // Create log entry for ActualJointPosition.E3
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ActualJointPosition.E3 = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.ActualJointPosition.E3));
+                          
+  // Create log entry for ActualJointPosition.E4
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ActualJointPosition.E4 = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.ActualJointPosition.E4));
+  
+  // Create log entry for ActualJointPosition.E5
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ActualJointPosition.E5 = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.ActualJointPosition.E5));
+                          
+  // Create log entry for ActualJointPosition.E6
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ActualJointPosition.E6 = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.ActualJointPosition.E6));
 
 END_METHOD
 

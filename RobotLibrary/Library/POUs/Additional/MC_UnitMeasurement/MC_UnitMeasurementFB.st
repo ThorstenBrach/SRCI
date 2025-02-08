@@ -79,10 +79,17 @@ END_VAR
   END_IF
   
   // compare memory 
-  CheckParameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
+  _parameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
   
-  IF ( CheckParameterChanged )
+  // check parameter valid ?
+  _parameterValid   := CheckParameterValid( AxesGroup := AxesGroup );
+  
+  IF ((  _parameterChanged        )  AND 
+      (  _parameterValid          )) OR
+      (  _parameterUpdateInternal )  
   THEN  
+    // reset internal flag for send parameter update
+   _parameterUpdateInternal := FALSE;
     // update internal copy of parameters 
    _parCmd := ParCmd;
     // inc parameter sequence
@@ -185,7 +192,7 @@ END_VAR
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'CreateCommandPayload with the following parameter(s) :');
+                          MessageText := 'Create command payload with the following parameter(s) :');
     
   // Create log entry for EmitterID[x]
   FOR _idx := 0 TO 3
@@ -330,14 +337,16 @@ END_VAR
            END_IF
          END_IF
   
-         // Check enable flag 
-         IF (_enable_F.Q)
+         // do not abort directly, so that the ParSeq update can be send
+         IF ( _enable_R.Q ) OR ( _enable_F.Q ) 
          THEN
-           // trigger parameter update to disable GroupJog
-           SysDepMemSet( pDest := ADR(_parCmd), Value := 0, DataLen := SIZEOF(_parCmd));
+           // trigger parameter update to disable FB
+          _parameterUpdateInternal := TRUE;
+           // reset the rising edge
+          _enable_R();       
            // reset the falling edge
           _enable_F();       
-        END_IF
+         END_IF
   
     02: IF (NOT Enable)
         THEN
@@ -410,6 +419,74 @@ END_VAR
   _response.MeasurementActive := ResponseData.GetBool();
   // Get Response.ResultNo
   _response.ResultNo := ResponseData.GetUsint();
+  
+  // Create logging
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+
+END_METHOD
+
+METHOD INTERNAL ParseResponsePayloadLog
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Parsed the following parameter(s) from response data:');
+                          
+  // Create log entry for InvocationCounter
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.InvocationCounter = {1}',
+                          Para1       :=  USINT_TO_STRING(_response.InvocationCounter));
+  
+  // Create log entry for Reserve
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.Reserve = {1}',
+                          Para1       :=  SINT_TO_STRING(_response.Reserve));
+  
+  // Create log entry for OriginID
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.OriginID = {1}',
+                          Para1       :=  INT_TO_STRING(_response.OriginID));
+  
+  // Create log entry for Result
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.Result = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.Result));
+  
+  // Create log entry for MeasurementActive
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.MeasurementActive = {1}',
+                          Para1       :=  BOOL_TO_STRING(_response.MeasurementActive));
+  
+  // Create log entry for ResultNo
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ResultNo = {1}',
+                          Para1       :=  USINT_TO_STRING(_response.ResultNo));
 
 END_METHOD
 

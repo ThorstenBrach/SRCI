@@ -74,10 +74,17 @@ END_VAR
   END_IF
   
   // compare memory 
-  CheckParameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
+  _parameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
   
-  IF ( CheckParameterChanged )
+  // check parameter valid ?
+  _parameterValid   := CheckParameterValid( AxesGroup := AxesGroup );
+  
+  IF ((  _parameterChanged        )  AND 
+      (  _parameterValid          )) OR
+      (  _parameterUpdateInternal )  
   THEN  
+    // reset internal flag for send parameter update
+   _parameterUpdateInternal := FALSE;
     // update internal copy of parameters 
    _parCmd := ParCmd;
     // inc parameter sequence
@@ -141,7 +148,7 @@ END_VAR
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'CreateCommandPayload with the following parameter(s) :');
+                          MessageText := 'Create command payload with the following parameter(s) :');
                          
   // Create log entry for WorkAreaNo
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
@@ -507,6 +514,378 @@ END_VAR
   _response.WorkAreaData.E6Limit.UpperLimit := ResponseData.GetReal();
   // Get Response.DataChanged
   _response.DataChanged := ResponseData.GetBool();
+  
+  // Create logging
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+
+END_METHOD
+
+METHOD INTERNAL ParseResponsePayloadLog
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Parsed the following parameter(s) from response data:');
+                          
+  // Create log entry for WorkAreaNoReturn
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaNoReturn = {1}',
+                          Para1       :=  USINT_TO_STRING(_response.WorkAreaNoReturn));
+  
+  // Create log entry for Reserve
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.Reserve = {1}',
+                          Para1       :=  BYTE_TO_STRING(_response.Reserve));
+  
+  // Create log entry for WorkAreaData.Timestamp.IEC_DATE
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.Timestamp.IEC_DATE = {1}',
+                          Para1       :=  IEC_DATE_TO_STRING(_response.WorkAreaData.Timestamp.IEC_DATE));
+  
+  // Create log entry for WorkAreaData.Timestamp.IEC_TIME
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.Timestamp.IEC_TIME = {1}',
+                          Para1       :=  IEC_TIME_TO_STRING(_response.WorkAreaData.Timestamp.IEC_TIME));
+  
+  // Create log entry for WorkAreaData.AreaType
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.AreaType = {1}',
+                          Para1       :=  USINT_TO_STRING(_response.WorkAreaData.AreaType));
+  
+  // Create log entry for WorkAreaData.AreaMode
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.AreaMode = {1}',
+                          Para1       :=  BOOL_TO_STRING(_response.WorkAreaData.AreaMode));
+                          
+  // Create log entry for WorkAreaData.ReactionMode
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.ReactionMode = {1}',
+                          Para1       :=  WORK_AREA_REACTION_MODE_TO_STRING(_response.WorkAreaData.ReactionMode));
+  
+  // Create log entry for WorkAreaData.ActiveModification
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.ActiveModification = {1}',
+                          Para1       :=  BOOL_TO_STRING(_response.WorkAreaData.ActiveModification));
+  
+  // Create log entry for WorkAreaData.DefinitionMode
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.DefinitionMode = {1}',
+                          Para1       := DEFINITION_MODE_TO_STRING(_response.WorkAreaData.DefinitionMode));
+  
+  // Create log entry for WorkAreaData.FrameNo
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.FrameNo = {1}',
+                          Para1       :=  USINT_TO_STRING(_response.WorkAreaData.FrameNo));
+  
+  // Create log entry for WorkAreaData.ZeroPointX
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.ZeroPointX = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.WorkAreaData.ZeroPointX));
+  
+  // Create log entry for WorkAreaData.ZeroPointY
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.ZeroPointY = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.WorkAreaData.ZeroPointY));
+  
+  // Create log entry for WorkAreaData.ZeroPointZ
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.ZeroPointZ = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.WorkAreaData.ZeroPointZ));
+  
+  // Create log entry for WorkAreaData.X.LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.X.LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.WorkAreaData.X.LowerLimit));
+  
+  // Create log entry for WorkAreaData.X.UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.X.UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.WorkAreaData.X.UpperLimit));
+  
+  // Create log entry for WorkAreaData.Y.LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.Y.LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.WorkAreaData.Y.LowerLimit));
+  
+  // Create log entry for WorkAreaData.Y.UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.Y.UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.WorkAreaData.Y.UpperLimit));
+  
+  // Create log entry for WorkAreaData.Z.LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.Z.LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.WorkAreaData.Z.LowerLimit));
+  
+  // Create log entry for WorkAreaData.Z.UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.Z.UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.WorkAreaData.Z.UpperLimit));
+  
+  // Create log entry for WorkAreaData.Radius
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.Radius = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.WorkAreaData.Radius));
+  
+  // Create log entry for WorkAreaData.J1Limit.LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.J1Limit.LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.WorkAreaData.J1Limit.LowerLimit));
+  
+  // Create log entry for WorkAreaData.J2Limit.LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.J2Limit.LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.WorkAreaData.J2Limit.LowerLimit));
+  
+  // Create log entry for WorkAreaData.J3Limit.LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.J3Limit.LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.WorkAreaData.J3Limit.LowerLimit));
+  
+  // Create log entry for WorkAreaData.J4Limit.LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.J4Limit.LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.WorkAreaData.J4Limit.LowerLimit));
+  
+  // Create log entry for WorkAreaData.J5Limit.LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.J5Limit.LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.WorkAreaData.J5Limit.LowerLimit));
+  
+  // Create log entry for WorkAreaData.J6Limit.LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.J6Limit.LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.WorkAreaData.J6Limit.LowerLimit));
+  
+  // Create log entry for WorkAreaData.E1Limit.LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.E1Limit.LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.WorkAreaData.E1Limit.LowerLimit));
+  
+  // Create log entry for WorkAreaData.J1Limit.UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.J1Limit.UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.WorkAreaData.J1Limit.UpperLimit));
+  
+  // Create log entry for WorkAreaData.J2Limit.UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.J2Limit.UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.WorkAreaData.J2Limit.UpperLimit));
+  
+  // Create log entry for WorkAreaData.J3Limit.UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.J3Limit.UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.WorkAreaData.J3Limit.UpperLimit));
+  
+  // Create log entry for WorkAreaData.J4Limit.UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.J4Limit.UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.WorkAreaData.J4Limit.UpperLimit));
+  
+  // Create log entry for WorkAreaData.J5Limit.UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.J5Limit.UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.WorkAreaData.J5Limit.UpperLimit));
+  
+  // Create log entry for WorkAreaData.J6Limit.UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.J6Limit.UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.WorkAreaData.J6Limit.UpperLimit));
+  
+  // Create log entry for WorkAreaData.E1Limit.UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.E1Limit.UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.WorkAreaData.E1Limit.UpperLimit));
+  
+  // Create log entry for WorkAreaData.E2Limit.LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.E2Limit.LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.WorkAreaData.E2Limit.LowerLimit));
+  
+  // Create log entry for WorkAreaData.E3Limit.LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.E3Limit.LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.WorkAreaData.E3Limit.LowerLimit));
+  
+  // Create log entry for WorkAreaData.E4Limit.LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.E4Limit.LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.WorkAreaData.E4Limit.LowerLimit));
+  
+  // Create log entry for WorkAreaData.E5Limit.LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.E5Limit.LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.WorkAreaData.E5Limit.LowerLimit));
+  
+  // Create log entry for WorkAreaData.E6Limit.LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.E6Limit.LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.WorkAreaData.E6Limit.LowerLimit));
+  
+  // Create log entry for WorkAreaData.E2Limit.UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.E2Limit.UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.WorkAreaData.E2Limit.UpperLimit));
+  
+  // Create log entry for WorkAreaData.E3Limit.UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.E3Limit.UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.WorkAreaData.E3Limit.UpperLimit));
+  
+  // Create log entry for WorkAreaData.E4Limit.UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.E4Limit.UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.WorkAreaData.E4Limit.UpperLimit));
+  
+  // Create log entry for WorkAreaData.E5Limit.UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.E5Limit.UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.WorkAreaData.E5Limit.UpperLimit));
+  
+  // Create log entry for WorkAreaData.E6Limit.UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.WorkAreaData.E6Limit.UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.WorkAreaData.E6Limit.UpperLimit));
 
 END_METHOD
 

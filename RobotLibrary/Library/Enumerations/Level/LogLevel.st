@@ -20,21 +20,6 @@
 //    own risk and responsibility.
 //
 // -------------------------------------------------------------------------
-TYPE LogLevel  :
-(
-  /// No events will be logged
-  DEACTIVATE  := 0,
-  /// Debugging messages, Informative messages, Warning messages, Error messages, Fatal error messages 
-  DEBUG := 4,
-  /// Informative messages, Warning messages, Error messages, Fatal error messages
-  INFO := 5, 
-  /// Warning messages, Error messages, Fatal error messages
-  WARNING := 20,
-  /// Error messages, Fatal error messages 
-  ERROR := 28, 
-  /// Fatal error messages
-  FATAL_ERROR := 29 
-)USINT;
-END_TYPE
+TYPE LogLevel : Severity; END_TYPE
 
 

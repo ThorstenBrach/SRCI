@@ -77,10 +77,17 @@ END_VAR
   END_IF
   
   // compare memory 
-  CheckParameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
+  _parameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
   
-  IF ( CheckParameterChanged )
+  // check parameter valid ?
+  _parameterValid   := CheckParameterValid( AxesGroup := AxesGroup );
+  
+  IF ((  _parameterChanged        )  AND 
+      (  _parameterValid          )) OR
+      (  _parameterUpdateInternal )  
   THEN  
+    // reset internal flag for send parameter update
+   _parameterUpdateInternal := FALSE;
     // update internal copy of parameters 
    _parCmd := ParCmd;
     // inc parameter sequence
@@ -152,7 +159,7 @@ END_VAR
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'CreateCommandPayload with the following parameter(s) :');
+                          MessageText := 'Create command payload with the following parameter(s) :');
     
   // Create log entry for MsgID
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
@@ -280,7 +287,18 @@ END_VAR
            END_IF
          END_IF
   
+         // do not abort directly, so that the ParSeq update can be send
+         IF ( _enable_R.Q ) OR ( _enable_F.Q ) 
+         THEN
+           // trigger parameter update to disable FB
+          _parameterUpdateInternal := TRUE;
+           // reset the rising edge
+          _enable_R();       
+           // reset the falling edge
+          _enable_F();       
+         END_IF
   
+         
     02: IF (NOT Enable)
         THEN
           Reset();   
@@ -516,6 +534,106 @@ END_VAR
   _response.ErrorCode := ResponseData.GetDword();
   // Get _response.RCManufacturer
   ResponseData.GetDataBlock(pData := ADR(_response.Text) , SIZEOF(_response.Text) , IsString := TRUE );
+  
+  // Create logging
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+
+END_METHOD
+
+METHOD INTERNAL ParseResponsePayloadLog
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Parsed the following parameter(s) from response data:');
+                          
+  // Create log entry for Enabled
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.Enabled = {1}',
+                          Para1       :=  BOOL_TO_STRING(_response.Enabled));
+  
+  // Create log entry for MsgID
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.MsgID = {1}',
+                          Para1       :=  USINT_TO_STRING(_response.MsgID));
+  
+  // Create log entry for NumberOfActiveErrors
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.NumberOfActiveErrors = {1}',
+                          Para1       :=  USINT_TO_STRING(_response.NumberOfActiveErrors));
+  
+  // Create log entry for NumberOfActiveWarnings
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.NumberOfActiveWarnings = {1}',
+                          Para1       :=  USINT_TO_STRING(_response.NumberOfActiveWarnings));
+  
+  // Create log entry for Timestamp.IEC_DATE
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.Timestamp.IEC_DATE = {1}',
+                          Para1       :=  IEC_DATE_TO_STRING(_response.Timestamp.IEC_DATE));
+  
+  // Create log entry for Timestamp.IEC_TIME
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.Timestamp.IEC_TIME = {1}',
+                          Para1       :=  IEC_TIME_TO_STRING(_response.Timestamp.IEC_TIME));
+  
+  // Create log entry for MsgType
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.MsgType = {1}',
+                          Para1       :=  USINT_TO_STRING(_response.MsgType));
+  
+  // Create log entry for Severity
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.Severity = {1}',
+                          Para1       :=  SEVERITY_TO_STRING(_response.Severity,AlignString := FALSE));
+  
+  // Create log entry for ErrorCode
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ErrorCode = {1}',
+                          Para1       :=  DWORD_TO_STRING(_response.ErrorCode));
+  
+  // Create log entry for Text
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.Text = {1}',
+                          Para1       :=  _response.Text);
 
 END_METHOD
 

@@ -73,10 +73,17 @@ END_VAR
   END_IF
   
   // compare memory 
-  CheckParameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
+  _parameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
   
-  IF ( CheckParameterChanged )
+  // check parameter valid ?
+  _parameterValid   := CheckParameterValid( AxesGroup := AxesGroup );
+  
+  IF ((  _parameterChanged        )  AND 
+      (  _parameterValid          )) OR
+      (  _parameterUpdateInternal )  
   THEN  
+    // reset internal flag for send parameter update
+   _parameterUpdateInternal := FALSE;
     // update internal copy of parameters 
    _parCmd := ParCmd;
     // inc parameter sequence
@@ -226,7 +233,7 @@ END_VAR
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'CreateCommandPayload with the following parameter(s) :');
+                          MessageText := 'Create command payload with the following parameter(s) :');
   
   // Create log entry for ToolNo
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
@@ -584,6 +591,122 @@ END_VAR
   _response.JointPosition.E5 := ResponseData.GetReal();
   // Get Response.JointPosition.E6
   _response.JointPosition.E6 := ResponseData.GetReal();
+  
+  // Create logging
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+
+END_METHOD
+
+METHOD INTERNAL ParseResponsePayloadLog
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Parsed the following parameter(s) from response data:');
+                          
+  // Create log entry for JointPosition.J1
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.JointPosition.J1 = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.JointPosition.J1));
+  
+  // Create log entry for JointPosition.J2
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.JointPosition.J2 = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.JointPosition.J2));
+  
+  // Create log entry for JointPosition.J3
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.JointPosition.J3 = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.JointPosition.J3));
+  
+  // Create log entry for JointPosition.J4
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.JointPosition.J4 = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.JointPosition.J4));
+  
+  // Create log entry for JointPosition.J5
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.JointPosition.J5 = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.JointPosition.J5));
+  
+  // Create log entry for JointPosition.J6
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.JointPosition.J6 = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.JointPosition.J6));
+  
+  // Create log entry for JointPosition.E1
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.JointPosition.E1 = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.JointPosition.E1));
+  
+  // Create log entry for JointPosition.E2
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.JointPosition.E2 = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.JointPosition.E2));
+  
+  // Create log entry for JointPosition.E3
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.JointPosition.E3 = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.JointPosition.E3));
+  
+  // Create log entry for JointPosition.E4
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.JointPosition.E4 = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.JointPosition.E4));
+  
+  // Create log entry for JointPosition.E5
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.JointPosition.E5 = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.JointPosition.E5));
+  
+  // Create log entry for JointPosition.E6
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.JointPosition.E6 = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.JointPosition.E6));
 
 END_METHOD
 

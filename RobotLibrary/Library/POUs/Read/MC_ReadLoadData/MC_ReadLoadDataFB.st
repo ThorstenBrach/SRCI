@@ -74,10 +74,17 @@ END_VAR
   END_IF
   
   // compare memory 
-  CheckParameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
+  _parameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
   
-  IF ( CheckParameterChanged )
+  // check parameter valid ?
+  _parameterValid   := CheckParameterValid( AxesGroup := AxesGroup );
+  
+  IF ((  _parameterChanged        )  AND 
+      (  _parameterValid          )) OR
+      (  _parameterUpdateInternal )  
   THEN  
+    // reset internal flag for send parameter update
+   _parameterUpdateInternal := FALSE;
     // update internal copy of parameters 
    _parCmd := ParCmd;
     // inc parameter sequence
@@ -141,7 +148,7 @@ END_VAR
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'CreateCommandPayload with the following parameter(s) :');
+                          MessageText := 'Create command payload with the following parameter(s) :');
     
   // Create log entry for LoadNo
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
@@ -357,6 +364,138 @@ END_VAR
   _response.LoadNoReturn := ResponseData.GetUsint();
   // Get Response.DataChanged
   _response.DataChanged := ResponseData.GetBool();
+  
+  // Create logging
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+
+END_METHOD
+
+METHOD INTERNAL ParseResponsePayloadLog
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Parsed the following parameter(s) from response data:');
+  
+  // Create log entry for LoadData.Timestamp.IEC_DATE
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LoadData.Timestamp.IEC_DATE = {1}',
+                          Para1       :=  IEC_DATE_TO_STRING(_response.LoadData.Timestamp.IEC_DATE));
+  
+  // Create log entry for LoadData.Timestamp.IEC_TIME
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LoadData.Timestamp.IEC_TIME = {1}',
+                          Para1       :=  IEC_TIME_TO_STRING(_response.LoadData.Timestamp.IEC_TIME));
+                          
+  // Create log entry for LoadData.X
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LoadData.X = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.LoadData.X));
+  
+  // Create log entry for LoadData.Y
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LoadData.Y = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.LoadData.Y));
+  
+  // Create log entry for LoadData.Z
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LoadData.Z = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.LoadData.Z));
+  
+  // Create log entry for LoadData.Rx
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LoadData.Rx = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.LoadData.Rx));
+  
+  // Create log entry for LoadData.Ry
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LoadData.Ry = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.LoadData.Ry));
+  
+  // Create log entry for LoadData.Rz
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LoadData.Rz = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.LoadData.Rz));
+  
+  // Create log entry for LoadData.Mass
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LoadData.Mass = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.LoadData.Mass));
+  
+  // Create log entry for LoadData.Ix
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LoadData.Ix = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.LoadData.Ix));
+  
+  // Create log entry for LoadData.Iz
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LoadData.Iz = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.LoadData.Iz));
+  
+  // Create log entry for LoadData.Iy
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LoadData.Iy = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.LoadData.Iy));
+  
+    // Create log entry for LoadNoReturn
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LoadNoReturn = {1}',
+                          Para1       :=  USINT_TO_STRING(_response.LoadNoReturn));
+  
+    // Create log entry for DataChanged
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.DataChanged = {1}',
+                          Para1       :=  BOOL_TO_STRING(_response.DataChanged));
 
 END_METHOD
 

@@ -49,7 +49,11 @@ END_VAR
 
 END_FUNCTION_BLOCK
 
-METHOD internal FSM : DINT
+METHOD INTERNAL FSM : DINT
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
 VAR
   /// internal return value
  _retVal : DINT;
@@ -71,7 +75,7 @@ END_VAR
         
     FsmState.START :
      
-     _retVal := OnExecStart();
+     _retVal := OnExecStart(AxesGroup := AxesGroup);
       
       IF ( _retVal = RobotLibraryConstants.OK )
       THEN
@@ -96,7 +100,7 @@ END_VAR
   
      FsmState.RUNNING :
   
-        _retVal := OnExecRun();
+        _retVal := OnExecRun(AxesGroup := AxesGroup);
       
          IF (_retVal = RobotLibraryConstants.OK )
          THEN
@@ -125,7 +129,7 @@ END_VAR
   
     FsmState.CANCEL :
   
-     _retVal := OnExecCancel();
+     _retVal := OnExecCancel(AxesGroup := AxesGroup);
       
       IF (_retVal = RobotLibraryConstants.OK )
       THEN
@@ -141,7 +145,7 @@ END_VAR
   
     FsmState.ERROR_CLEAR :
   
-     _retVal := OnExecErrorClear();
+     _retVal := OnExecErrorClear(AxesGroup := AxesGroup);
       
       IF (_retVal = RobotLibraryConstants.OK )
       THEN
@@ -167,7 +171,7 @@ END_VAR
   _enable_F( CLK := Enable);
   
   // call state machine
-  FSM();
+  FSM(AxesGroup := AxesGroup);
   
   
   // Abort execution 
@@ -180,7 +184,9 @@ END_VAR
 END_METHOD
 
 METHOD Protected OnExecCancel : DINT
-VAR_INPUT
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
 END_VAR
 
   OnExecCancel := Reset();
@@ -197,7 +203,9 @@ END_VAR
 END_METHOD
 
 METHOD PROTECTED OnExecErrorClear : DINT
-VAR_INPUT
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
 END_VAR
 
   Reset();
@@ -205,14 +213,18 @@ END_VAR
 END_METHOD
 
 METHOD PROTECTED OnExecRun : DINT
-VAR_INPUT
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
 END_VAR
 
 
 END_METHOD
 
 METHOD PROTECTED OnExecStart : DINT
-VAR_INPUT
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
 END_VAR
 
 

@@ -75,10 +75,17 @@ END_VAR
   END_IF
   
   // compare memory 
-  CheckParameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
+  _parameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
   
-  IF ( CheckParameterChanged )
+  // check parameter valid ?
+  _parameterValid   := CheckParameterValid( AxesGroup := AxesGroup );
+  
+  IF ((  _parameterChanged        )  AND 
+      (  _parameterValid          )) OR
+      (  _parameterUpdateInternal )  
   THEN  
+    // reset internal flag for send parameter update
+   _parameterUpdateInternal := FALSE;
     // update internal copy of parameters 
    _parCmd := ParCmd;
     // inc parameter sequence
@@ -142,7 +149,7 @@ END_VAR
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'CreateCommandPayload with the following parameter(s) :');
+                          MessageText := 'Create command payload with the following parameter(s) :');
     
   // Create log entry for ModifiedConvention
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
@@ -461,6 +468,103 @@ END_VAR
   DO
     // Get Response.DHParameter.PositiveJointDirection[_idx]
    _response.DHParameter.PositiveJointDirection[_idx] := ResponseData.GetBool();
+  END_FOR
+  
+  // Create logging
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+
+END_METHOD
+
+METHOD INTERNAL ParseResponsePayloadLog
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
+VAR 
+  /// internal index for loops
+ _idx : DINT;
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Parsed the following parameter(s) from response data:');
+                  
+          
+  // Create log entry for DHParameter.Alpha[{x}]
+  FOR _idx := 0 TO 6
+  DO
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.DHParameter.Alpha[{2}] = {1}',
+                            Para1       :=  REAL_TO_STRING(_response.DHParameter.Alpha[_idx]),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  END_FOR
+  
+  // Create log entry for DHParameter.A[{x}]
+  FOR _idx := 0 TO 6
+  DO
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.DHParameter.A[{2}] = {1}',
+                            Para1       :=  REAL_TO_STRING(_response.DHParameter.A[_idx]),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  END_FOR
+  
+  // Create log entry for DHParameter.D[{x}]
+  FOR _idx := 0 TO 6
+  DO
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.DHParameter.D[{2}] = {1}',
+                            Para1       :=  REAL_TO_STRING(_response.DHParameter.D[_idx]),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  END_FOR
+  
+  // Create log entry for DHParameter.Theta[{x}]
+  FOR _idx := 0 TO 6
+  DO
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.DHParameter.Theta[{2}] = {1}',
+                            Para1       :=  REAL_TO_STRING(_response.DHParameter.Theta[_idx]),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  END_FOR
+  
+  // Create log entry for DHParameter.JointZeroPosition[{x}]
+  FOR _idx := 0 TO 6
+  DO
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.DHParameter.JointZeroPosition[{2}] = {1}',
+                            Para1       :=  REAL_TO_STRING(_response.DHParameter.JointZeroPosition[_idx]),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  END_FOR
+  
+  // Create log entry for DHParameter.PositiveJointDirection[{x}]
+  FOR _idx := 0 TO 6
+  DO
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.DHParameter.PositiveJointDirection[{2}] = {1}',
+                            Para1       :=  BOOL_TO_STRING(_response.DHParameter.PositiveJointDirection[_idx]),
+                            Para2       :=  DINT_TO_STRING(_idx));
   END_FOR
 
 END_METHOD

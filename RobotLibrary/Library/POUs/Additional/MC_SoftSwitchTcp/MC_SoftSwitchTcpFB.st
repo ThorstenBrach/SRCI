@@ -84,10 +84,17 @@ END_VAR
   END_IF
   
   // compare memory 
-  CheckParameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
+  _parameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
   
-  IF ( CheckParameterChanged )
+  // check parameter valid ?
+  _parameterValid   := CheckParameterValid( AxesGroup := AxesGroup );
+  
+  IF ((  _parameterChanged        )  AND 
+      (  _parameterValid          )) OR
+      (  _parameterUpdateInternal )  
   THEN  
+    // reset internal flag for send parameter update
+   _parameterUpdateInternal := FALSE;
     // update internal copy of parameters 
    _parCmd := ParCmd;
     // inc parameter sequence
@@ -170,15 +177,15 @@ END_VAR
   _command.CompliantAxes             := _parCmd.CompliantAxes;       
   _command.ReferenceType             := _parCmd.ReferenceType;
   _command.ReferenceNo               := _parCmd.ReferenceNo;
-  _command.ResistanceForceTCP        := REAL_TO_INT (_parCmd.ResistanceForceTCP     * RobotLibraryConstants.REAL_CONVERSION_FACTOR);
-  _command.ResistanceForceMode       := _parCmd.ResistanceForceMode;
-  _command.ResistanceForceAxis[0]    := REAL_TO_UINT(_parCmd.ResistanceForceAxis[0] * RobotLibraryConstants.REAL_CONVERSION_FACTOR);
-  _command.ResistanceForceAxis[1]    := REAL_TO_UINT(_parCmd.ResistanceForceAxis[1] * RobotLibraryConstants.REAL_CONVERSION_FACTOR);
-  _command.ResistanceForceAxis[2]    := REAL_TO_UINT(_parCmd.ResistanceForceAxis[2] * RobotLibraryConstants.REAL_CONVERSION_FACTOR);
-  _command.ResistanceForceAxis[3]    := REAL_TO_UINT(_parCmd.ResistanceForceAxis[3] * RobotLibraryConstants.REAL_CONVERSION_FACTOR);
-  _command.ResistanceForceAxis[4]    := REAL_TO_UINT(_parCmd.ResistanceForceAxis[4] * RobotLibraryConstants.REAL_CONVERSION_FACTOR);
-  _command.ResistanceForceAxis[5]    := REAL_TO_UINT(_parCmd.ResistanceForceAxis[5] * RobotLibraryConstants.REAL_CONVERSION_FACTOR);
-  _command.VectorData                := _parCmd.VectorData;
+  _command.ResistanceForceTCP        := REAL_TO_PERCENT_INT (_parCmd.ResistanceForceTCP     , IsOptional := TRUE );
+  _command.ResistanceForceMode       :=_parCmd.ResistanceForceMode;
+  _command.ResistanceForceAxis[0]    := REAL_TO_PERCENT_UINT(_parCmd.ResistanceForceAxis[0] , IsOptional := TRUE );
+  _command.ResistanceForceAxis[1]    := REAL_TO_PERCENT_UINT(_parCmd.ResistanceForceAxis[1] , IsOptional := TRUE );
+  _command.ResistanceForceAxis[2]    := REAL_TO_PERCENT_UINT(_parCmd.ResistanceForceAxis[2] , IsOptional := TRUE );
+  _command.ResistanceForceAxis[3]    := REAL_TO_PERCENT_UINT(_parCmd.ResistanceForceAxis[3] , IsOptional := TRUE );
+  _command.ResistanceForceAxis[4]    := REAL_TO_PERCENT_UINT(_parCmd.ResistanceForceAxis[4] , IsOptional := TRUE );
+  _command.ResistanceForceAxis[5]    := REAL_TO_PERCENT_UINT(_parCmd.ResistanceForceAxis[5] , IsOptional := TRUE );
+  _command.VectorData                :=_parCmd.VectorData;
   
   
   // copy command data to header
@@ -239,7 +246,7 @@ END_VAR
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'CreateCommandPayload with the following parameter(s) :');
+                          MessageText := 'Create command payload with the following parameter(s) :');
     
   // Create log entry for LimitMode
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
@@ -518,6 +525,34 @@ END_VAR
   
   // Get Response.SoftMovement
   _response.SoftMovement := ResponseData.GetBool();
+  
+  // Create logging
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+
+END_METHOD
+
+METHOD INTERNAL ParseResponsePayloadLog
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Parsed the following parameter(s) from response data:');
+                          
+  // Create log entry for SoftMovement
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.SoftMovement = {1}',
+                          Para1       :=  BOOL_TO_STRING(_response.SoftMovement));
 
 END_METHOD
 

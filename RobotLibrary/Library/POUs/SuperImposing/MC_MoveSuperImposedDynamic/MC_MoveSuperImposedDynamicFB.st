@@ -87,10 +87,17 @@ END_VAR
   END_IF
   
   // compare memory 
-  CheckParameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
+  _parameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
   
-  IF ( CheckParameterChanged )
+  // check parameter valid ?
+  _parameterValid   := CheckParameterValid( AxesGroup := AxesGroup );
+  
+  IF ((  _parameterChanged        )  AND 
+      (  _parameterValid          )) OR
+      (  _parameterUpdateInternal )  
   THEN  
+    // reset internal flag for send parameter update
+   _parameterUpdateInternal := FALSE;
     // update internal copy of parameters 
    _parCmd := ParCmd;
     // inc parameter sequence
@@ -201,13 +208,13 @@ END_VAR
   _command.ExecMode             :=  ExecMode;
   _command.ParSeq               := _command.ParSeq;
   _command.Priority             :=  Priority;
-  _command.VelocityDiffRate     :=  REAL_TO_UINT(_parCmd.VelocityDiffRate     * RobotLibraryConstants.REAL_CONVERSION_FACTOR);
-  _command.AccelerationDiffRate :=  REAL_TO_UINT(_parCmd.AccelerationDiffRate * RobotLibraryConstants.REAL_CONVERSION_FACTOR);
-  _command.DecelerationDiffRate :=  REAL_TO_UINT(_parCmd.DecelerationDiffRate * RobotLibraryConstants.REAL_CONVERSION_FACTOR);
-  _command.JerkDiffRate         :=  REAL_TO_UINT(_parCmd.JerkDiffRate         * RobotLibraryConstants.REAL_CONVERSION_FACTOR);
+  _command.VelocityDiffRate     :=  REAL_TO_PERCENT_UINT(_parCmd.VelocityDiffRate     , IsOptional := FALSE);
+  _command.AccelerationDiffRate :=  REAL_TO_PERCENT_UINT(_parCmd.AccelerationDiffRate , IsOptional := FALSE);
+  _command.DecelerationDiffRate :=  REAL_TO_PERCENT_UINT(_parCmd.DecelerationDiffRate , IsOptional := TRUE );
+  _command.JerkDiffRate         :=  REAL_TO_PERCENT_UINT(_parCmd.JerkDiffRate         , IsOptional := TRUE );
   _command.ToolNo               := _parCmd.ToolNo;
   _command.FrameNo              := _parCmd.FrameNo;
-  _command.Reserve_X            := 0.0;
+  _command.Reserve_X            :=  0.0;
   _command.Offset               := _parCmd.Offset;
   _command.ReferenceType        := _parCmd.ReferenceType;
   _command.InterpolationMode    := _parCmd.InterpolationMode;
@@ -284,7 +291,7 @@ END_VAR
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'CreateCommandPayload with the following parameter(s) :');
+                          MessageText := 'Create command payload with the following parameter(s) :');
     
   // Create log entry for VelocityDiffRate
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
@@ -648,6 +655,50 @@ END_VAR
   _response.RemainingDistance := ResponseData.GetReal();
   // Get Response.OffsetReached
   _response.OffsetReached := ResponseData.GetBool();
+  
+  // Create logging
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+
+END_METHOD
+
+METHOD INTERNAL ParseResponsePayloadLog
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Parsed the following parameter(s) from response data:');
+                          
+  // Create log entry for Progress
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.Progress = {1}',
+                          Para1       :=  UINT_TO_STRING(_response.Progress));
+  
+  // Create log entry for RemainingDistance
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.RemainingDistance = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.RemainingDistance));
+  
+  // Create log entry for OffsetReached
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.OffsetReached = {1}',
+                          Para1       :=  BOOL_TO_STRING(_response.OffsetReached));
 
 END_METHOD
 

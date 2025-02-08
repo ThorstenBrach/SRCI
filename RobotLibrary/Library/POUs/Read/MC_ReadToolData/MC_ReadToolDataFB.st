@@ -74,10 +74,17 @@ END_VAR
   END_IF
   
   // compare memory 
-  CheckParameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
+  _parameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
   
-  IF ( CheckParameterChanged )
+  // check parameter valid ?
+  _parameterValid   := CheckParameterValid( AxesGroup := AxesGroup );
+  
+  IF ((  _parameterChanged        )  AND 
+      (  _parameterValid          )) OR
+      (  _parameterUpdateInternal )  
   THEN  
+    // reset internal flag for send parameter update
+   _parameterUpdateInternal := FALSE;
     // update internal copy of parameters 
    _parCmd := ParCmd;
     // inc parameter sequence
@@ -141,7 +148,7 @@ END_VAR
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'CreateCommandPayload with the following parameter(s) :');
+                          MessageText := 'Create command payload with the following parameter(s) :');
     
   // Create log entry for ToolNo
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
@@ -345,6 +352,138 @@ END_VAR
   _response.ToolNoReturn := ResponseData.GetUsint();
   // Get Response.DataChanged
   _response.DataChanged := ResponseData.GetBool();
+  
+  // Create logging
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+
+END_METHOD
+
+METHOD INTERNAL ParseResponsePayloadLog
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Parsed the following parameter(s) from response data:');                        
+  
+  // Create log entry for ToolData.Timestamp.IEC_DATE
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ToolData.Timestamp.IEC_DATE = {1}',
+                          Para1       :=  IEC_DATE_TO_STRING(_response.ToolData.Timestamp.IEC_DATE));
+  
+  // Create log entry for ToolData.Timestamp.IEC_TIME
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ToolData.Timestamp.IEC_TIME = {1}',
+                          Para1       :=  IEC_TIME_TO_STRING(_response.ToolData.Timestamp.IEC_TIME));
+  
+  // Create log entry for ToolData.X
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ToolData.X = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.ToolData.X));
+  
+  // Create log entry for ToolData.Y
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ToolData.Y = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.ToolData.Y));
+  
+  // Create log entry for ToolData.Z
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ToolData.Z = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.ToolData.Z));
+  
+  // Create log entry for ToolData.Rx
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ToolData.Rx = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.ToolData.Rx));
+  
+  // Create log entry for ToolData.Ry
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ToolData.Ry = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.ToolData.Ry));
+  
+  // Create log entry for ToolData.Rz
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ToolData.Rz = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.ToolData.Rz));
+  
+  // Create log entry for ToolData.ID
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ToolData.ID = {1}',
+                          Para1       :=  USINT_TO_STRING(_response.ToolData.ID));
+  
+  // Create log entry for ToolData.LoadNo
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ToolData.LoadNo = {1}',
+                          Para1       :=  USINT_TO_STRING(_response.ToolData.LoadNo));
+  
+  // Create log entry for ToolData.ExternalTCP
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ToolData.ExternalTCP = {1}',
+                          Para1       :=  BOOL_TO_STRING(_response.ToolData.ExternalTCP));
+  
+  // Create log entry for Reserve
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.Reserve = {1}',
+                          Para1       :=  BYTE_TO_STRING(_response.Reserve));
+  
+  // Create log entry for ToolNoReturn
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ToolNoReturn = {1}',
+                          Para1       :=  USINT_TO_STRING(_response.ToolNoReturn));
+  
+  // Create log entry for DataChanged
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.DataChanged = {1}',
+                          Para1       :=  BOOL_TO_STRING(_response.DataChanged));
 
 END_METHOD
 

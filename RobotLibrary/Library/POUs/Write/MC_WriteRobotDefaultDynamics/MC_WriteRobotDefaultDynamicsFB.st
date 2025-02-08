@@ -80,10 +80,17 @@ END_VAR
   END_IF
   
   // compare memory 
-  CheckParameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
+  _parameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
   
-  IF ( CheckParameterChanged )
+  // check parameter valid ?
+  _parameterValid   := CheckParameterValid( AxesGroup := AxesGroup );
+  
+  IF ((  _parameterChanged        )  AND 
+      (  _parameterValid          )) OR
+      (  _parameterUpdateInternal )  
   THEN  
+    // reset internal flag for send parameter update
+   _parameterUpdateInternal := FALSE;
     // update internal copy of parameters 
    _parCmd := ParCmd;
     // inc parameter sequence
@@ -135,22 +142,10 @@ END_VAR
   _command.ParSeq           := _command.ParSeq;
   _command.Priority         :=  Priority;
   _command.Timestamp        := _parCmd.DynamicValues.Timestamp;
-  _command.VelocityRate     := REAL_TO_UINT(_parCmd.DynamicValues.VelocityRate     * RobotLibraryConstants.REAL_CONVERSION_FACTOR);
-  _command.AccelerationRate := REAL_TO_UINT(_parCmd.DynamicValues.AccelerationRate * RobotLibraryConstants.REAL_CONVERSION_FACTOR);
-  
-  IF (_parCmd.DynamicValues.JerkRate <> -1 ) 
-  THEN
-   _command.JerkRate := REAL_TO_UINT(_parCmd.DynamicValues.JerkRate * RobotLibraryConstants.REAL_CONVERSION_FACTOR);
-  ELSE
-   _command.JerkRate := 16#FFFF;  // Robot needs 16#FFFF ( -1 ) for not supported values
-  END_IF
-  
-  IF (_parCmd.DynamicValues.DecelerationRate <> -1 ) 
-  THEN
-   _command.DecelerationRate := REAL_TO_UINT(_parCmd.DynamicValues.DecelerationRate * RobotLibraryConstants.REAL_CONVERSION_FACTOR);
-  ELSE
-   _command.DecelerationRate := 16#FFFF;  // Robot needs 16#FFFF ( -1 ) for not supported values
-  END_IF
+  _command.VelocityRate     := REAL_TO_PERCENT_UINT(_parCmd.DynamicValues.VelocityRate     , IsOptional := FALSE);
+  _command.AccelerationRate := REAL_TO_PERCENT_UINT(_parCmd.DynamicValues.AccelerationRate , IsOptional := FALSE);
+  _command.JerkRate         := REAL_TO_PERCENT_UINT(_parCmd.DynamicValues.JerkRate         , IsOptional := TRUE );
+  _command.DecelerationRate := REAL_TO_PERCENT_UINT(_parCmd.DynamicValues.DecelerationRate , IsOptional := TRUE );
   
   // copy command data to header
   _cmdHeader := _command;
@@ -186,7 +181,7 @@ END_VAR
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'CreateCommandPayload with the following parameter(s) :');
+                          MessageText := 'Create command payload with the following parameter(s) :');
     
   // Create log entry for Timestamp.IEC_DATE
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
@@ -310,10 +305,10 @@ END_VAR
              // Reset Busy flag
              Busy := FALSE;
              // Update results
-             OutCmd.DefaultDynamicValues.VelocityRate     := UINT_TO_REAL(_response.VelocityRate     ) / RobotLibraryConstants.REAL_CONVERSION_FACTOR; 
-             OutCmd.DefaultDynamicValues.AccelerationRate := UINT_TO_REAL(_response.AccelerationRate ) / RobotLibraryConstants.REAL_CONVERSION_FACTOR;
-             OutCmd.DefaultDynamicValues.DecelerationRate := UINT_TO_REAL(_response.DecelerationRate ) / RobotLibraryConstants.REAL_CONVERSION_FACTOR;
-             OutCmd.DefaultDynamicValues.JerkRate         := UINT_TO_REAL(_response.JerkRate         ) / RobotLibraryConstants.REAL_CONVERSION_FACTOR;
+             OutCmd.DefaultDynamicValues.VelocityRate     := PERCENT_INT_TO_REAL(UINT_TO_INT(_response.VelocityRate     ), IsOptional := FALSE); 
+             OutCmd.DefaultDynamicValues.AccelerationRate := PERCENT_INT_TO_REAL(UINT_TO_INT(_response.AccelerationRate ), IsOptional := FALSE);
+             OutCmd.DefaultDynamicValues.DecelerationRate := PERCENT_INT_TO_REAL(UINT_TO_INT(_response.DecelerationRate ), IsOptional := TRUE );
+             OutCmd.DefaultDynamicValues.JerkRate         := PERCENT_INT_TO_REAL(UINT_TO_INT(_response.JerkRate         ), IsOptional := TRUE );
   
              // set timeout
              SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
@@ -387,6 +382,58 @@ END_VAR
   _response.DecelerationRate := ResponseData.GetUint();
   // Get Response.JerkRate
   _response.JerkRate         := ResponseData.GetUint();
+  
+  // Create logging
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+
+END_METHOD
+
+METHOD INTERNAL ParseResponsePayloadLog
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Parsed the following parameter(s) from response data:');
+                 
+  // Create log entry for VelocityRate
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.VelocityRate = {1}',
+                          Para1       :=  UINT_TO_STRING(_response.VelocityRate));
+  
+  // Create log entry for AccelerationRate
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.AccelerationRate = {1}',
+                          Para1       :=  UINT_TO_STRING(_response.AccelerationRate));
+  
+  // Create log entry for DecelerationRate
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.DecelerationRate = {1}',
+                          Para1       :=  UINT_TO_STRING(_response.DecelerationRate));
+  
+  // Create log entry for JerkRate
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.JerkRate = {1}',
+                          Para1       :=  UINT_TO_STRING(_response.JerkRate));
 
 END_METHOD
 

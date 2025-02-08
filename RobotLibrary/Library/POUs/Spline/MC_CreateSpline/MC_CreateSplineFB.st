@@ -74,10 +74,17 @@ END_VAR
   END_IF
   
   // compare memory 
-  CheckParameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
+  _parameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
   
-  IF ( CheckParameterChanged )
+  // check parameter valid ?
+  _parameterValid   := CheckParameterValid( AxesGroup := AxesGroup );
+  
+  IF ((  _parameterChanged        )  AND 
+      (  _parameterValid          )) OR
+      (  _parameterUpdateInternal )  
   THEN  
+    // reset internal flag for send parameter update
+   _parameterUpdateInternal := FALSE;
     // update internal copy of parameters 
    _parCmd := ParCmd;
     // inc parameter sequence
@@ -189,10 +196,10 @@ END_VAR
   
   FOR _idx := 1 TO RobotLibraryParameter.SPLINE_DATA_MAX
   DO
-    _command.SplineData[_idx].VelocityRate     := REAL_TO_UINT(_parCmd.SplineData[_idx].VelocityRate     * RobotLibraryConstants.REAL_CONVERSION_FACTOR);
-    _command.SplineData[_idx].AccelerationRate := REAL_TO_UINT(_parCmd.SplineData[_idx].AccelerationRate * RobotLibraryConstants.REAL_CONVERSION_FACTOR);
-    _command.SplineData[_idx].DecelerationRate := REAL_TO_UINT(_parCmd.SplineData[_idx].DecelerationRate * RobotLibraryConstants.REAL_CONVERSION_FACTOR);
-    _command.SplineData[_idx].JerkRate         := REAL_TO_UINT(_parCmd.SplineData[_idx].JerkRate         * RobotLibraryConstants.REAL_CONVERSION_FACTOR);
+    _command.SplineData[_idx].VelocityRate     := REAL_TO_PERCENT_UINT(_parCmd.SplineData[_idx].VelocityRate     , IsOptional := FALSE);
+    _command.SplineData[_idx].AccelerationRate := REAL_TO_PERCENT_UINT(_parCmd.SplineData[_idx].AccelerationRate , IsOptional := FALSE);
+    _command.SplineData[_idx].DecelerationRate := REAL_TO_PERCENT_UINT(_parCmd.SplineData[_idx].DecelerationRate , IsOptional := TRUE );
+    _command.SplineData[_idx].JerkRate         := REAL_TO_PERCENT_UINT(_parCmd.SplineData[_idx].JerkRate         , IsOptional := TRUE );
     _command.SplineData[_idx].ToolNo           :=              _parCmd.SplineData[_idx].ToolNo;
     _command.SplineData[_idx].FrameNo          :=              _parCmd.SplineData[_idx].FrameNo;
     _command.SplineData[_idx].MoveTime         := TIME_TO_UINT(_parCmd.SplineData[_idx].MoveTime);
@@ -275,7 +282,7 @@ END_VAR
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'CreateCommandPayload with the following parameter(s) :');
+                          MessageText := 'Create command payload with the following parameter(s) :');
   
   // Create log entry for Mode
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
@@ -640,6 +647,33 @@ END_VAR
   _response.State                := _rspHeader.State;
   _response.AlarmMessageSeverity := _rspHeader.AlarmMessageSeverity;
   _response.AlarmMessageCode     := _rspHeader.AlarmMessageCode;
+  
+  // Create logging
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+
+END_METHOD
+
+METHOD INTERNAL ParseResponsePayloadLog
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Parsed the following parameter(s) from response data:');
+                          
+  // Create log entry for no parameter 
+  CreateLogMessage      ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'This command has no parameter to parse...');
 
 END_METHOD
 

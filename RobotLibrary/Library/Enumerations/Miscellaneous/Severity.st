@@ -22,6 +22,8 @@
 // -------------------------------------------------------------------------
 TYPE Severity : 
 (
+  /// No events will be logged
+  DEACTIVATE  := 0,
   /// Debug message
   /// • No user action required
   DEBUG := 4, 

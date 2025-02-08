@@ -87,10 +87,17 @@ END_VAR
   END_IF
   
   // compare memory 
-  CheckParameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
+  _parameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
   
-  IF ( CheckParameterChanged )
+  // check parameter valid ?
+  _parameterValid   := CheckParameterValid( AxesGroup := AxesGroup );
+  
+  IF ((  _parameterChanged        )  AND 
+      (  _parameterValid          )) OR
+      (  _parameterUpdateInternal )  
   THEN  
+    // reset internal flag for send parameter update
+   _parameterUpdateInternal := FALSE;
     // update internal copy of parameters 
    _parCmd := ParCmd;
     // inc parameter sequence
@@ -196,7 +203,7 @@ END_VAR
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'CreateCommandPayload with the following parameter(s) :');
+                          MessageText := 'Create command payload with the following parameter(s) :');
     
   // Create log entry for EmitterID[x]
   FOR _idx := 0 TO 3
@@ -350,6 +357,10 @@ VAR_INPUT
   /// Timestamp
   Timestamp    : SystemTime;  
 END_VAR
+VAR 
+  /// internal index for loops
+ _idx : DINT;
+END_VAR
 // Table 6-485: Received CMD payload (RC to PLC) of "ReadDigitalOutputs"
 // --------------------------
 // Header
@@ -388,15 +399,69 @@ END_VAR
   // Get Response.OriginID
   _response.OriginID := ResponseData.GetInt();
   // Get Response.Values[0]
-  _response.Values[0] := ResponseData.GetByte();
-  // Get Response.Values[1]
-  _response.Values[1] := ResponseData.GetByte();
-  // Get Response.Values[2]
-  _response.Values[2] := ResponseData.GetByte();
-  // Get Response.Values[3]
-  _response.Values[3] := ResponseData.GetByte();
-  // Get Response.Values[4]
-  _response.Values[4] := ResponseData.GetByte();
+  FOR _idx := 0 TO 4
+  DO
+   _response.Values[_idx] := ResponseData.GetByte();
+  END_FOR
+  // Create logging
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+
+END_METHOD
+
+METHOD INTERNAL ParseResponsePayloadLog
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
+VAR 
+  /// internal index for loops
+ _idx : DINT;
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Parsed the following parameter(s) from response data:');
+                          
+  // Create log entry for InvocationCounter
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.InvocationCounter = {1}',
+                          Para1       :=  USINT_TO_STRING(_response.InvocationCounter));
+  
+  // Create log entry for Reserve
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.Reserve = {1}',
+                          Para1       :=  SINT_TO_STRING(_response.Reserve));
+  
+  // Create log entry for OriginID
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.OriginID = {1}',
+                          Para1       :=  INT_TO_STRING(_response.OriginID));
+  
+  // Create log entry for Values[{x}]
+  FOR _idx := 0 TO 4
+  DO
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Values[{2}] = {1}',
+                            Para1       :=  BYTE_TO_STRING(_response.Values[_idx]),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  END_FOR
 
 END_METHOD
 

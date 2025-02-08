@@ -74,10 +74,17 @@ END_VAR
   END_IF
   
   // compare memory 
-  CheckParameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
+  _parameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
   
-  IF ( CheckParameterChanged )
+  // check parameter valid ?
+  _parameterValid   := CheckParameterValid( AxesGroup := AxesGroup );
+  
+  IF ((  _parameterChanged        )  AND 
+      (  _parameterValid          )) OR
+      (  _parameterUpdateInternal )  
   THEN  
+    // reset internal flag for send parameter update
+   _parameterUpdateInternal := FALSE;
     // update internal copy of parameters 
    _parCmd := ParCmd;
     // inc parameter sequence
@@ -148,7 +155,7 @@ END_VAR
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'CreateCommandPayload with the following parameter(s) :');
+                          MessageText := 'Create command payload with the following parameter(s) :');
     
   // Create log entry for MeasuringMode
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
@@ -628,6 +635,367 @@ END_VAR
   _response.Measurings[2].MeasuredJointPosition.E5 := ResponseData.GetReal();
   // Get Response.Measurings[2].MeasuredJointPosition.E6
   _response.Measurings[2].MeasuredJointPosition.E6 := ResponseData.GetReal();
+  
+  // Create logging
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+
+END_METHOD
+
+METHOD INTERNAL ParseResponsePayloadLog
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
+VAR
+  /// internal index for loops
+  _idx : DINT;
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Parsed the following parameter(s) from response data:');
+                          
+  // Create log entry for MeasuringID
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.MeasuringID = {1}',
+                          Para1       :=  UINT_TO_STRING(_response.MeasuringID));
+  
+  // Create log entry for MeasuringID
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.MeasuringID = {1}',
+                          Para1       :=  UINT_TO_STRING(_response.MeasuringID));
+  
+  // Create log entry for Measurings[x]
+  FOR _idx := 1 TO 2
+  DO
+    // Create log entry for Measurings[x].ToolNo
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Measurings[{2}].ToolNo = {1}',
+                            Para1       :=  USINT_TO_STRING(_response.Measurings[_idx].ToolNo),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  
+    // Create log entry for Measurings[x].FrameNo
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Measurings[{2}].FrameNo = {1}',
+                            Para1       :=  USINT_TO_STRING(_response.Measurings[_idx].FrameNo),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  END_FOR
+  
+  
+  // Create log entry for Measurings[x]
+  FOR _idx := 1 TO 2
+  DO
+    // Create log entry for Measurings[x].MeasuredCartesianPosition.X
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Measurings[{2}].MeasuredCartesianPosition.X = {1}',
+                            Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.X),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  
+    // Create log entry for Measurings[x].MeasuredCartesianPosition.Y
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Measurings[{2}].MeasuredCartesianPosition.Y = {1}',
+                            Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.Y),
+                            Para2       :=  DINT_TO_STRING(_idx));
+                            
+    // Create log entry for Measurings[x].MeasuredCartesianPosition.Z
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Measurings[{2}].MeasuredCartesianPosition.Z = {1}',
+                            Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.Z),
+                            Para2       :=  DINT_TO_STRING(_idx));
+                            
+    // Create log entry for Measurings[x].MeasuredCartesianPosition.Rx
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Measurings[{2}].MeasuredCartesianPosition.Rx = {1}',
+                            Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.Rx),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  
+    // Create log entry for Measurings[x].MeasuredCartesianPosition.Ry
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Measurings[{2}].MeasuredCartesianPosition.Ry = {1}',
+                            Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.Ry),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  
+    // Create log entry for Measurings[x].MeasuredCartesianPosition.Rz
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Measurings[{2}].MeasuredCartesianPosition.Rz = {1}',
+                            Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.Rz),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  
+    // Create log entry for Measurings[x].MeasuredCartesianPosition.Config
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Measurings[{2}].MeasuredCartesianPosition.Config = {1}',
+                            Para1       :=  ARM_CONFIG_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.Config),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  
+    // Create log entry for Measurings[x].MeasuredCartesianPosition.TurnNumber.J1Turns
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Measurings[{2}].MeasuredCartesianPosition.TurnNumber.J1Turns = {1}',
+                            Para1       :=  SINT_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.TurnNumber.J1Turns),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  
+    // Create log entry for Measurings[x].MeasuredCartesianPosition.TurnNumber.J2Turns
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Measurings[{2}].MeasuredCartesianPosition.TurnNumber.J2Turns = {1}',
+                            Para1       :=  SINT_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.TurnNumber.J2Turns),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  
+    // Create log entry for Measurings[x].MeasuredCartesianPosition.TurnNumber.J3Turns
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Measurings[{2}].MeasuredCartesianPosition.TurnNumber.J3Turns = {1}',
+                            Para1       :=  SINT_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.TurnNumber.J3Turns),
+                            Para2       :=  DINT_TO_STRING(_idx));
+                            
+    // Create log entry for Measurings[x].MeasuredCartesianPosition.TurnNumber.J4Turns
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Measurings[{2}].MeasuredCartesianPosition.TurnNumber.J4Turns = {1}',
+                            Para1       :=  SINT_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.TurnNumber.J4Turns),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  
+    // Create log entry for Measurings[x].MeasuredCartesianPosition.TurnNumber.J5Turns
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Measurings[{2}].MeasuredCartesianPosition.TurnNumber.J5Turns = {1}',
+                            Para1       :=  SINT_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.TurnNumber.J5Turns),
+                            Para2       :=  DINT_TO_STRING(_idx));
+                            
+    // Create log entry for Measurings[x].MeasuredCartesianPosition.TurnNumber.J6Turns
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Measurings[{2}].MeasuredCartesianPosition.TurnNumber.J6Turns = {1}',
+                            Para1       :=  SINT_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.TurnNumber.J6Turns),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  
+    // Create log entry for Measurings[x].MeasuredCartesianPosition.TurnNumber.E1Turns
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Measurings[{2}].MeasuredCartesianPosition.TurnNumber.E1Turns = {1}',
+                            Para1       :=  SINT_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.TurnNumber.E1Turns),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  
+    // Create log entry for Measurings[x].MeasuredCartesianPosition.E1
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Measurings[{2}].MeasuredCartesianPosition.E1 = {1}',
+                            Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.E1),
+                            Para2       :=  DINT_TO_STRING(_idx));
+                            
+    // Create log entry for Measurings[x].MeasuredJointPosition.J1
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Measurings[{2}].MeasuredJointPosition.J1 = {1}',
+                            Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredJointPosition.J1),
+                            Para2       :=  DINT_TO_STRING(_idx));
+                            
+    // Create log entry for Measurings[x].MeasuredJointPosition.J2
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Measurings[{2}].MeasuredJointPosition.J2 = {1}',
+                            Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredJointPosition.J2),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  
+    // Create log entry for Measurings[x].MeasuredJointPosition.J3
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Measurings[{2}].MeasuredJointPosition.J3 = {1}',
+                            Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredJointPosition.J3),
+                            Para2       :=  DINT_TO_STRING(_idx));
+                            
+    // Create log entry for Measurings[x].MeasuredJointPosition.J4
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Measurings[{2}].MeasuredJointPosition.J4 = {1}',
+                            Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredJointPosition.J4),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  
+    // Create log entry for Measurings[x].MeasuredJointPosition.J5
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Measurings[{2}].MeasuredJointPosition.J5 = {1}',
+                            Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredJointPosition.J5),
+                            Para2       :=  DINT_TO_STRING(_idx));
+                            
+    // Create log entry for Measurings[x].MeasuredJointPosition.J6
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Measurings[{2}].MeasuredJointPosition.J6 = {1}',
+                            Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredJointPosition.J6),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  
+    // Create log entry for Measurings[x].MeasuredJointPosition.E1
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Measurings[{2}].MeasuredJointPosition.E1 = {1}',
+                            Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredJointPosition.E1),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  END_FOR
+  
+  
+  // Create log entry for Measurings[x]
+  FOR _idx := 1 TO 2
+  DO
+    // Create log entry for Measurings[x].MeasuredCartesianPosition.E2
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Measurings[{2}].MeasuredCartesianPosition.E2 = {1}',
+                            Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.E2),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  
+    // Create log entry for Measurings[x].MeasuredCartesianPosition.E3
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Measurings[{2}].MeasuredCartesianPosition.E3 = {1}',
+                            Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.E3),
+                            Para2       :=  DINT_TO_STRING(_idx));
+                            
+    // Create log entry for Measurings[x].MeasuredCartesianPosition.E4
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Measurings[{2}].MeasuredCartesianPosition.E4 = {1}',
+                            Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.E4),
+                            Para2       :=  DINT_TO_STRING(_idx));
+                            
+    // Create log entry for Measurings[x].MeasuredCartesianPosition.E5
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Measurings[{2}].MeasuredCartesianPosition.E5 = {1}',
+                            Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.E5),
+                            Para2       :=  DINT_TO_STRING(_idx));
+                            
+    // Create log entry for Measurings[x].MeasuredCartesianPosition.E6
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Measurings[{2}].MeasuredCartesianPosition.E6 = {1}',
+                            Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.E6),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  
+    // Create log entry for Measurings[x].MeasuredJointPosition.E2
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Measurings[{2}].MeasuredJointPosition.E2 = {1}',
+                            Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredJointPosition.E2),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  
+    // Create log entry for Measurings[x].MeasuredJointPosition.E3
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Measurings[{2}].MeasuredJointPosition.E3 = {1}',
+                            Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredJointPosition.E3),
+                            Para2       :=  DINT_TO_STRING(_idx));
+                            
+    // Create log entry for Measurings[x].MeasuredJointPosition.E4
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Measurings[{2}].MeasuredJointPosition.E4 = {1}',
+                            Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredJointPosition.E4),
+                            Para2       :=  DINT_TO_STRING(_idx));
+                            
+    // Create log entry for Measurings[x].MeasuredJointPosition.E5
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Measurings[{2}].MeasuredJointPosition.E5 = {1}',
+                            Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredJointPosition.E5),
+                            Para2       :=  DINT_TO_STRING(_idx));
+                            
+    // Create log entry for Measurings[x].MeasuredJointPosition.E6
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Measurings[{2}].MeasuredJointPosition.E6 = {1}',
+                            Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredJointPosition.E6),
+                            Para2       :=  DINT_TO_STRING(_idx));
+                       
+  END_FOR
 
 END_METHOD
 

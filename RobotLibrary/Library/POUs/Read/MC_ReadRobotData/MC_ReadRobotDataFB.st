@@ -76,10 +76,17 @@ END_VAR
   END_IF
   
   // compare memory 
-  CheckParameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
+  _parameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
   
-  IF ( CheckParameterChanged )
+  // check parameter valid ?
+  _parameterValid   := CheckParameterValid( AxesGroup := AxesGroup );
+  
+  IF ((  _parameterChanged        )  AND 
+      (  _parameterValid          )) OR
+      (  _parameterUpdateInternal )  
   THEN  
+    // reset internal flag for send parameter update
+   _parameterUpdateInternal := FALSE;
     // update internal copy of parameters 
    _parCmd := ParCmd;
     // inc parameter sequence
@@ -134,7 +141,7 @@ END_VAR
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'CreateCommandPayload without additional parameter(s)');
+                          MessageText := 'Create command payload without additional parameter(s)');
 
 END_METHOD
 
@@ -436,7 +443,160 @@ END_VAR
   // Get _response.RobotID
   ResponseData.GetDataBlock(pData := ADR(_response.RobotID)             , SIZEOF(_response.RobotID)             , IsString := TRUE );
   // Get _response.InterpreterCycleTime
-  _response.InterpreterCycleTime := ResponseData.GetUsint();
+  _response.InterpreterCycleTime := ResponseData.GetUsint(); 
+  
+  // Create logging
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+
+END_METHOD
+
+METHOD INTERNAL ParseResponsePayloadLog
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
+VAR 
+  /// internal index for loops
+ _idx : DINT;
+  /// temporary string
+ _tmpStr : STRING;
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Parsed the following parameter(s) from response data:');
+  
+  // Create log entry for RCManufacturer
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.RCManufacturer = {1}',
+                          Para1       := _response.RCManufacturer);
+  
+  // Create log entry for RCOrderID
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.RCOrderID = {1}',
+                          Para1       := _response.RCOrderID);
+  
+  // Create log entry for RCSerialNumber
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.RCSerialNumber = {1}',
+                          Para1       := _response.RCSerialNumber);
+  
+  // Create log entry for RASerialNumber
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.RASerialNumber = {1}',
+                          Para1       := _response.RASerialNumber);
+  
+  // Create log entry for RCFirmwareVersion
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.RCFirmwareVersion = {1}',
+                          Para1       := _response.RCFirmwareVersion);
+                          
+  // Create log entry for RCInterpreterVersion
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.RCInterpreterVersion = {1}',
+                          Para1       := _response.RCInterpreterVersion);
+  
+  // Create log entry for Reserve
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.Reserve = {1}',
+                          Para1       :=  BYTE_TO_STRING(_response.Reserve));
+  
+  // Create log entry for AxisJointUsed
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.AxisJointUsed = {1}',
+                          Para1       :=  BYTE_TO_STRING_BIN(_response.AxisJointUsed));
+  
+  // Create log entry for AxisExternalUsed
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.AxisExternalUsed = {1}',
+                          Para1       :=  BYTE_TO_STRING_BIN(_response.AxisExternalUsed));
+  
+  // Create log entry for AxisJointUnit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.AxisJointUnit = {1}',
+                          Para1       :=  BYTE_TO_STRING(_response.AxisJointUnit));
+  
+  // Create log entry for AxisExternalUnit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.AxisExternalUnit = {1}',
+                          Para1       :=  BYTE_TO_STRING(_response.AxisExternalUnit));
+  
+  FOR _idx := 0 TO 18
+  do
+   _tmpStr := '16#';
+   _tmpStr := CONCAT( _tmpStr, BYTE_TO_STRING_BIN(_response.RCSupportedFunctions[_idx]));
+  
+    // Create log entry for RCSupportedFunctions
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.RCSupportedFunctions[{2}] = {1}',
+                            Para1       := _tmpStr,
+                            Para2       :=  DINT_TO_STRING(_idx));
+  END_FOR
+  
+  // Create log entry for Reserve2
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.Reserve2 = {1}',
+                          Para1       :=  BYTE_TO_STRING(_response.Reserve2));
+  
+  // Create log entry for RobotID
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.RobotID = {1}',
+                          Para1       :=  _response.RobotID);
+  
+  // Create log entry for InterpreterCycleTime
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.InterpreterCycleTime = {1}',
+                          Para1       :=  UINT_TO_STRING(_response.InterpreterCycleTime));
 
 END_METHOD
 

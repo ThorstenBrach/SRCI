@@ -89,10 +89,17 @@ END_VAR
   END_IF
   
   // compare memory 
-  CheckParameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
+  _parameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
   
-  IF ( CheckParameterChanged )
+  // check parameter valid ?
+  _parameterValid   := CheckParameterValid( AxesGroup := AxesGroup );
+  
+  IF ((  _parameterChanged        )  AND 
+      (  _parameterValid          )) OR
+      (  _parameterUpdateInternal )  
   THEN  
+    // reset internal flag for send parameter update
+   _parameterUpdateInternal := FALSE;
     // update internal copy of parameters 
    _parCmd := ParCmd;
     // inc parameter sequence
@@ -163,7 +170,7 @@ END_VAR
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'CreateCommandPayload with the following parameter(s) :');
+                          MessageText := 'Create command payload with the following parameter(s) :');
   
   // Create log entry for ConveyorNo
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
@@ -320,6 +327,90 @@ END_VAR
   
   // Get Response.Enabled
   _response.TrackingStatus := ResponseData.GetTrackingStatus();
+  
+  // Create logging
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+
+END_METHOD
+
+METHOD INTERNAL ParseResponsePayloadLog
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Parsed the following parameter(s) from response data:');
+                          
+  // Create log entry for TrackingStatus.ConveyorTrackingEnabled
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.TrackingStatus.ConveyorTrackingEnabled = {1}',
+                          Para1       :=  BOOL_TO_STRING(_response.TrackingStatus.ConveyorTrackingEnabled));
+  
+  // Create log entry for TrackingStatus.WaitingForSynchronization
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.TrackingStatus.WaitingForSynchronization = {1}',
+                          Para1       :=  BOOL_TO_STRING(_response.TrackingStatus.WaitingForSynchronization));
+  
+  // Create log entry for TrackingStatus.Synchronizing
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.TrackingStatus.Synchronizing = {1}',
+                          Para1       :=  BOOL_TO_STRING(_response.TrackingStatus.Synchronizing));
+  
+  // Create log entry for TrackingStatus.Synchronous
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.TrackingStatus.Synchronous = {1}',
+                          Para1       :=  BOOL_TO_STRING(_response.TrackingStatus.Synchronous));
+  
+  // Create log entry for TrackingStatus.Desynchronizing
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.TrackingStatus.Desynchronizing = {1}',
+                          Para1       :=  BOOL_TO_STRING(_response.TrackingStatus.Desynchronizing));
+  
+  // Create log entry for TrackingStatus.SyncOutZoneEntered
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.TrackingStatus.SyncOutZoneEntered = {1}',
+                          Para1       :=  BOOL_TO_STRING(_response.TrackingStatus.SyncOutZoneEntered));
+  
+  // Create log entry for TrackingStatus.SyncOutZoneLeft
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.TrackingStatus.SyncOutZoneLeft = {1}',
+                          Para1       :=  BOOL_TO_STRING(_response.TrackingStatus.SyncOutZoneLeft));
+  
+  // Create log entry for TrackingStatus.NotUsed
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.TrackingStatus.NotUsed = {1}',
+                          Para1       :=  BOOL_TO_STRING(_response.TrackingStatus.NotUsed));
 
 END_METHOD
 

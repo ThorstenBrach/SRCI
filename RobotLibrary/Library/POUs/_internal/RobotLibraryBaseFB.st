@@ -54,25 +54,31 @@ END_VAR
 
 VAR
   /// Rising edge for error
- _error_R          : R_TRIG;
+ _error_R                  : R_TRIG;
   /// Rising edge for warning
- _warning_R        : R_TRIG;
+ _warning_R                : R_TRIG;
   /// Rising edge for information
- _info_R           : R_TRIG;
+ _info_R                   : R_TRIG;
   /// unique ID
- _uniqueID         : UDINT;  
+ _uniqueID                 : UDINT;  
   /// flag for response received
- _responseReceived : BOOL;
+ _responseReceived         : BOOL;
   /// internal step counter
- _stepCmd          : DINT;
-  /// internal timer 
- _timerCmd         : TON;
+ _stepCmd                  : DINT;
+  /// internal timer  
+ _timerCmd                 : TON;
   /// internal timeout 
- _timeoutCmd       : TIME := T#5S;
+ _timeoutCmd               : TIME := T#5S;
   /// internal command header
- _cmdHeader        : CmdHeader;  
+ _cmdHeader                : CmdHeader;  
   /// internal response header
- _rspHeader        : RspHeader;
+ _rspHeader                : RspHeader;
+  /// internal flag for send a parameter update
+ _parameterUpdateInternal  : BOOL; 
+  /// internal flag for parameter has changed
+ _parameterChanged         : BOOL;
+  /// internal flag for parameter are valid
+ _parameterValid           : BOOL;
 END_VAR
 
   OnCall               (AxesGroup := AxesGroup);
@@ -94,6 +100,13 @@ VAR_INPUT
   Timestamp : SystemTime;
 END_VAR
 
+  // Create log entry
+  CreateLogMessage ( Timestamp   := Timestamp,
+                     MessageType := MessageType.CMD,
+                     Severity    := Severity.DEBUG,
+                     MessageCode := 0,
+                     MessageText := CONCAT('Callback reveiced in FB ', MyType));
+  
   ResponseData.Reset();
   ResponseData.Payload    := RspData.Payload; 
   ResponseData.PayloadLen := RspData.PayloadLen;
@@ -101,13 +114,6 @@ END_VAR
   
   // set flag for response received
   _responseReceived := TRUE;
-  
-  // Create log entry
-  CreateLogMessage ( Timestamp   := Timestamp,
-                     MessageType := MessageType.CMD,
-                     Severity    := Severity.DEBUG,
-                     MessageCode := 0,
-                     MessageText := CONCAT('Callback reveiced in FB ', MyType));
 
 END_METHOD
 
@@ -285,6 +291,7 @@ METHOD PROTECTED Reset : DINT
 VAR_INPUT
 END_VAR
 
+  _parameterUpdateInternal := FALSE;
   _uniqueId := 0;
   _stepCmd  := 0;
   Error     := FALSE;

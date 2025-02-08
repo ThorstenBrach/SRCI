@@ -31,7 +31,7 @@ STRUCT
   /// Payload length
   PayloadLen        : UDINT;  
   /// Payload poiner position   
-  PayLoadPtr        : DWORD;
+  PayLoadPtr        : UINT;
 END_STRUCT
 END_TYPE
 

@@ -73,10 +73,17 @@ END_VAR
   END_IF
   
   // compare memory 
-  CheckParameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
+  _parameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
   
-  IF ( CheckParameterChanged )
+  // check parameter valid ?
+  _parameterValid   := CheckParameterValid( AxesGroup := AxesGroup );
+  
+  IF ((  _parameterChanged        )  AND 
+      (  _parameterValid          )) OR
+      (  _parameterUpdateInternal )  
   THEN  
+    // reset internal flag for send parameter update
+   _parameterUpdateInternal := FALSE;
     // update internal copy of parameters 
    _parCmd := ParCmd;
     // inc parameter sequence
@@ -293,7 +300,7 @@ END_VAR
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'CreateCommandPayload with the following parameter(s) :');
+                          MessageText := 'Create command payload with the following parameter(s) :');
     
   // Create log entry for TransformationParameter_1.Timestamp.IEC_DATE
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
@@ -764,6 +771,187 @@ END_VAR
   _response.TransformedPosition.E5 := ResponseData.GetReal();
   // Get Response.TransformedPosition.E6
   _response.TransformedPosition.E6 := ResponseData.GetReal();
+  
+  // Create logging
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+
+END_METHOD
+
+METHOD INTERNAL ParseResponsePayloadLog
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Parsed the following parameter(s) from response data:');
+                          
+  // Create log entry for TransformedPosition.X
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.TransformedPosition.X = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.TransformedPosition.X));
+  
+  // Create log entry for TransformedPosition.Y
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.TransformedPosition.Y = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.TransformedPosition.Y));
+  
+  // Create log entry for TransformedPosition.Z
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.TransformedPosition.Z = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.TransformedPosition.Z));
+  
+  // Create log entry for TransformedPosition.Rx
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.TransformedPosition.Rx = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.TransformedPosition.Rx));
+  
+  // Create log entry for TransformedPosition.Ry
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.TransformedPosition.Ry = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.TransformedPosition.Ry));
+  
+  // Create log entry for TransformedPosition.Rz
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.TransformedPosition.Rz = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.TransformedPosition.Rz));
+  
+  
+  // Create log entry for TransformedPosition.Config
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.TransformedPosition.Config = {1}',
+                          Para1       :=  ARM_CONFIG_TO_STRING(_response.TransformedPosition.Config));
+  
+  // Create log entry for TransformedPosition.TurnNumber.J1Turns
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.TransformedPosition.TurnNumber.J1Turns = {1}',
+                          Para1       :=  SINT_TO_STRING(_response.TransformedPosition.TurnNumber.J1Turns));
+  
+  // Create log entry for TransformedPosition.TurnNumber.J2Turns
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.TransformedPosition.TurnNumber.J2Turns = {1}',
+                          Para1       :=  SINT_TO_STRING(_response.TransformedPosition.TurnNumber.J2Turns));
+  
+  // Create log entry for TransformedPosition.TurnNumber.J3Turns
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.TransformedPosition.TurnNumber.J3Turns = {1}',
+                          Para1       :=  SINT_TO_STRING(_response.TransformedPosition.TurnNumber.J3Turns));
+  
+  // Create log entry for TransformedPosition.TurnNumber.J4Turns
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.TransformedPosition.TurnNumber.J4Turns = {1}',
+                          Para1       :=  SINT_TO_STRING(_response.TransformedPosition.TurnNumber.J4Turns));
+  
+  // Create log entry for TransformedPosition.TurnNumber.J5Turns
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.TransformedPosition.TurnNumber.J5Turns = {1}',
+                          Para1       :=  SINT_TO_STRING(_response.TransformedPosition.TurnNumber.J5Turns));
+  
+  // Create log entry for TransformedPosition.TurnNumber.J6Turns
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.TransformedPosition.TurnNumber.J6Turns = {1}',
+                          Para1       :=  SINT_TO_STRING(_response.TransformedPosition.TurnNumber.J6Turns));
+  
+  // Create log entry for TransformedPosition.TurnNumber.E1Turns
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.TransformedPosition.TurnNumber.E1Turns = {1}',
+                          Para1       :=  SINT_TO_STRING(_response.TransformedPosition.TurnNumber.E1Turns));
+  
+  // Create log entry for TransformedPosition.E1
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.TransformedPosition.E1 = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.TransformedPosition.E1));
+  
+  // Create log entry for TransformedPosition.E2
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.TransformedPosition.E2 = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.TransformedPosition.E2));
+  
+  // Create log entry for TransformedPosition.E3
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.TransformedPosition.E3 = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.TransformedPosition.E3));
+  
+  // Create log entry for TransformedPosition.E4
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.TransformedPosition.E4 = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.TransformedPosition.E4));
+  
+  // Create log entry for TransformedPosition.E5
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.TransformedPosition.E5 = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.TransformedPosition.E5));
+  
+  // Create log entry for TransformedPosition.E6
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.TransformedPosition.E6 = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.TransformedPosition.E6));
 
 END_METHOD
 

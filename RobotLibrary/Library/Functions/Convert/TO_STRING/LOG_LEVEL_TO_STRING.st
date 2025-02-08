@@ -28,12 +28,12 @@ END_VAR
   CASE Value 
   OF
   
-    LogLevel.DEACTIVATE  : StrReplace('DEACTIVATE ({0})' ,'{0}' , USINT_TO_STRING(Value));
-    LogLevel.DEBUG       : StrReplace('DEBUG ({0})'      ,'{0}' , USINT_TO_STRING(Value));
-    LogLevel.INFO        : StrReplace('INFO ({0})'       ,'{0}' , USINT_TO_STRING(Value));
-    LogLevel.WARNING     : StrReplace('WARNING ({0})'    ,'{0}' , USINT_TO_STRING(Value));
-    LogLevel.ERROR       : StrReplace('ERROR ({0})'      ,'{0}' , USINT_TO_STRING(Value));
-    LogLevel.FATAL_ERROR : StrReplace('FATAL_ERROR ({0})','{0}' , USINT_TO_STRING(Value));
+    LogLevel.DEACTIVATE  : StrReplace('DEACTIVATE ({0})' ,'{0}' , SINT_TO_STRING(Value));
+    LogLevel.DEBUG       : StrReplace('DEBUG ({0})'      ,'{0}' , SINT_TO_STRING(Value));
+    LogLevel.INFO        : StrReplace('INFO ({0})'       ,'{0}' , SINT_TO_STRING(Value));
+    LogLevel.WARNING     : StrReplace('WARNING ({0})'    ,'{0}' , SINT_TO_STRING(Value));
+    LogLevel.ERROR       : StrReplace('ERROR ({0})'      ,'{0}' , SINT_TO_STRING(Value));
+    LogLevel.FATAL_ERROR : StrReplace('FATAL_ERROR ({0})','{0}' , SINT_TO_STRING(Value));
   
   END_CASE
 

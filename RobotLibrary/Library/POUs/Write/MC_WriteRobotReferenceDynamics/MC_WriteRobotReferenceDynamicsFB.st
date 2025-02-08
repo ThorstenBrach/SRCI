@@ -80,10 +80,17 @@ END_VAR
   END_IF
   
   // compare memory 
-  CheckParameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
+  _parameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
   
-  IF ( CheckParameterChanged )
+  // check parameter valid ?
+  _parameterValid   := CheckParameterValid( AxesGroup := AxesGroup );
+  
+  IF ((  _parameterChanged        )  AND 
+      (  _parameterValid          )) OR
+      (  _parameterUpdateInternal )  
   THEN  
+    // reset internal flag for send parameter update
+   _parameterUpdateInternal := FALSE;
     // update internal copy of parameters 
    _parCmd := ParCmd;
     // inc parameter sequence
@@ -142,27 +149,14 @@ END_VAR
   _command.ParSeq                := _command.ParSeq;
   _command.Priority              :=  Priority;
   
-  _command.DynamicValues         := _parCmd.DynamicValues;
+  _command.DynamicValues         := _parCmd.DynamicValues; {warning 'ToDo: Check if this is a mistake in the SRCI specification ? '}
   
   (*
-  
-  _command.Timestamp             := _parCmd.DynamicValues.Timestamp;
-  _command.VelocityReference     := REAL_TO_UINT(_parCmd.DynamicValues.VelocityReference     * RobotLibraryConstants.REAL_CONVERSION_FACTOR);
-  _command.AccelerationReference := REAL_TO_UINT(_parCmd.DynamicValues.AccelerationReference * RobotLibraryConstants.REAL_CONVERSION_FACTOR);
-  
-  IF (_parCmd.DynamicValues.JerkReference  <> -1 ) 
-  THEN
-   _command.JerkReference := REAL_TO_UINT(_parCmd.DynamicValues.JerkReference * RobotLibraryConstants.REAL_CONVERSION_FACTOR);
-  ELSE
-   _command.JerkReference := 16#FFFF;  // Robot needs 16#FFFF ( -1 ) for not supported values
-  END_IF
-  
-  IF (_parCmd.DynamicValues.DecelerationReference <> -1 ) 
-  THEN
-   _command.DecelerationReference := REAL_TO_UINT(_parCmd.DynamicValues.DecelerationReference * RobotLibraryConstants.REAL_CONVERSION_FACTOR);
-  ELSE
-   _command.DecelerationReference := 16#FFFF;  // Robot needs 16#FFFF ( -1 ) for not supported values
-  END_IF
+   _command.Timestamp             := _parCmd.DynamicValues.Timestamp;
+   _command.VelocityReference     := REAL_TO_PERCENT_UINT(_parCmd.DynamicValues.VelocityReference     , IsOptional := FALSE);
+   _command.AccelerationReference := REAL_TO_PERCENT_UINT(_parCmd.DynamicValues.AccelerationReference , IsOptional := FALSE);
+   _command.JerkReference         := REAL_TO_PERCENT_UINT(_parCmd.DynamicValues.JerkReference         , IsOptional := TRUE );
+   _command.DecelerationReference := REAL_TO_PERCENT_UINT(_parCmd.DynamicValues.DecelerationReference , IsOptional := TRUE );
   *)
   
   
@@ -200,7 +194,7 @@ END_VAR
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'CreateCommandPayload with the following parameter(s) :');
+                          MessageText := 'Create command payload with the following parameter(s) :');
     
   // Create log entry for DynamicValues.Timestamp.IEC_DATE
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
@@ -409,6 +403,58 @@ END_VAR
   _response.ReferenceDynamicValues.DecelerationReference := ResponseData.GetReal();
   // Get ReferenceDynamicValues.JerkReference
   _response.ReferenceDynamicValues.JerkReference := ResponseData.GetReal();
+  
+  // Create logging
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+
+END_METHOD
+
+METHOD INTERNAL ParseResponsePayloadLog
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Parsed the following parameter(s) from response data:');
+  
+  // Create log entry for ReferenceDynamicValues.VelocityReference
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ReferenceDynamicValues.VelocityReference = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.ReferenceDynamicValues.VelocityReference));
+  
+  // Create log entry for ReferenceDynamicValues.AccelerationReference
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ReferenceDynamicValues.AccelerationReference = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.ReferenceDynamicValues.AccelerationReference));
+                          
+  // Create log entry for ReferenceDynamicValues.DecelerationReference
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ReferenceDynamicValues.DecelerationReference = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.ReferenceDynamicValues.DecelerationReference));
+  
+  // Create log entry for ReferenceDynamicValues.JerkReference
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ReferenceDynamicValues.JerkReference = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.ReferenceDynamicValues.JerkReference));
 
 END_METHOD
 

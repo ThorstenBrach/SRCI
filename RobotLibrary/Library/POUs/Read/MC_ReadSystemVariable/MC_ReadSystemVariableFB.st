@@ -95,10 +95,17 @@ END_VAR
   END_IF
   
   // compare memory 
-  CheckParameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
+  _parameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
   
-  IF ( CheckParameterChanged )
+  // check parameter valid ?
+  _parameterValid   := CheckParameterValid( AxesGroup := AxesGroup );
+  
+  IF ((  _parameterChanged        )  AND 
+      (  _parameterValid          )) OR
+      (  _parameterUpdateInternal )  
   THEN  
+    // reset internal flag for send parameter update
+   _parameterUpdateInternal := FALSE;
     // update internal copy of parameters 
    _parCmd := ParCmd;
     // inc parameter sequence
@@ -236,7 +243,7 @@ END_VAR
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'CreateCommandPayload with the following parameter(s) :');
+                          MessageText := 'Create command payload with the following parameter(s) :');
     
   // Create log entry for EmitterID[x]
   FOR _idx := 0 TO 3
@@ -549,6 +556,163 @@ END_VAR
   DO
     // Get Response.DataType[_idx] 
    _response.Data_7[_idx] := ResponseData.GetByte();
+  END_FOR
+  
+  // Create logging
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+
+END_METHOD
+
+METHOD INTERNAL ParseResponsePayloadLog
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
+VAR 
+  /// internal index for loops
+ _idx : DINT;
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Parsed the following parameter(s) from response data:');
+                          
+  // Create log entry for InvocationCounter
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.InvocationCounter = {1}',
+                          Para1       :=  USINT_TO_STRING(_response.InvocationCounter));
+  
+  // Create log entry for Reserve
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.Reserve = {1}',
+                          Para1       :=  SINT_TO_STRING(_response.Reserve));
+  
+  // Create log entry for OriginID
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.OriginID = {1}',
+                          Para1       :=  INT_TO_STRING(_response.OriginID));
+  
+  // Create log entry for DataType
+  FOR _idx := 0 TO 7
+  DO
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.DataType[{2}] = {1}',
+                            Para1       :=  USINT_TO_STRING(_response.DataType[_idx]),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  
+  END_FOR
+  
+  // Create log entry for Data_0
+  FOR _idx := 0 TO 3
+  DO
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Data_0[{2}] = {1}',
+                            Para1       :=  BYTE_TO_STRING(_response.Data_0[_idx]),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  END_FOR
+  
+  // Create log entry for Data_1
+  FOR _idx := 0 TO 3
+  DO
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Data_1[{2}] = {1}',
+                            Para1       :=  BYTE_TO_STRING(_response.Data_1[_idx]),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  END_FOR
+  
+  // Create log entry for Data_2
+  FOR _idx := 0 TO 3
+  DO
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Data_2[{2}] = {1}',
+                            Para1       :=  BYTE_TO_STRING(_response.Data_2[_idx]),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  END_FOR
+  
+  // Create log entry for Data_3
+  FOR _idx := 0 TO 3
+  DO
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Data_3[{2}] = {1}',
+                            Para1       :=  BYTE_TO_STRING(_response.Data_3[_idx]),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  END_FOR
+  
+  // Create log entry for Data_4
+  FOR _idx := 0 TO 3
+  DO
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Data_4[{2}] = {1}',
+                            Para1       :=  BYTE_TO_STRING(_response.Data_4[_idx]),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  END_FOR
+  
+  // Create log entry for Data_5
+  FOR _idx := 0 TO 3
+  DO
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Data_5[{2}] = {1}',
+                            Para1       :=  BYTE_TO_STRING(_response.Data_5[_idx]),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  END_FOR
+  
+  // Create log entry for Data_6
+  FOR _idx := 0 TO 3
+  DO
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Data_6[{2}] = {1}',
+                            Para1       :=  BYTE_TO_STRING(_response.Data_6[_idx]),
+                            Para2       :=  DINT_TO_STRING(_idx));
+  END_FOR
+  
+  // Create log entry for Data_7
+  FOR _idx := 0 TO 3
+  DO
+    CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Response.Data_7[{2}] = {1}',
+                            Para1       :=  BYTE_TO_STRING(_response.Data_7[_idx]),
+                            Para2       :=  DINT_TO_STRING(_idx));
   END_FOR
 
 END_METHOD

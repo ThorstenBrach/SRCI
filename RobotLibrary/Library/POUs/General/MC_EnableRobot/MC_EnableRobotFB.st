@@ -78,10 +78,17 @@ END_VAR
   END_IF
   
   // compare memory 
-  CheckParameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
+  _parameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
   
-  IF ( CheckParameterChanged )
+  // check parameter valid ?
+  _parameterValid   := CheckParameterValid( AxesGroup := AxesGroup );
+  
+  IF ((  _parameterChanged        )  AND 
+      (  _parameterValid          )) OR
+      (  _parameterUpdateInternal )  
   THEN  
+    // reset internal flag for send parameter update
+   _parameterUpdateInternal := FALSE;
     // update internal copy of parameters 
    _parCmd := ParCmd;
     // inc parameter sequence
@@ -141,20 +148,7 @@ END_VAR
   // add command.HoldToRun
   CreateCommandPayload.AddBool(_command.HoldToRun);
   // add command.ManualStep
-  CreateCommandPayload.AddBool(_command.ManualStep);
-  
-  // Create log entry
-  CreateLogMessagePara5(  Timestamp   := AxesGroup.InternalData.SystemTime, // ToDo
-  	                      MessageType := MessageType.CMD, 
-  	                      Severity    := Severity.DEBUG, 
-  	                      MessageCode := 0, 
-  	                      MessageText := 'Create command payload with parameter : Enable = {1}, StepMode = {2}, HoldToRun = {3},ManualStep = {4}', 
-  	                      Para1       :=  CMD_TYPE_TO_STRING(_cmdHeader.CmdTyp),
-                          Para2       :=  BOOL_TO_STRING     (_command.Enable), 
-  	                      Para3       :=  STEP_MODE_TO_STRING(_command.StepMode), 
-  	                      Para4       :=  BOOL_TO_STRING     (_command.HoldToRun), 
-  	                      Para5       :=  BOOL_TO_STRING     (_command.ManualStep));
-                          
+  CreateCommandPayload.AddBool(_command.ManualStep);                      
   
   // Create logging
   CreateCommandPayloadLog(AxesGroup := AxesGroup);
@@ -172,7 +166,7 @@ END_VAR
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'CreateCommandPayload with the following parameter(s) :');
+                          MessageText := 'Create command payload with the following parameter(s) :');
   
   // Create log entry for Enable
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
@@ -295,8 +289,8 @@ END_VAR
          // do not abort directly, so that the ParSeq update can be send
          IF ( _enable_R.Q ) OR ( _enable_F.Q ) 
          THEN
-           // trigger parameter update to disable GroupJog
-           SysDepMemSet( pDest := ADR(_parCmd), Value := 0, DataLen := SIZEOF(_parCmd));
+           // trigger parameter update to disable Enable
+          _parameterUpdateInternal := TRUE;
            // reset the rising edge
           _enable_R();       
            // reset the falling edge
@@ -357,6 +351,34 @@ END_VAR
   
   // Get Response.Enabled
   _response.Enabled := ResponseData.GetBool();
+  
+  // Create logging
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+
+END_METHOD
+
+METHOD INTERNAL ParseResponsePayloadLog
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Parsed the following parameter(s) from response data:');
+                          
+  // Create log entry for Enabled
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.Enabled = {1}',
+                          Para1       :=  BOOL_TO_STRING(_response.Enabled));
 
 END_METHOD
 

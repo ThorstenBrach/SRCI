@@ -77,10 +77,17 @@ END_VAR
   END_IF
   
   // compare memory 
-  CheckParameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
+  _parameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
   
-  IF ( CheckParameterChanged )
+  // check parameter valid ?
+  _parameterValid   := CheckParameterValid( AxesGroup := AxesGroup );
+  
+  IF ((  _parameterChanged        )  AND 
+      (  _parameterValid          )) OR
+      (  _parameterUpdateInternal )  
   THEN  
+    // reset internal flag for send parameter update
+   _parameterUpdateInternal := FALSE;
     // update internal copy of parameters 
    _parCmd := ParCmd;
     // inc parameter sequence
@@ -156,7 +163,7 @@ END_VAR
   CreateCommandPayload := SUPER^.CreateCommandPayload(AxesGroup := AxesGroup);
   
   // add command.LogLevel
-  CreateCommandPayload.AddUsint(_command.LogLevel);
+  CreateCommandPayload.AddUsint(SINT_TO_USINT(_command.LogLevel));
   // add command.CtrlByte
   CreateCommandPayload.AddByte(_command.CtrlByte);
   // add command.DelayTime
@@ -194,7 +201,7 @@ END_VAR
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'CreateCommandPayload with the following parameter(s) :');
+                          MessageText := 'Create command payload with the following parameter(s) :');
     
   // Create log entry for LogLevel
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
@@ -391,14 +398,16 @@ END_VAR
            END_IF
          END_IF
   
-         // Check enable flag 
-         IF (_enable_F.Q)
+         // do not abort directly, so that the ParSeq update can be send
+         IF ( _enable_R.Q ) OR ( _enable_F.Q ) 
          THEN
-           // trigger parameter update to disable GroupJog
-           SysDepMemSet( pDest := ADR(_parCmd), Value := 0, DataLen := SIZEOF(_parCmd));
+           // trigger parameter update to disable FB
+          _parameterUpdateInternal := TRUE;
+           // reset the rising edge
+          _enable_R();       
            // reset the falling edge
           _enable_F();       
-        END_IF
+         END_IF
   
   
     02: IF (NOT Enable)
@@ -509,6 +518,210 @@ END_VAR
   _response.ConstantVelocitySupported := ResponseData.GetBool();
   // Get Response.RCWorkingHours
   _response.RCWorkingHours := ResponseData.GetUdint();
+  
+  // Create logging
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+
+END_METHOD
+
+METHOD INTERNAL ParseResponsePayloadLog
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Parsed the following parameter(s) from response data:');
+  
+  // Create log entry for Enabled
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.Enabled = {1}',
+                          Para1       :=  BOOL_TO_STRING(_response.Enabled));
+  
+  // Create log entry for Reserve1
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.Reserve1 = {1}',
+                          Para1       :=  BYTE_TO_STRING(_response.Reserve1));
+  
+  // Create log entry for LengthACR
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LengthACR = {1}',
+                          Para1       :=  UINT_TO_STRING(_response.LengthACR));
+  
+  // Create log entry for HighestToolIndex
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.HighestToolIndex = {1}',
+                          Para1       :=  USINT_TO_STRING(_response.HighestToolIndex));
+  
+  // Create log entry for HighestFrameIndex
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.HighestFrameIndex = {1}',
+                          Para1       :=  USINT_TO_STRING(_response.HighestFrameIndex));
+  
+  // Create log entry for HighestLoadIndex
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.HighestLoadIndex = {1}',
+                          Para1       :=  USINT_TO_STRING(_response.HighestLoadIndex));
+  
+  // Create log entry for HighestWorkAreaIndex
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.HighestWorkAreaIndex = {1}',
+                          Para1       :=  USINT_TO_STRING(_response.HighestWorkAreaIndex));
+  
+  // Create log entry for DataInSync.ToolsInSync
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.DataInSync.ToolsInSync = {1}',
+                          Para1       :=  BOOL_TO_STRING(_response.DataInSync.ToolsInSync));
+  
+  // Create log entry for DataInSync.FramesInSync
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.DataInSync.FramesInSync = {1}',
+                          Para1       :=  BOOL_TO_STRING(_response.DataInSync.FramesInSync));
+  
+  // Create log entry for DataInSync.LoadsInSync
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.DataInSync.LoadsInSync = {1}',
+                          Para1       :=  BOOL_TO_STRING(_response.DataInSync.LoadsInSync));
+  
+  // Create log entry for DataInSync.WorkAreasInSync
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.DataInSync.WorkAreasInSync = {1}',
+                          Para1       :=  BOOL_TO_STRING(_response.DataInSync.WorkAreasInSync));
+  
+  // Create log entry for DataInSync.SoftwareLimitsInSync
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.DataInSync.SoftwareLimitsInSync = {1}',
+                          Para1       :=  BOOL_TO_STRING(_response.DataInSync.SoftwareLimitsInSync));
+                
+  // Create log entry for DataInSync.DefaultDynamicsInSync
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.DataInSync.DefaultDynamicsInSync = {1}',
+                          Para1       :=  BOOL_TO_STRING(_response.DataInSync.DefaultDynamicsInSync));
+                 
+  // Create log entry for DataInSync.ReferenceDynamicsInSync
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.DataInSync.ReferenceDynamicsInSync = {1}',
+                          Para1       :=  BOOL_TO_STRING(_response.DataInSync.ReferenceDynamicsInSync));
+  
+  // Create log entry for Reserve2
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.Reserve2 = {1}',
+                          Para1       :=  BYTE_TO_STRING(_response.Reserve2));
+  
+  // Create log entry for ChangeIndexTool
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ChangeIndexTool = {1}',
+                          Para1       :=  USINT_TO_STRING(_response.ChangeIndexTool));
+  
+  // Create log entry for ChangeIndexFrame
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ChangeIndexFrame = {1}',
+                          Para1       :=  USINT_TO_STRING(_response.ChangeIndexFrame));
+  
+  // Create log entry for ChangeIndexLoad
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ChangeIndexLoad = {1}',
+                          Para1       :=  USINT_TO_STRING(_response.ChangeIndexLoad));
+  
+  // Create log entry for ChangeIndexWorkArea
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ChangeIndexWorkArea = {1}',
+                          Para1       :=  USINT_TO_STRING(_response.ChangeIndexWorkArea));
+  
+  // Create log entry for RAWorkingHours
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.RAWorkingHours = {1}',
+                          Para1       :=  UDINT_TO_STRING(_response.RAWorkingHours));
+  
+  // Create log entry for StatusByte
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.StatusByte = {1}',
+                          Para1       :=  BYTE_TO_STRING_BIN(_response.StatusByte));
+  
+  // Create log entry for ConstantVelocitySupported
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.ConstantVelocitySupported = {1}',
+                          Para1       :=  BOOL_TO_STRING(_response.ConstantVelocitySupported));
+  
+  // Create log entry for RCWorkingHours
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.RCWorkingHours = {1}',
+                          Para1       :=  UDINT_TO_STRING(_response.RCWorkingHours));
 
 END_METHOD
 

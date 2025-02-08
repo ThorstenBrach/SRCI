@@ -75,10 +75,17 @@ END_VAR
   END_IF
   
   // compare memory 
-  CheckParameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
+  _parameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
   
-  IF ( CheckParameterChanged )
+  // check parameter valid ?
+  _parameterValid   := CheckParameterValid( AxesGroup := AxesGroup );
+  
+  IF ((  _parameterChanged        )  AND 
+      (  _parameterValid          )) OR
+      (  _parameterUpdateInternal )  
   THEN  
+    // reset internal flag for send parameter update
+   _parameterUpdateInternal := FALSE;
     // update internal copy of parameters 
    _parCmd := ParCmd;
     // inc parameter sequence
@@ -132,7 +139,7 @@ END_VAR
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'CreateCommandPayload without additional parameter(s)');
+                          MessageText := 'Create command payload without additional parameter(s)');
 
 END_METHOD
 
@@ -207,33 +214,10 @@ END_VAR
              Busy := FALSE;
              
              // Update results
-             IF ( _response.VelocityReference  <> 16#FFFF ) // Robot returns 16#FFFF ( -1 ) for not supported values 
-             THEN
-               OutCmd.DynamicValues.VelocityReference     := INT_TO_REAL(UINT_TO_INT(_response.VelocityReference )) / RobotLibraryConstants.REAL_CONVERSION_FACTOR; {warning 'ToDo: check conversation is correct ?'}
-             ELSE
-               OutCmd.DynamicValues.VelocityReference     := INT_TO_REAL(UINT_TO_INT(_response.VelocityReference ));
-  					 END_IF
-  
-             IF ( _response.AccelerationReference <> 16#FFFF ) // Robot returns 16#FFFF ( -1 ) for not supported values
-             THEN
-               OutCmd.DynamicValues.AccelerationReference := INT_TO_REAL(UINT_TO_INT(_response.AccelerationReference )) / RobotLibraryConstants.REAL_CONVERSION_FACTOR; {warning 'ToDo: check conversation is correct ?'}
-             ELSE
-               OutCmd.DynamicValues.AccelerationReference := INT_TO_REAL(UINT_TO_INT(_response.AccelerationReference ));
-  					 END_IF
-  
-             IF ( _response.DecelerationReference <> 16#FFFF ) // Robot returns 16#FFFF ( -1 ) for not supported values
-             THEN
-               OutCmd.DynamicValues.DecelerationReference := INT_TO_REAL(UINT_TO_INT(_response.DecelerationReference )) / RobotLibraryConstants.REAL_CONVERSION_FACTOR; {warning 'ToDo: check conversation is correct ?'}
-             ELSE
-               OutCmd.DynamicValues.DecelerationReference := INT_TO_REAL(UINT_TO_INT(_response.DecelerationReference ));
-  					 END_IF
-  
-             IF ( _response.JerkReference <> 16#FFFF ) // Robot returns 16#FFFF ( -1 ) for not supported values
-             THEN
-               OutCmd.DynamicValues.JerkReference := INT_TO_REAL(UINT_TO_INT(_response.JerkReference )) / RobotLibraryConstants.REAL_CONVERSION_FACTOR; {warning 'ToDo: check conversation is correct ?'}
-             ELSE
-               OutCmd.DynamicValues.JerkReference := INT_TO_REAL(UINT_TO_INT(_response.JerkReference ));
-  					 END_IF
+             OutCmd.DynamicValues.VelocityReference     := PERCENT_INT_TO_REAL(UINT_TO_INT(_response.VelocityReference    ), IsOptional := FALSE );
+             OutCmd.DynamicValues.AccelerationReference := PERCENT_INT_TO_REAL(UINT_TO_INT(_response.AccelerationReference) ,IsOptional := FALSE);
+             OutCmd.DynamicValues.DecelerationReference := PERCENT_INT_TO_REAL(UINT_TO_INT(_response.DecelerationReference), IsOptional := TRUE );
+             OutCmd.DynamicValues.JerkReference         := PERCENT_INT_TO_REAL(UINT_TO_INT(_response.JerkReference        ), IsOptional := TRUE );
   
              // set timeout
              SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
@@ -320,6 +304,82 @@ END_VAR
   _response.JerkReference := ResponseData.GetUint();
   // Get Response.DataChanged
   _response.DataChanged := ResponseData.GetBool();
+  
+  // Create logging
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+
+END_METHOD
+
+METHOD INTERNAL ParseResponsePayloadLog
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Parsed the following parameter(s) from response data:');
+                          
+  // Create log entry for Timestamp.IEC_DATE
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.Timestamp.IEC_DATE = {1}',
+                          Para1       :=  IEC_DATE_TO_STRING(_response.Timestamp.IEC_DATE));
+  
+  // Create log entry for Timestamp.IEC_TIME
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.Timestamp.IEC_TIME = {1}',
+                          Para1       :=  IEC_TIME_TO_STRING(_response.Timestamp.IEC_TIME));
+                          
+  // Create log entry for VelocityReference
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.VelocityReference = {1}',
+                          Para1       :=  UINT_TO_STRING(_response.VelocityReference));
+  
+  // Create log entry for AccelerationReference
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.AccelerationReference = {1}',
+                          Para1       :=  UINT_TO_STRING(_response.AccelerationReference));
+  
+  // Create log entry for DecelerationReference
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.DecelerationReference = {1}',
+                          Para1       :=  UINT_TO_STRING(_response.DecelerationReference));
+  
+  // Create log entry for JerkReference
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.JerkReference = {1}',
+                          Para1       :=  UINT_TO_STRING(_response.JerkReference));
+  
+  // Create log entry for DataChanged
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.DataChanged = {1}',
+                          Para1       :=  BOOL_TO_STRING(_response.DataChanged));
 
 END_METHOD
 

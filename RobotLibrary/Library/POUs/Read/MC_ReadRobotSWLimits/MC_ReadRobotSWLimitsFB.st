@@ -75,10 +75,17 @@ END_VAR
   END_IF
   
   // compare memory 
-  CheckParameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
+  _parameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
   
-  IF ( CheckParameterChanged )
+  // check parameter valid ?
+  _parameterValid   := CheckParameterValid( AxesGroup := AxesGroup );
+  
+  IF ((  _parameterChanged        )  AND 
+      (  _parameterValid          )) OR
+      (  _parameterUpdateInternal )  
   THEN  
+    // reset internal flag for send parameter update
+   _parameterUpdateInternal := FALSE;
     // update internal copy of parameters 
    _parCmd := ParCmd;
     // inc parameter sequence
@@ -133,7 +140,7 @@ END_VAR
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'CreateCommandPayload without additional parameter(s)');
+                          MessageText := 'Create command payload without additional parameter(s)');
 
 END_METHOD
 
@@ -419,6 +426,234 @@ END_VAR
   _response.LimitValues.E5UpperLimit := ResponseData.GetReal();
   // Get Response.LimitValues.E6UpperLimit
   _response.LimitValues.E6UpperLimit := ResponseData.GetReal();
+  
+  // Create logging
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+
+END_METHOD
+
+METHOD INTERNAL ParseResponsePayloadLog
+VAR_INPUT
+  /// Response data
+  ResponseData : RobotLibraryRecvDataFB;
+  /// Timestamp
+  Timestamp    : SystemTime;  
+END_VAR
+
+  // Create log entry for Parameter start
+  CreateLogMessage      ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Parsed the following parameter(s) from response data:');
+                          
+  // Create log entry for LimitValues.Timestamp.IEC_DATE
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LimitValues.Timestamp.IEC_DATE = {1}',
+                          Para1       :=  IEC_DATE_TO_STRING(_response.LimitValues.Timestamp.IEC_DATE));
+  
+  // Create log entry for LimitValues.Timestamp.IEC_TIME
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LimitValues.Timestamp.IEC_TIME = {1}',
+                          Para1       :=  IEC_TIME_TO_STRING(_response.LimitValues.Timestamp.IEC_TIME));
+                          
+  // Create log entry for LimitValues.J1LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LimitValues.J1LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.LimitValues.J1LowerLimit));
+  
+  // Create log entry for LimitValues.J2LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LimitValues.J2LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.LimitValues.J2LowerLimit));
+  
+  // Create log entry for LimitValues.J3LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LimitValues.J3LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.LimitValues.J3LowerLimit));
+  
+  // Create log entry for LimitValues.J4LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LimitValues.J4LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.LimitValues.J4LowerLimit));
+  
+  // Create log entry for LimitValues.J5LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LimitValues.J5LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.LimitValues.J5LowerLimit));
+  
+  // Create log entry for LimitValues.J6LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LimitValues.J6LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.LimitValues.J6LowerLimit));
+  
+  // Create log entry for LimitValues.E1LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LimitValues.E1LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.LimitValues.E1LowerLimit));
+  
+  // Create log entry for LimitValues.J1UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LimitValues.J1UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.LimitValues.J1UpperLimit));
+  
+  // Create log entry for LimitValues.J2UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LimitValues.J2UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.LimitValues.J2UpperLimit));
+  
+  // Create log entry for LimitValues.J3UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LimitValues.J3UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.LimitValues.J3UpperLimit));
+  
+  // Create log entry for LimitValues.J4UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LimitValues.J4UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.LimitValues.J4UpperLimit));
+  
+  // Create log entry for LimitValues.J5UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LimitValues.J5UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.LimitValues.J5UpperLimit));
+  
+  // Create log entry for LimitValues.J6UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LimitValues.J6UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.LimitValues.J6UpperLimit));
+  
+  // Create log entry for LimitValues.E1UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LimitValues.E1UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.LimitValues.E1UpperLimit));
+  
+  // Create log entry for LimitValues.E2LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LimitValues.E2LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.LimitValues.E2LowerLimit));
+  
+  // Create log entry for LimitValues.E3LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LimitValues.E3LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.LimitValues.E3LowerLimit));
+  
+  // Create log entry for LimitValues.E4LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LimitValues.E4LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.LimitValues.E4LowerLimit));
+  
+  // Create log entry for LimitValues.E5LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LimitValues.E5LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.LimitValues.E5LowerLimit));
+  
+  // Create log entry for LimitValues.E6LowerLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LimitValues.E6LowerLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.LimitValues.E6LowerLimit));
+  
+  // Create log entry for LimitValues.E2UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LimitValues.E2UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.LimitValues.E2UpperLimit));
+  
+  // Create log entry for LimitValues.E3UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LimitValues.E3UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.LimitValues.E3UpperLimit));
+  
+  // Create log entry for LimitValues.E4UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LimitValues.E4UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.LimitValues.E4UpperLimit));
+  
+  // Create log entry for LimitValues.E5UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LimitValues.E5UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.LimitValues.E5UpperLimit));
+  
+  // Create log entry for LimitValues.E6UpperLimit
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Response.LimitValues.E6UpperLimit = {1}',
+                          Para1       :=  REAL_TO_STRING(_response.LimitValues.E6UpperLimit));
 
 END_METHOD
 
