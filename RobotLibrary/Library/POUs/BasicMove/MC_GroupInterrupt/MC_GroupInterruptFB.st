@@ -214,9 +214,13 @@ END_VAR
              CmdMessageState.ACTIVE      : Active          := TRUE;
              CmdMessageState.ERROR       : Error           := TRUE;
              CmdMessageState.DONE        : Done            := TRUE;
+              
                                            // dec FastStop counter
+                                           {warning 'ToDo: for Jaka it is not allowed to decrement the FastStop'} 
+                                           (*                                        
                                            AxesGroup.Cyclic.PlcToRob.FastStop 
                                              :=  AxesGroup.Cyclic.PlcToRob.FastStop - 1;
+                                           *) 
            END_CASE
                   
            // Done, Aborted or Error ?

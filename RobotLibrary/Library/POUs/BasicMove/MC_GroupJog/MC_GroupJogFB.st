@@ -152,7 +152,7 @@ END_VAR
   _command.Mode                   := _parCmd.Mode;
   _command.IncrementalTranslation := _parCmd.IncrementalTranslation;
   _command.IncrementalRotation    := _parCmd.IncrementalRotation;
-  _command.Override               := _parCmd.Override;
+  _command.Override               := _parCmd.Override * 100;
   _command.JogControl[0].0        := _parCmd.Control.X_J1_Pos;
   _command.JogControl[0].1        := _parCmd.Control.Y_J2_Pos;
   _command.JogControl[0].2        := _parCmd.Control.Z_J3_Pos;
@@ -185,12 +185,18 @@ END_VAR
   
   // add command.Enable
   CreateCommandPayload.AddBool(_command.Enable);
+  // add command.Reserve 
+  CreateCommandPayload.AddByte(0); {warning 'ToDo: Not in Spec'}
+  
   // add command.ToolNo
   CreateCommandPayload.AddUsint(_command.ToolNo);
   // add command.FrameNo
   CreateCommandPayload.AddUsint(_command.FrameNo);
   // add command.Mode
   CreateCommandPayload.AddUsint(_command.Mode);
+  // add command.Reserve 
+  CreateCommandPayload.AddByte(0); {warning 'ToDo: Not in Spec'}
+  
   // add command.IncrementalTranslation
   CreateCommandPayload.AddReal(_command.IncrementalTranslation);
   // add command.IncrementalRotation

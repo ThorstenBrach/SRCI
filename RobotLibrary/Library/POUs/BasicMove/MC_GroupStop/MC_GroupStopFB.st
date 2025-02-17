@@ -209,9 +209,12 @@ END_VAR
            OF
              CmdMessageState.BUFFERED : CommandBuffered := TRUE;
              CmdMessageState.DONE     : Done            := TRUE;
-                                       // dec fast stop counter
-                                       AxesGroup.Cyclic.PlcToRob.FastStop 
-                                        := AxesGroup.Cyclic.PlcToRob.FastStop -1;
+                                           // dec FastStop counter
+                                           {warning 'ToDo: for Jaka it is not allowed to decrement the FastStop'} 
+                                           (*                                        
+                                           AxesGroup.Cyclic.PlcToRob.FastStop 
+                                             :=  AxesGroup.Cyclic.PlcToRob.FastStop - 1;
+                                           *) 
   
              CmdMessageState.ERROR    : Error           := TRUE;
                
