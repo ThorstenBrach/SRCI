@@ -55,7 +55,7 @@ VAR
 END_VAR
 
   IF (( ExternalLogger <> 0        ) AND 
-      ( LogLevel       <= Severity )) {warning 'ToDo: LogLevel and Severity are the same -> use an alias for it'}
+      ( LogLevel       <= Severity ))
   THEN
    _logMessage.Timestamp   := Timestamp;
    _logMessage.MessageType := MessageType;

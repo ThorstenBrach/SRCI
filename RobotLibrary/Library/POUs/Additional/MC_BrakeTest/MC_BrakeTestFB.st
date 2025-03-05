@@ -24,6 +24,10 @@ FUNCTION_BLOCK MC_BrakeTestFB EXTENDS RobotLibraryBaseExecuteFB
 VAR_INPUT
   /// Command parameter 
   ParCmd             : BrakeTestParCmd;
+  /// Parameter which determines the behavior towards the previously sent and still active or buffered commands.
+  AbortingMode       : AbortingMode;
+  /// Defines the target sequence in which the command will be executed
+  SequenceFlag       : SequenceFlag;  
 END_VAR
 VAR_OUTPUT
   /// Command is transferred and confirmed by the RC
@@ -59,7 +63,7 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
-  CheckFunctionSupported := AxesGroup.InternalData.RCSupportedFunctions.BrakeTest;
+  CheckFunctionSupported := AxesGroup.InternalData.RobotData.RCSupportedFunctions.BrakeTest;
   
   IF ( NOT CheckFunctionSupported )
   THEN
@@ -76,7 +80,7 @@ VAR_IN_OUT
 END_VAR
 
   // Check ParCmd Size is > 0, because MemCmp does not work correctly with size = 0
-  IF (SIZEOF(ParCmd) = 0) 
+  IF (SIZEOF(ParCmd) = 0) OR (_stepCmd = 0)
   THEN 
     RETURN;
   END_IF
@@ -101,6 +105,99 @@ END_VAR
     CommandData := CreateCommandPayload(AxesGroup := AxesGroup); // ( Access via reference to rCommandFB in ACR )
     // notify active command register 
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;  
+  END_IF
+
+END_METHOD
+
+METHOD PROTECTED CheckParameterValid : BOOL
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+  CheckParameterValid := TRUE;
+  
+  // Check ParCmd.SequenceFlag valid ? 
+  IF (( SequenceFlag <> SequenceFlagEnum.PRIMARY_SEQUENCE   ) AND  
+      ( SequenceFlag <> SequenceFlagEnum.SECONDARY_SEQUENCE ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_SEQFLAG_NOT_ALLOWED;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter SequenceFlag = {1}',
+                            Para1       := SEQUENCE_FLAG_TO_STRING (SequenceFlag));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check AbortingMode valid ? 
+  IF (( AbortingMode <> AbortingModeEnum.BUFFER ) AND  
+      ( AbortingMode <> AbortingModeEnum.ABORT  ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_ABORTINGMODE_INVALID;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter AbortingMode = {1}',
+                            Para1       := ABORTING_MODE_TO_STRING(AbortingMode));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check RobotAxesActive valid ? 
+  IF ((( ParCmd.RobotAxesActive.AxisJ1 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.1 )) OR
+      (( ParCmd.RobotAxesActive.AxisJ2 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.2 )) OR
+      (( ParCmd.RobotAxesActive.AxisJ3 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.3 )) OR
+      (( ParCmd.RobotAxesActive.AxisJ4 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.4 )) OR
+      (( ParCmd.RobotAxesActive.AxisJ5 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.5 )) OR
+      (( ParCmd.RobotAxesActive.AxisJ6 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.6 )))  
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.RobotAxesActive = {1}',
+                            Para1       := ROBOT_AXES_FLAGS_TO_STRING(ParCmd.RobotAxesActive));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ExternalAxesActive valid ? 
+  IF ((( ParCmd.ExternalAxesActive.AxisE1 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.1 )) OR
+      (( ParCmd.ExternalAxesActive.AxisE2 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.2 )) OR
+      (( ParCmd.ExternalAxesActive.AxisE3 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.3 )) OR
+      (( ParCmd.ExternalAxesActive.AxisE4 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.4 )) OR
+      (( ParCmd.ExternalAxesActive.AxisE5 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.5 )) OR
+      (( ParCmd.ExternalAxesActive.AxisE6 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.6 )))  
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ExternalAxesActive = {1}',
+                            Para1       := EXTERNAL_AXES_FLAGS_TO_STRING(ParCmd.ExternalAxesActive));
+    RETURN;                          
   END_IF
 
 END_METHOD

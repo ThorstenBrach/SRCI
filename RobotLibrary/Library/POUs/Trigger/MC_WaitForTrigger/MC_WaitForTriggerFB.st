@@ -61,7 +61,7 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
-  CheckFunctionSupported := AxesGroup.InternalData.RCSupportedFunctions.WaitForTrigger;
+  CheckFunctionSupported := AxesGroup.InternalData.RobotData.RCSupportedFunctions.WaitForTrigger;
   
   IF ( NOT CheckFunctionSupported )
   THEN
@@ -78,7 +78,7 @@ VAR_IN_OUT
 END_VAR
 
   // Check ParCmd Size is > 0, because MemCmp does not work correctly with size = 0
-  IF (SIZEOF(ParCmd) = 0) 
+  IF (SIZEOF(ParCmd) = 0) OR (_stepCmd = 0)
   THEN 
     RETURN;
   END_IF
@@ -103,6 +103,96 @@ END_VAR
     CommandData := CreateCommandPayload(AxesGroup := AxesGroup); // ( Access via reference to rCommandFB in ACR )
     // notify active command register 
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
+  END_IF
+
+END_METHOD
+
+METHOD PROTECTED CheckParameterValid : BOOL
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+VAR
+  /// internal index for loops
+ _idx : DINT;
+END_VAR
+
+  CheckParameterValid := TRUE;
+  
+  // Check ProcessingMode valid ? 
+  IF (( ProcessingMode <> ProcessingModeEnum.DEACTIVATE       ) AND 
+      ( ProcessingMode <> ProcessingModeEnum.TRIGGER_BUFFERED ) AND  
+      ( ProcessingMode <> ProcessingModeEnum.TRIGGER_ABORTING ))  
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_PROCESSINGMODE_NOT_ALLOWED;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ProcessingMode = {1}',
+                            Para1       := PROCESSING_MODE_TO_STRING(ProcessingMode));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check SequenceFlag valid ? 
+  IF (( SequenceFlag <> SequenceFlagEnum.PRIMARY_SEQUENCE   ) AND  
+      ( SequenceFlag <> SequenceFlagEnum.SECONDARY_SEQUENCE ))  
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_SEQFLAG_NOT_ALLOWED;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter SequenceFlag = {1}',
+                            Para1       := SEQUENCE_FLAG_TO_STRING(SequenceFlag));
+    RETURN;                          
+  END_IF
+  
+  // Check ParCmd.ConditionalWait valid ? 
+  IF  (( ParCmd.ConditionalWait <> FALSE ) AND
+       ( ParCmd.ConditionalWait <>  TRUE ))     
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ConditionalWait = {1}',
+                            Para1       := BOOL_TO_STRING(ParCmd.ConditionalWait));
+    RETURN;
+  END_IF
+  
+  
+  
+  // Check ParCmd.ListenerID valid ? 
+  IF  (( ParCmd.ListenerID <   0 ) OR
+       ( ParCmd.ListenerID > 127 ))     
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ListenerID = {1}',
+                            Para1       := SINT_TO_STRING(ParCmd.ListenerID));
+    RETURN;
   END_IF
 
 END_METHOD
@@ -208,7 +298,7 @@ END_VAR
   _command.ExecMode        :=  ExecMode;
   _command.ParSeq          := _command.ParSeq;
   _command.Priority        :=  Priority;                         
-  _command.EmitterID[0]    := _parCmd.EmitterID;
+  _command.EmitterID[0]    := 0;
   _command.EmitterID[1]    := 0;
   _command.EmitterID[2]    := 0;
   _command.EmitterID[3]    := 0;

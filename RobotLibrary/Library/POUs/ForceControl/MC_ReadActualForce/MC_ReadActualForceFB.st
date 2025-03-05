@@ -22,6 +22,8 @@ FUNCTION_BLOCK MC_ReadActualForceFB EXTENDS RobotLibraryBaseExecuteFB
 //
 // -------------------------------------------------------------------------
 VAR_INPUT
+  /// Processing Mode
+  ProcessingMode    : ProcessingMode;
   /// Command parameter 
   ParCmd            : ReadActualForceParCmd;   
 END_VAR
@@ -57,7 +59,7 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
-  CheckFunctionSupported := AxesGroup.InternalData.RCSupportedFunctions.ReadActualForce;
+  CheckFunctionSupported := AxesGroup.InternalData.RobotData.RCSupportedFunctions.ReadActualForce;
   
   IF ( NOT CheckFunctionSupported )
   THEN
@@ -74,7 +76,7 @@ VAR_IN_OUT
 END_VAR
 
   // Check ParCmd Size is > 0, because MemCmp does not work correctly with size = 0
-  IF (SIZEOF(ParCmd) = 0) 
+  IF (SIZEOF(ParCmd) = 0) OR (_stepCmd = 0)
   THEN 
     RETURN;
   END_IF
@@ -101,6 +103,139 @@ END_VAR
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
     // Reset parameter accepted flag
     ParameterAccepted := FALSE;  
+  END_IF
+
+END_METHOD
+
+METHOD PROTECTED CheckParameterValid : BOOL
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+VAR
+  /// internal index for loops
+ _idx : DINT;
+END_VAR
+
+  CheckParameterValid := TRUE;
+  
+  // Check ProcessingMode valid ? 
+  IF (( ProcessingMode <> ProcessingModeEnum.BUFFERED           ) AND  
+      ( ProcessingMode <> ProcessingModeEnum.ABORTING           ) AND  
+      ( ProcessingMode <> ProcessingModeEnum.PARALLEL           ) AND  
+      ( ProcessingMode <> ProcessingModeEnum.CONTINUOUS         ) AND  
+      ( ProcessingMode <> ProcessingModeEnum.DEACTIVATE         ) AND  
+      ( ProcessingMode <> ProcessingModeEnum.TRIGGER_ONCE       ) AND  
+      ( ProcessingMode <> ProcessingModeEnum.TRIGGER_CONTINUOUS ) AND  
+      ( ProcessingMode <> ProcessingModeEnum.TRIGGER_MULTIPLE   ))  
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ProcessingMode = {1}',
+                            Para1       :=  PROCESSING_MODE_TO_STRING(ProcessingMode));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.ReferenceType valid ? 
+  IF (( ParCmd.ReferenceType <> ReferenceType.TOOL  ) AND  
+      ( ParCmd.ReferenceType <> ReferenceType.FRAME ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ReferenceType = {1}',
+                            Para1       :=  REFERENCE_TYPE_TO_STRING(ParCmd.ReferenceType));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.ToolNo valid ? 
+  IF (( ParCmd.ToolNo <   0 ) OR  
+      ( ParCmd.ToolNo > 254 ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ToolNo = {1}',
+                            Para1       :=  USINT_TO_STRING(ParCmd.ToolNo));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.FrameNo valid ? 
+  IF (( ParCmd.FrameNo <   0 ) OR  
+      ( ParCmd.FrameNo > 254 ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.FrameNo = {1}',
+                            Para1       :=  USINT_TO_STRING(ParCmd.FrameNo));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.CalibrationData valid ? 
+  IF (( ParCmd.CalibrationData <   0 ) OR  
+      ( ParCmd.CalibrationData > 255 ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.CalibrationData = {1}',
+                            Para1       :=  USINT_TO_STRING(ParCmd.CalibrationData));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.ListenerID valid ? 
+  IF (( ParCmd.ListenerID <   0 ) OR  
+      ( ParCmd.ListenerID > 127 ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ListenerID = {1}',
+                            Para1       :=  SINT_TO_STRING(ParCmd.ListenerID));
+    RETURN;                          
   END_IF
 
 END_METHOD

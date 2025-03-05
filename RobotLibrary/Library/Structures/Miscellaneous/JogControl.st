@@ -117,8 +117,7 @@ STRUCT
   /// Mode Frame : not supported
   /// Mode Tool  : not supported
   /// Mode Axes  : Movement in negative direction sixts external axis
-  E6_Neg    : BOOL;
-  
+  E6_Neg    : BOOL;  
 END_STRUCT
 END_TYPE
 

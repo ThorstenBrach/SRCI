@@ -53,7 +53,7 @@ STRUCT
   /// • <0: Stop Action         - Stop executing the Action function with the identical ListenerID.
   /// •  0: Undefined (default) - If no EmitterID is defined, the function returns an error message
   /// For more information see chapter 5.5.12.4
-  EmitterID              : SINT;  
+  EmitterID              : ARRAY[0..3] OF SINT;  
 END_STRUCT
 END_TYPE
 

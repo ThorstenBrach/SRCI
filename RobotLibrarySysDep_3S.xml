@@ -1,7 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="Beckhoff Automation GmbH" productName="TwinCAT PLC Control" productVersion="3.5.13.21" creationDateTime="2024-12-21T17:20:41.7631258" />
-  <contentHeader name="RobotLibrarySysDep" modificationDateTime="2024-12-21T17:20:41.7651654">
+  <fileHeader companyName="Rexroth" productName="ctrlX PLC Engineering" productVersion="ctrlX PLC 2.6.6" creationDateTime="2025-03-04T19:12:31.5427624" />
+  <contentHeader name="RobotLibrarySysDep" version="0.0.0.2" modificationDateTime="2025-03-04T19:09:29.8758205" organization="Thorsten Brach" author="Thorsten Brach">
+    <Comment>SRCI Robot Library System Dependencies</Comment>
     <coordinateInfo>
       <fbd>
         <scaling x="1" y="1" />
@@ -15,7 +16,16 @@
     </coordinateInfo>
     <addData>
       <data name="http://www.3s-software.com/plcopenxml/projectinformation" handleUnknown="implementation">
-        <ProjectInformation />
+        <ProjectInformation>
+          <property name="Author" type="string">Thorsten Brach</property>
+          <property name="Company" type="string">Thorsten Brach</property>
+          <property name="Description" type="string">SRCI Robot Library System Dependencies</property>
+          <property name="Placeholder" type="string">RobotLibrarySysDep</property>
+          <property name="Project" type="string">RobotLibrarySysDep_3S</property>
+          <property name="Title" type="string">RobotLibrarySysDep</property>
+          <property name="Version" type="version">0.0.0.2</property>
+          <property name="library-category-list" type="library-category-list">Robotics</property>
+        </ProjectInformation>
       </data>
     </addData>
   </contentHeader>
@@ -61,53 +71,16 @@
               </documentation>
             </variable>
           </inputVars>
-          <documentation>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml"> System dependent implementation of the memory compare function </xhtml>
-          </documentation>
         </interface>
         <body>
           <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">SysDepMemCmp := SysMemCmp( pBuffer1 := pData1, pBuffer2 := pData2, udiCount := DataLen );</xhtml>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">SysDepMemCmp := SysMemCmp( pBuffer1 := pData1, pBuffer2 := pData2, udiCount := DataLen );
+</xhtml>
           </ST>
         </body>
         <addData>
-          <data name="http://www.3s-software.com/plcopenxml/interfaceasplaintext" handleUnknown="implementation">
-            <InterfaceAsPlainText>
-              <xhtml xmlns="http://www.w3.org/1999/xhtml">/// System dependent implementation of the memory compare function 
-FUNCTION SysDepMemCmp : DINT
-// ------------------------------------------------------------------------- 
-//  SRCI Robot Library System Dependencies                                               
-// ------------------------------------------------------------------------- 
-//                                                                           
-//  Object:      SysDepMemCmp                                       
-//  Author:      Thorsten Brach                                                
-//  Date:        2024-12-21
-//
-//  Description:                                              
-//    System specific implementation of the memory compare function 
-//                                                                           
-//  Copyright: 
-//    (C) 2024 Thorsten Brach. All rights reserved                                                                                                                                            
-//             Licensed under the LGPL-3.0 license.
-//                                                                           
-//  Disclaimer:                                                                           
-//    This project is provided without any guarantee and can be used for   
-//    private and commercial purposes. Any use is at the user’s 
-//    own risk and responsibility.
-//
-// -------------------------------------------------------------------------
-VAR_INPUT
-  /// Pointer to 1st memory area to be compared with the 2nd memory area
-  pData1  : POINTER TO BYTE;
-  /// Pointer to 2nd memory area to be compared with the 1st memory area
-  pData2  : POINTER TO BYTE;
-  /// Amount of bytes to be compared
-  DataLen : UDINT;  
-END_VAR</xhtml>
-            </InterfaceAsPlainText>
-          </data>
           <data name="http://www.3s-software.com/plcopenxml/objectid" handleUnknown="discard">
-            <ObjectId>93399ded-f117-4e67-a7c0-6593877e102d</ObjectId>
+            <ObjectId>023136b1-f85b-411b-83c9-d29d6ff0c4a9</ObjectId>
           </data>
         </addData>
       </pou>
@@ -150,53 +123,17 @@ END_VAR</xhtml>
               </documentation>
             </variable>
           </inputVars>
-          <documentation>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml"> System dependent implementation of the memory copy function </xhtml>
-          </documentation>
         </interface>
         <body>
           <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">SysMemCpy( pDest := pDest, pSrc := pSrc, udiCount := DataLen );</xhtml>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">SysMemCpy( pDest := pDest, pSrc := pSrc, udiCount := DataLen );
+
+</xhtml>
           </ST>
         </body>
         <addData>
-          <data name="http://www.3s-software.com/plcopenxml/interfaceasplaintext" handleUnknown="implementation">
-            <InterfaceAsPlainText>
-              <xhtml xmlns="http://www.w3.org/1999/xhtml">/// System dependent implementation of the memory copy function 
-FUNCTION SysDepMemCpy : UDINT
-// ------------------------------------------------------------------------- 
-//  SRCI Robot Library System Dependencies                                               
-// ------------------------------------------------------------------------- 
-//                                                                           
-//  Object:      SysDepMemCpy                                       
-//  Author:      Thorsten Brach                                                
-//  Date:        2024-12-21
-//
-//  Description:                                              
-//    System specific implementation of the memory copy function 
-//                                                                           
-//  Copyright: 
-//    (C) 2024 Thorsten Brach. All rights reserved                                                                                                                                            
-//             Licensed under the LGPL-3.0 license.
-//                                                                           
-//  Disclaimer:                                                                           
-//    This project is provided without any guarantee and can be used for   
-//    private and commercial purposes. Any use is at the user’s 
-//    own risk and responsibility.
-//
-// -------------------------------------------------------------------------
-VAR_INPUT
-  /// Pointer to memory address to be copied to (target)
-  pDest : POINTER TO BYTE;
-  /// Pointer to memory address to be copied from (source)
-  pSrc  : POINTER TO BYTE;
-  /// Amount of bytes to be copied
-  DataLen : UDINT;  
-END_VAR</xhtml>
-            </InterfaceAsPlainText>
-          </data>
           <data name="http://www.3s-software.com/plcopenxml/objectid" handleUnknown="discard">
-            <ObjectId>5600bc23-aecb-4bc3-8ab9-bcb5f857e51c</ObjectId>
+            <ObjectId>eecc7f5b-c9a1-4024-beea-c940ff6657e2</ObjectId>
           </data>
         </addData>
       </pou>
@@ -235,9 +172,6 @@ END_VAR</xhtml>
               </documentation>
             </variable>
           </inputVars>
-          <documentation>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml"> System dependent implementation of the memory set function </xhtml>
-          </documentation>
         </interface>
         <body>
           <ST>
@@ -245,43 +179,62 @@ END_VAR</xhtml>
           </ST>
         </body>
         <addData>
-          <data name="http://www.3s-software.com/plcopenxml/interfaceasplaintext" handleUnknown="implementation">
-            <InterfaceAsPlainText>
-              <xhtml xmlns="http://www.w3.org/1999/xhtml">/// System dependent implementation of the memory set function 
-FUNCTION SysDepMemSet : UDINT
-// ------------------------------------------------------------------------- 
-//  SRCI Robot Library System Dependencies                                               
-// ------------------------------------------------------------------------- 
-//                                                                           
-//  Object:      SysDepMemSet                                       
-//  Author:      Thorsten Brach                                                
-//  Date:        2024-12-21
-//
-//  Description:                                              
-//    System specific implementation of the memory set function 
-//                                                                           
-//  Copyright: 
-//    (C) 2024 Thorsten Brach. All rights reserved                                                                                                                                            
-//             Licensed under the LGPL-3.0 license.
-//                                                                           
-//  Disclaimer:                                                                           
-//    This project is provided without any guarantee and can be used for   
-//    private and commercial purposes. Any use is at the user’s 
-//    own risk and responsibility.
-//
-// -------------------------------------------------------------------------
-VAR_INPUT
-  /// Pointer to memory address to be filled (target)
-  pDest   : POINTER TO BYTE;
-  /// Value with which the memory is to be initialized
-  Value   : BYTE;
-  /// Amount of bytes to be initialized in the memory block
-  DataLen : UDINT;  
-END_VAR</xhtml>
-            </InterfaceAsPlainText>
-          </data>
           <data name="http://www.3s-software.com/plcopenxml/objectid" handleUnknown="discard">
-            <ObjectId>6765e84f-f2f4-4894-955d-d9ca28c2ab71</ObjectId>
+            <ObjectId>ddc26631-fa66-408d-92a9-b4eed23b66d0</ObjectId>
+          </data>
+        </addData>
+      </pou>
+      <pou name="SysDepIsValidLReal" pouType="function">
+        <interface>
+          <returnType>
+            <BOOL />
+          </returnType>
+          <inputVars>
+            <variable name="Value">
+              <type>
+                <LREAL />
+              </type>
+              <documentation>
+                <xhtml xmlns="http://www.w3.org/1999/xhtml"> Real value to validate</xhtml>
+              </documentation>
+            </variable>
+          </inputVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">SysDepIsValidLReal := FPU.IsLRealNumber(Value);</xhtml>
+          </ST>
+        </body>
+        <addData>
+          <data name="http://www.3s-software.com/plcopenxml/objectid" handleUnknown="discard">
+            <ObjectId>10937b41-5076-4667-a3c6-736950ef639d</ObjectId>
+          </data>
+        </addData>
+      </pou>
+      <pou name="SysDepIsValidReal" pouType="function">
+        <interface>
+          <returnType>
+            <BOOL />
+          </returnType>
+          <inputVars>
+            <variable name="Value">
+              <type>
+                <REAL />
+              </type>
+              <documentation>
+                <xhtml xmlns="http://www.w3.org/1999/xhtml"> Real value to validate</xhtml>
+              </documentation>
+            </variable>
+          </inputVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">SysDepIsValidReal := FPU.IsRealNumber(Value);</xhtml>
+          </ST>
+        </body>
+        <addData>
+          <data name="http://www.3s-software.com/plcopenxml/objectid" handleUnknown="discard">
+            <ObjectId>fddf3bdf-e324-4b54-8a1e-43fecd1fae55</ObjectId>
           </data>
         </addData>
       </pou>
@@ -295,9 +248,13 @@ END_VAR</xhtml>
       <ProjectStructure>
         <Folder Name="Library">
           <Folder Name="Memory">
-            <Object Name="SysDepMemCmp" ObjectId="93399ded-f117-4e67-a7c0-6593877e102d" />
-            <Object Name="SysDepMemCpy" ObjectId="5600bc23-aecb-4bc3-8ab9-bcb5f857e51c" />
-            <Object Name="SysDepMemSet" ObjectId="6765e84f-f2f4-4894-955d-d9ca28c2ab71" />
+            <Object Name="SysDepMemCmp" ObjectId="023136b1-f85b-411b-83c9-d29d6ff0c4a9" />
+            <Object Name="SysDepMemCpy" ObjectId="eecc7f5b-c9a1-4024-beea-c940ff6657e2" />
+            <Object Name="SysDepMemSet" ObjectId="ddc26631-fa66-408d-92a9-b4eed23b66d0" />
+          </Folder>
+          <Folder Name="Real">
+            <Object Name="SysDepIsValidReal" ObjectId="fddf3bdf-e324-4b54-8a1e-43fecd1fae55" />
+            <Object Name="SysDepIsValidLReal" ObjectId="10937b41-5076-4667-a3c6-736950ef639d" />
           </Folder>
         </Folder>
       </ProjectStructure>

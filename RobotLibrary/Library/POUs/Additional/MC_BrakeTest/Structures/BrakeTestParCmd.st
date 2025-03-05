@@ -22,8 +22,6 @@
 // -------------------------------------------------------------------------
 TYPE BrakeTestParCmd :
 STRUCT
-  /// Parameter which determines the behavior towards the previously sent and still active or buffered commands.
-  AbortingMode       : AbortingMode;
   /// Defines which of the robot axis should be activated for the brake test.
   /// • TRUE (default): Axis activated.
   /// • FALSE: Axis deactivated.
@@ -34,8 +32,6 @@ STRUCT
   /// • FALSE (default): Axis deactivated.
   /// See Table 6-735 for bit assignment.   
   ExternalAxesActive : ExternalAxesFlags;
-  /// Defines the target sequence in which the command will be executed
-  SequenceFlag       : SequenceFlag;
 END_STRUCT
 END_TYPE
 

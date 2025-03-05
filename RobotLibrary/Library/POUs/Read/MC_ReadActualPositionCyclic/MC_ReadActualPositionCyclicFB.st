@@ -46,7 +46,7 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
-  CheckFunctionSupported := AxesGroup.InternalData.RCSupportedFunctions.ReadActualPositionCyclic;
+  CheckFunctionSupported := AxesGroup.InternalData.RobotData.RCSupportedFunctions.ReadActualPositionCyclic;
   
   IF ( NOT CheckFunctionSupported )
   THEN
@@ -63,7 +63,7 @@ VAR_IN_OUT
 END_VAR
 
   // Check ParCmd Size is > 0, because MemCmp does not work correctly with size = 0
-  IF (SIZEOF(ParCmd) = 0) 
+  IF (SIZEOF(ParCmd) = 0) OR (_stepCmd = 0)
   THEN 
     RETURN;
   END_IF
@@ -104,13 +104,114 @@ END_VAR
 
   CheckParameterValid := TRUE;
   
-  // Check ParCmd are valid ? 
-  IF (( ParCmd.ReadCartesianPosition    ) AND ( NOT AxesGroup.CyclicOptional.RobToPlc.CartesianPosition   .Active) OR
-      ( ParCmd.ReadCartesianPositionExt ) AND ( NOT AxesGroup.CyclicOptional.RobToPlc.CartesianPositionExt.Active) OR
-      ( ParCmd.ReadJointPosition        ) AND ( NOT AxesGroup.CyclicOptional.RobToPlc.JointPosition       .Active) OR
-      ( ParCmd.ReadJointPositionExt     ) AND ( NOT AxesGroup.CyclicOptional.RobToPlc.JointPositionExt    .Active))
+  
+  // Check ParCmd.ReadCartesianPosition valid ? 
+  IF ( ParCmd.ReadCartesianPosition ) AND ( NOT AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.Active) 
   THEN
+    // Parameter not valid
     CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ReadCartesianPosition = {1} but CyclicOptional.RobToPlc.CartesianPosition = FALSE',
+                            Para1       :=  BOOL_TO_STRING(ParCmd.ReadCartesianPosition));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.ReadCartesianPositionExt valid ? 
+  IF ( ParCmd.ReadCartesianPositionExt ) AND ( NOT AxesGroup.CyclicOptional.RobToPlc.CartesianPositionExt.Active) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ReadCartesianPositionExt = {1} but CyclicOptional.RobToPlc.CartesianPositionExt = FALSE',
+                            Para1       :=  BOOL_TO_STRING(ParCmd.ReadCartesianPositionExt));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.ToolNo valid ? 
+  IF (( ParCmd.ToolNo <  -1 ) OR  
+      ( ParCmd.ToolNo > 254 ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ToolNo = {1}',
+                            Para1       :=  INT_TO_STRING(ParCmd.ToolNo));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.FrameNo valid ? 
+  IF (( ParCmd.FrameNo <  -1 ) OR  
+      ( ParCmd.FrameNo > 254 ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.FrameNo = {1}',
+                            Para1       :=  INT_TO_STRING(ParCmd.FrameNo));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.ReadJointPosition valid ? 
+  IF ( ParCmd.ReadJointPosition ) AND ( NOT AxesGroup.CyclicOptional.RobToPlc.JointPosition.Active) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ReadJointPosition = {1} but CyclicOptional.RobToPlc.JointPosition = FALSE',
+                            Para1       :=  BOOL_TO_STRING(ParCmd.ReadJointPosition));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.ReadJointPositionExt valid ? 
+  IF ( ParCmd.ReadJointPositionExt ) AND ( NOT AxesGroup.CyclicOptional.RobToPlc.JointPositionExt.Active) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ReadJointPositionExt = {1} but CyclicOptional.RobToPlc.JointPositionExt = FALSE',
+                            Para1       :=  BOOL_TO_STRING(ParCmd.ReadJointPositionExt));
+    RETURN;                          
   END_IF
 
 END_METHOD

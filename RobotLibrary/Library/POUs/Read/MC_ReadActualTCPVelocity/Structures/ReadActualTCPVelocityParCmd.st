@@ -30,6 +30,11 @@ STRUCT
   /// •      0: WCS (default)
   /// • 1..254: User frames
   FrameNo            : USINT;
+  /// ID of associated trigger function
+  /// •  0: No Trigger (default) -> No trigger related behavior
+  /// • >0: Trigger              -> Start executing when the trigger function with the identical EmitterID is triggered.
+  /// Always positive. For more information, see chapter 5.5.12 Triggers
+  ListenerID         : SINT;  
 END_STRUCT
 END_TYPE
 

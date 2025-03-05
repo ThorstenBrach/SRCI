@@ -54,7 +54,7 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
-  CheckFunctionSupported := AxesGroup.InternalData.RCSupportedFunctions.FreeDrive;
+  CheckFunctionSupported := AxesGroup.InternalData.RobotData.RCSupportedFunctions.FreeDrive;
   
   IF ( NOT CheckFunctionSupported )
   THEN
@@ -71,7 +71,7 @@ VAR_IN_OUT
 END_VAR
 
   // Check ParCmd Size is > 0, because MemCmp does not work correctly with size = 0
-  IF (SIZEOF(ParCmd) = 0) 
+  IF (SIZEOF(ParCmd) = 0) OR (_stepCmd = 0)
   THEN 
     RETURN;
   END_IF

@@ -52,7 +52,7 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
-  CheckFunctionSupported := AxesGroup.InternalData.RCSupportedFunctions.CalculateCartesianPosition;
+  CheckFunctionSupported := AxesGroup.InternalData.RobotData.RCSupportedFunctions.CalculateCartesianPosition;
   
   IF ( NOT CheckFunctionSupported )
   THEN
@@ -69,7 +69,7 @@ VAR_IN_OUT
 END_VAR
 
   // Check ParCmd Size is > 0, because MemCmp does not work correctly with size = 0
-  IF (SIZEOF(ParCmd) = 0) 
+  IF (SIZEOF(ParCmd) = 0) OR (_stepCmd = 0)
   THEN 
     RETURN;
   END_IF
@@ -94,6 +94,351 @@ END_VAR
     CommandData := CreateCommandPayload(AxesGroup := AxesGroup); // ( Access via reference to rCommandFB in ACR )
     // notify active command register 
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
+  END_IF
+
+END_METHOD
+
+METHOD PROTECTED CheckParameterValid : BOOL
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+VAR
+  /// internal index for loops
+ _idx : DINT;
+END_VAR
+
+  CheckParameterValid := TRUE;
+  
+  // Check ParCmd.CartesianPosition.X valid ? 
+  IF ( SysDepIsValidReal(ParCmd.CartesianPosition.X) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.CartesianPosition.X = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.CartesianPosition.X));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.CartesianPosition.Y valid ? 
+  IF ( SysDepIsValidReal(ParCmd.CartesianPosition.Y) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.CartesianPosition.Y = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.CartesianPosition.Y));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.CartesianPosition.Z valid ? 
+  IF ( SysDepIsValidReal(ParCmd.CartesianPosition.Z) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.CartesianPosition.Z = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.CartesianPosition.Z));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.CartesianPosition.Rx valid ? 
+  IF ( SysDepIsValidReal(ParCmd.CartesianPosition.Rx) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.CartesianPosition.Rx = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.CartesianPosition.Rx));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.CartesianPosition.Ry valid ? 
+  IF ( SysDepIsValidReal(ParCmd.CartesianPosition.Ry) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.CartesianPosition.Ry = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.CartesianPosition.Ry));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.CartesianPosition.Rz valid ? 
+  IF ( SysDepIsValidReal(ParCmd.CartesianPosition.Rz) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.CartesianPosition.Rz = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.CartesianPosition.Rz));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.CartesianPosition.E1 valid ? 
+  IF ( SysDepIsValidReal(ParCmd.CartesianPosition.E1) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.CartesianPosition.E1 = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.CartesianPosition.E1));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.CartesianPosition.E2 valid ? 
+  IF ( SysDepIsValidReal(ParCmd.CartesianPosition.E2) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.CartesianPosition.E2 = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.CartesianPosition.E2));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.CartesianPosition.E3 valid ? 
+  IF ( SysDepIsValidReal(ParCmd.CartesianPosition.E3) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.CartesianPosition.E3 = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.CartesianPosition.E3));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.CartesianPosition.E4 valid ? 
+  IF ( SysDepIsValidReal(ParCmd.CartesianPosition.E4) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.CartesianPosition.E4 = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.CartesianPosition.E4));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.CartesianPosition.E5 valid ? 
+  IF ( SysDepIsValidReal(ParCmd.CartesianPosition.E5) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.CartesianPosition.E5 = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.CartesianPosition.E5));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.CartesianPosition.E6 valid ? 
+  IF ( SysDepIsValidReal(ParCmd.CartesianPosition.E6) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.CartesianPosition.E6 = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.CartesianPosition.E6));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.CartesianPosition.Config.Shoulder valid ? 
+  IF (( ParCmd.CartesianPosition.Config.Shoulder <> ArmConfigShoulder.USE_CONFIG ) AND  
+      ( ParCmd.CartesianPosition.Config.Shoulder <> ArmConfigShoulder.SAME       ) AND
+      ( ParCmd.CartesianPosition.Config.Shoulder <> ArmConfigShoulder.FREE       ) AND
+      ( ParCmd.CartesianPosition.Config.Shoulder <> ArmConfigShoulder.BACK       ) AND
+      ( ParCmd.CartesianPosition.Config.Shoulder <> ArmConfigShoulder.FRONT      ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.CartesianPosition.Config.Shoulder = {1}',
+                            Para1       :=  ARM_CONFIG_SHOULDER_TO_STRING(ParCmd.CartesianPosition.Config.Shoulder));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.CartesianPosition.Config.Elbow valid ? 
+  IF (( ParCmd.CartesianPosition.Config.Elbow <> ArmConfigElbow.USE_CONFIG ) AND  
+      ( ParCmd.CartesianPosition.Config.Elbow <> ArmConfigElbow.SAME       ) AND
+      ( ParCmd.CartesianPosition.Config.Elbow <> ArmConfigElbow.FREE       ) AND
+      ( ParCmd.CartesianPosition.Config.Elbow <> ArmConfigElbow.DOWN       ) AND
+      ( ParCmd.CartesianPosition.Config.Elbow <> ArmConfigElbow.UP         ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.CartesianPosition.Config.Elbow = {1}',
+                            Para1       :=  ARM_CONFIG_ELBOW_TO_STRING(ParCmd.CartesianPosition.Config.Elbow));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.CartesianPosition.Config.Wrist valid ? 
+  IF (( ParCmd.CartesianPosition.Config.Wrist <> ArmConfigWrist.USE_CONFIG ) AND  
+      ( ParCmd.CartesianPosition.Config.Wrist <> ArmConfigWrist.SAME       ) AND
+      ( ParCmd.CartesianPosition.Config.Wrist <> ArmConfigWrist.FREE       ) AND
+      ( ParCmd.CartesianPosition.Config.Wrist <> ArmConfigWrist.FLIP       ) AND
+      ( ParCmd.CartesianPosition.Config.Wrist <> ArmConfigWrist.NON_FLIP   ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.CartesianPosition.Config.Wrist = {1}',
+                            Para1       :=  ARM_CONFIG_WRIST_TO_STRING(ParCmd.CartesianPosition.Config.Wrist));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.FrameNo valid ? 
+  IF (( ParCmd.FrameNo <   0 ) OR   
+      ( ParCmd.FrameNo > 254 ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.FrameNo = {1}',
+                            Para1       := USINT_TO_STRING(ParCmd.FrameNo));                            
+    RETURN;
+  END_IF
+  
+  
+  // Check ParCmd.TargetFrameNo valid ? 
+  IF (( ParCmd.TargetFrameNo <   0 ) OR   
+      ( ParCmd.TargetFrameNo > 254 ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.TargetFrameNo = {1}',
+                            Para1       := USINT_TO_STRING(ParCmd.TargetFrameNo));                            
+    RETURN;
   END_IF
 
 END_METHOD

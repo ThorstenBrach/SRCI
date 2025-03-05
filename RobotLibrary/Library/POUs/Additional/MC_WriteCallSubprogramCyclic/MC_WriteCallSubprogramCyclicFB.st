@@ -41,7 +41,7 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
-  CheckFunctionSupported := AxesGroup.InternalData.RCSupportedFunctions.WriteCallSubprogramCyclic;
+  CheckFunctionSupported := AxesGroup.InternalData.RobotData.RCSupportedFunctions.WriteCallSubprogramCyclic;
   
   IF ( NOT CheckFunctionSupported )
   THEN
@@ -73,6 +73,8 @@ END_VAR
   SUPER^.OnCall(AxesGroup := AxesGroup);
   
   AxesGroup.Parameter.Plc.OptionalCyclic.UseCallSubprogram := Enable;
+  
+  {warning 'ToDo: modify like MC_ReadActualPositionCyclic'}
   
   Enabled := AxesGroup.CyclicOptional.PlcToRob.SubProgramData.Active;
   Busy    := (Enabled <> Enable); 

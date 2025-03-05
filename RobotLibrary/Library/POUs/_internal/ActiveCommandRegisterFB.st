@@ -111,7 +111,7 @@ END_VAR
                               MessageType := MessageType.CMD,
                               Severity    := Severity.DEBUG,
                               MessageCode := 0,
-                              MessageText := 'Added Cmd <{1}> to active command register',
+                              MessageText := 'Added Cmd <{1}> to ACR',
                               Para1       :=  CMD_TYPE_TO_STRING(SwapUint(_cmdType)));
       EXIT;
     END_IF

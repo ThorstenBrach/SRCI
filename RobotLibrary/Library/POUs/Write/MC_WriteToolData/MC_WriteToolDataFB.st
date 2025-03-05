@@ -59,7 +59,7 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
-  CheckFunctionSupported := AxesGroup.InternalData.RCSupportedFunctions.WriteToolData;
+  CheckFunctionSupported := AxesGroup.InternalData.RobotData.RCSupportedFunctions.WriteToolData;
   
   IF ( NOT CheckFunctionSupported )
   THEN
@@ -76,7 +76,7 @@ VAR_IN_OUT
 END_VAR
 
   // Check ParCmd Size is > 0, because MemCmp does not work correctly with size = 0
-  IF (SIZEOF(ParCmd) = 0) 
+  IF (SIZEOF(ParCmd) = 0) OR (_stepCmd = 0)
   THEN 
     RETURN;
   END_IF
@@ -101,6 +101,255 @@ END_VAR
     CommandData := CreateCommandPayload(AxesGroup := AxesGroup); // ( Access via reference to rCommandFB in ACR )
     // notify active command register 
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
+  END_IF
+
+END_METHOD
+
+METHOD PROTECTED CheckParameterValid : BOOL
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+VAR
+  /// internal index for loops
+ _idx : DINT;
+END_VAR
+
+  CheckParameterValid := TRUE;
+  
+  // Check ProcessingModea valid ? 
+  IF (( ProcessingMode <> ProcessingModeEnum.BUFFERED ) AND
+      ( ProcessingMode <> ProcessingModeEnum.ABORTING ) AND
+      ( ProcessingMode <> ProcessingModeEnum.PARALLEL ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_PROCESSINGMODE_NOT_ALLOWED;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ProcessingMode = {1}',
+                            Para1       := PROCESSING_MODE_TO_STRING(ProcessingMode));
+    RETURN;
+  END_IF
+  
+  
+  // Check SequenceFlag valid ? 
+  IF (( SequenceFlag <> SequenceFlagEnum.NO_SEQUENCE        ) AND
+      ( SequenceFlag <> SequenceFlagEnum.PRIMARY_SEQUENCE   ) AND
+      ( SequenceFlag <> SequenceFlagEnum.SECONDARY_SEQUENCE ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_SEQFLAG_NOT_ALLOWED;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter SequenceFlag = {1}',
+                            Para1       := SEQUENCE_FLAG_TO_STRING(SequenceFlag));
+    RETURN;
+  END_IF
+  
+  
+  // Check ParCmd.ToolNo valid ? 
+  IF (( ParCmd.ToolNo < 0   ) OR
+      ( ParCmd.ToolNo > 254 ))      
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ToolNo = {1}',
+                            Para1       := USINT_TO_STRING(ParCmd.ToolNo));
+    RETURN;
+  END_IF
+  
+  
+  // Check ParCmd.LoadNo valid ? 
+  IF (( ParCmd.ToolData.LoadNo < 0   ) OR
+      ( ParCmd.ToolData.LoadNo > 254 ))      
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ToolData.LoadNo = {1}',
+                            Para1       := USINT_TO_STRING(ParCmd.ToolData.LoadNo));
+    RETURN;
+  END_IF
+  
+  
+  // Check ParCmd.ToolData.X ? 
+  IF ( SysDepIsValidReal(ParCmd.ToolData.X) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ToolData.X = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.ToolData.X));
+  
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.ToolData.Y ? 
+  IF ( SysDepIsValidReal(ParCmd.ToolData.Y) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ToolData.Y = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.ToolData.Y));
+  
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.ToolData.Z ? 
+  IF ( SysDepIsValidReal(ParCmd.ToolData.Z) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ToolData.Z = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.ToolData.Z));
+  
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.ToolData.Rx ? 
+  IF ( SysDepIsValidReal(ParCmd.ToolData.Rx) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ToolData.Rx = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.ToolData.Rx));
+  
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.ToolData.Ry ? 
+  IF ( SysDepIsValidReal(ParCmd.ToolData.Ry) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ToolData.Ry = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.ToolData.Ry));
+  
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.ToolData.Rz ? 
+  IF ( SysDepIsValidReal(ParCmd.ToolData.Rz) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ToolData.Rz = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.ToolData.Rz));
+  
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.ToolData.ID valid ? 
+  IF (( ParCmd.ToolData.ID < 0   ) OR
+      ( ParCmd.ToolData.ID > 255 ))      
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ToolData.ID = {1}',
+                            Para1       := USINT_TO_STRING(ParCmd.ToolData.ID));
+    RETURN;
+  END_IF
+  
+  
+  // Check ParCmd.ToolData.ExternalTCP valid ? 
+  IF (( ParCmd.ToolData.ExternalTCP <> FALSE ) AND
+      ( ParCmd.ToolData.ExternalTCP <> TRUE  ))      
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ToolData.ExternalTCP = {1}',
+                            Para1       := BOOL_TO_STRING(ParCmd.ToolData.ExternalTCP));
+    RETURN;
   END_IF
 
 END_METHOD

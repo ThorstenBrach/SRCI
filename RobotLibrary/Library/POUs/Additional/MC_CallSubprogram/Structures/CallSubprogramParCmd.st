@@ -23,15 +23,15 @@
 TYPE CallSubprogramParCmd :
 STRUCT
   /// Program number of the subprogram in the RC
-  JobID             : UINT;
+  JobID          : UINT;
   /// ID of associated trigger function:
   /// • 0: No Trigger (default) - No trigger related behavior
   /// • >0: Triggero - Start executing when the trigger function with the identical EmitterID is triggered.
   /// Always positive.
   /// For more information, see chapter 5.5.12 Triggers
-  ListenerID        : SINT;
+  ListenerID     : SINT;
   /// Acyclic input parameters of the subprogram Array length adjusts to transmitted data (max 190 bytes)
-  Data              : ARRAY[0..RobotLibraryParameter.SUB_PROGRAM_DATA_MAX] OF BYTE;
+  Data           : ARRAY[0..RobotLibraryParameter.SUB_PROGRAM_DATA_MAX] OF BYTE;
 END_STRUCT
 END_TYPE
 

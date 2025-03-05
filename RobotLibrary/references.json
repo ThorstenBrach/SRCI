@@ -1,7 +1,7 @@
 [
   {
     "Name": "RobotLibrarySysDep",
-    "Version": "0.0.0.1",
+    "Version": "*",
     "DistributorName": "Thorsten Brach",
     "Namespace": null
   },

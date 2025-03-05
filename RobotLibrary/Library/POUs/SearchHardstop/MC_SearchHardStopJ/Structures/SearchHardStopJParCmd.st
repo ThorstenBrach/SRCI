@@ -58,10 +58,6 @@ STRUCT
   /// • 100%:           - Use maximal reference jerk
   /// See chapter 5.5.7 Robot dynamics
   JerkRate           : REAL;
-  /// Index of tool
-  /// •      0: Flange (default)
-  /// • 1..254: Tool frames
-  ToolNo             : USINT;
   /// Set TRUE to allow manipulation of this move command through superimposing functions.
   /// For more information see chapter 5.5.9.5
   Manipulation       : BOOL;

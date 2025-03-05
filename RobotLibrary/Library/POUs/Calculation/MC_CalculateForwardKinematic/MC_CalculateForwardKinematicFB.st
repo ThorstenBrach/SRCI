@@ -51,7 +51,7 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
-  CheckFunctionSupported := AxesGroup.InternalData.RCSupportedFunctions.CalculateForwardKinematic;
+  CheckFunctionSupported := AxesGroup.InternalData.RobotData.RCSupportedFunctions.CalculateForwardKinematic;
   
   IF ( NOT CheckFunctionSupported )
   THEN
@@ -68,7 +68,7 @@ VAR_IN_OUT
 END_VAR
 
   // Check ParCmd Size is > 0, because MemCmp does not work correctly with size = 0
-  IF (SIZEOF(ParCmd) = 0) 
+  IF (SIZEOF(ParCmd) = 0) OR (_stepCmd = 0)
   THEN 
     RETURN;
   END_IF
@@ -93,6 +93,285 @@ END_VAR
     CommandData := CreateCommandPayload(AxesGroup := AxesGroup); // ( Access via reference to rCommandFB in ACR )
     // notify active command register 
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
+  END_IF
+
+END_METHOD
+
+METHOD PROTECTED CheckParameterValid : BOOL
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+VAR
+  /// internal index for loops
+ _idx : DINT;
+END_VAR
+
+  CheckParameterValid := TRUE;
+  
+  // Check ParCmd.JointPosition.J1 valid ? 
+  IF ( SysDepIsValidReal(ParCmd.JointPosition.J1) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.JointPosition.J1 = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.JointPosition.J1));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.JointPosition.J2 valid ? 
+  IF ( SysDepIsValidReal(ParCmd.JointPosition.J2) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.JointPosition.J2 = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.JointPosition.J2));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.JointPosition.J3 valid ? 
+  IF ( SysDepIsValidReal(ParCmd.JointPosition.J3) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.JointPosition.J3 = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.JointPosition.J3));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.JointPosition.J4 valid ? 
+  IF ( SysDepIsValidReal(ParCmd.JointPosition.J4) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.JointPosition.J4 = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.JointPosition.J4));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.JointPosition.J5 valid ? 
+  IF ( SysDepIsValidReal(ParCmd.JointPosition.J5) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.JointPosition.J5 = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.JointPosition.J5));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.JointPosition.J6 valid ? 
+  IF ( SysDepIsValidReal(ParCmd.JointPosition.J6) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.JointPosition.J6 = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.JointPosition.J6));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.JointPosition.E1 valid ? 
+  IF ( SysDepIsValidReal(ParCmd.JointPosition.E1) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.JointPosition.E1 = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.JointPosition.E1));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.JointPosition.E2 valid ? 
+  IF ( SysDepIsValidReal(ParCmd.JointPosition.E2) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.JointPosition.E2 = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.JointPosition.E2));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.JointPosition.E3 valid ? 
+  IF ( SysDepIsValidReal(ParCmd.JointPosition.E3) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.JointPosition.E3 = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.JointPosition.E3));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.JointPosition.E4 valid ? 
+  IF ( SysDepIsValidReal(ParCmd.JointPosition.E4) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.JointPosition.E4 = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.JointPosition.E4));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.JointPosition.E5 valid ? 
+  IF ( SysDepIsValidReal(ParCmd.JointPosition.E5) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.JointPosition.E5 = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.JointPosition.E5));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.JointPosition.E6 valid ? 
+  IF ( SysDepIsValidReal(ParCmd.JointPosition.E6) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.JointPosition.E6 = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.JointPosition.E6));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.ToolNo valid ? 
+  IF (( ParCmd.ToolNo <   0 ) OR   
+      ( ParCmd.ToolNo > 254 ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ToolNo = {1}',
+                            Para1       := USINT_TO_STRING(ParCmd.ToolNo));                            
+    RETURN;
+  END_IF
+  
+  
+  // Check ParCmd.FrameNo valid ? 
+  IF (( ParCmd.FrameNo <   0 ) OR   
+      ( ParCmd.FrameNo > 254 ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.FrameNo = {1}',
+                            Para1       := USINT_TO_STRING(ParCmd.FrameNo));                            
+    RETURN;
   END_IF
 
 END_METHOD

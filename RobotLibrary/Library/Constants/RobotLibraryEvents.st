@@ -12,6 +12,11 @@ VAR_GLOBAL
   ERR_FUNCTION_NOT_SUPPORTED   : WORD := 5;
   /// Program fault : Timeout during command execution 
   ERR_TIMEOUT_CMD              : WORD := 4;
+
+
+  /// Parameter fault : Invalid command parameter SyncReaction
+  ERR_INVALID_PAR_CMD_SYNC_REACTION : WORD := 10;
+
 END_VAR
 
 

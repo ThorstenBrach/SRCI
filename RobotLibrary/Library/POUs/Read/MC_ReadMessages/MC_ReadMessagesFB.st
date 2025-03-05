@@ -54,7 +54,7 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
-  CheckFunctionSupported := AxesGroup.InternalData.RCSupportedFunctions.ReadMessages;
+  CheckFunctionSupported := AxesGroup.InternalData.RobotData.RCSupportedFunctions.ReadMessages;
   
   IF ( NOT CheckFunctionSupported )
   THEN
@@ -71,7 +71,7 @@ VAR_IN_OUT
 END_VAR
 
   // Check ParCmd Size is > 0, because MemCmp does not work correctly with size = 0
-  IF (SIZEOF(ParCmd) = 0) 
+  IF (SIZEOF(ParCmd) = 0) OR (_stepCmd = 0)
   THEN 
     RETURN;
   END_IF
@@ -96,6 +96,59 @@ END_VAR
     CommandData := CreateCommandPayload(AxesGroup := AxesGroup); // ( Access via reference to rCommandFB in ACR )
     // notify active command register 
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
+  END_IF
+
+END_METHOD
+
+METHOD PROTECTED CheckParameterValid : BOOL
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+VAR
+  /// internal index for loops
+ _idx : DINT;
+END_VAR
+
+  CheckParameterValid := TRUE;
+  
+  // Check ParCmd.MsgID valid ? 
+  IF (( ParCmd.MsgID <   0 ) OR  
+      ( ParCmd.MsgID > 255 ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.MsgID = {1}',
+                            Para1       :=  INT_TO_STRING(ParCmd.MsgID));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.MessageLevel valid ? 
+  IF (( ParCmd.MessageLevel <> MessageLevel.DEBUG   ) AND 
+      ( ParCmd.MessageLevel <> MessageLevel.INFO    ) AND
+      ( ParCmd.MessageLevel <> MessageLevel.WARNING ) AND
+      ( ParCmd.MessageLevel <> MessageLevel.ERROR   ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.MessageLevel = {1}',
+                            Para1       :=  MESSAGE_LEVEL_TO_STRING(ParCmd.MessageLevel));
+    RETURN;                          
   END_IF
 
 END_METHOD

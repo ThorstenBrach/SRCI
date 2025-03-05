@@ -50,7 +50,7 @@ STRUCT
   /// • [5]: Rotation around Z- Axis (RZ)
   ForceLimit        : ARRAY[0..5] OF REAL;
   /// Specifies encoder connection setup according to Table 6-713 (at least one option must be supported) 
-  ConnectionMode    : SensorConnectionMode;
+  ConnectionMode    : ConnectionMode;
   /// Position of sensor relative to flange (FixedSensor FALSE) or relative to WCS (FixedSensor TRUE)
   /// • [0]: X-Axis
   /// • [1]: Y-Axis

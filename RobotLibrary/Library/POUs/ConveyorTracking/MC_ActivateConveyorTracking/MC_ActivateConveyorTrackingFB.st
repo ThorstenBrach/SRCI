@@ -66,7 +66,7 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
-  CheckFunctionSupported := AxesGroup.InternalData.RCSupportedFunctions.ActivateConveyorTracking;
+  CheckFunctionSupported := AxesGroup.InternalData.RobotData.RCSupportedFunctions.ActivateConveyorTracking;
   
   IF ( NOT CheckFunctionSupported )
   THEN
@@ -83,7 +83,7 @@ VAR_IN_OUT
 END_VAR
 
   // Check ParCmd Size is > 0, because MemCmp does not work correctly with size = 0
-  IF (SIZEOF(ParCmd) = 0) 
+  IF (SIZEOF(ParCmd) = 0) OR (_stepCmd = 0)
   THEN 
     RETURN;
   END_IF
@@ -110,6 +110,73 @@ END_VAR
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
     // Reset parameter accepted flag
     ParameterAccepted := FALSE;  
+  END_IF
+
+END_METHOD
+
+METHOD PROTECTED CheckParameterValid : BOOL
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+  CheckParameterValid := TRUE;
+  
+  
+  // Check ParCmd.ConveyorNo valid ? 
+  IF (( ParCmd.ConveyorNo <   0 ) OR  
+      ( ParCmd.ConveyorNo > 255 ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ConveyorNo = {1}',
+                            Para1       :=  SINT_TO_STRING(ParCmd.ConveyorNo));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.ConnectionMode valid ? 
+  IF (( ParCmd.ConnectionMode <> ConnectionMode.RC_CONNECTED ) AND  
+      ( ParCmd.ConnectionMode <> ConnectionMode.PLC_CONNECTED ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ConnectionMode = {1}',
+                            Para1       :=  CONNECTION_MODE_TO_STRING(ParCmd.ConnectionMode));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.PLCEncoderValue valid ? 
+  IF ( SysDepIsValidReal(ParCmd.PLCEncoderValue) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.PLCEncoderValue = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.PLCEncoderValue));
+    RETURN;                          
   END_IF
 
 END_METHOD

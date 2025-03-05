@@ -50,7 +50,7 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
-  CheckFunctionSupported := AxesGroup.InternalData.RCSupportedFunctions.ActivateWorkArea;
+  CheckFunctionSupported := AxesGroup.InternalData.RobotData.RCSupportedFunctions.ActivateWorkArea;
   
   IF ( NOT CheckFunctionSupported )
   THEN
@@ -67,7 +67,7 @@ VAR_IN_OUT
 END_VAR
 
   // Check ParCmd Size is > 0, because MemCmp does not work correctly with size = 0
-  IF (SIZEOF(ParCmd) = 0) 
+  IF (SIZEOF(ParCmd) = 0) OR (_stepCmd = 0)
   THEN 
     RETURN;
   END_IF
@@ -92,6 +92,60 @@ END_VAR
     CommandData := CreateCommandPayload(AxesGroup := AxesGroup); // ( Access via reference to rCommandFB in ACR )
     // notify active command register 
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
+  END_IF
+
+END_METHOD
+
+METHOD PROTECTED CheckParameterValid : BOOL
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+VAR
+  /// internal index for loops
+ _idx : DINT;
+END_VAR
+
+  CheckParameterValid := TRUE;
+  
+  
+  // Check ParCmd.WorkAreaNo valid ? 
+  IF (( ParCmd.WorkAreaNo < 0   ) OR
+      ( ParCmd.WorkAreaNo > 254 ))
+        
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.WorkAreaNo = {1}',
+                            Para1       := USINT_TO_STRING(ParCmd.WorkAreaNo));
+    RETURN;
+  END_IF
+  
+  
+  // Check ParCmd.ActivateArea valid ? 
+  IF (( ParCmd.ActivateArea <> FALSE ) AND
+      ( ParCmd.ActivateArea <> TRUE  ))
+        
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ActivateArea = {1}',
+                            Para1       := BOOL_TO_STRING(ParCmd.ActivateArea));
+    RETURN;
   END_IF
 
 END_METHOD
@@ -243,8 +297,6 @@ END_VAR
            THEN
              // Reset Busy flag
              Busy := FALSE;
-             // Update results
-             //OutCmd.Dummy := _response.Dummy;
              // set timeout
              SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
              // inc step counter

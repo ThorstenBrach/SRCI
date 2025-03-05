@@ -27,7 +27,7 @@ STRUCT
   /// JobID or InstanceID of target subprogram according to selected StopMode
   /// • Refers to StopMode 0 (Stop via JobID) and 1 (Stop via InstanceID).
   /// • -1: Invalid (default)
-  TargetID          : UINT;
+  TargetID          : DINT;
   /// Defines the target sequence in which the command will be executed
   SequenceFlag      : SequenceFlag;
   /// ID of associated trigger function:

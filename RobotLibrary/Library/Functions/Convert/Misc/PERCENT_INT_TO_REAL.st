@@ -27,7 +27,8 @@ VAR_INPUT
   IsOptional : BOOL;
 END_VAR
 
-  IF ( Value = 16#FFFF ) AND (IsOptional)// 16#FFFF for not supported values 
+  IF (( Value = 16#FFFF_FFFF ) AND (IsOptional)) OR // 16#FFFF_FFFF for not supported values
+     (( Value = 16#0000_FFFF ) AND (IsOptional))    // 16#0000_FFFF for not supported values 
   THEN
     PERCENT_INT_TO_REAL := -1.0;
     RETURN;

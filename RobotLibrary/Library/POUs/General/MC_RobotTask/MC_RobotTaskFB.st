@@ -888,6 +888,295 @@ END_VAR
 
 END_METHOD
 
+METHOD PROTECTED CheckParameterChanged : BOOL
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup    : AxesGroup; 
+END_VAR
+
+  // Check initialization is already done ?
+  IF ( NOT Initialized )
+  THEN
+    CheckParameterChanged := FALSE;
+    RETURN;
+  END_IF
+  
+  // compare memory 
+  CheckParameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCfg), pData2 := ADR(_parCfg), DataLen := SIZEOF(ParCfg)) <> RobotLibraryConstants.OK );
+  
+  
+  // Check Tool SyncMode changed ? 
+  IF ( _parCfg.Plc.Parameter.SynchronizationModes.Tool <> ParCfg.Plc.Parameter.SynchronizationModes.Tool )
+  THEN
+    // Set info
+    InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_TOOL_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED;
+     
+    // Create log entry
+    CreateLogMessagePara1( Timestamp   := SystemTime,
+                           MessageType := MessageType.CMD,
+                           Severity    := Severity.INFO,
+                           MessageCode := 0,
+                           MessageText := 'Tool SyncMode changed from {1} to {2}, but this is only allowed at PLC start',
+                           Para1       := SYNC_MODE_TO_STRING(ParCfg.Plc.Parameter.SynchronizationModes.Tool));
+     
+  END_IF
+  
+  
+  // Check Frame SyncMode changed ? 
+  IF ( _parCfg.Plc.Parameter.SynchronizationModes.Frame <> ParCfg.Plc.Parameter.SynchronizationModes.Frame )
+  THEN
+    // Set info
+    InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_FRAME_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED;
+     
+    // Create log entry
+    CreateLogMessagePara1( Timestamp   := SystemTime,
+                           MessageType := MessageType.CMD,
+                           Severity    := Severity.INFO,
+                           MessageCode := 0,
+                           MessageText := 'Frame SyncMode changed from {1} to {2}, but this is only allowed at PLC start',
+                           Para1       := SYNC_MODE_TO_STRING(ParCfg.Plc.Parameter.SynchronizationModes.Frame));
+     
+  END_IF
+  
+  
+  // Check Load SyncMode changed ? 
+  IF ( _parCfg.Plc.Parameter.SynchronizationModes.Load <> ParCfg.Plc.Parameter.SynchronizationModes.Load )
+  THEN
+    // Set info
+    InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_LOAD_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED;
+     
+    // Create log entry
+    CreateLogMessagePara2( Timestamp   := SystemTime,
+                           MessageType := MessageType.CMD,
+                           Severity    := Severity.INFO,
+                           MessageCode := 0,
+                           MessageText := 'Load SyncMode changed from {1} to {2}, but this is only allowed at PLC start',
+                           Para1       := SYNC_MODE_TO_STRING(_parCfg.Plc.Parameter.SynchronizationModes.Load),
+                           Para2       := SYNC_MODE_TO_STRING( ParCfg.Plc.Parameter.SynchronizationModes.Load));
+  END_IF
+  
+  
+  // Check WorkAreas SyncMode changed ? 
+  IF ( _parCfg.Plc.Parameter.SynchronizationModes.WorkAreas <> ParCfg.Plc.Parameter.SynchronizationModes.WorkAreas )
+  THEN
+    // Set info
+    InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_WORK_AREA_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED;
+     
+    // Create log entry
+    CreateLogMessagePara2( Timestamp   := SystemTime,
+                           MessageType := MessageType.CMD,
+                           Severity    := Severity.INFO,
+                           MessageCode := 0,
+                           MessageText := 'WorkAreas SyncMode changed from {1} to {2}, but this is only allowed at PLC start',
+                           Para1       := SYNC_MODE_TO_STRING(_parCfg.Plc.Parameter.SynchronizationModes.WorkAreas),
+                           Para2       := SYNC_MODE_TO_STRING( ParCfg.Plc.Parameter.SynchronizationModes.WorkAreas));
+  END_IF
+  
+  
+  // Check WorkAreas SyncMode changed ? 
+  IF ( _parCfg.Plc.Parameter.SynchronizationModes.WorkAreas <> ParCfg.Plc.Parameter.SynchronizationModes.WorkAreas )
+  THEN
+    // Set info
+    InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_WORK_AREA_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED;
+     
+    // Create log entry
+    CreateLogMessagePara2( Timestamp   := SystemTime,
+                           MessageType := MessageType.CMD,
+                           Severity    := Severity.INFO,
+                           MessageCode := 0,
+                           MessageText := 'WorkAreas SyncMode changed from {1} to {2}, but this is only allowed at PLC start',
+                           Para1       := SYNC_MODE_TO_STRING(_parCfg.Plc.Parameter.SynchronizationModes.WorkAreas),
+                           Para2       := SYNC_MODE_TO_STRING( ParCfg.Plc.Parameter.SynchronizationModes.WorkAreas));
+  END_IF
+  
+  
+  // Check DefaultDynamics SyncMode changed ? 
+  IF ( _parCfg.Plc.Parameter.SynchronizationModes.DefaultDynamics <> ParCfg.Plc.Parameter.SynchronizationModes.DefaultDynamics )
+  THEN
+    // Set info
+    InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_DEFAULT_DYNAMIVS_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED;
+     
+    // Create log entry
+    CreateLogMessagePara2( Timestamp   := SystemTime,
+                           MessageType := MessageType.CMD,
+                           Severity    := Severity.INFO,
+                           MessageCode := 0,
+                           MessageText := 'DefaultDynamics SyncMode changed from {1} to {2}, but this is only allowed at PLC start',
+                           Para1       := SYNC_MODE_TO_STRING(_parCfg.Plc.Parameter.SynchronizationModes.DefaultDynamics),
+                           Para2       := SYNC_MODE_TO_STRING( ParCfg.Plc.Parameter.SynchronizationModes.DefaultDynamics));   
+  END_IF
+  
+  
+  // Check ReferenceDynamics SyncMode changed ?
+  IF ( _parCfg.Plc.Parameter.SynchronizationModes.ReferenceDynamics <> ParCfg.Plc.Parameter.SynchronizationModes.ReferenceDynamics )
+  THEN
+    // Set info
+    InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_REFERENCE_DYNAMIVS_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED;
+     
+    // Create log entry
+    CreateLogMessagePara2( Timestamp   := SystemTime,
+                           MessageType := MessageType.CMD,
+                           Severity    := Severity.INFO,
+                           MessageCode := 0,
+                           MessageText := 'ReferenceDynamics SyncMode changed from {1} to {2}, but this is only allowed at PLC start',
+                           Para1       := SYNC_MODE_TO_STRING(_parCfg.Plc.Parameter.SynchronizationModes.ReferenceDynamics),
+                           Para2       := SYNC_MODE_TO_STRING( ParCfg.Plc.Parameter.SynchronizationModes.ReferenceDynamics));   
+  END_IF
+  
+  
+  
+  // Check Plc.OptionalCyclic changed ? 
+  IF ( PlcOptionalCyclicToUint(_parCfg.Plc.OptionalCyclic) <> PlcOptionalCyclicToUint(ParCfg.Plc.OptionalCyclic ))
+  THEN
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_TELEGRAM_NUMBER_CHANGED_AFTER_INIT;
+     
+    // Create log entry
+    CreateLogMessagePara2( Timestamp   := SystemTime,
+                           MessageType := MessageType.CMD,
+                           Severity    := Severity.ERROR,
+                           MessageCode := 0,
+                           MessageText := 'ParCfg.Plc.OptionalCyclic changed after initialization from {1} to {2} -> Reinitialize by disabling and enabling the RobotTask',
+                           Para1       := WORD_TO_STRING_BIN(PlcOptionalCyclicToUint(_parCfg.Plc.OptionalCyclic)),
+                           Para2       := WORD_TO_STRING_BIN(PlcOptionalCyclicToUint( ParCfg.Plc.OptionalCyclic)));   
+  END_IF
+  
+  
+  // Check Rob.OptionalCyclic changed ? 
+  IF ( RobOptionalCyclicToUint(_parCfg.Rob.OptionalCyclic) <> RobOptionalCyclicToUint(ParCfg.Rob.OptionalCyclic ))
+  THEN
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_TELEGRAM_NUMBER_CHANGED_AFTER_INIT;
+     
+    // Create log entry
+    CreateLogMessagePara2( Timestamp   := SystemTime,
+                           MessageType := MessageType.CMD,
+                           Severity    := Severity.ERROR,
+                           MessageCode := 0,
+                           MessageText := 'ParCfg.Rob.OptionalCyclic changed after initialization from {1} to {2} -> Reinitialize by disabling and enabling the RobotTask',
+                           Para1       := WORD_TO_STRING_BIN(RobOptionalCyclicToUint(_parCfg.Rob.OptionalCyclic)),
+                           Para2       := WORD_TO_STRING_BIN(RobOptionalCyclicToUint( ParCfg.Rob.OptionalCyclic)));   
+  END_IF
+
+END_METHOD
+
+METHOD PROTECTED CheckParameterValid : BOOL
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+  // init return value
+  CheckParameterValid := TRUE;
+  
+  // Regrion ParCfg.Com {{{
+  
+  // Check LifeSignTimeout
+  IF ( ParCfg.Com.LifeSignTimeOut < T#10MS )
+  THEN
+    // set to valid min value
+    ParCfg.Com.LifeSignTimeOut := T#10MS;
+   
+    // Set info
+    InfoID := RobotLibraryInfoIdEnum.INFO_LIFESIGN_TIMEOUT_TO_SMALL_AND_SET_TO_10MS;
+     
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.INFO,
+                            MessageCode := 0,
+                            MessageText := 'LifeSignTimeout to small and set from {1}ms to 10ms',
+                            Para1       := TIME_TO_STRING(ParCfg.Com.LifeSignTimeOut));                          
+  END_IF
+  
+  
+  // Check ParCfg.Com.TelegramLengthPlcToRob
+  IF (( ParCfg.Com.TelegramLengthPlcToRob < 64                                             ) OR
+      ( ParCfg.Com.TelegramLengthPlcToRob > RobotLibraryParameter.ROBOT_OUT_DATA_MAX   + 1 ) OR
+      ( ParCfg.Com.TelegramLengthPlcToRob > RobotLibraryParameter.TELEGRAM_PAYLOAD_MAX + 1 ))
+  THEN
+    // parameter(s) not valid
+    CheckParameterValid := FALSE;
+  
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_TELEGRAM_LENGTH_MISMATCH_0x80A3;
+     
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.INFO,
+                            MessageCode := 0,
+                            MessageText := 'ParCfg.Com.TelegramLengthPlcToRob {1} invalid',
+                            Para1       := UINT_TO_STRING(ParCfg.Com.TelegramLengthPlcToRob));
+    // no further validation                          
+    RETURN;                          
+  END_IF
+  
+  // Check ParCfg.Com.TelegramLengthRobToPlc
+  IF (( ParCfg.Com.TelegramLengthRobToPlc < 64                                             ) OR
+      ( ParCfg.Com.TelegramLengthRobToPlc > RobotLibraryParameter.ROBOT_IN_DATA_MAX    + 1 ) OR
+      ( ParCfg.Com.TelegramLengthRobToPlc > RobotLibraryParameter.TELEGRAM_PAYLOAD_MAX + 1 ))
+  THEN
+    // parameter(s) not valid
+    CheckParameterValid := FALSE;
+  
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_TELEGRAM_LENGTH_MISMATCH_0x80A3;
+     
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.INFO,
+                            MessageCode := 0,
+                            MessageText := 'ParCfg.Com.TelegramLengthRobToPlc {1} invalid',
+                            Para1       := UINT_TO_STRING(ParCfg.Com.TelegramLengthRobToPlc));
+    // no further validation                          
+    RETURN;                          
+  END_IF
+  // EndRegion }}}
+  
+  // Region ParCfg.Rob.OptionalCyclic {{{
+  
+  // Check configuration if optional cyclic CartesianPosition valid ?
+  IF ( ParCfg.Rob.OptionalCyclic.UseCartesianPosition AND ParCfg.Rob.OptionalCyclic.UseCartesianPositionExt )
+  THEN
+    // set to valid configuration
+    ParCfg.Rob.OptionalCyclic.UseCartesianPosition    := TRUE;
+    ParCfg.Rob.OptionalCyclic.UseCartesianPositionExt := FALSE;
+   
+    // Set info
+    InfoID := RobotLibraryInfoIdEnum.INFO_RECV_EXT_CART_POS_NOT_USABLE_WITH_RECV_CART_POS;
+     
+    // Create log entry
+    CreateLogMessage( Timestamp   := SystemTime,
+                      MessageType := MessageType.CMD,
+                      Severity    := Severity.INFO,
+                      MessageCode := 0,
+                      MessageText := 'UseCartesianPosition and UseCartesianPositionExt cannot be configured together -> UseCartesianPosition is automatically activated');
+  END_IF
+  
+  
+  // Check configuration if optional cyclic JointPosition valid ?
+  IF ( ParCfg.Rob.OptionalCyclic.UseJointPosition AND ParCfg.Rob.OptionalCyclic.UseJointPositionExt )
+  THEN
+    // set to valid configuration
+    ParCfg.Rob.OptionalCyclic.UseJointPosition    := TRUE;
+    ParCfg.Rob.OptionalCyclic.UseJointPositionExt := FALSE;
+   
+    // Set info
+    InfoID := RobotLibraryInfoIdEnum.INFO_RECV_EXT_JOINT_POS_NOT_USABLE_WITH_RECV_JOINT_POS;
+     
+    // Create log entry
+    CreateLogMessage( Timestamp   := SystemTime,
+                      MessageType := MessageType.CMD,
+                      Severity    := Severity.INFO,
+                      MessageCode := 0,
+                      MessageText := 'UseJointPosition and UseJointPositionExt cannot be configured together -> UseJointPosition is automatically activated');
+  END_IF
+  // EndRegion }}}
+
+END_METHOD
+
 METHOD PRIVATE CreateSendPayload : DINT
 VAR_IN_OUT
   /// Robot assignment of function
@@ -1330,7 +1619,7 @@ END_VAR
   AxesGroup.InternalData.GroupReset_F(CLK := AxesGroup.InternalData.GroupReset);
   
   // Copy supported Functions 
-  AxesGroup.InternalData.RCSupportedFunctions := ReadRobotData.OutCmd.RCSupportedFunctions;
+  AxesGroup.InternalData.RobotData.RCSupportedFunctions := ReadRobotData.OutCmd.RCSupportedFunctions;
 
 END_METHOD
 
@@ -1672,6 +1961,9 @@ END_VAR
   
   SystemLog  := AxesGroup.MessageLog.SystemLogs;
   MessageLog := AxesGroup.MessageLog.Messages;
+  
+  // Check configuration parameter changed ? 
+  CheckParameterChanged(AxesGroup := AxesGroup);
 
 END_METHOD
 
@@ -1814,9 +2106,11 @@ END_VAR
           _stepCmd := _stepCmd + 1; 
          END_IF
          
-         // take configuration parameter if not yet enabled
-        _parCfg := ParCfg;
-  
+         IF ( CheckParameterValid(AxesGroup := AxesGroup) )
+         THEN
+           // take configuration parameter if not yet enabled
+          _parCfg := ParCfg;
+  			 END_IF
        
     01:  CASE AxesGroup.Cyclic.RobToPlc.TelegramState  OF
   

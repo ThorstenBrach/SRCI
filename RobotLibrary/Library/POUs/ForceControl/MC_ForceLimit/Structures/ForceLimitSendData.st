@@ -40,7 +40,7 @@ STRUCT
   /// For more information refer to chapter 5.5.14
   FrameNo            : USINT;
   /// Specifies encoder connection setup according to Table 6-713 (at least one option must be supported) 
-  ConnectionMode     : SensorConnectionMode;
+  ConnectionMode     : USINT;
   /// Defines sensor positioning:
   /// • FALSE (default): Sensor mounted on flange
   /// • TRUE: Sensor fixed
@@ -59,7 +59,6 @@ STRUCT
   CalibrationData    : USINT;
   /// Defines type of reference of Force and Torque (at least one option must be supported)
   ReferenceType      : ReferenceType;
-
   /// Relates to ConnectionMode 1 and 2 (Sensor connected to PLC).
   /// Currently applied force and torque detected by sensor according to ReferenceType, ToolNo and FrameNo.
   /// • [0]: X-Axis

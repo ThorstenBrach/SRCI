@@ -4,5 +4,11 @@
     "Version": "*",
     "DistributorName": "Beckhoff Automation GmbH",
     "Namespace": null
+  },
+  {
+    "Name": "Tc2_Utilities",
+    "Version": "*",
+    "DistributorName": "Beckhoff Automation GmbH",
+    "Namespace": null
   }
 ]

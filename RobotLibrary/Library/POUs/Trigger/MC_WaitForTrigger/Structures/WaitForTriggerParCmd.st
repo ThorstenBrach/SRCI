@@ -22,12 +22,6 @@
 // -------------------------------------------------------------------------
 TYPE WaitForTriggerParCmd :
 STRUCT
-  /// ID of the Action function that will be executed when the trigger condition is met
-  /// • >0: Start Action        - Start executing the Action function with the identical ListenerID.
-  /// • <0: Stop Action         - Stop executing the Action function with the identical ListenerID.
-  /// •  0: Undefined (default) - If no EmitterID is defined, the function returns an error message
-  /// For more information see chapter 5.5.12.4
-  EmitterID              : SINT;
   /// ID of associated trigger function:
   /// • 0: Immediately (default) - Start executing this function immediately.
   /// • >0: Trigger -  Start executing, when the trigger function with the identical EmitterID is triggered.

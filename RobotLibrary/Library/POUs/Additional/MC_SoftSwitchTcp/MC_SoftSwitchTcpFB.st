@@ -61,7 +61,7 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
-  CheckFunctionSupported := AxesGroup.InternalData.RCSupportedFunctions.SoftSwitchTCP;
+  CheckFunctionSupported := AxesGroup.InternalData.RobotData.RCSupportedFunctions.SoftSwitchTCP;
   
   IF ( NOT CheckFunctionSupported )
   THEN
@@ -78,7 +78,7 @@ VAR_IN_OUT
 END_VAR
 
   // Check ParCmd Size is > 0, because MemCmp does not work correctly with size = 0
-  IF (SIZEOF(ParCmd) = 0) 
+  IF (SIZEOF(ParCmd) = 0) OR (_stepCmd = 0)
   THEN 
     RETURN;
   END_IF
@@ -104,6 +104,221 @@ END_VAR
     // notify active command register 
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
   END_IF
+
+END_METHOD
+
+METHOD PROTECTED CheckParameterValid : BOOL
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+VAR
+  /// internal index for loops
+ _idx       : DINT;  
+END_VAR
+
+  CheckParameterValid := TRUE;
+  
+  // Check AbortingMode valid ? 
+  IF (( AbortingMode <> AbortingModeEnum.BUFFER ) AND
+      ( AbortingMode <> AbortingModeEnum.ABORT  ))  
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_ABORTINGMODE_INVALID;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter AbortingMode = {1}',
+                            Para1       := ABORTING_MODE_TO_STRING(AbortingMode));
+    RETURN;                          
+  END_IF
+  
+  // Check SequenceFlag valid ? 
+  IF (( SequenceFlag <> SequenceFlagEnum.PRIMARY_SEQUENCE   ) AND
+      ( SequenceFlag <> SequenceFlagEnum.SECONDARY_SEQUENCE ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_SEQFLAG_NOT_ALLOWED;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter SequenceFlag = {1}',
+                            Para1       := SEQUENCE_FLAG_TO_STRING(SequenceFlag));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.ReferenceType valid ? 
+  IF (( ParCmd.ReferenceType <> ReferenceType.TOOL  ) AND  
+      ( ParCmd.ReferenceType <> ReferenceType.FRAME ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ReferenceType = {1}',
+                            Para1       :=  REFERENCE_TYPE_TO_STRING(ParCmd.ReferenceType));
+    RETURN;                          
+  END_IF
+  
+  // Check ParCmd.ReferenceNo valid ? 
+  IF (( ParCmd.ReferenceNo < 0   ) OR  
+      ( ParCmd.ReferenceNo > 254 ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ReferenceNo = {1}',
+                            Para1       :=  USINT_TO_STRING(ParCmd.ReferenceNo));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.CompliantAxes valid ?
+  IF (( ParCmd.CompliantAxes < 0  ) OR  
+      ( ParCmd.CompliantAxes > 63 ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.CompliantAxes = {1}',
+                            Para1       :=  BYTE_TO_STRING_BIN(ParCmd.CompliantAxes));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.LimitMode valid ? 
+  IF (( ParCmd.LimitMode <> LimitMode.NO_LIMIT_DEFINED ) AND  
+      ( ParCmd.LimitMode <> LimitMode.LIMIT_DEFINED    ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.LimitMode = {1}',
+                            Para1       :=  LIMIT_MODE_TO_STRING(ParCmd.LimitMode));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.ResistanceForceMode valid ? 
+  IF (( ParCmd.ResistanceForceMode <> ResistanceForceMode.RESISTANCE_FORCE_TCP  ) AND  
+      ( ParCmd.ResistanceForceMode <> ResistanceForceMode.RESISTANCE_FORCE_AXIS ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ResistanceForceMode = {1}',
+                            Para1       :=  RESISTANT_FORCE_MODE_TO_STRING(ParCmd.ResistanceForceMode));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.ResistanceForceTCP valid ? 
+  IF (( SysDepIsValidReal(ParCmd.ResistanceForceTCP) = FALSE ) OR
+      (                   ParCmd.ResistanceForceTCP  <     0 ) OR
+      (                   ParCmd.ResistanceForceTCP  >   200 ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ResistanceForceTCP = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.ResistanceForceTCP));
+    RETURN;                          
+  END_IF
+  
+  
+  FOR _idx := 0 TO 5
+  DO
+    // Check ParCmd.ResistanceForceAxis[x] valid ? 
+    IF (( SysDepIsValidReal(ParCmd.ResistanceForceAxis[_idx]) = FALSE ) OR
+        (                   ParCmd.ResistanceForceAxis[_idx]  <     0 ) OR
+        (                   ParCmd.ResistanceForceAxis[_idx]  >   200 ))
+    THEN
+      // Parameter not valid
+      CheckParameterValid := FALSE;
+      // Set error
+      ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+      
+      // Create log entry
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                              MessageType := MessageType.CMD,
+                              Severity    := Severity.ERROR,
+                              MessageCode := ErrorID,
+                              MessageText := 'Invalid Parameter ParCmd.ResistanceForceAxis[{2}] = {1}',
+                              Para1       := VALID_REAL_TO_STRING(ParCmd.ResistanceForceAxis[_idx]),
+                              Para2       := DINT_TO_STRING(_idx));
+      EXIT;                            
+      RETURN;                          
+    END_IF
+  END_FOR
+  
+  
+  FOR _idx := 0 TO 5
+  DO
+    // Check ParCmd.VectorData[x] valid ? 
+    IF ( SysDepIsValidReal(ParCmd.VectorData[_idx]) = FALSE )
+    THEN
+      // Parameter not valid
+      CheckParameterValid := FALSE;
+      // Set error
+      ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+      
+      // Create log entry
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                              MessageType := MessageType.CMD,
+                              Severity    := Severity.ERROR,
+                              MessageCode := ErrorID,
+                              MessageText := 'Invalid Parameter ParCmd.VectorData[{2}] = {1}',
+                              Para1       := VALID_REAL_TO_STRING(ParCmd.VectorData[_idx]),
+                              Para2       := DINT_TO_STRING(_idx));
+      EXIT;                            
+      RETURN;                          
+    END_IF
+  END_FOR
 
 END_METHOD
 

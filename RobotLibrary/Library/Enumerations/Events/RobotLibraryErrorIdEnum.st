@@ -3,6 +3,10 @@ TYPE RobotLibraryErrorIdEnum :
 (
   NO_ERROR := 0,
 
+  /// Invalid command parameter - see log file for details (LogLevel Error)
+  ERR_INVALID_PAR_CMD := 1, {warning 'ToDo: This is an internal error ID, which is not defined in SRCI specification'}
+
+  
   /// Telegram control does not match the telegram state
   ERR_TELEGRAM_CONTROL_MISMATCH_TELEGRAM_STATE_0xA1 := 16#A1,  
   /// Initialization lost for unknown reason. See message log after reinitializing

@@ -22,8 +22,6 @@
 // -------------------------------------------------------------------------
 TYPE RedefineTrackingPosParCmd :
 STRUCT
-  /// Relates to ListenerID >0:
-  ProcessingMode         : ProcessingMode;
   /// Index of assigned conveyor
   ConveyorNo             : USINT;
   /// Relates to ListenerID = 0:

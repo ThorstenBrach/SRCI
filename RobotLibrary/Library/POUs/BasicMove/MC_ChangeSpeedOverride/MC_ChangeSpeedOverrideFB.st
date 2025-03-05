@@ -51,7 +51,7 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
-  CheckFunctionSupported := AxesGroup.InternalData.RCSupportedFunctions.ChangeSpeedOverride;
+  CheckFunctionSupported := AxesGroup.InternalData.RobotData.RCSupportedFunctions.ChangeSpeedOverride;
   
   IF ( NOT CheckFunctionSupported )
   THEN
@@ -68,7 +68,7 @@ VAR_IN_OUT
 END_VAR
 
   // Check ParCmd Size is > 0, because MemCmp does not work correctly with size = 0
-  IF (SIZEOF(ParCmd) = 0) 
+  IF (SIZEOF(ParCmd) = 0) OR (_stepCmd = 0)
   THEN 
     RETURN;
   END_IF
@@ -93,6 +93,35 @@ END_VAR
     CommandData := CreateCommandPayload(AxesGroup := AxesGroup); // ( Access via reference to rCommandFB in ACR )
     // notify active command register 
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
+  END_IF
+
+END_METHOD
+
+METHOD PROTECTED CheckParameterValid : BOOL
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+  CheckParameterValid := TRUE;
+  
+  // Check ParCmd.Override valid ? 
+  IF  (( SysDepIsValidReal(ParCmd.Override) = FALSE )  OR
+       (                   ParCmd.Override  <     0 )  OR 
+       (                   ParCmd.Override  >   100 ))      
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_VELOCITY_INVALID;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.Override = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.Override));                            
+    RETURN;
   END_IF
 
 END_METHOD

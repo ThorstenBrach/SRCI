@@ -22,6 +22,8 @@ FUNCTION_BLOCK MC_RedefineTrackingPosFB EXTENDS RobotLibraryBaseExecuteFB
 //
 // -------------------------------------------------------------------------
 VAR_INPUT
+  /// Relates to ListenerID >0:
+  ProcessingMode    : ProcessingMode;
   /// Command parameter 
   ParCmd            : RedefineTrackingPosParCmd;      
 END_VAR
@@ -54,7 +56,7 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
-  CheckFunctionSupported := AxesGroup.InternalData.RCSupportedFunctions.RedefineTrackingPosition;
+  CheckFunctionSupported := AxesGroup.InternalData.RobotData.RCSupportedFunctions.RedefineTrackingPosition;
   
   IF ( NOT CheckFunctionSupported )
   THEN
@@ -71,7 +73,7 @@ VAR_IN_OUT
 END_VAR
 
   // Check ParCmd Size is > 0, because MemCmp does not work correctly with size = 0
-  IF (SIZEOF(ParCmd) = 0) 
+  IF (SIZEOF(ParCmd) = 0) OR (_stepCmd = 0)
   THEN 
     RETURN;
   END_IF
@@ -98,6 +100,177 @@ END_VAR
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
     // Reset parameter accepted flag
     ParameterAccepted := FALSE;  
+  END_IF
+
+END_METHOD
+
+METHOD PROTECTED CheckParameterValid : BOOL
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+VAR
+  /// internal index for loops
+ _idx : DINT;
+END_VAR
+
+  CheckParameterValid := TRUE;
+  
+  
+  // Check ProcessingMode valid ? 
+  IF (( ProcessingMode <> ProcessingModeEnum.DEACTIVATE       ) AND  
+      ( ProcessingMode <> ProcessingModeEnum.TRIGGER_ONCE     ) AND
+      ( ProcessingMode <> ProcessingModeEnum.TRIGGER_MULTIPLE ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ProcessingMode = {1}',
+                            Para1       :=  PROCESSING_MODE_TO_STRING(ProcessingMode));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.ConveyorNo valid ? 
+  IF (( ParCmd.ConveyorNo <   0 ) OR  
+      ( ParCmd.ConveyorNo > 255 ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ConveyorNo = {1}',
+                            Para1       :=  USINT_TO_STRING(ParCmd.ConveyorNo));
+    RETURN;                          
+  END_IF
+  
+  FOR _idx := 0 TO 5 
+  DO
+    // Check ParCmd.InitObjectPosition[_idx] valid ? 
+    IF ( SysDepIsValidReal(ParCmd.InitObjectPosition[_idx]) = FALSE ) 
+    THEN
+      // Parameter not valid
+      CheckParameterValid := FALSE;
+      // Set error
+      ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+      
+      // Create log entry
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                              MessageType := MessageType.CMD,
+                              Severity    := Severity.ERROR,
+                              MessageCode := ErrorID,
+                              MessageText := 'Invalid Parameter ParCmd.InitObjectPosition[_idx] = {1}',
+                              Para1       := VALID_REAL_TO_STRING(ParCmd.InitObjectPosition[_idx]),
+                              Para2       := DINT_TO_STRING(_idx));
+      EXIT;                            
+      RETURN;                          
+    END_IF
+  END_FOR
+  
+  
+  // Check ParCmd.TrackingOffset valid ? 
+  IF ( SysDepIsValidReal(ParCmd.TrackingOffset) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.TrackingOffset = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.TrackingOffset));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.StartIndexInitPosition valid ? 
+  IF (( ParCmd.StartIndexInitPosition < 0 ) OR  
+      ( ParCmd.StartIndexInitPosition > 5 ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.StartIndexInitPosition = {1}',
+                            Para1       :=  USINT_TO_STRING(ParCmd.StartIndexInitPosition));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.FrameNo valid ? 
+  IF (( ParCmd.FrameNo <   0 ) OR  
+      ( ParCmd.FrameNo > 254 ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.FrameNo = {1}',
+                            Para1       :=  USINT_TO_STRING(ParCmd.FrameNo));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.IndexTrackingOffset valid ? 
+  IF (( ParCmd.IndexTrackingOffset < 0 ) OR  
+      ( ParCmd.IndexTrackingOffset > 5 ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.IndexTrackingOffset = {1}',
+                            Para1       :=  USINT_TO_STRING(ParCmd.IndexTrackingOffset));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.ListenerID valid ? 
+  IF (( ParCmd.ListenerID <   0 ) OR  
+      ( ParCmd.ListenerID > 127 ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ListenerID = {1}',
+                            Para1       :=  SINT_TO_STRING(ParCmd.ListenerID));
+    RETURN;                          
   END_IF
 
 END_METHOD

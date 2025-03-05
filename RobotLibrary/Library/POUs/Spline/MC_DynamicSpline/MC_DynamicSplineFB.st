@@ -69,7 +69,7 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
-  CheckFunctionSupported := AxesGroup.InternalData.RCSupportedFunctions.DynamicSpline;
+  CheckFunctionSupported := AxesGroup.InternalData.RobotData.RCSupportedFunctions.DynamicSpline;
   
   IF ( NOT CheckFunctionSupported )
   THEN
@@ -86,7 +86,7 @@ VAR_IN_OUT
 END_VAR
 
   // Check ParCmd Size is > 0, because MemCmp does not work correctly with size = 0
-  IF (SIZEOF(ParCmd) = 0) 
+  IF (SIZEOF(ParCmd) = 0) OR (_stepCmd = 0)
   THEN 
     RETURN;
   END_IF
@@ -113,6 +113,624 @@ END_VAR
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
     // Reset parameter accepted flag
     ParameterAccepted := FALSE;  
+  END_IF
+
+END_METHOD
+
+METHOD PROTECTED CheckParameterValid : BOOL
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+VAR
+  /// internal index for loops
+ _idx : DINT;
+END_VAR
+
+  CheckParameterValid := TRUE;
+  
+  
+  // Check AbortingMode valid ? 
+  IF (( AbortingMode <> AbortingModeEnum.BUFFER ) AND
+      ( AbortingMode <> AbortingModeEnum.ABORT  ))  
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_ABORTINGMODE_INVALID;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter AbortingMode = {1}',
+                            Para1       := ABORTING_MODE_TO_STRING(AbortingMode));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check SequenceFlag valid ? 
+  IF (( SequenceFlag <> SequenceFlagEnum.PRIMARY_SEQUENCE   ) AND
+      ( SequenceFlag <> SequenceFlagEnum.SECONDARY_SEQUENCE ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_SEQFLAG_NOT_ALLOWED;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter SequenceFlag = {1}',
+                            Para1       := SEQUENCE_FLAG_TO_STRING(SequenceFlag));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.BlendingMode valid ? 
+  IF (( ParCmd.BlendingMode <> BlendingMode.EXACT_STOP           ) AND   
+      ( ParCmd.BlendingMode <> BlendingMode.DEFINED_VELOCITY     ) AND
+      ( ParCmd.BlendingMode <> BlendingMode.CORNER_DISTANCE      ) AND
+      ( ParCmd.BlendingMode <> BlendingMode.MAX_CORNER_DEVIATION ) AND
+      ( ParCmd.BlendingMode <> BlendingMode.CORNER_DISTANCE_2R   ) AND
+      ( ParCmd.BlendingMode <> BlendingMode.RAMP_OVERLAP         ) AND
+      ( ParCmd.BlendingMode <> BlendingMode.CORNER_DISTANCE_1R   ))    
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.BlendingMode = {1}',
+                            Para1       := BLENDING_MODE_TO_STRING(ParCmd.BlendingMode));                            
+    RETURN;
+  END_IF
+  
+  
+  FOR _idx := 0 TO 1 
+  DO
+    // Check ParCmd.BlendingParameter valid ? 
+    IF  ( SysDepIsValidReal(ParCmd.BlendingParameter[_idx]) = FALSE ) 
+    THEN
+      // Parameter not valid
+      CheckParameterValid := FALSE;
+      // Set error
+      ErrorID := RobotLibraryErrorIdEnum.ERR_JERK_INVALID;
+      // Create log entry
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                              MessageType := MessageType.CMD,
+                              Severity    := Severity.ERROR,
+                              MessageCode := ErrorID,
+                              MessageText := 'Invalid Parameter ParCmd.BlendingParameter[{2}] = {1}',
+                              Para1       := VALID_REAL_TO_STRING(ParCmd.BlendingParameter[_idx]),
+                              Para2       := DINT_TO_STRING(_idx));       
+      EXIT;                     
+      RETURN;
+    END_IF
+  END_FOR
+  
+  // Check ParCmd.Mode valid ? 
+  IF (( ParCmd.Mode <> SplineMode.DISCRETE_POINTS      ) AND
+      ( ParCmd.Mode <> SplineMode.BEZIER_SPLINE        ) AND 
+      ( ParCmd.Mode <> SplineMode.B_SPLINES            ) AND 
+      ( ParCmd.Mode <> SplineMode.CUBIC_HERMITE_SPLINE ) AND 
+      ( ParCmd.Mode <> SplineMode.C_SPLINES    ))  
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.Mode = {1}',
+                            Para1       := SPLINE_MODE_TO_STRING(ParCmd.Mode));
+    RETURN;                          
+  END_IF
+  
+  FOR _idx := 0 TO RobotLibraryParameter.SPLINE_DATA_MAX
+  DO
+    // Check ParCmd.SplineData[x].Position.X valid ? 
+    IF ( SysDepIsValidReal(ParCmd.SplineData[_idx].Position.X) = FALSE ) 
+    THEN
+      // Parameter not valid
+      CheckParameterValid := FALSE;
+      // Set error
+      ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+      
+      // Create log entry
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                              MessageType := MessageType.CMD,
+                              Severity    := Severity.ERROR,
+                              MessageCode := ErrorID,
+                              MessageText := 'Invalid Parameter ParCmd.[{2}].Position.X = {1}',
+                              Para1       := VALID_REAL_TO_STRING(ParCmd.SplineData[_idx].Position.X),
+                              Para2       := DINT_TO_STRING(_idx));
+      EXIT;                            
+      RETURN;                          
+    END_IF
+    
+    
+    // Check ParCmd.SplineData[x].Position.Y valid ? 
+    IF ( SysDepIsValidReal(ParCmd.SplineData[_idx].Position.Y) = FALSE ) 
+    THEN
+      // Parameter not valid
+      CheckParameterValid := FALSE;
+      // Set error
+      ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+      
+      // Create log entry
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                              MessageType := MessageType.CMD,
+                              Severity    := Severity.ERROR,
+                              MessageCode := ErrorID,
+                              MessageText := 'Invalid Parameter ParCmd.SplineData[{2}].Position.Y = {1}',
+                              Para1       := VALID_REAL_TO_STRING(ParCmd.SplineData[_idx].Position.Y),
+                              Para2       := DINT_TO_STRING(_idx)); 
+      EXIT;                            
+      RETURN;                          
+    END_IF
+    
+    
+    // Check ParCmd.SplineData[x].Position.Z valid ? 
+    IF ( SysDepIsValidReal(ParCmd.SplineData[_idx].Position.Z) = FALSE ) 
+    THEN
+      // Parameter not valid
+      CheckParameterValid := FALSE;
+      // Set error
+      ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+      
+      // Create log entry
+      CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                              MessageType := MessageType.CMD,
+                              Severity    := Severity.ERROR,
+                              MessageCode := ErrorID,
+                              MessageText := 'Invalid Parameter ParCmd.SplineData[{2}].Position.Z = {1}',
+                              Para1       := VALID_REAL_TO_STRING(ParCmd.SplineData[_idx].Position.Z));
+      EXIT;                            
+      RETURN;                          
+    END_IF
+    
+    
+    // Check ParCmd.SplineData[x].Position.Rx valid ? 
+    IF ( SysDepIsValidReal(ParCmd.SplineData[_idx].Position.Rx) = FALSE ) 
+    THEN
+      // Parameter not valid
+      CheckParameterValid := FALSE;
+      // Set error
+      ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+      
+      // Create log entry
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                              MessageType := MessageType.CMD,
+                              Severity    := Severity.ERROR,
+                              MessageCode := ErrorID,
+                              MessageText := 'Invalid Parameter ParCmd.SplineData[{2}].Position.Rx = {1}',
+                              Para1       := VALID_REAL_TO_STRING(ParCmd.SplineData[_idx].Position.Rx),
+                              Para2       := DINT_TO_STRING(_idx)); 
+      EXIT;                            
+      RETURN;                          
+    END_IF
+    
+    
+    // Check ParCmd.SplineData[x].Position.Ry valid ? 
+    IF ( SysDepIsValidReal(ParCmd.SplineData[_idx].Position.Ry) = FALSE ) 
+    THEN
+      // Parameter not valid
+      CheckParameterValid := FALSE;
+      // Set error
+      ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+      
+      // Create log entry
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                              MessageType := MessageType.CMD,
+                              Severity    := Severity.ERROR,
+                              MessageCode := ErrorID,
+                              MessageText := 'Invalid Parameter ParCmd.SplineData[{2}].Position.Ry = {1}',
+                              Para1       := VALID_REAL_TO_STRING(ParCmd.SplineData[_idx].Position.Ry),
+                              Para2       := DINT_TO_STRING(_idx));
+      EXIT;                            
+      RETURN;                          
+    END_IF
+    
+    
+    // Check ParCmd.SplineData[x].Position.Rz valid ? 
+    IF ( SysDepIsValidReal(ParCmd.SplineData[_idx].Position.Rz) = FALSE ) 
+    THEN
+      // Parameter not valid
+      CheckParameterValid := FALSE;
+      // Set error
+      ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+      
+      // Create log entry
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                              MessageType := MessageType.CMD,
+                              Severity    := Severity.ERROR,
+                              MessageCode := ErrorID,
+                              MessageText := 'Invalid Parameter ParCmd.SplineData[{2}].Position.Rz = {1}',
+                              Para1       := VALID_REAL_TO_STRING(ParCmd.SplineData[_idx].Position.Rz),
+                              Para2       := DINT_TO_STRING(_idx));
+      EXIT;                            
+      RETURN;                          
+    END_IF
+    
+    
+    // Check ParCmd.SplineData[x].Position.E1 valid ? 
+    IF ( SysDepIsValidReal(ParCmd.SplineData[_idx].Position.E1) = FALSE ) 
+    THEN
+      // Parameter not valid
+      CheckParameterValid := FALSE;
+      // Set error
+      ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+      
+      // Create log entry
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                              MessageType := MessageType.CMD,
+                              Severity    := Severity.ERROR,
+                              MessageCode := ErrorID,
+                              MessageText := 'Invalid Parameter ParCmd.SplineData[{2}].Position.E1 = {1}',
+                              Para1       := VALID_REAL_TO_STRING(ParCmd.SplineData[_idx].Position.E1),
+                              Para2       := DINT_TO_STRING(_idx));
+      EXIT;                            
+      RETURN;                          
+    END_IF
+    
+    
+    // Check ParCmd.SplineData[x].Position.E2 valid ? 
+    IF ( SysDepIsValidReal(ParCmd.SplineData[_idx].Position.E2) = FALSE ) 
+    THEN
+      // Parameter not valid
+      CheckParameterValid := FALSE;
+      // Set error
+      ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+      
+      // Create log entry
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                              MessageType := MessageType.CMD,
+                              Severity    := Severity.ERROR,
+                              MessageCode := ErrorID,
+                              MessageText := 'Invalid Parameter ParCmd.SplineData[{2}].Position.E2 = {1}',
+                              Para1       := VALID_REAL_TO_STRING(ParCmd.SplineData[_idx].Position.E2),
+                              Para2       := DINT_TO_STRING(_idx)); 
+      EXIT;                            
+      RETURN;                          
+    END_IF
+    
+    
+    // Check ParCmd.SplineData[_idx].Position.E3 valid ? 
+    IF ( SysDepIsValidReal(ParCmd.SplineData[_idx].Position.E3) = FALSE ) 
+    THEN
+      // Parameter not valid
+      CheckParameterValid := FALSE;
+      // Set error
+      ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+      
+      // Create log entry
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                              MessageType := MessageType.CMD,
+                              Severity    := Severity.ERROR,
+                              MessageCode := ErrorID,
+                              MessageText := 'Invalid Parameter ParCmd.SplineData[{2}].Position.E3 = {1}',
+                              Para1       := VALID_REAL_TO_STRING(ParCmd.SplineData[_idx].Position.E3),
+                              Para2       := DINT_TO_STRING(_idx));
+      EXIT;                            
+      RETURN;                          
+    END_IF
+    
+    
+    // Check ParCmd.SplineData[x].Position.E4 valid ? 
+    IF ( SysDepIsValidReal(ParCmd.SplineData[_idx].Position.E4) = FALSE ) 
+    THEN
+      // Parameter not valid
+      CheckParameterValid := FALSE;
+      // Set error
+      ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+      
+      // Create log entry
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                              MessageType := MessageType.CMD,
+                              Severity    := Severity.ERROR,
+                              MessageCode := ErrorID,
+                              MessageText := 'Invalid Parameter ParCmd.SplineData[{2}].Position.E4 = {1}',
+                              Para1       := VALID_REAL_TO_STRING(ParCmd.SplineData[_idx].Position.E4),
+                              Para2       := DINT_TO_STRING(_idx));
+      EXIT;                            
+      RETURN;                          
+    END_IF
+    
+    
+    // Check ParCmd.SplineData[x].Position.E5 valid ? 
+    IF ( SysDepIsValidReal(ParCmd.SplineData[_idx].Position.E5) = FALSE ) 
+    THEN
+      // Parameter not valid
+      CheckParameterValid := FALSE;
+      // Set error
+      ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+      
+      // Create log entry
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                              MessageType := MessageType.CMD,
+                              Severity    := Severity.ERROR,
+                              MessageCode := ErrorID,
+                              MessageText := 'Invalid Parameter ParCmd.SplineData[{2}].Position.E5 = {1}',
+                              Para1       := VALID_REAL_TO_STRING(ParCmd.SplineData[_idx].Position.E5),
+                              Para2       := DINT_TO_STRING(_idx));
+      EXIT;                            
+      RETURN;                          
+    END_IF
+    
+    
+    // Check ParCmd.SplineData[x].Position.E6 valid ? 
+    IF ( SysDepIsValidReal(ParCmd.SplineData[_idx].Position.E6) = FALSE ) 
+    THEN
+      // Parameter not valid
+      CheckParameterValid := FALSE;
+      // Set error
+      ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+      
+      // Create log entry
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                              MessageType := MessageType.CMD,
+                              Severity    := Severity.ERROR,
+                              MessageCode := ErrorID,
+                              MessageText := 'Invalid Parameter ParCmd.SplineData[{2}].Position.E6 = {1}',
+                              Para1       := VALID_REAL_TO_STRING(ParCmd.SplineData[_idx].Position.E6),
+                              Para2       := DINT_TO_STRING(_idx));
+      EXIT;                            
+      RETURN;                          
+    END_IF
+    
+    
+    // Check ParCmd.SplineData[x].Position.Config.Shoulder valid ? 
+    IF (( ParCmd.SplineData[_idx].Position.Config.Shoulder <> ArmConfigShoulder.USE_CONFIG ) AND  
+        ( ParCmd.SplineData[_idx].Position.Config.Shoulder <> ArmConfigShoulder.SAME       ) AND
+        ( ParCmd.SplineData[_idx].Position.Config.Shoulder <> ArmConfigShoulder.FREE       ) AND
+        ( ParCmd.SplineData[_idx].Position.Config.Shoulder <> ArmConfigShoulder.BACK       ) AND
+        ( ParCmd.SplineData[_idx].Position.Config.Shoulder <> ArmConfigShoulder.FRONT      ))
+    THEN
+      // Parameter not valid
+      CheckParameterValid := FALSE;
+      // Set error
+      ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+      // Create log entry
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                              MessageType := MessageType.CMD,
+                              Severity    := Severity.ERROR,
+                              MessageCode := ErrorID,
+                              MessageText := 'Invalid Parameter ParCmd.SplineData[{2}].Position.Config.Shoulder = {1}',
+                              Para1       := ARM_CONFIG_SHOULDER_TO_STRING(ParCmd.SplineData[_idx].Position.Config.Shoulder),
+                              Para2       := DINT_TO_STRING(_idx));
+      EXIT;                            
+      RETURN;                          
+    END_IF
+    
+    
+    // Check ParCmd.SplineData[x].Position.Config.Elbow valid ? 
+    IF (( ParCmd.SplineData[_idx].Position.Config.Elbow <> ArmConfigElbow.USE_CONFIG ) AND  
+        ( ParCmd.SplineData[_idx].Position.Config.Elbow <> ArmConfigElbow.SAME       ) AND
+        ( ParCmd.SplineData[_idx].Position.Config.Elbow <> ArmConfigElbow.FREE       ) AND
+        ( ParCmd.SplineData[_idx].Position.Config.Elbow <> ArmConfigElbow.DOWN       ) AND
+        ( ParCmd.SplineData[_idx].Position.Config.Elbow <> ArmConfigElbow.UP         ))
+    THEN
+      // Parameter not valid
+      CheckParameterValid := FALSE;
+      // Set error
+      ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+      // Create log entry
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                              MessageType := MessageType.CMD,
+                              Severity    := Severity.ERROR,
+                              MessageCode := ErrorID,
+                              MessageText := 'Invalid Parameter ParCmd.SplineData[{2}].Position.Config.Elbow = {1}',
+                              Para1       := ARM_CONFIG_ELBOW_TO_STRING(ParCmd.SplineData[_idx].Position.Config.Elbow),
+                              Para2       := DINT_TO_STRING(_idx));
+      EXIT;                            
+      RETURN;                          
+    END_IF
+    
+    
+    // Check ParCmd.SplineData[x].Position.Config.Wrist valid ? 
+    IF (( ParCmd.SplineData[_idx].Position.Config.Wrist <> ArmConfigWrist.USE_CONFIG ) AND  
+        ( ParCmd.SplineData[_idx].Position.Config.Wrist <> ArmConfigWrist.SAME       ) AND
+        ( ParCmd.SplineData[_idx].Position.Config.Wrist <> ArmConfigWrist.FREE       ) AND
+        ( ParCmd.SplineData[_idx].Position.Config.Wrist <> ArmConfigWrist.FLIP       ) AND
+        ( ParCmd.SplineData[_idx].Position.Config.Wrist <> ArmConfigWrist.NON_FLIP   ))
+    THEN
+      // Parameter not valid
+      CheckParameterValid := FALSE;
+      // Set error
+      ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+      // Create log entry
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                              MessageType := MessageType.CMD,
+                              Severity    := Severity.ERROR,
+                              MessageCode := ErrorID,
+                              MessageText := 'Invalid Parameter ParCmd.SplineData[{2}].Position.Config.Wrist = {1}',
+                              Para1       := ARM_CONFIG_WRIST_TO_STRING(ParCmd.SplineData[_idx].Position.Config.Wrist),
+                              Para2       := DINT_TO_STRING(_idx));      
+      EXIT;                            
+      RETURN;                          
+    END_IF
+  
+    
+    // Check ParCmd.SplineData[x].VelocityRate valid ? 
+    IF  (( SysDepIsValidReal(ParCmd.SplineData[_idx].VelocityRate) = FALSE )  OR
+        ((                   ParCmd.SplineData[_idx].VelocityRate  <     0 )  AND 
+         (                   ParCmd.SplineData[_idx].VelocityRate <>    -1 )) OR   
+         (                   ParCmd.SplineData[_idx].VelocityRate  >   100 ))      
+    THEN
+      // Parameter not valid
+      CheckParameterValid := FALSE;
+      // Set error
+      ErrorID := RobotLibraryErrorIdEnum.ERR_VELOCITY_INVALID;
+      // Create log entry
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                              MessageType := MessageType.CMD,
+                              Severity    := Severity.ERROR,
+                              MessageCode := ErrorID,
+                              MessageText := 'Invalid Parameter ParCmd.SplineData[{2}].VelocityRate = {1}',
+                              Para1       := VALID_REAL_TO_STRING(ParCmd.SplineData[_idx].VelocityRate),
+                              Para2       := DINT_TO_STRING(_idx));                            
+      EXIT;                            
+      RETURN;
+    END_IF
+    
+    
+    // Check ParCmd.SplineData[x].AccelerationRate valid ? 
+    IF  (( SysDepIsValidReal(ParCmd.SplineData[_idx].AccelerationRate) = FALSE )  OR
+        ((                   ParCmd.SplineData[_idx].AccelerationRate  <     0 )  AND 
+         (                   ParCmd.SplineData[_idx].AccelerationRate <>    -1 )) OR   
+         (                   ParCmd.SplineData[_idx].AccelerationRate  >   100 ))      
+    THEN
+      // Parameter not valid
+      CheckParameterValid := FALSE;
+      // Set error
+      ErrorID := RobotLibraryErrorIdEnum.ERR_ACCELERATION_INVALID;
+      // Create log entry
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                              MessageType := MessageType.CMD,
+                              Severity    := Severity.ERROR,
+                              MessageCode := ErrorID,
+                              MessageText := 'Invalid Parameter ParCmd.SplineData[{2}].AccelerationRate = {1}',
+                              Para1       := VALID_REAL_TO_STRING(ParCmd.SplineData[_idx].AccelerationRate),
+                              Para2       := DINT_TO_STRING(_idx));
+      EXIT;                            
+      RETURN;
+    END_IF
+    
+    
+    // Check ParCmd.SplineData[x].DecelerationRate valid ? 
+    IF  (( SysDepIsValidReal(ParCmd.SplineData[_idx].DecelerationRate) = FALSE )  OR
+        ((                   ParCmd.SplineData[_idx].DecelerationRate  <     0 )  AND 
+         (                   ParCmd.SplineData[_idx].DecelerationRate <>    -1 )) OR   
+         (                   ParCmd.SplineData[_idx].DecelerationRate  >   100 ))      
+    THEN
+      // Parameter not valid
+      CheckParameterValid := FALSE;
+      // Set error
+      ErrorID := RobotLibraryErrorIdEnum.ERR_DECELERATION_INVALID;
+      // Create log entry
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                              MessageType := MessageType.CMD,
+                              Severity    := Severity.ERROR,
+                              MessageCode := ErrorID,
+                              MessageText := 'Invalid Parameter ParCmd.SplineData[{2}].DecelerationRate = {1}',
+                              Para1       := VALID_REAL_TO_STRING(ParCmd.SplineData[_idx].DecelerationRate),
+                              Para2       := DINT_TO_STRING(_idx));                            
+      EXIT;                            
+      RETURN;
+    END_IF
+    
+    
+    // Check ParCmd.SplineData[x].JerkRate valid ? 
+    IF  (( SysDepIsValidReal(ParCmd.SplineData[_idx].JerkRate) = FALSE )  OR
+        ((                   ParCmd.SplineData[_idx].JerkRate  <     0 )  AND 
+         (                   ParCmd.SplineData[_idx].JerkRate <>    -1 )) OR   
+         (                   ParCmd.SplineData[_idx].JerkRate  >   100 ))      
+    THEN
+      // Parameter not valid
+      CheckParameterValid := FALSE;
+      // Set error
+      ErrorID := RobotLibraryErrorIdEnum.ERR_JERK_INVALID;
+      // Create log entry
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                              MessageType := MessageType.CMD,
+                              Severity    := Severity.ERROR,
+                              MessageCode := ErrorID,
+                              MessageText := 'Invalid Parameter ParCmd.SplineData[{2}].JerkRate = {1}',
+                              Para1       := VALID_REAL_TO_STRING(ParCmd.SplineData[_idx].JerkRate),
+                              Para2       := DINT_TO_STRING(_idx));                            
+      EXIT;                            
+      RETURN;
+    END_IF
+    
+    
+    // Check ParCmd.SplineData[x].ToolNo valid ? 
+    IF (( ParCmd.SplineData[_idx].ToolNo <   0 ) OR   
+        ( ParCmd.SplineData[_idx].ToolNo > 254 ))
+    THEN
+      // Parameter not valid
+      CheckParameterValid := FALSE;
+      // Set error
+      ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+      // Create log entry
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                              MessageType := MessageType.CMD,
+                              Severity    := Severity.ERROR,
+                              MessageCode := ErrorID,
+                              MessageText := 'Invalid Parameter ParCmd.SplineData[{2}].ToolNo = {1}',
+                              Para1       := USINT_TO_STRING(ParCmd.SplineData[_idx].ToolNo),
+                              Para2       := DINT_TO_STRING(_idx));                           
+      EXIT;                            
+      RETURN;
+    END_IF
+    
+    
+    // Check ParCmd.SplineData[x].FrameNo valid ? 
+    IF (( ParCmd.SplineData[_idx].FrameNo <   0 ) OR   
+        ( ParCmd.SplineData[_idx].FrameNo > 254 ))
+    THEN
+      // Parameter not valid
+      CheckParameterValid := FALSE;
+      // Set error
+      ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+      // Create log entry
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                              MessageType := MessageType.CMD,
+                              Severity    := Severity.ERROR,
+                              MessageCode := ErrorID,
+                              MessageText := 'Invalid Parameter ParCmd.SplineData[{2}].FrameNo = {1}',
+                              Para1       := USINT_TO_STRING(ParCmd.SplineData[_idx].FrameNo),
+                              Para2       := DINT_TO_STRING(_idx));                            
+      EXIT;                            
+      RETURN;
+    END_IF
+  
+      
+    // Check ParCmd.SplineData[x].MoveTime valid ? 
+    IF  ( ParCmd.SplineData[_idx].MoveTime < T#0S )
+    THEN
+      // Parameter not valid
+      CheckParameterValid := FALSE;
+      // Set error
+      ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+      // Create log entry
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                              MessageType := MessageType.CMD,
+                              Severity    := Severity.ERROR,
+                              MessageCode := ErrorID,
+                              MessageText := 'Invalid Parameter ParCmd.SplineData[{2}].MoveTime = {1}',
+                              Para1       := TIME_TO_STRING(ParCmd.SplineData[_idx].MoveTime),
+                              Para2       := DINT_TO_STRING(_idx));                           
+      EXIT;                            
+      RETURN;
+    END_IF  
+  END_FOR
+  
+  
+  // Check ParCmd.StartPosition valid ? 
+  IF (( ParCmd.StartPosition < 0                                     ) OR
+      ( ParCmd.StartPosition > RobotLibraryParameter.SPLINE_DATA_MAX ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.StartPosition = {1}',
+                            Para1       := INT_TO_STRING(ParCmd.StartPosition));
+    RETURN;
   END_IF
 
 END_METHOD

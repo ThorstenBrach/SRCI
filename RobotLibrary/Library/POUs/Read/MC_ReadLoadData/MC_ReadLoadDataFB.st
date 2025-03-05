@@ -51,7 +51,7 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
-  CheckFunctionSupported := AxesGroup.InternalData.RCSupportedFunctions.ReadLoadData;
+  CheckFunctionSupported := AxesGroup.InternalData.RobotData.RCSupportedFunctions.ReadLoadData;
   
   IF ( NOT CheckFunctionSupported )
   THEN
@@ -68,7 +68,7 @@ VAR_IN_OUT
 END_VAR
 
   // Check ParCmd Size is > 0, because MemCmp does not work correctly with size = 0
-  IF (SIZEOF(ParCmd) = 0) 
+  IF (SIZEOF(ParCmd) = 0) OR (_stepCmd = 0)
   THEN 
     RETURN;
   END_IF
@@ -97,6 +97,38 @@ END_VAR
 
 END_METHOD
 
+METHOD PROTECTED CheckParameterValid : BOOL
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+VAR
+  /// internal index for loops
+ _idx : DINT;
+END_VAR
+
+  CheckParameterValid := TRUE;
+  
+  // Check ParCmd.LoadNo valid ? 
+  IF (( ParCmd.LoadNo <  -1 ) OR  
+      ( ParCmd.LoadNo > 254 ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.LoadNo = {1}',
+                            Para1       :=  INT_TO_STRING(ParCmd.LoadNo));
+    RETURN;                          
+  END_IF
+
+END_METHOD
+
 METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
 VAR_IN_OUT
   /// Robot assignment of function
@@ -121,8 +153,12 @@ END_VAR
   _command.ExecMode :=  ExecMode;
   _command.ParSeq   := _command.ParSeq;
   _command.Priority :=  Priority;
-  _command.LoadNo   := _parCmd.LoadNo;
+  _command.LoadNo   := INT_TO_USINT(_parCmd.LoadNo);
   
+  IF (_parCmd.LoadNo = -1)
+  THEN
+    _command.LoadNo := 255; // -1 is mapped to 255, see specification
+  END_IF
   
   // copy command data to header
   _cmdHeader := _command;

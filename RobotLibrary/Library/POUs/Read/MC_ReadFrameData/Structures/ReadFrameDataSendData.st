@@ -26,7 +26,7 @@ STRUCT
   /// • -1: Currently used frame on RC
   /// • 0: WCS
   /// • 1 (default)..254: UCS (User frames)
-  FrameNo            : INT;
+  FrameNo            : USINT;
 END_STRUCT
 END_TYPE
 

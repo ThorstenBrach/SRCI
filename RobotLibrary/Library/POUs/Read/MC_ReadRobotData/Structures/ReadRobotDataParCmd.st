@@ -22,8 +22,6 @@
 // -------------------------------------------------------------------------
 TYPE ReadRobotDataParCmd :
 STRUCT
-  {attribute 'hide' := '1'} 
-  Dummy : BYTE;
 END_STRUCT
 END_TYPE
 

@@ -23,7 +23,7 @@
 TYPE FreeDriveSendData EXTENDS CmdHeader: 
 STRUCT
   /// Set TRUE to activate "FreeDrive".
-  Enable            : BOOL;
+  Enable : BOOL;
 END_STRUCT
 END_TYPE
 

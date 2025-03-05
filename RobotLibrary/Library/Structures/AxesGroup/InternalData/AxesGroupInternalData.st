@@ -25,7 +25,10 @@ STRUCT
   /// Current System Time
   SystemTime           : SystemTime;
     /// • TRUE: Function is supported by RC • FALSE: Function is not supported by RC See Table 6-14 for bit assignment.
-  RCSupportedFunctions : RCSupportedFunctions;
+  //RCSupportedFunctions : RCSupportedFunctions;
+  
+  RobotData            : ReadRobotDataOutCmd;
+  
   /// Online Change detected
   OnlineChange         : BOOL;  
   /// Rising edge for Online Change detected

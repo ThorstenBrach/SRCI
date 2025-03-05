@@ -54,7 +54,7 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
-  CheckFunctionSupported := AxesGroup.InternalData.RCSupportedFunctions.ExchangeConfiguration;
+  CheckFunctionSupported := AxesGroup.InternalData.RobotData.RCSupportedFunctions.ExchangeConfiguration;
   
   IF ( NOT CheckFunctionSupported )
   THEN
@@ -71,7 +71,7 @@ VAR_IN_OUT
 END_VAR
 
   // Check ParCmd Size is > 0, because MemCmp does not work correctly with size = 0
-  IF (SIZEOF(ParCmd) = 0) 
+  IF (SIZEOF(ParCmd) = 0) OR (_stepCmd = 0)
   THEN 
     RETURN;
   END_IF
@@ -99,6 +99,198 @@ END_VAR
     // Reset parameter accepted flag
     ParameterAccepted := FALSE;
   END_IF
+
+END_METHOD
+
+METHOD PROTECTED CheckParameterValid : BOOL
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+  CheckParameterValid := TRUE;
+  
+  // Check ParCmd.LogLevel valid ? 
+  IF (( ParCmd.LogLevel <> Severity.DEACTIVATE  ) AND  
+      ( ParCmd.LogLevel <> Severity.DEBUG       ) AND
+      ( ParCmd.LogLevel <> Severity.INFO        ) AND
+      ( ParCmd.LogLevel <> Severity.WARNING     ) AND
+      ( ParCmd.LogLevel <> Severity.ERROR       ) AND
+      ( ParCmd.LogLevel <> Severity.FATAL_ERROR ))    
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.LogLevel = {1}',
+                            Para1       :=  LOG_LEVEL_TO_STRING(ParCmd.LogLevel));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.WaitAtBlendingZone
+  // -> no plausibility check for boolean
+  
+  
+  // Check ParCmd.AllowSecSeqWhileSubprogram
+  // -> no plausibility check for boolean
+  
+  
+  // Check ParCmd.DelayTime valid ? 
+  IF ( ParCmd.DelayTime < 0  )   
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.DelayTime = {1} ms',
+                            Para1       :=  UINT_TO_STRING(ParCmd.DelayTime));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.WaitForNrOfCmd valid ? 
+  IF ( ParCmd.WaitForNrOfCmd < 0  )   
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.WaitForNrOfCmd = {1}',
+                            Para1       :=  UINT_TO_STRING(ParCmd.WaitForNrOfCmd));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.LifeSignTimeOut valid ? 
+  IF ( ParCmd.LifeSignTimeOut < 10 )   
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.LifeSignTimeOut = {1} ms',
+                            Para1       :=  UINT_TO_STRING(ParCmd.LifeSignTimeOut));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.SyncDelay valid ? 
+  IF ( ParCmd.SyncDelay < 0  )   
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD; 
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.SyncDelay = {1}',
+                            Para1       :=  UINT_TO_STRING(ParCmd.SyncDelay));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.SyncReaction valid ? 
+  IF (( ParCmd.SyncReaction <> SyncReaction.NO_REACTION     ) AND  
+      ( ParCmd.SyncReaction <> SyncReaction.REACTION_TYPE_1 ) AND
+      ( ParCmd.SyncReaction <> SyncReaction.REACTION_TYPE_2 ) AND
+      ( ParCmd.SyncReaction <> SyncReaction.REACTION_TYPE_3 ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD; 
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.SyncReaction = {1}',
+                            Para1       :=  SYNC_REACTION_TO_STRING(ParCmd.SyncReaction));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.DataInSync.ToolsInSync
+  // -> no plausibility check for boolean
+  
+  
+  // Check ParCmd.DataInSync.FramesInSync
+  // -> no plausibility check for boolean
+  
+  
+  // Check ParCmd.DataInSync.LoadsInSync
+  // -> no plausibility check for boolean
+  
+  
+  // Check ParCmd.DataInSync.WorkAreasInSync
+  // -> no plausibility check for boolean
+  
+  
+  // Check ParCmd.DataInSync.SoftwareLimitsInSync
+  // -> no plausibility check for boolean
+  
+  
+  // Check ParCmd.DataInSync.DefaultDynamicsInSync
+  // -> no plausibility check for boolean
+  
+  
+  // Check ParCmd.DataInSync.ReferenceDynamicsInSync
+  // -> no plausibility check for boolean
+  
+  
+  // Check ParCmd.DataEnableSync.EnableSyncTool
+  // -> no plausibility check for boolean
+  
+  
+  // Check ParCmd.DataEnableSync.EnableSyncFrame
+  // -> no plausibility check for boolean
+  
+  
+  // Check ParCmd.DataEnableSync.EnableSyncLoad
+  // -> no plausibility check for boolean
+  
+  
+  // Check ParCmd.DataEnableSync.EnableSyncWorkArea
+  // -> no plausibility check for boolean
+  
+  
+  // Check ParCmd.DataEnableSync.EnableSyncSWLimits
+  // -> no plausibility check for boolean
+  
+  
+  // Check ParCmd.DataEnableSync.EnableSyncDefaultDynamics
+  // -> no plausibility check for boolean
+  
+  
+  // Check ParCmd.DataEnableSync.EnableSyncReferenceDynamics
+  // -> no plausibility check for boolean
+  
+  // Check ParCmd.DataEnableSync.AllowDynamicBlending
+  // -> no plausibility check for boolean
 
 END_METHOD
 

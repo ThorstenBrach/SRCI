@@ -52,7 +52,7 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
-  CheckFunctionSupported := AxesGroup.InternalData.RCSupportedFunctions.ConfigureConveyor;
+  CheckFunctionSupported := AxesGroup.InternalData.RobotData.RCSupportedFunctions.ConfigureConveyor;
   
   IF ( NOT CheckFunctionSupported )
   THEN
@@ -69,7 +69,7 @@ VAR_IN_OUT
 END_VAR
 
   // Check ParCmd Size is > 0, because MemCmp does not work correctly with size = 0
-  IF (SIZEOF(ParCmd) = 0) 
+  IF (SIZEOF(ParCmd) = 0) OR (_stepCmd = 0)
   THEN 
     RETURN;
   END_IF
@@ -94,6 +94,283 @@ END_VAR
     CommandData := CreateCommandPayload(AxesGroup := AxesGroup); // ( Access via reference to rCommandFB in ACR )
     // notify active command register 
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
+  END_IF
+
+END_METHOD
+
+METHOD PROTECTED CheckParameterValid : BOOL
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+  CheckParameterValid := TRUE;
+  
+  
+  // Check ParCmd.ConveyorNo valid ? 
+  IF (( ParCmd.ConveyorNo <   0 ) OR  
+      ( ParCmd.ConveyorNo > 255 ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ConveyorNo = {1}',
+                            Para1       :=  USINT_TO_STRING(ParCmd.ConveyorNo));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.ConveyorOrigin.X valid ? 
+  IF ( SysDepIsValidReal(ParCmd.ConveyorOrigin.X) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ConveyorOrigin.X = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.ConveyorOrigin.X));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.ConveyorOrigin.Y valid ? 
+  IF ( SysDepIsValidReal(ParCmd.ConveyorOrigin.Y) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ConveyorOrigin.Y = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.ConveyorOrigin.Y));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.ConveyorOrigin.Z valid ? 
+  IF ( SysDepIsValidReal(ParCmd.ConveyorOrigin.Z) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ConveyorOrigin.Z = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.ConveyorOrigin.Z));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.ConveyorOrigin.Rx valid ? 
+  IF ( SysDepIsValidReal(ParCmd.ConveyorOrigin.Rx) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ConveyorOrigin.Rx = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.ConveyorOrigin.Rx));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.ConveyorOrigin.Ry valid ? 
+  IF ( SysDepIsValidReal(ParCmd.ConveyorOrigin.Ry) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ConveyorOrigin.Ry = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.ConveyorOrigin.Ry));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.ConveyorOrigin.Rz valid ? 
+  IF ( SysDepIsValidReal(ParCmd.ConveyorOrigin.Rz) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ConveyorOrigin.Rz = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.ConveyorOrigin.Rz));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.ConveyorOrigin.ReferenceFrame  valid ? 
+  IF (( ParCmd.ConveyorOrigin.ReferenceFrame <   0 ) OR  
+      ( ParCmd.ConveyorOrigin.ReferenceFrame > 254 ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ConveyorOrigin.ReferenceFrame = {1}',
+                            Para1       := USINT_TO_STRING(ParCmd.ConveyorOrigin.ReferenceFrame ));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.ConveyorType valid ? 
+  IF (( ParCmd.ConveyorType <> ConveyorType.LINEAR_CONVEYOR_TRACKING ) AND  
+      ( ParCmd.ConveyorType <> ConveyorType.LINEAR_CONVEYOR_TRACKING ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ConveyorType = {1}',
+                            Para1       :=  CONVEYOR_TYPE_TO_STRING(ParCmd.ConveyorType));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.Radius valid ? 
+  IF ( SysDepIsValidReal(ParCmd.Radius) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.Radius = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.Radius));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.StartDistance valid ? 
+  IF ( SysDepIsValidReal(ParCmd.StartDistance) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.StartDistance = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.StartDistance));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.EndDistance valid ? 
+  IF ( SysDepIsValidReal(ParCmd.EndDistance) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.EndDistance = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.EndDistance));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.SyncInLength valid ? 
+  IF ( SysDepIsValidReal(ParCmd.SyncInLength) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.SyncInLength = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.SyncInLength));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.SyncOutLength valid ? 
+  IF ( SysDepIsValidReal(ParCmd.SyncOutLength) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.SyncOutLength = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.SyncOutLength));
+    RETURN;                          
   END_IF
 
 END_METHOD
@@ -459,9 +736,6 @@ END_VAR
            THEN
              // Reset Busy flag
              Busy := FALSE;
-             // Update results
-             //OutCmd.Dummy := _response.Dummy;
-             
              // set timeout
              SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
              // inc step counter

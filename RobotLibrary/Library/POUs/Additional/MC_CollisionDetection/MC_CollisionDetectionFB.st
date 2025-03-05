@@ -59,7 +59,7 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
-  CheckFunctionSupported := AxesGroup.InternalData.RCSupportedFunctions.CollisionDetection;
+  CheckFunctionSupported := AxesGroup.InternalData.RobotData.RCSupportedFunctions.CollisionDetection;
   
   IF ( NOT CheckFunctionSupported )
   THEN
@@ -76,7 +76,7 @@ VAR_IN_OUT
 END_VAR
 
   // Check ParCmd Size is > 0, because MemCmp does not work correctly with size = 0
-  IF (SIZEOF(ParCmd) = 0) 
+  IF (SIZEOF(ParCmd) = 0) OR (_stepCmd = 0)
   THEN 
     RETURN;
   END_IF
@@ -101,6 +101,187 @@ END_VAR
     CommandData := CreateCommandPayload(AxesGroup := AxesGroup); // ( Access via reference to rCommandFB in ACR )
     // notify active command register 
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
+  END_IF
+
+END_METHOD
+
+METHOD PROTECTED CheckParameterValid : BOOL
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+VAR
+  /// internal index for loops
+ _idx : DINT;
+END_VAR
+
+  CheckParameterValid := TRUE;
+  
+  // Check ProcessingMode valid ? 
+  IF (( ProcessingMode <> ProcessingModeEnum.BUFFERED ) AND
+      ( ProcessingMode <> ProcessingModeEnum.ABORTING ) AND  
+      ( ProcessingMode <> ProcessingModeEnum.PARALLEL ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_PROCESSINGMODE_NOT_ALLOWED;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ProcessingMode = {1}',
+                            Para1       := PROCESSING_MODE_TO_STRING(ProcessingMode));
+    RETURN;                          
+  END_IF
+  
+  // Check SequenceFlag valid ? 
+  IF (( SequenceFlag <> SequenceFlagEnum.PRIMARY_SEQUENCE   ) AND
+      ( SequenceFlag <> SequenceFlagEnum.SECONDARY_SEQUENCE ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_SEQFLAG_NOT_ALLOWED;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter SequenceFlag = {1}',
+                            Para1       := SEQUENCE_FLAG_TO_STRING(SequenceFlag));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.ReactionMode valid ? 
+  IF (( ParCmd.ReactionMode < CollisionReactionMode.STANDING_STILL    ) OR  
+      ( ParCmd.ReactionMode > CollisionReactionMode.REVERSED_MOVEMENT ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD; 
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ReactionMode = {1}',
+                            Para1       :=  COLLISION_REACTION_MODE_TO_STRING(ParCmd.ReactionMode));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.ThresholdMode valid ? 
+  IF (( ParCmd.ThresholdMode <> ThresholdMode.AUTOMATIC ) AND  
+      ( ParCmd.ThresholdMode <> ThresholdMode.MANUAL    ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ThresholdMode = {1}',
+                            Para1       := THRESHOLD_MODE_TO_STRING(ParCmd.ThresholdMode));
+    RETURN;                          
+  END_IF
+  
+  
+  
+  // Check ParCmd.Sensitivity valid ? 
+  IF (( SysDepIsValidReal(ParCmd.Sensitivity) = FALSE ) OR
+      ( ParCmd.Sensitivity                    <     0 ) OR  
+      ( ParCmd.Sensitivity                    >   200 ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.Sensitivity = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.Sensitivity));
+    RETURN;                          
+  END_IF
+  
+  
+  
+  FOR _idx := 0 TO 6
+  DO
+    // Check ParCmd.SensitivityAxis valid ? 
+    IF (( SysDepIsValidReal(ParCmd.SensitivityAxis[_idx]) = FALSE ) OR
+        (                   ParCmd.SensitivityAxis[_idx]  <     0 ) OR  
+        (                   ParCmd.SensitivityAxis[_idx]  >   200 ))      
+    THEN
+      // Parameter not valid
+      CheckParameterValid := FALSE;
+      // Set error
+      ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD; 
+      // Create log entry
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                              MessageType := MessageType.CMD,
+                              Severity    := Severity.ERROR,
+                              MessageCode := ErrorID,
+                              MessageText := 'Invalid Parameter ParCmd.SensitivityAxis[{2}] = {1}',
+                              Para1       := VALID_REAL_TO_STRING(ParCmd.SensitivityAxis[_idx]),
+                              Para2       := DINT_TO_STRING(_idx));
+      EXIT;
+      RETURN;                          
+    END_IF
+  END_FOR  
+  
+  
+  FOR _idx := 0 TO 6
+  DO
+    // Check ParCmd.LimitAxis valid ? 
+    IF (( SysDepIsValidReal(ParCmd.LimitAxis[_idx]) = FALSE ))
+    THEN
+      // Parameter not valid
+      CheckParameterValid := FALSE;
+      // Set error
+      ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD; 
+      // Create log entry
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                              MessageType := MessageType.CMD,
+                              Severity    := Severity.ERROR,
+                              MessageCode := ErrorID,
+                              MessageText := 'Invalid Parameter ParCmd.LimitAxis[{2}] = {1}',
+                              Para1       := VALID_REAL_TO_STRING(ParCmd.LimitAxis[_idx]),
+                              Para2       := DINT_TO_STRING(_idx));
+      EXIT;
+      RETURN;                          
+    END_IF
+  END_FOR  
+  
+  
+  // Check ParCmd.UnitLimitAxis valid ? 
+  IF (( ParCmd.UnitLimitAxis <> UnitLimitAxis.PERCENTAGE  ) AND  
+      ( ParCmd.UnitLimitAxis <> UnitLimitAxis.NEWTONMETER ) AND
+      ( ParCmd.UnitLimitAxis <> UnitLimitAxis.MILLIAMPERE ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.UnitLimitAxis = {1}',
+                            Para1       := THRESHOLD_MODE_TO_STRING(ParCmd.UnitLimitAxis));
+    RETURN;                          
   END_IF
 
 END_METHOD

@@ -58,7 +58,7 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
-  CheckFunctionSupported := AxesGroup.InternalData.RCSupportedFunctions.GroupJog;
+  CheckFunctionSupported := AxesGroup.InternalData.RobotData.RCSupportedFunctions.GroupJog;
   
   IF ( NOT CheckFunctionSupported )
   THEN
@@ -75,7 +75,7 @@ VAR_IN_OUT
 END_VAR
 
   // Check ParCmd Size is > 0, because MemCmp does not work correctly with size = 0
-  IF (SIZEOF(ParCmd) = 0) 
+  IF (SIZEOF(ParCmd) = 0) OR (_stepCmd = 0)
   THEN 
     RETURN;
   END_IF
@@ -102,6 +102,134 @@ END_VAR
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
     // Reset parameter accepted flag
     ParameterAccepted := FALSE;
+  END_IF
+
+END_METHOD
+
+METHOD PROTECTED CheckParameterValid : BOOL
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+  CheckParameterValid := TRUE;
+  
+  // Check ParCmd.Override valid ? 
+  IF  (( SysDepIsValidReal(ParCmd.Override) = FALSE )  OR
+       (                   ParCmd.Override  <     0 )  OR 
+       (                   ParCmd.Override  >   100 ))      
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_VELOCITY_INVALID;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.Override = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.Override));                            
+    RETURN;
+  END_IF
+  
+  
+  // Check ParCmd.Control valid ? 
+  IF  (( ParCmd.Control. X_J1_Neg) AND ( ParCmd.Control. X_J1_Pos ))  OR
+      (( ParCmd.Control. Y_J2_Neg) AND ( ParCmd.Control. Y_J2_Pos ))  OR
+      (( ParCmd.Control. Z_J3_Neg) AND ( ParCmd.Control. Z_J3_Pos ))  OR
+      (( ParCmd.Control.Rx_J4_Neg) AND ( ParCmd.Control.Rx_J4_Pos ))  OR
+      (( ParCmd.Control.Ry_J5_Neg) AND ( ParCmd.Control.Ry_J5_Pos ))  OR
+      (( ParCmd.Control.Rz_J6_Neg) AND ( ParCmd.Control.Rz_J6_Pos )) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_VELOCITY_INVALID;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.Control = {1}',
+                            Para1       := JOG_CONTROL_TO_STRING(ParCmd.Control));                            
+    RETURN;
+  END_IF
+  
+  
+  // Check ParCmd.ToolNo valid ? 
+  IF (( ParCmd.ToolNo <   0 ) OR   
+      ( ParCmd.ToolNo > 254 ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ToolNo = {1}',
+                            Para1       := USINT_TO_STRING(ParCmd.ToolNo));                            
+    RETURN;
+  END_IF
+  
+  
+  // Check ParCmd.FrameNo valid ? 
+  IF (( ParCmd.FrameNo <   0 ) OR   
+      ( ParCmd.FrameNo > 254 ))
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.FrameNo = {1}',
+                            Para1       := USINT_TO_STRING(ParCmd.FrameNo));                            
+    RETURN;
+  END_IF
+  
+  
+  // Check ParCmd.IncrementalTranslation valid ? 
+  IF  (( SysDepIsValidReal(ParCmd.IncrementalTranslation) = FALSE )  OR
+       (                   ParCmd.IncrementalTranslation  <     0 ))      
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_VELOCITY_INVALID;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.IncrementalTranslation = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.IncrementalTranslation));                            
+    RETURN;
+  END_IF
+  
+  
+  // Check ParCmd.IncrementalRotation valid ? 
+  IF  (( SysDepIsValidReal(ParCmd.IncrementalRotation) = FALSE )  OR
+       (                   ParCmd.IncrementalRotation  <     0 ))      
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_VELOCITY_INVALID;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.IncrementalRotation = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.IncrementalRotation));                            
+    RETURN;
   END_IF
 
 END_METHOD

@@ -22,8 +22,6 @@ FUNCTION_BLOCK MC_WriteRobotDefaultDynamicsFB EXTENDS RobotLibraryBaseExecuteFB
 //
 // -------------------------------------------------------------------------
 VAR_INPUT
-  /// Processing Mode
-  ProcessingMode     : ProcessingMode;
   /// command parameter 
   ParCmd             : WriteRobotDefaultDynamicsParCmd;
 END_VAR
@@ -57,7 +55,7 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
-  CheckFunctionSupported := AxesGroup.InternalData.RCSupportedFunctions.WriteRobotDefaultDynamics;
+  CheckFunctionSupported := AxesGroup.InternalData.RobotData.RCSupportedFunctions.WriteRobotDefaultDynamics;
   
   IF ( NOT CheckFunctionSupported )
   THEN
@@ -74,7 +72,7 @@ VAR_IN_OUT
 END_VAR
 
   // Check ParCmd Size is > 0, because MemCmp does not work correctly with size = 0
-  IF (SIZEOF(ParCmd) = 0) 
+  IF (SIZEOF(ParCmd) = 0) OR (_stepCmd = 0)
   THEN 
     RETURN;
   END_IF
@@ -99,6 +97,100 @@ END_VAR
     CommandData := CreateCommandPayload(AxesGroup := AxesGroup); // ( Access via reference to rCommandFB in ACR )
     // notify active command register 
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
+  END_IF
+
+END_METHOD
+
+METHOD PROTECTED CheckParameterValid : BOOL
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+VAR
+  /// internal index for loops
+ _idx : DINT;
+END_VAR
+
+  CheckParameterValid := TRUE;
+  
+  
+  // Check ParCmd.DynamicValues.VelocityRate ? 
+  IF ( SysDepIsValidReal(ParCmd.DynamicValues.VelocityRate) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_VELOCITY_INVALID;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.DynamicValues.VelocityRate = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.DynamicValues.VelocityRate));
+  
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.DynamicValues.AccelerationRate ? 
+  IF ( SysDepIsValidReal(ParCmd.DynamicValues.AccelerationRate) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_ACCELERATION_INVALID;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.DynamicValues.AccelerationRate = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.DynamicValues.AccelerationRate));
+  
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.DynamicValues.DecelerationRate ? 
+  IF ( SysDepIsValidReal(ParCmd.DynamicValues.DecelerationRate) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_DECELERATION_INVALID;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.DynamicValues.DecelerationRate = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.DynamicValues.DecelerationRate));
+  
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.DynamicValues.JerkRate ? 
+  IF ( SysDepIsValidReal(ParCmd.DynamicValues.JerkRate) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_JERK_INVALID;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.DynamicValues.JerkRate = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.DynamicValues.JerkRate));
+  
+    RETURN;                          
   END_IF
 
 END_METHOD

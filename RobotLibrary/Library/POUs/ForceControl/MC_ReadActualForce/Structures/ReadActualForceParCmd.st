@@ -22,8 +22,6 @@
 // -------------------------------------------------------------------------
 TYPE ReadActualForceParCmd :
 STRUCT
-  /// Processing Mode
-  ProcessingMode      : ProcessingMode;
   /// Defines type of reference of Force and Torque (at least one option must be supported )
   ReferenceType       : ReferenceType;
   /// Index of tool

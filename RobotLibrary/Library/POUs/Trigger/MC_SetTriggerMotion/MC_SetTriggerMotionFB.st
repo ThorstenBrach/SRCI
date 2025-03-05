@@ -56,7 +56,7 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
-  CheckFunctionSupported := AxesGroup.InternalData.RCSupportedFunctions.SetTriggerMotion;
+  CheckFunctionSupported := AxesGroup.InternalData.RobotData.RCSupportedFunctions.SetTriggerMotion;
   
   IF ( NOT CheckFunctionSupported )
   THEN
@@ -73,7 +73,7 @@ VAR_IN_OUT
 END_VAR
 
   // Check ParCmd Size is > 0, because MemCmp does not work correctly with size = 0
-  IF (SIZEOF(ParCmd) = 0) 
+  IF (SIZEOF(ParCmd) = 0) OR (_stepCmd = 0)
   THEN 
     RETURN;
   END_IF
@@ -99,6 +99,173 @@ END_VAR
     // notify active command register 
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
   END_IF
+
+END_METHOD
+
+METHOD PROTECTED CheckParameterValid : BOOL
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+VAR
+  /// internal index for loops
+ _idx : DINT;
+END_VAR
+
+  CheckParameterValid := TRUE;
+  
+  // Check ProcessingMode valid ? 
+  IF (( ProcessingMode <> ProcessingModeEnum.DEACTIVATE       ) AND 
+      ( ProcessingMode <> ProcessingModeEnum.TRIGGER_ONCE     ) AND  
+      ( ProcessingMode <> ProcessingModeEnum.TRIGGER_MULTIPLE ))  
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_ABORTINGMODE_INVALID;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ProcessingMode = {1}',
+                            Para1       := PROCESSING_MODE_TO_STRING(ProcessingMode));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.TriggerMode_1 valid ? 
+  IF (( ParCmd.TriggerMode_1 <> TriggerCondition.TARGET_POSITION_DISTANCE_PERCENT      ) AND
+      ( ParCmd.TriggerMode_1 <> TriggerCondition. START_POSITION_DISTANCE_PERCENT      ) AND
+      ( ParCmd.TriggerMode_1 <> TriggerCondition.TARGET_POSITION_DISTANCE_ABSOLUTE     ) AND
+      ( ParCmd.TriggerMode_1 <> TriggerCondition. START_POSITION_DISTANCE_ABSOLUTE     ) AND
+      ( ParCmd.TriggerMode_1 <> TriggerCondition.TARGET_POSITION_TCP_VELOCITY_PERCENT  ) AND
+      ( ParCmd.TriggerMode_1 <> TriggerCondition. START_POSITION_TCP_VELOCITY_PERCENT  ) AND
+      ( ParCmd.TriggerMode_1 <> TriggerCondition.TARGET_POSITION_TCP_VELOCITY_ABSOLUTE ) AND
+      ( ParCmd.TriggerMode_1 <> TriggerCondition. START_POSITION_TCP_VELOCIT_ABSOLUTE  ) AND    
+      ( ParCmd.TriggerMode_1 <> TriggerCondition.TARGET_POSITION_TIME_MS               ) AND
+      ( ParCmd.TriggerMode_1 <> TriggerCondition. START_POSITION_TIME_MS               ))
+  THEN                                                        
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.TriggerMode_1 = {1}',
+                            Para1       := TRIGGER_CONDITION_TO_STRING(ParCmd.TriggerMode_1));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.TriggerParameter_1 valid ? 
+  IF ( SysDepIsValidReal(ParCmd.TriggerParameter_1) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.TriggerParameter_1 = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.TriggerParameter_1));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.TriggerMode_2 valid ? 
+  IF (( ParCmd.TriggerMode_2 <> TriggerCondition.TARGET_POSITION_DISTANCE_PERCENT      ) AND
+      ( ParCmd.TriggerMode_2 <> TriggerCondition. START_POSITION_DISTANCE_PERCENT      ) AND
+      ( ParCmd.TriggerMode_2 <> TriggerCondition.TARGET_POSITION_DISTANCE_ABSOLUTE     ) AND
+      ( ParCmd.TriggerMode_2 <> TriggerCondition. START_POSITION_DISTANCE_ABSOLUTE     ) AND
+      ( ParCmd.TriggerMode_2 <> TriggerCondition.TARGET_POSITION_TCP_VELOCITY_PERCENT  ) AND
+      ( ParCmd.TriggerMode_2 <> TriggerCondition. START_POSITION_TCP_VELOCITY_PERCENT  ) AND
+      ( ParCmd.TriggerMode_2 <> TriggerCondition.TARGET_POSITION_TCP_VELOCITY_ABSOLUTE ) AND
+      ( ParCmd.TriggerMode_2 <> TriggerCondition. START_POSITION_TCP_VELOCIT_ABSOLUTE  ) AND    
+      ( ParCmd.TriggerMode_2 <> TriggerCondition.TARGET_POSITION_TIME_MS               ) AND
+      ( ParCmd.TriggerMode_2 <> TriggerCondition. START_POSITION_TIME_MS               ))
+  THEN                                                        
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.TriggerMode_2 = {1}',
+                            Para1       := TRIGGER_CONDITION_TO_STRING(ParCmd.TriggerMode_2));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.TriggerParameter_2 valid ? 
+  IF ( SysDepIsValidReal(ParCmd.TriggerParameter_2) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.TriggerParameter_2 = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.TriggerParameter_2));
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.ListenerID valid ? 
+  IF  (( ParCmd.ListenerID <   0 ) OR
+       ( ParCmd.ListenerID > 127 ))     
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.ListenerID = {1}',
+                            Para1       := SINT_TO_STRING(ParCmd.ListenerID));
+    RETURN;
+  END_IF
+  
+  
+  FOR _idx := 0 TO 3
+  DO
+    // Check ParCmd.EmitterID[x] valid ? 
+    IF  (( ParCmd.EmitterID[_idx] < -127 ) OR
+         ( ParCmd.EmitterID[_idx] >  127 ))     
+    THEN
+      // Parameter not valid
+      CheckParameterValid := FALSE;
+      // Set error
+      ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+      // Create log entry
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                              MessageType := MessageType.CMD,
+                              Severity    := Severity.ERROR,
+                              MessageCode := ErrorID,
+                              MessageText := 'Invalid Parameter ParCmd.EmitterID[{2}] = {1}',
+                              Para1       := SINT_TO_STRING(ParCmd.EmitterID[_idx]),
+                              Para2       := DINT_TO_STRING(_idx));
+      RETURN;
+    END_IF
+  END_FOR
 
 END_METHOD
 
@@ -138,10 +305,10 @@ END_VAR
   _command.ExecMode           :=  ExecMode;
   _command.ParSeq             := _command.ParSeq;
   _command.Priority           :=  Priority;                            
-  _command.EmitterID[0]       := _parCmd.EmitterID;
-  _command.EmitterID[1]       := 0;
-  _command.EmitterID[2]       := 0;
-  _command.EmitterID[3]       := 0;
+  _command.EmitterID[0]       := _parCmd.EmitterID[0];
+  _command.EmitterID[1]       := _parCmd.EmitterID[1];
+  _command.EmitterID[2]       := _parCmd.EmitterID[2];
+  _command.EmitterID[3]       := _parCmd.EmitterID[3];
   _command.ListenerID         := _parCmd.ListenerID;
   _command.TriggerMode_1      := _parCmd.TriggerMode_1;
   _command.TriggerMode_2      := _parCmd.TriggerMode_2;

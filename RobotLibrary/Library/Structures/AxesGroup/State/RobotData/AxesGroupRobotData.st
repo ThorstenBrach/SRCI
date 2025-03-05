@@ -22,7 +22,6 @@
 // -------------------------------------------------------------------------
 TYPE AxesGroupRobotData EXTENDS ReadRobotDataOutCmd :
 STRUCT
-  dummy : bool;
 END_STRUCT
 END_TYPE
 

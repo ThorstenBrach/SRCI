@@ -23,7 +23,7 @@
 TYPE FreeDriveRecvData EXTENDS RspHeader :
 STRUCT
   /// TRUE when function is exchanging data
-  Enabled                   : BOOL;
+  Enabled : BOOL;
 END_STRUCT
 END_TYPE
 

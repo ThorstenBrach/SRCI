@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="Beckhoff Automation GmbH" productName="TwinCAT PLC Control" productVersion="3.5.13.21" creationDateTime="2024-12-21T17:19:31.1447508" />
-  <contentHeader name="RobotLibrarySysDep" modificationDateTime="2024-12-21T17:19:31.1468142">
+  <fileHeader companyName="Beckhoff Automation GmbH" productName="TwinCAT PLC Control" productVersion="3.5.13.21" creationDateTime="2025-02-26T19:55:30.2627325" />
+  <contentHeader name="RobotLibrarySysDep" modificationDateTime="2025-02-26T19:55:30.2640275">
     <coordinateInfo>
       <fbd>
         <scaling x="1" y="1" />
@@ -287,6 +287,72 @@ END_VAR</xhtml>
           </data>
         </addData>
       </pou>
+      <pou name="SysDepIsValidReal" pouType="function">
+        <interface>
+          <returnType>
+            <BOOL />
+          </returnType>
+          <inputVars>
+            <variable name="Value">
+              <type>
+                <REAL />
+              </type>
+            </variable>
+          </inputVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">SysDepIsValidReal := IsFinite(F_REAL(Value));</xhtml>
+          </ST>
+        </body>
+        <addData>
+          <data name="http://www.3s-software.com/plcopenxml/interfaceasplaintext" handleUnknown="implementation">
+            <InterfaceAsPlainText>
+              <xhtml xmlns="http://www.w3.org/1999/xhtml">FUNCTION SysDepIsValidReal : BOOL
+VAR_INPUT
+  Value : REAL;
+END_VAR
+</xhtml>
+            </InterfaceAsPlainText>
+          </data>
+          <data name="http://www.3s-software.com/plcopenxml/objectid" handleUnknown="discard">
+            <ObjectId>1818a807-e7c6-4966-93b6-9d9f7e0db12e</ObjectId>
+          </data>
+        </addData>
+      </pou>
+      <pou name="SysDepIsValidLReal" pouType="function">
+        <interface>
+          <returnType>
+            <BOOL />
+          </returnType>
+          <inputVars>
+            <variable name="Value">
+              <type>
+                <LREAL />
+              </type>
+            </variable>
+          </inputVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">SysDepIsValidLReal := IsFinite(F_LREAL(Value));</xhtml>
+          </ST>
+        </body>
+        <addData>
+          <data name="http://www.3s-software.com/plcopenxml/interfaceasplaintext" handleUnknown="implementation">
+            <InterfaceAsPlainText>
+              <xhtml xmlns="http://www.w3.org/1999/xhtml">FUNCTION SysDepIsValidLReal : BOOL
+VAR_INPUT
+  Value : LREAL;
+END_VAR
+</xhtml>
+            </InterfaceAsPlainText>
+          </data>
+          <data name="http://www.3s-software.com/plcopenxml/objectid" handleUnknown="discard">
+            <ObjectId>fe9b04de-cc71-49e7-acd5-fe4ad376eaf8</ObjectId>
+          </data>
+        </addData>
+      </pou>
     </pous>
   </types>
   <instances>
@@ -300,6 +366,10 @@ END_VAR</xhtml>
             <Object Name="SysDepMemCmp" ObjectId="93399ded-f117-4e67-a7c0-6593877e102d" />
             <Object Name="SysDepMemCpy" ObjectId="5600bc23-aecb-4bc3-8ab9-bcb5f857e51c" />
             <Object Name="SysDepMemSet" ObjectId="6765e84f-f2f4-4894-955d-d9ca28c2ab71" />
+          </Folder>
+          <Folder Name="Real">
+            <Object Name="SysDepIsValidReal" ObjectId="1818a807-e7c6-4966-93b6-9d9f7e0db12e" />
+            <Object Name="SysDepIsValidLReal" ObjectId="fe9b04de-cc71-49e7-acd5-fe4ad376eaf8" />
           </Folder>
         </Folder>
       </ProjectStructure>

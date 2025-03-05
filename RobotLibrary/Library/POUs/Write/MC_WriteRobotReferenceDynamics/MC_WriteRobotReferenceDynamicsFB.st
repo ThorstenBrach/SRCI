@@ -57,7 +57,7 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
-  CheckFunctionSupported := AxesGroup.InternalData.RCSupportedFunctions.WriteRobotReferenceDynamics;
+  CheckFunctionSupported := AxesGroup.InternalData.RobotData.RCSupportedFunctions.WriteRobotReferenceDynamics;
   
   IF ( NOT CheckFunctionSupported )
   THEN
@@ -74,7 +74,7 @@ VAR_IN_OUT
 END_VAR
 
   // Check ParCmd Size is > 0, because MemCmp does not work correctly with size = 0
-  IF (SIZEOF(ParCmd) = 0) 
+  IF (SIZEOF(ParCmd) = 0) OR (_stepCmd = 0)
   THEN 
     RETURN;
   END_IF
@@ -99,6 +99,100 @@ END_VAR
     CommandData := CreateCommandPayload(AxesGroup := AxesGroup); // ( Access via reference to rCommandFB in ACR )
     // notify active command register 
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
+  END_IF
+
+END_METHOD
+
+METHOD PROTECTED CheckParameterValid : BOOL
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+VAR
+  /// internal index for loops
+ _idx : DINT;
+END_VAR
+
+  CheckParameterValid := TRUE;
+  
+  
+  // Check ParCmd.DynamicValues.VelocityReference ? 
+  IF ( SysDepIsValidReal(ParCmd.DynamicValues.VelocityReference) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_VELOCITY_INVALID;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.DynamicValues.VelocityReference = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.DynamicValues.VelocityReference));
+  
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.DynamicValues.AccelerationReference ? 
+  IF ( SysDepIsValidReal(ParCmd.DynamicValues.AccelerationReference) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_ACCELERATION_INVALID;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.DynamicValues.AccelerationReference = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.DynamicValues.AccelerationReference));
+  
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.DynamicValues.DecelerationReference ? 
+  IF ( SysDepIsValidReal(ParCmd.DynamicValues.DecelerationReference) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_DECELERATION_INVALID;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.DynamicValues.DecelerationReference = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.DynamicValues.DecelerationReference));
+  
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ParCmd.DynamicValues.JerkReference ? 
+  IF ( SysDepIsValidReal(ParCmd.DynamicValues.JerkReference) = FALSE ) 
+  THEN
+    // Parameter not valid
+    CheckParameterValid := FALSE;
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_JERK_INVALID;
+    
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ParCmd.DynamicValues.JerkReference = {1}',
+                            Para1       := VALID_REAL_TO_STRING(ParCmd.DynamicValues.JerkReference));
+  
+    RETURN;                          
   END_IF
 
 END_METHOD
