@@ -27,10 +27,10 @@ END_VAR
 
   CASE Value 
   OF
-  
-    ThresholdMode.AUTOMATIC : StrReplace('AUTOMATIC ({0})','{0}' , USINT_TO_STRING(Value));
-    ThresholdMode.MANUAL    : StrReplace('MANUAL ({0})'   ,'{0}' , USINT_TO_STRING(Value));
-  
+    ThresholdMode.AUTOMATIC : THRESHOLD_MODE_TO_STRING := StrReplace('AUTOMATIC ({0})','{0}' , USINT_TO_STRING(Value));
+    ThresholdMode.MANUAL    : THRESHOLD_MODE_TO_STRING := StrReplace('MANUAL ({0})'   ,'{0}' , USINT_TO_STRING(Value));
+  ELSE
+    THRESHOLD_MODE_TO_STRING := CONCAT('THRESHOLD_MODE_TO_STRING Function: Error -> no parsing for value ', USINT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

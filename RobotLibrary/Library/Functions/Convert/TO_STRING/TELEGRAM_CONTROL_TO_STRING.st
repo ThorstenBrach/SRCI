@@ -25,7 +25,8 @@ VAR_INPUT
   Control : ControlHalfByte;
 END_VAR
 
-  CASE Control OF
+  CASE Control 
+  OF
     ControlHalfByte.NONE         : TELEGRAM_CONTROL_TO_STRING := StrReplace('NONE ({0})'        ,'{0}', USINT_TO_STRING(Control));
     ControlHalfByte.INITIALIZE   : TELEGRAM_CONTROL_TO_STRING := StrReplace('INITIALIZE ({0})'  ,'{0}', USINT_TO_STRING(Control));
     ControlHalfByte.RESUME       : TELEGRAM_CONTROL_TO_STRING := StrReplace('RESUME ({0})'      ,'{0}', USINT_TO_STRING(Control));
@@ -33,7 +34,7 @@ END_VAR
     ControlHalfByte.ACK_ERROR    : TELEGRAM_CONTROL_TO_STRING := StrReplace('ACK_ERROR ({0})'   ,'{0}', USINT_TO_STRING(Control));
     ControlHalfByte.CLIENT_ERROR : TELEGRAM_CONTROL_TO_STRING := StrReplace('CLIENT_ERROR ({0})','{0}', USINT_TO_STRING(Control));  
   ELSE
-    TELEGRAM_CONTROL_TO_STRING := CONCAT('TelegramControlToString-Function: Error -> no parsing for value ', BYTE_TO_STRING(Control));
+    TELEGRAM_CONTROL_TO_STRING := CONCAT('TelegramControlToString-Function: Error -> no parsing for value ', USINT_TO_STRING(Control));
   END_CASE
 
 END_FUNCTION

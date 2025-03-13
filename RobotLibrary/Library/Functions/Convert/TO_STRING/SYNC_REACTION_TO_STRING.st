@@ -27,12 +27,12 @@ END_VAR
 
   CASE Value 
   OF
-  
-    SyncReaction.NO_REACTION     : StrReplace('NO_REACTION ({0})'     ,'{0}' , USINT_TO_STRING(Value));
-    SyncReaction.REACTION_TYPE_1 : StrReplace('REACTION_TYPE_1 ({0})' ,'{0}' , USINT_TO_STRING(Value));
-    SyncReaction.REACTION_TYPE_2 : StrReplace('REACTION_TYPE_2 ({0})' ,'{0}' , USINT_TO_STRING(Value));
-    SyncReaction.REACTION_TYPE_3 : StrReplace('REACTION_TYPE_3 ({0})' ,'{0}' , USINT_TO_STRING(Value));
-  
+    SyncReaction.NO_REACTION     : SYNC_REACTION_TO_STRING := StrReplace('NO_REACTION ({0})'     ,'{0}' , USINT_TO_STRING(Value));
+    SyncReaction.REACTION_TYPE_1 : SYNC_REACTION_TO_STRING := StrReplace('REACTION_TYPE_1 ({0})' ,'{0}' , USINT_TO_STRING(Value));
+    SyncReaction.REACTION_TYPE_2 : SYNC_REACTION_TO_STRING := StrReplace('REACTION_TYPE_2 ({0})' ,'{0}' , USINT_TO_STRING(Value));
+    SyncReaction.REACTION_TYPE_3 : SYNC_REACTION_TO_STRING := StrReplace('REACTION_TYPE_3 ({0})' ,'{0}' , USINT_TO_STRING(Value));
+  ELSE
+    SYNC_REACTION_TO_STRING := CONCAT('SYNC_REACTION_TO_STRING Function: Error -> no parsing for value ', USINT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

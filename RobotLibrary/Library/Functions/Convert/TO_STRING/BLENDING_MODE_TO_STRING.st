@@ -27,15 +27,15 @@ END_VAR
 
   CASE Value 
   OF
-  
-    BlendingMode.EXACT_STOP           : StrReplace('EXACT_STOP ({0})','{0}'           , USINT_TO_STRING(Value));
-    BlendingMode.DEFINED_VELOCITY     : StrReplace('DEFINED_VELOCITY ({0})','{0}'     , USINT_TO_STRING(Value));
-    BlendingMode.CORNER_DISTANCE      : StrReplace('CORNER_DISTANCE ({0})','{0}'      , USINT_TO_STRING(Value));
-    BlendingMode.MAX_CORNER_DEVIATION : StrReplace('MAX_CORNER_DEVIATION ({0})','{0}' , USINT_TO_STRING(Value));
-    BlendingMode.CORNER_DISTANCE_2R   : StrReplace('CORNER_DISTANCE_2R ({0})','{0}'   , USINT_TO_STRING(Value));
-    BlendingMode.RAMP_OVERLAP         : StrReplace('RAMP_OVERLAP ({0})','{0}'         , USINT_TO_STRING(Value));
-    BlendingMode.CORNER_DISTANCE_1R   : StrReplace('CORNER_DISTANCE_1R ({0})','{0}'   , USINT_TO_STRING(Value));
-  
+    BlendingMode.EXACT_STOP           : BLENDING_MODE_TO_STRING := StrReplace('EXACT_STOP ({0})','{0}'           , USINT_TO_STRING(Value));
+    BlendingMode.DEFINED_VELOCITY     : BLENDING_MODE_TO_STRING := StrReplace('DEFINED_VELOCITY ({0})','{0}'     , USINT_TO_STRING(Value));
+    BlendingMode.CORNER_DISTANCE      : BLENDING_MODE_TO_STRING := StrReplace('CORNER_DISTANCE ({0})','{0}'      , USINT_TO_STRING(Value));
+    BlendingMode.MAX_CORNER_DEVIATION : BLENDING_MODE_TO_STRING := StrReplace('MAX_CORNER_DEVIATION ({0})','{0}' , USINT_TO_STRING(Value));
+    BlendingMode.CORNER_DISTANCE_2R   : BLENDING_MODE_TO_STRING := StrReplace('CORNER_DISTANCE_2R ({0})','{0}'   , USINT_TO_STRING(Value));
+    BlendingMode.RAMP_OVERLAP         : BLENDING_MODE_TO_STRING := StrReplace('RAMP_OVERLAP ({0})','{0}'         , USINT_TO_STRING(Value));
+    BlendingMode.CORNER_DISTANCE_1R   : BLENDING_MODE_TO_STRING := StrReplace('CORNER_DISTANCE_1R ({0})','{0}'   , USINT_TO_STRING(Value));
+  ELSE
+    BLENDING_MODE_TO_STRING := CONCAT('BLENDING_MODE_TO_STRING Function: Error -> no parsing for value ', USINT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

@@ -27,13 +27,13 @@ END_VAR
 
   CASE Value 
   OF
-  
-    SplineMode.DISCRETE_POINTS      : StrReplace('DISCRETE_POINTS ({0})'      ,'{0}' , UINT_TO_STRING(Value));
-    SplineMode.BEZIER_SPLINE        : StrReplace('BEZIER_SPLINE ({0})'        ,'{0}' , UINT_TO_STRING(Value));
-    SplineMode.B_SPLINES            : StrReplace('B_SPLINES ({0})'            ,'{0}' , UINT_TO_STRING(Value));
-    SplineMode.CUBIC_HERMITE_SPLINE : StrReplace('CUBIC_HERMITE_SPLINE ({0})' ,'{0}' , UINT_TO_STRING(Value));
-    SplineMode.C_SPLINES            : StrReplace('C_SPLINES ({0})'            ,'{0}' , UINT_TO_STRING(Value));
-  
+    SplineMode.DISCRETE_POINTS      : SPLINE_MODE_TO_STRING := StrReplace('DISCRETE_POINTS ({0})'      ,'{0}' , UINT_TO_STRING(Value));
+    SplineMode.BEZIER_SPLINE        : SPLINE_MODE_TO_STRING := StrReplace('BEZIER_SPLINE ({0})'        ,'{0}' , UINT_TO_STRING(Value));
+    SplineMode.B_SPLINES            : SPLINE_MODE_TO_STRING := StrReplace('B_SPLINES ({0})'            ,'{0}' , UINT_TO_STRING(Value));
+    SplineMode.CUBIC_HERMITE_SPLINE : SPLINE_MODE_TO_STRING := StrReplace('CUBIC_HERMITE_SPLINE ({0})' ,'{0}' , UINT_TO_STRING(Value));
+    SplineMode.C_SPLINES            : SPLINE_MODE_TO_STRING := StrReplace('C_SPLINES ({0})'            ,'{0}' , UINT_TO_STRING(Value));
+  ELSE
+    SPLINE_MODE_TO_STRING := CONCAT('SPLINE_MODE_TO_STRING Function: Error -> no parsing for value ', UINT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

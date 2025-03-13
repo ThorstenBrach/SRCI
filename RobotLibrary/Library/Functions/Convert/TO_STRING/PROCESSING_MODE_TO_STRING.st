@@ -27,18 +27,18 @@ END_VAR
 
   CASE Value 
   OF
-  
-    ProcessingMode.BUFFERED           : StrReplace('BUFFERED ({0})'           ,'{0}' , USINT_TO_STRING(Value));
-    ProcessingMode.ABORTING           : StrReplace('ABORTING ({0})'           ,'{0}' , USINT_TO_STRING(Value));
-    ProcessingMode.PARALLEL           : StrReplace('PARALLEL ({0})'           ,'{0}' , USINT_TO_STRING(Value));
-    ProcessingMode.CONTINUOUS         : StrReplace('CONTINUOUS ({0})'         ,'{0}' , USINT_TO_STRING(Value));
-    ProcessingMode.DEACTIVATE         : StrReplace('DEACTIVATE ({0})'         ,'{0}' , USINT_TO_STRING(Value));
-    ProcessingMode.TRIGGER_BUFFERED   : StrReplace('TRIGGER_BUFFERED ({0})'   ,'{0}' , USINT_TO_STRING(Value));
-    ProcessingMode.TRIGGER_ABORTING   : StrReplace('TRIGGER_ABORTING ({0})'   ,'{0}' , USINT_TO_STRING(Value));
-    ProcessingMode.TRIGGER_ONCE       : StrReplace('TRIGGER_ONCE ({0})'       ,'{0}' , USINT_TO_STRING(Value));
-    ProcessingMode.TRIGGER_CONTINUOUS : StrReplace('TRIGGER_CONTINUOUS ({0})' ,'{0}' , USINT_TO_STRING(Value));
-    ProcessingMode.TRIGGER_MULTIPLE   : StrReplace('TRIGGER_MULTIPLE ({0})'   ,'{0}' , USINT_TO_STRING(Value));
-  
+    ProcessingMode.BUFFERED           : PROCESSING_MODE_TO_STRING := StrReplace('BUFFERED ({0})'           ,'{0}' , USINT_TO_STRING(Value));
+    ProcessingMode.ABORTING           : PROCESSING_MODE_TO_STRING := StrReplace('ABORTING ({0})'           ,'{0}' , USINT_TO_STRING(Value));
+    ProcessingMode.PARALLEL           : PROCESSING_MODE_TO_STRING := StrReplace('PARALLEL ({0})'           ,'{0}' , USINT_TO_STRING(Value));
+    ProcessingMode.CONTINUOUS         : PROCESSING_MODE_TO_STRING := StrReplace('CONTINUOUS ({0})'         ,'{0}' , USINT_TO_STRING(Value));
+    ProcessingMode.DEACTIVATE         : PROCESSING_MODE_TO_STRING := StrReplace('DEACTIVATE ({0})'         ,'{0}' , USINT_TO_STRING(Value));
+    ProcessingMode.TRIGGER_BUFFERED   : PROCESSING_MODE_TO_STRING := StrReplace('TRIGGER_BUFFERED ({0})'   ,'{0}' , USINT_TO_STRING(Value));
+    ProcessingMode.TRIGGER_ABORTING   : PROCESSING_MODE_TO_STRING := StrReplace('TRIGGER_ABORTING ({0})'   ,'{0}' , USINT_TO_STRING(Value));
+    ProcessingMode.TRIGGER_ONCE       : PROCESSING_MODE_TO_STRING := StrReplace('TRIGGER_ONCE ({0})'       ,'{0}' , USINT_TO_STRING(Value));
+    ProcessingMode.TRIGGER_CONTINUOUS : PROCESSING_MODE_TO_STRING := StrReplace('TRIGGER_CONTINUOUS ({0})' ,'{0}' , USINT_TO_STRING(Value));
+    ProcessingMode.TRIGGER_MULTIPLE   : PROCESSING_MODE_TO_STRING := StrReplace('TRIGGER_MULTIPLE ({0})'   ,'{0}' , USINT_TO_STRING(Value));
+  ELSE
+    PROCESSING_MODE_TO_STRING := CONCAT('PROCESSING_MODE_TO_STRING Function: Error -> no parsing for value ', USINT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

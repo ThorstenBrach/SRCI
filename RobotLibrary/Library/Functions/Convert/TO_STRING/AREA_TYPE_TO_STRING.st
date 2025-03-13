@@ -27,12 +27,12 @@ END_VAR
 
   CASE Value 
   OF
-  
-    AreaType.AXES     : StrReplace('AXES ({0})'     ,'{0}' , USINT_TO_STRING(Value));
-    AreaType.BOX      : StrReplace('BOX ({0})'      ,'{0}' , USINT_TO_STRING(Value));
-    AreaType.CYLINDER : StrReplace('CYLINDER ({0})' ,'{0}' , USINT_TO_STRING(Value));
-    AreaType.SPHERE   : StrReplace('SPHERE ({0})'   ,'{0}' , USINT_TO_STRING(Value));
-  
+    AreaType.AXES     : AREA_TYPE_TO_STRING := StrReplace('AXES ({0})'     ,'{0}' , USINT_TO_STRING(Value));
+    AreaType.BOX      : AREA_TYPE_TO_STRING := StrReplace('BOX ({0})'      ,'{0}' , USINT_TO_STRING(Value));
+    AreaType.CYLINDER : AREA_TYPE_TO_STRING := StrReplace('CYLINDER ({0})' ,'{0}' , USINT_TO_STRING(Value));
+    AreaType.SPHERE   : AREA_TYPE_TO_STRING := StrReplace('SPHERE ({0})'   ,'{0}' , USINT_TO_STRING(Value));
+  ELSE
+    AREA_TYPE_TO_STRING := CONCAT('AREA_TYPE_TO_STRING Function: Error -> no parsing for value ', USINT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

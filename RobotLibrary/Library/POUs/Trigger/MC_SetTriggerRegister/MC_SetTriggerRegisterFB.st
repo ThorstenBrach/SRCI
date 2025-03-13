@@ -206,7 +206,7 @@ END_VAR
                               MessageType := MessageType.CMD,
                               Severity    := Severity.ERROR,
                               MessageCode := ErrorID,
-                              MessageText := 'Invalid Parameter ParCmd.IntValue[_idx] = {1}',
+                              MessageText := 'Invalid Parameter ParCmd.IntValue[{2}] = {1}',
                               Para1       := INT_TO_STRING(ParCmd.IntValue[_idx]),
                               Para2       := DINT_TO_STRING(_idx));
       EXIT;                            
@@ -227,7 +227,7 @@ END_VAR
                               MessageType := MessageType.CMD,
                               Severity    := Severity.ERROR,
                               MessageCode := ErrorID,
-                              MessageText := 'Invalid Parameter ParCmd.RealValue[_idx] = {1}',
+                              MessageText := 'Invalid Parameter ParCmd.RealValue[{2}] = {1}',
                               Para1       := VALID_REAL_TO_STRING(ParCmd.RealValue[_idx]),
                               Para2       := DINT_TO_STRING(_idx));
       EXIT;                            

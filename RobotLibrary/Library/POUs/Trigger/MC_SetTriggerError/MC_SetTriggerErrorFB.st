@@ -175,7 +175,7 @@ END_VAR
                               MessageType := MessageType.CMD,
                               Severity    := Severity.ERROR,
                               MessageCode := ErrorID,
-                              MessageText := 'Invalid Parameter ParCmd.MessageCodes[_idx] = {1}',
+                              MessageText := 'Invalid Parameter ParCmd.MessageCodes[{2}] = {1}',
                               Para1       := DWORD_TO_STRING(ParCmd.MessageCodes[_idx]),
                               Para2       := DINT_TO_STRING(_idx));
       EXIT;

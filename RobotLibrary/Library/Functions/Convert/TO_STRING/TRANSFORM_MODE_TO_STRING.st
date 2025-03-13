@@ -27,13 +27,13 @@ END_VAR
 
   CASE Value 
   OF
-  
-    TransformMode.MIRROR_AT_POINT             : StrReplace('MIRROR_AT_POINT ({0})'             ,'{0}' , SINT_TO_STRING(Value));
-    TransformMode.MIRROR_AT_STRAIGHT_LINE     : StrReplace('MIRROR_AT_STRAIGHT_LINE ({0})'     ,'{0}' , SINT_TO_STRING(Value));
-    TransformMode.MIRROR_AT_PLANE             : StrReplace('MIRROR_AT_PLANE ({0})'             ,'{0}' , SINT_TO_STRING(Value));
-    TransformMode.ROTATE_AROUND_STRAIGHT_LINE : StrReplace('ROTATE_AROUND_STRAIGHT_LINE ({0})' ,'{0}' , SINT_TO_STRING(Value));
-    TransformMode.SHIFT_BY_VECTOR             : StrReplace('SHIFT_BY_VECTOR ({0})'             ,'{0}' , SINT_TO_STRING(Value));
-  
+    TransformMode.MIRROR_AT_POINT             : TRANSFORM_MODE_TO_STRING := StrReplace('MIRROR_AT_POINT ({0})'             ,'{0}' , SINT_TO_STRING(Value));
+    TransformMode.MIRROR_AT_STRAIGHT_LINE     : TRANSFORM_MODE_TO_STRING := StrReplace('MIRROR_AT_STRAIGHT_LINE ({0})'     ,'{0}' , SINT_TO_STRING(Value));
+    TransformMode.MIRROR_AT_PLANE             : TRANSFORM_MODE_TO_STRING := StrReplace('MIRROR_AT_PLANE ({0})'             ,'{0}' , SINT_TO_STRING(Value));
+    TransformMode.ROTATE_AROUND_STRAIGHT_LINE : TRANSFORM_MODE_TO_STRING := StrReplace('ROTATE_AROUND_STRAIGHT_LINE ({0})' ,'{0}' , SINT_TO_STRING(Value));
+    TransformMode.SHIFT_BY_VECTOR             : TRANSFORM_MODE_TO_STRING := StrReplace('SHIFT_BY_VECTOR ({0})'             ,'{0}' , SINT_TO_STRING(Value));
+  ELSE
+    TRANSFORM_MODE_TO_STRING := CONCAT('TRANSFORM_MODE_TO_STRING Function: Error -> no parsing for value ', SINT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

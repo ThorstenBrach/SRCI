@@ -24,8 +24,6 @@ FUNCTION_BLOCK MC_RobotTaskFB EXTENDS RobotLibraryLogFB
 //
 // -------------------------------------------------------------------------
 VAR_INPUT
-  /// Stäubli simulator 
-  STAUBLI_SIMULATOR : BOOL; {warning 'ToDo: Remove'}
   /// Set TRUE (default) to initialize the interface
   Enable            : BOOL;
   /// User defined robot name
@@ -233,6 +231,10 @@ END_VAR
     Priority  := PriorityLevel.NORMAL, 
     AxesGroup := AxesGroup, 
   );
+  
+  
+  SystemLog  := AxesGroup.MessageLog.SystemLogs;
+  MessageLog := AxesGroup.MessageLog.Messages;
 
 END_FUNCTION_BLOCK
 
@@ -1157,7 +1159,7 @@ END_VAR
   
   
   // Check configuration if optional cyclic JointPosition valid ?
-  IF ( ParCfg.Rob.OptionalCyclic.UseJointPosition AND ParCfg.Rob.OptionalCyclic.UseJointPositionExt )
+  IF ( ParCfg.Rob.OptionalCyclic.UseJointPosition AND ParCfg.Rob.OptionalCyclic.UseJointPositionExt ) AND FALSE  {warning 'ToDo: Yaskawa need this combination for debugging via JointPosExt '}
   THEN
     // set to valid configuration
     ParCfg.Rob.OptionalCyclic.UseJointPosition    := TRUE;
@@ -1650,7 +1652,6 @@ END_VAR
 
   AxesGroup.Parameter.Plc.Parameter                           := ParCfg.Plc.Parameter;      
   AxesGroup.Parameter.Plc.OptionalCyclic                      := ParCfg.Plc.OptionalCyclic; {warning 'ToDo: '}
-  
   AxesGroup.Parameter.Rob.OptionalCyclic                      := ParCfg.Rob.OptionalCyclic; {warning 'ToDo'}
   
   IF (ExchangeConfiguration.Enabled)
@@ -1801,40 +1802,29 @@ END_METHOD
 
 METHOD PRIVATE HandleLifeSign
 VAR_IN_OUT
-   /// Robot assignment of function
+  /// Robot assignment of function
   AxesGroup    : AxesGroup;
 END_VAR 
 
 VAR_INST
-  /// internal toggle bit
- _toggle                     : BOOL;
-  /// Toggle for life sign
- _lifeSignToggle_R           : TON;
-  /// Toggle for life sign
- _lifeSignToggle_F           : TON;
+  /// flag for 1st cycle
+ _first : BOOL := TRUE;
 END_VAR
 
-  // call timers for toggle
-  _lifeSignToggle_R(IN :=     _toggle, PT := ParCfg.Com.LifeSignTimeOut - ParCfg.Plc.CycleTime);
-  _lifeSignToggle_F(IN := NOT _toggle, PT := ParCfg.Com.LifeSignTimeOut - ParCfg.Plc.CycleTime);
-  
-  IF (STAUBLI_SIMULATOR)
+  IF ( _first )
   THEN
-   _lifeSignToggle_R(IN :=     _toggle, PT := T#40MS); 
-   _lifeSignToggle_F(IN := NOT _toggle, PT := T#40MS); 
+    // init LifeSign 
+    AxesGroup.Cyclic.PlcToRob.LifeSign := 0;
+    // reset first flag
+   _first := FALSE;
+    RETURN;
   END_IF
   
-  // increment LifeSign counter
-  IF ( _lifeSignToggle_R.Q) OR ( _lifeSignToggle_F.Q) OR ( NOT STAUBLI_SIMULATOR)
-  THEN
-   _toggle := NOT _toggle;
-   
-    AxesGroup.Cyclic.PlcToRob.LifeSign := AxesGroup.Cyclic.PlcToRob.LifeSign + 1;
+  AxesGroup.Cyclic.PlcToRob.LifeSign := AxesGroup.Cyclic.PlcToRob.LifeSign + 1;
   
-    IF ( AxesGroup.Cyclic.PlcToRob.LifeSign > 15 )
-    THEN
-      AxesGroup.Cyclic.PlcToRob.LifeSign := 0;
-    END_IF
+  IF ( AxesGroup.Cyclic.PlcToRob.LifeSign > 15 )
+  THEN
+    AxesGroup.Cyclic.PlcToRob.LifeSign := 1; // 0 is only in the very 1st cycle to indicate the system start in logging
   END_IF
 
 END_METHOD
@@ -1959,9 +1949,6 @@ END_VAR
   END_IF
   
   
-  SystemLog  := AxesGroup.MessageLog.SystemLogs;
-  MessageLog := AxesGroup.MessageLog.Messages;
-  
   // Check configuration parameter changed ? 
   CheckParameterChanged(AxesGroup := AxesGroup);
 
@@ -1989,7 +1976,7 @@ END_VAR
            Busy := TRUE;
                    
            IF (( AxesGroup.Cyclic.RobToPlc.TelegramState >= TelegramState.ERROR_161  ) AND
-               ( AxesGroup.Cyclic.RobToPlc.TelegramState <= TelegramState.ERROR_172  )) 
+               ( AxesGroup.Cyclic.RobToPlc.TelegramState <= TelegramState.ERROR_173  )) 
            THEN
              // clear error
              AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.ACK_ERROR;        
@@ -2019,11 +2006,11 @@ END_VAR
            // timeout exceeded ? 
            IF (( CheckTimeout(_timerErrorClear)           = RobotLibraryConstants.OK ) AND
                ( AxesGroup.Cyclic.RobToPlc.TelegramState >= TelegramState.ERROR_161  ) AND
-               ( AxesGroup.Cyclic.RobToPlc.TelegramState <= TelegramState.ERROR_172  )) 
+               ( AxesGroup.Cyclic.RobToPlc.TelegramState <= TelegramState.ERROR_173  )) 
            THEN
-            // TelegrammState in error          
-            ErrorID := AxesGroup.Cyclic.RobToPlc.TelegramState;
-            ErrorAddTxt := CONCAT('_stepErrorClear = ' , DINT_TO_STRING(_stepErrorClear));
+             // TelegrammState in error          
+             ErrorID := AxesGroup.Cyclic.RobToPlc.TelegramState;
+             ErrorAddTxt := CONCAT('_stepErrorClear = ' , DINT_TO_STRING(_stepErrorClear));
            END_IF
          END_IF
   
@@ -2078,6 +2065,12 @@ END_VAR
   _enable_R( CLK := Enable);
   _enable_F( CLK := Enable);
   
+  IF ( _enable_F.Q)
+  THEN
+    Reset();
+  END_IF
+  
+  
   OnExecRun := RobotLibraryConstants.RUNNING;
   
   CASE _stepCmd OF
@@ -2116,12 +2109,12 @@ END_VAR
   
            TelegramState.UNDEFINED : ;
            
-           TelegramState.ERROR_161..TelegramState.ERROR_172:
+           TelegramState.ERROR_161..TelegramState.ERROR_173:
   
              // clear error
              AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.ACK_ERROR;        
   
-           TelegramState.READY_TO_RESUME : ; 
+           TelegramState.READY_TO_RESUME :  
              // clear error
              AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.RESUME;        
            
@@ -2129,15 +2122,11 @@ END_VAR
   
              // Request initialization
              AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.INITIALIZE;
-             // set timeout
-             SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
-             // inc step counter
-            _stepCmd := _stepCmd + 1; 
-  
+             
            TelegramState.INITIALIZED: 
   
-           // inc step counter
-          _stepCmd := _stepCmd + 1; 
+             // inc step counter
+            _stepCmd := _stepCmd + 1; 
   
          ELSE
            // TelegrammState in error          
@@ -2752,8 +2741,10 @@ END_VAR
   Telegram.RobToPlc.Sequence[0].Header.SEQ_ACK       := RecvData.GetUint();
   Telegram.RobToPlc.Sequence[0].Header.PayloadLength := RecvData.GetUint();
   
+  
+  
   // check new data ? 
-  IF ( Telegram.RobToPlc.Sequence[0].Header.SEQ_ACK <> AxesGroup.InternalData.LastACK[0]) {warning 'ToDo Handle 2nd sequence'} 
+  IF ( Telegram.RobToPlc.Sequence[0].Header.SEQ_ACK <> AxesGroup.InternalData.LastACK[0])  {warning 'ToDo Handle 2nd sequence'} 
   THEN
   
     IF (Telegram.RobToPlc.Sequence[0].Header.PayloadLength > 0)
@@ -2768,7 +2759,7 @@ END_VAR
                               Para2       :=  DINT_TO_STRING(0), {warning 'Add seqIdx'}
                               Para3       :=  UINT_TO_STRING(Telegram.RobToPlc.Sequence[0].Header.PayloadLength),
                               Para4       :=  BYTE_TO_STRING(Telegram.RobToPlc.Header.LifeSign));
-      
+  
       Telegram.RobToPlc.Sequence[0].Fragment[0].Header.CmdID               := RecvData.GetUint();
       Telegram.RobToPlc.Sequence[0].Fragment[0].Header.Reserve             := RecvData.GetByte();
       Telegram.RobToPlc.Sequence[0].Fragment[0].Header.FragmentAction      := RecvData.GetByte();
@@ -2813,6 +2804,27 @@ END_VAR
   THEN
    _seqCount := _seqCount + 1;
   END_IF
+
+END_METHOD
+
+METHOD Reset
+VAR_INPUT
+END_VAR
+
+  // reset flags
+  Busy              := FALSE;
+  Initialized       := FALSE;
+  Synchronized      := FALSE;
+  Error             := FALSE;
+  ErrorID           := 0;
+  WarningID         := 0;
+  InfoID            := 0;  
+  // Reset internal functon blocks
+  ReadMessages.Enable          := FALSE;
+  ReadRobotData.Execute        := FALSE;
+  ExchangeConfiguration.Enable := FALSE;
+  // reset step counter
+  _stepCmd := 0;
 
 END_METHOD
 

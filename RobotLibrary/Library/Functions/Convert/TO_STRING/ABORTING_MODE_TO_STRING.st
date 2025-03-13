@@ -27,10 +27,10 @@ END_VAR
 
   CASE Value 
   OF
-  
-    AbortingMode.BUFFER : StrReplace('BUFFER ({0})','{0}' , SINT_TO_STRING(Value));
-    AbortingMode.ABORT  : StrReplace('ABORT ({0})' ,'{0}' , SINT_TO_STRING(Value));
-  
+    AbortingMode.BUFFER : ABORTING_MODE_TO_STRING := StrReplace('BUFFER ({0})','{0}' , SINT_TO_STRING(Value));
+    AbortingMode.ABORT  : ABORTING_MODE_TO_STRING := StrReplace('ABORT ({0})' ,'{0}' , SINT_TO_STRING(Value));
+  ELSE
+    ABORTING_MODE_TO_STRING := CONCAT('ABORTING_MODE_TO_STRING Function: Error -> no parsing for value ', SINT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

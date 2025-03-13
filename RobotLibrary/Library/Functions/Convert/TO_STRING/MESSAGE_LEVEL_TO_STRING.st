@@ -27,12 +27,12 @@ END_VAR
 
   CASE Value 
   OF
-  
-    MessageLevel.DEBUG       : StrReplace('DEBUG ({0})'      ,'{0}' , USINT_TO_STRING(Value));
-    MessageLevel.INFO        : StrReplace('INFO ({0})'       ,'{0}' , USINT_TO_STRING(Value));
-    MessageLevel.WARNING     : StrReplace('WARNING ({0})'    ,'{0}' , USINT_TO_STRING(Value));
-    MessageLevel.ERROR       : StrReplace('ERROR ({0})'      ,'{0}' , USINT_TO_STRING(Value));
-  
+    MessageLevel.DEBUG       : MESSAGE_LEVEL_TO_STRING := StrReplace('DEBUG ({0})'      ,'{0}' , USINT_TO_STRING(Value));
+    MessageLevel.INFO        : MESSAGE_LEVEL_TO_STRING := StrReplace('INFO ({0})'       ,'{0}' , USINT_TO_STRING(Value));
+    MessageLevel.WARNING     : MESSAGE_LEVEL_TO_STRING := StrReplace('WARNING ({0})'    ,'{0}' , USINT_TO_STRING(Value));
+    MessageLevel.ERROR       : MESSAGE_LEVEL_TO_STRING := StrReplace('ERROR ({0})'      ,'{0}' , USINT_TO_STRING(Value));
+  ELSE
+    MESSAGE_LEVEL_TO_STRING := CONCAT('MESSAGE_LEVEL_TO_STRING Function: Error -> no parsing for value ', USINT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

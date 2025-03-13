@@ -38,7 +38,7 @@ END_VAR
     CmdMessageState.ABORTED             : CMD_MESSAGE_STATE_TO_STRING := StrReplace('ABORTED ({0})'            ,'{0}', USINT_TO_STRING(Value));
     CmdMessageState.ERROR               : CMD_MESSAGE_STATE_TO_STRING := StrReplace('ERROR ({0})'              ,'{0}', USINT_TO_STRING(Value));
   ELSE
-    CMD_MESSAGE_STATE_TO_STRING := CONCAT('CmdMessageStateToString-Function: Error -> no parsing for value ', USINT_TO_STRING(Value));
+    CMD_MESSAGE_STATE_TO_STRING := CONCAT('CMD_MESSAGE_STATE_TO_STRING Function: Error -> no parsing for value ', USINT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

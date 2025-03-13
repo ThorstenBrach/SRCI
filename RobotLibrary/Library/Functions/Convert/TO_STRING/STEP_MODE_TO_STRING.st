@@ -26,12 +26,12 @@ VAR_INPUT
 END_VAR
 
   CASE Value 
-  OF
-    
-    StepMode.DEACTIVATE : StrReplace('DEACTIVATE ({0})' ,'{0}' , USINT_TO_STRING(Value));
-    StepMode.BLENDING   : StrReplace('BLENDING ({0})'   ,'{0}' , USINT_TO_STRING(Value));
-    StepMode.EXACT_STOP : StrReplace('EXACT_STOP ({0})' ,'{0}' , USINT_TO_STRING(Value));
-  
+  OF  
+    StepMode.DEACTIVATE : STEP_MODE_TO_STRING := StrReplace('DEACTIVATE ({0})' ,'{0}' , USINT_TO_STRING(Value));
+    StepMode.BLENDING   : STEP_MODE_TO_STRING := StrReplace('BLENDING ({0})'   ,'{0}' , USINT_TO_STRING(Value));
+    StepMode.EXACT_STOP : STEP_MODE_TO_STRING := StrReplace('EXACT_STOP ({0})' ,'{0}' , USINT_TO_STRING(Value));
+  ELSE
+    STEP_MODE_TO_STRING := CONCAT('STEP_MODE_TO_STRING Function: Error -> no parsing for value ', USINT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

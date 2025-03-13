@@ -170,7 +170,7 @@ END_VAR
                               MessageType := MessageType.CMD,
                               Severity    := Severity.ERROR,
                               MessageCode := ErrorID,
-                              MessageText := 'Invalid Parameter ParCmd.InitObjectPosition[_idx] = {1}',
+                              MessageText := 'Invalid Parameter ParCmd.InitObjectPosition[{2}] = {1}',
                               Para1       := VALID_REAL_TO_STRING(ParCmd.InitObjectPosition[_idx]),
                               Para2       := DINT_TO_STRING(_idx));
       EXIT;                            

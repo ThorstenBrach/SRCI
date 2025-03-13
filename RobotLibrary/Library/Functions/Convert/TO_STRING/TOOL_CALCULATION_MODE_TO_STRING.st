@@ -27,15 +27,15 @@ END_VAR
 
   CASE Value 
   OF
-  
-    ToolCalculationMode.TWO_POINT_Z_METHOD   : StrReplace('TWO_POINT_Z_METHOD ({0})'  ,'{0}' , SINT_TO_STRING(Value));
-    ToolCalculationMode.THREE_POINT_METHOD   : StrReplace('THREE_POINT_METHOD ({0})'  ,'{0}' , SINT_TO_STRING(Value));
-    ToolCalculationMode.FOUR_POINT_METHOD    : StrReplace('FOUR_POINT_METHOD ({0})'   ,'{0}' , SINT_TO_STRING(Value));
-    ToolCalculationMode.FIVE_POINT_METHOD    : StrReplace('FIVE_POINT_METHOD ({0})'   ,'{0}' , SINT_TO_STRING(Value));
-    ToolCalculationMode.SIX_POINT_METHOD     : StrReplace('SIX_POINT_METHOD ({0})'    ,'{0}' , SINT_TO_STRING(Value));
-    ToolCalculationMode.ABC_WORLD_METHOD     : StrReplace('ABC_WORLD_METHOD ({0})'    ,'{0}' , SINT_TO_STRING(Value));
-    ToolCalculationMode.ABC_TWO_POINT_METHOD : StrReplace('ABC_TWO_POINT_METHOD ({0})','{0}' , SINT_TO_STRING(Value));
-    
+    ToolCalculationMode.TWO_POINT_Z_METHOD   : TOOL_CALCULATION_MODE_TO_STRING := StrReplace('TWO_POINT_Z_METHOD ({0})'  ,'{0}' , SINT_TO_STRING(Value));
+    ToolCalculationMode.THREE_POINT_METHOD   : TOOL_CALCULATION_MODE_TO_STRING := StrReplace('THREE_POINT_METHOD ({0})'  ,'{0}' , SINT_TO_STRING(Value));
+    ToolCalculationMode.FOUR_POINT_METHOD    : TOOL_CALCULATION_MODE_TO_STRING := StrReplace('FOUR_POINT_METHOD ({0})'   ,'{0}' , SINT_TO_STRING(Value));
+    ToolCalculationMode.FIVE_POINT_METHOD    : TOOL_CALCULATION_MODE_TO_STRING := StrReplace('FIVE_POINT_METHOD ({0})'   ,'{0}' , SINT_TO_STRING(Value));
+    ToolCalculationMode.SIX_POINT_METHOD     : TOOL_CALCULATION_MODE_TO_STRING := StrReplace('SIX_POINT_METHOD ({0})'    ,'{0}' , SINT_TO_STRING(Value));
+    ToolCalculationMode.ABC_WORLD_METHOD     : TOOL_CALCULATION_MODE_TO_STRING := StrReplace('ABC_WORLD_METHOD ({0})'    ,'{0}' , SINT_TO_STRING(Value));
+    ToolCalculationMode.ABC_TWO_POINT_METHOD : TOOL_CALCULATION_MODE_TO_STRING := StrReplace('ABC_TWO_POINT_METHOD ({0})','{0}' , SINT_TO_STRING(Value));
+  ELSE
+    TOOL_CALCULATION_MODE_TO_STRING := CONCAT('TOOL_CALCULATION_MODE_TO_STRING Function: Error -> no parsing for value ', SINT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

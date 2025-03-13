@@ -27,11 +27,11 @@ END_VAR
 
   CASE Value 
   OF
-  
-    TriggerModeMeasurement.NO_TRIGGER                   : StrReplace('NO_TRIGGER ({0})'                   ,'{0}' , USINT_TO_STRING(Value));
-    TriggerModeMeasurement.POSITIVE_START_NEGATIVE_STOP : StrReplace('POSITIVE_START_NEGATIVE_STOP ({0})' ,'{0}' , USINT_TO_STRING(Value));
-    TriggerModeMeasurement.POSITIVE_START_STOP          : StrReplace('POSITIVE_START_STOP ({0})'          ,'{0}' , USINT_TO_STRING(Value));
-  
+    TriggerModeMeasurement.NO_TRIGGER                   : TRIGGER_MODE_MEASUREMENT_TO_STRING := StrReplace('NO_TRIGGER ({0})'                   ,'{0}' , USINT_TO_STRING(Value));
+    TriggerModeMeasurement.POSITIVE_START_NEGATIVE_STOP : TRIGGER_MODE_MEASUREMENT_TO_STRING := StrReplace('POSITIVE_START_NEGATIVE_STOP ({0})' ,'{0}' , USINT_TO_STRING(Value));
+    TriggerModeMeasurement.POSITIVE_START_STOP          : TRIGGER_MODE_MEASUREMENT_TO_STRING := StrReplace('POSITIVE_START_STOP ({0})'          ,'{0}' , USINT_TO_STRING(Value));
+  ELSE
+    TRIGGER_MODE_MEASUREMENT_TO_STRING := CONCAT('TRIGGER_MODE_MEASUREMENT_TO_STRING Function: Error -> no parsing for value ', USINT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

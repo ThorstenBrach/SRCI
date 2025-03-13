@@ -22,14 +22,6 @@
 // -------------------------------------------------------------------------
 TYPE ReturnToPrimarySendData EXTENDS CmdHeader: 
 STRUCT
-  /// Index of tool
-  /// •      0: Flange (default)
-  /// • 1..254: Tool frames
-  ToolNo             : USINT;
-  /// Index of frame
-  /// •      0: WCS (default)
-  /// • 1..254: User frames
-  FrameNo            : USINT;
   /// TCP velocity in % of nominal velocity
   /// •  <0%: (default) - Use default velocity
   /// •   0%:           - Use internal minimal velocity
@@ -58,17 +50,30 @@ STRUCT
   /// Maximum allowed distance between current position and target position according to ReturnMode.
   /// If calculated distance is beyond specified Limit, RC returns an error
   DistanceLimit      : REAL;
+  /// Index of tool
+  /// •      0: Flange (default)
+  /// • 1..254: Tool frames
+  ToolNo             : USINT;
+  /// Index of frame
+  /// •      0: WCS (default)
+  /// • 1..254: User frames
+  FrameNo            : USINT;
+  /// Parameter is used if it is greater than 0 (default)
+  /// • Velocity input is ignored
+  /// • Parameter defines the time for the movement to reach the target position
+  /// Error is sent by the RC if the time cannot be kept
+  MoveTime           : UINT;  
   /// Defines target position when function is executed:
   /// • 0: Interrupt position (default) - Returns to position active,  when interrupt was executed
   /// • 1: End position                 - Returns to target position of interrupted segment
   ReturnMode         : BOOL;
   /// Defines type of command movement. One of the optional modes must be supported
   TrajectoryMode     : BOOL;
-  /// Parameter is used if it is greater than 0 (default)
-  /// • Velocity input is ignored
-  /// • Parameter defines the time for the movement to reach the target position
-  /// Error is sent by the RC if the time cannot be kept
-  MoveTime           : UINT;
+  /// 
+  Enable : BOOL;
+  ///
+  AllowDifferences : BOOL;
+  
 END_STRUCT
 END_TYPE
 

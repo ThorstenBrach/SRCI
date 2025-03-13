@@ -27,6 +27,8 @@ TYPE TelegramState :
   ERROR_171 := 171,
   /// Telegram Number is not supported
   ERROR_172 := 172,
+  /// Telegram Number is not supported : Connection lost (yaskawa)
+  ERROR_173 := 173,
   /// The RC is currently not initialized but has state in the ACR
   READY_TO_RESUME := 253,
   /// The RC is currently not initialized and has no state in the ACR

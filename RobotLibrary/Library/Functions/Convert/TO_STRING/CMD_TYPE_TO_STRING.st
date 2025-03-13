@@ -256,7 +256,7 @@ END_VAR
     CmdType.UnitMeasurement             : CMD_TYPE_TO_STRING := StrReplace('UnitMeasurement ({0})','{0}'            , UINT_TO_STRING(CmdType.UnitMeasurement));
   
   ELSE
-    CMD_TYPE_TO_STRING := CONCAT('CmdTypeToString-Function: Error -> no parsing for value',UINT_TO_STRING(Value));
+    CMD_TYPE_TO_STRING := CONCAT('CMD_TYPE_TO_STRING Function: Error -> no parsing for value',UINT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

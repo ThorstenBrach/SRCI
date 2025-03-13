@@ -54,6 +54,9 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
+  CheckFunctionSupported := TRUE; // Function is mandatory 
+  RETURN;
+  
   CheckFunctionSupported := AxesGroup.InternalData.RobotData.RCSupportedFunctions.ReadMessages;
   
   IF ( NOT CheckFunctionSupported )

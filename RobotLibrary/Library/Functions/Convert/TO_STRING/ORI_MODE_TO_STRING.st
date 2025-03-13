@@ -27,12 +27,12 @@ END_VAR
 
   CASE Value 
   OF
-  
-    OriMode.LINEAR_INTERPOLATED : StrReplace('LINEAR_INTERPOLATED ({0})','{0}' , USINT_TO_STRING(Value));
-    OriMode.JOINT_INTERPOLATED  : StrReplace('JOINT_INTERPOLATED ({0})' ,'{0}' , USINT_TO_STRING(Value));
-    OriMode.FIX                 : StrReplace('FIX ({0})'                ,'{0}' , USINT_TO_STRING(Value));
-    OriMode.PATH                : StrReplace('PATH ({0})'               ,'{0}' , USINT_TO_STRING(Value));
-  
+    OriMode.LINEAR_INTERPOLATED : ORI_MODE_TO_STRING := StrReplace('LINEAR_INTERPOLATED ({0})','{0}' , USINT_TO_STRING(Value));
+    OriMode.JOINT_INTERPOLATED  : ORI_MODE_TO_STRING := StrReplace('JOINT_INTERPOLATED ({0})' ,'{0}' , USINT_TO_STRING(Value));
+    OriMode.FIX                 : ORI_MODE_TO_STRING := StrReplace('FIX ({0})'                ,'{0}' , USINT_TO_STRING(Value));
+    OriMode.PATH                : ORI_MODE_TO_STRING := StrReplace('PATH ({0})'               ,'{0}' , USINT_TO_STRING(Value));
+  ELSE
+    ORI_MODE_TO_STRING := CONCAT('ORI_MODE_TO_STRING Function: Error -> no parsing for value ', USINT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

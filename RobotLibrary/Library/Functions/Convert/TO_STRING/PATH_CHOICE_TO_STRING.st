@@ -27,10 +27,10 @@ END_VAR
 
   CASE Value 
   OF
-  
-    PathChoice.CLOCKWISE         : StrReplace('CLOCKWISE ({0})'        ,'{0}' , BYTE_TO_STRING(Value));
-    PathChoice.COUNTERCLOCKWISE  : StrReplace('COUNTERCLOCKWISE ({0})' ,'{0}' , BYTE_TO_STRING(Value));
-  
+    PathChoice.CLOCKWISE         : PATH_CHOICE_TO_STRING := StrReplace('CLOCKWISE ({0})'        ,'{0}' , BYTE_TO_STRING(Value));
+    PathChoice.COUNTERCLOCKWISE  : PATH_CHOICE_TO_STRING := StrReplace('COUNTERCLOCKWISE ({0})' ,'{0}' , BYTE_TO_STRING(Value));
+  ELSE
+    PATH_CHOICE_TO_STRING := CONCAT('PATH_CHOICE_TO_STRING Function: Error -> no parsing for value ', BYTE_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

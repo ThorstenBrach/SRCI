@@ -1180,7 +1180,7 @@ END_VAR
   // add command.Offset.Ry
   CreateCommandPayload.AddReal(_command.Offset.Ry);
   // add command.Offset.Rz
-  CreateCommandPayload.AddReal(_command.Offset.Rz); {warning 'ToDo'}
+  CreateCommandPayload.AddReal(_command.Offset.Rz); 
   // add command.AuxCornerDistance
   CreateCommandPayload.AddReal(_command.AuxCornerDistance);
   // add command.VelocityCoefficient

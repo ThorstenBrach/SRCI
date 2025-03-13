@@ -151,16 +151,16 @@ END_VAR
       // delete response 
       IF ( _fragmentAction.Clear )
       THEN
-        SysDepMemSet( pDest := ADR(Register[_regIdx].Response[1]), Value := 0, DataLen := SIZEOF(Register[_regIdx].Response[1]));
+        SysDepMemSet( pDest := ADR(Register[_regIdx].Response[ACTIVE_CMD]), Value := 0, DataLen := SIZEOF(Register[_regIdx].Response[ACTIVE_CMD]));
       END_IF
                          
       // add payload to response
       FOR _idx := Rsp.Header.PayloadPointer TO  Rsp.Header.PayloadLength -1
       DO
-        Register[_regIdx].Response[1].Timestamp     := SystemTime;
-        Register[_regIdx].Response[1].State         := BufferStateRsp.RECEIVING;
-        Register[_regIdx].Response[1].PayloadLen    := Register[_regIdx].Response[1].PayloadLen + 1;
-        Register[_regIdx].Response[1].Payload[_idx] := Rsp.Command.Payload[_idx];
+        Register[_regIdx].Response[ACTIVE_CMD].Timestamp     := SystemTime;
+        Register[_regIdx].Response[ACTIVE_CMD].State         := BufferStateRsp.RECEIVING;
+        Register[_regIdx].Response[ACTIVE_CMD].PayloadLen    := Register[_regIdx].Response[ACTIVE_CMD].PayloadLen + 1;
+        Register[_regIdx].Response[ACTIVE_CMD].Payload[_idx] := Rsp.Command.Payload[_idx];
       END_FOR
   
       // Get current message state 
@@ -182,7 +182,7 @@ END_VAR
       IF ( _fragmentAction.Complete )
       THEN
         // set response state
-        Register[_regIdx].Response[1].State := BufferStateRsp.RECEIVED;      
+        Register[_regIdx].Response[ACTIVE_CMD].State := BufferStateRsp.RECEIVED;      
        
         // Check current message state and tag the register state as IS_FINAL, if needed 
         IF ( _cmdMessageState >= CmdMessageState.DONE) 
@@ -194,17 +194,28 @@ END_VAR
                                         LoByte := Register[_regIdx].Command[ACTIVE_CMD].Payload[1]);
   
           // Create log entry
-          CreateLogMessagePara3( Timestamp   := SystemTime,
+          CreateLogMessagePara4( Timestamp   := SystemTime,
                                  MessageType := MessageType.CMD,
                                  Severity    := Severity.DEBUG,
                                  MessageCode := 0,
-                                 MessageText := 'ARC Register [{1}] : Response of CmdID <{2}>, CmdType <{3}> has reached Final State',
+                                 MessageText := 'ARC Register [{1}] : Response of CmdID <{2}>, CmdType <{3}> has reached final state <{4}>',
                                  Para1       :=  DINT_TO_STRING(_regIdx),
                                  Para2       :=  UINT_TO_STRING(Rsp.Header.CmdID),
-                                 Para3       :=  CMD_TYPE_TO_STRING(_cmdType));
+                                 Para3       :=  CMD_TYPE_TO_STRING(_cmdType),
+                                 Para4       :=  CMD_MESSAGE_STATE_TO_STRING(_cmdMessageState));
                                  
           // Exit the loop
         END_IF      
+      END_IF
+      
+      
+      // Check Response received complete ? 
+      IF ( Register[_regIdx].Response[ACTIVE_CMD].State = BufferStateRsp.RECEIVED)
+      THEN
+        // update state
+        Register[_regIdx].Response[ACTIVE_CMD].State := BufferStateRsp.PROCESSED;
+        // callback CommandFB    
+        Register[_regIdx].pCommandFB^.CallBack(RspData := Register[_regIdx].Response[ACTIVE_CMD],TimeStamp := SystemTime);    
       END_IF
       
       EXIT;
@@ -263,65 +274,65 @@ END_VAR
   FOR _regIdx := 1 TO RegisterSize
   DO
     // Check pointer to command FB is valid ? 
-    IF ( Register[_regIdx].pCommandFB = RobotLibraryConstants.NULL_POINTER)
-    THEN
-      RETURN;
-    END_IF
-  
-    // Check apply Cmd parameter update ?  
-    IF (( Register[_regIdx].Command[ACTIVE_CMD].State = BufferStateCmd.PROCESSED        ) AND
-        ( Register[_regIdx].Command[BUFFER_CMD].State = BufferStateCmd.UPDATE_AVAILABLE ))
-    THEN
-      Register[_regIdx].Command[ACTIVE_CMD] := Register[_regIdx].Command[BUFFER_CMD];
-      Register[_regIdx].Command[BUFFER_CMD] := EMPTY_CMD_ENTRY;
-  
-      // get command type from payload
-     _cmdType := CombineBytesToUint(HiByte := Register[_regIdx].Command[ACTIVE_CMD].Payload[0],
-                                    LoByte := Register[_regIdx].Command[ACTIVE_CMD].Payload[1]);
-  
-      // Create log entry
-      CreateLogMessagePara3 ( Timestamp   := SystemTime,
-                              MessageType := MessageType.CMD,
-                              Severity    := Severity.DEBUG,
-                              MessageCode := 0,
-                              MessageText := 'ARC Register [{1}] : Moved BUFFER_CMD to ACTIVE_CMD, CmdID <{2}> , CmdType <{3}>',
-                              Para1       :=  DINT_TO_STRING(_regIdx),
-                              Para2       :=  UINT_TO_STRING(Register[_regIdx].UniqueID),
-                              Para3       :=  CMD_TYPE_TO_STRING(_cmdType));
-  
-    END_IF
-    
-    // Check Response received ? 
-    IF ( Register[_regIdx].Response[ACTIVE_CMD].State = BufferStateRsp.RECEIVED)
-    THEN
-      // update state
-      Register[_regIdx].Response[ACTIVE_CMD].State := BufferStateRsp.PROCESSED;
-      // callback CommandFB    
-      Register[_regIdx].pCommandFB^.CallBack(RspData := Register[_regIdx].Response[ACTIVE_CMD],TimeStamp := SystemTime);    
-    END_IF
-  
-    // delete entries with State.IS_Final 
-    IF ( Register[_regIdx].State = ActiveCommandRegisterState.IS_FINAL )
+    IF ( Register[_regIdx].pCommandFB <> RobotLibraryConstants.NULL_POINTER) 
     THEN
     
-      // get command type from payload
-     _cmdType := CombineBytesToUint(HiByte := Register[_regIdx].Command[ACTIVE_CMD].Payload[0],
-                                    LoByte := Register[_regIdx].Command[ACTIVE_CMD].Payload[1]);
-  
-      // Create log entry
-      CreateLogMessagePara3( Timestamp   := SystemTime,
-                             MessageType := MessageType.CMD,
-                             Severity    := Severity.DEBUG,
-                             MessageCode := 0,
-                             MessageText := 'ARC Register [{1}} : Deleted CmdID <{2}> , CmdType <{3}> from ARC, because of Final-State was reached',
-                             Para1       :=  DINT_TO_STRING(_regIdx),
-                             Para2       :=  UINT_TO_STRING(Register[_regIdx].UniqueID),  
-                             Para3       :=  CMD_TYPE_TO_STRING(_cmdType));
-  
-                             
-      Register[_regIdx] := EMPTY_ARC_ENTRY;                           
+      // Check apply Cmd parameter update ?  
+      IF (( Register[_regIdx].Command[ACTIVE_CMD].State = BufferStateCmd.PROCESSED        ) AND
+          ( Register[_regIdx].Command[BUFFER_CMD].State = BufferStateCmd.UPDATE_AVAILABLE ))
+      THEN
+        Register[_regIdx].Command[ACTIVE_CMD] := Register[_regIdx].Command[BUFFER_CMD];
+        Register[_regIdx].Command[BUFFER_CMD] := EMPTY_CMD_ENTRY;
+    
+        // get command type from payload
+       _cmdType := CombineBytesToUint(HiByte := Register[_regIdx].Command[ACTIVE_CMD].Payload[0],
+                                      LoByte := Register[_regIdx].Command[ACTIVE_CMD].Payload[1]);
+    
+        // Create log entry
+        CreateLogMessagePara3 ( Timestamp   := SystemTime,
+                                MessageType := MessageType.CMD,
+                                Severity    := Severity.DEBUG,
+                                MessageCode := 0,
+                                MessageText := 'ARC Register [{1}] : Moved BUFFER_CMD to ACTIVE_CMD, CmdID <{2}> , CmdType <{3}>',
+                                Para1       :=  DINT_TO_STRING(_regIdx),
+                                Para2       :=  UINT_TO_STRING(Register[_regIdx].UniqueID),
+                                Para3       :=  CMD_TYPE_TO_STRING(_cmdType));
+    
+      END_IF
+      
+      (*
+      // Check Response received ? 
+      IF ( Register[_regIdx].Response[ACTIVE_CMD].State = BufferStateRsp.RECEIVED)
+      THEN
+        // update state
+        Register[_regIdx].Response[ACTIVE_CMD].State := BufferStateRsp.PROCESSED;
+        // callback CommandFB    
+        Register[_regIdx].pCommandFB^.CallBack(RspData := Register[_regIdx].Response[ACTIVE_CMD],TimeStamp := SystemTime);    
+      END_IF
+      *)
+      
+      // delete entries with State.IS_Final 
+      IF ( Register[_regIdx].State = ActiveCommandRegisterState.IS_FINAL )
+      THEN
+      
+        // get command type from payload
+       _cmdType := CombineBytesToUint(HiByte := Register[_regIdx].Command[ACTIVE_CMD].Payload[0],
+                                      LoByte := Register[_regIdx].Command[ACTIVE_CMD].Payload[1]);
+    
+        // Create log entry
+        CreateLogMessagePara3( Timestamp   := SystemTime,
+                               MessageType := MessageType.CMD,
+                               Severity    := Severity.DEBUG,
+                               MessageCode := 0,
+                               MessageText := 'ARC Register [{1}} : Deleted CmdID <{2}> , CmdType <{3}> from ARC, because of Final-State was reached',
+                               Para1       :=  DINT_TO_STRING(_regIdx),
+                               Para2       :=  UINT_TO_STRING(Register[_regIdx].UniqueID),  
+                               Para3       :=  CMD_TYPE_TO_STRING(_cmdType));
+    
+                               
+        Register[_regIdx] := EMPTY_ARC_ENTRY;                           
+      END_IF
     END_IF
-   
   END_FOR
 
 END_METHOD

@@ -27,11 +27,11 @@ END_VAR
 
   CASE Value 
   OF
-  
-    WorkAreaReactionMode.NO_REACTION : StrReplace('NO_REACTION ({0})','{0}' , USINT_TO_STRING(Value));
-    WorkAreaReactionMode.ABORT       : StrReplace('ABORT ({0})'      ,'{0}' , USINT_TO_STRING(Value));
-    WorkAreaReactionMode.INTERRUPT   : StrReplace('INTERRUPT ({0})'  ,'{0}' , USINT_TO_STRING(Value));
-  
+    WorkAreaReactionMode.NO_REACTION : WORK_AREA_REACTION_MODE_TO_STRING := StrReplace('NO_REACTION ({0})','{0}' , USINT_TO_STRING(Value));
+    WorkAreaReactionMode.ABORT       : WORK_AREA_REACTION_MODE_TO_STRING := StrReplace('ABORT ({0})'      ,'{0}' , USINT_TO_STRING(Value));
+    WorkAreaReactionMode.INTERRUPT   : WORK_AREA_REACTION_MODE_TO_STRING := StrReplace('INTERRUPT ({0})'  ,'{0}' , USINT_TO_STRING(Value));
+  ELSE
+    WORK_AREA_REACTION_MODE_TO_STRING := CONCAT('WORK_AREA_REACTION_MODE_TO_STRING Function: Error -> no parsing for value ', USINT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

@@ -53,9 +53,12 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
+  CheckFunctionSupported := TRUE;  // Function is mandatory 
+  RETURN;
+  
   CheckFunctionSupported := AxesGroup.InternalData.RobotData.RCSupportedFunctions.ReadRobotData;
   
-  IF ( NOT CheckFunctionSupported )
+  IF ( NOT CheckFunctionSupported ) 
   THEN
     // call base implementation for set error and create log entry
     SUPER^.CheckFunctionSupported(AxesGroup := AxesGroup);
@@ -227,6 +230,12 @@ END_VAR
              OutCmd.RCSupportedFunctions :=  BytesToRCSupportedFunctions(_response.RCSupportedFunctions);
              OutCmd.RobotID              :=                              _response.RobotID;  
              OutCmd.InterpreterCycleTime :=                              _response.InterpreterCycleTime;
+             
+             // must be always true, because this command is part of the interface initialization
+             OutCmd.RCSupportedFunctions.ExchangeConfiguration := TRUE;
+             OutCmd.RCSupportedFunctions.ReadRobotData         := TRUE;
+             OutCmd.RCSupportedFunctions.ReadMessages          := TRUE;
+                        
              // set timeout
              SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
              // inc step counter

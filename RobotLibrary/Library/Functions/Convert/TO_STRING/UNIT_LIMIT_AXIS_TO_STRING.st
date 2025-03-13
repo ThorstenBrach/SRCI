@@ -27,11 +27,11 @@ END_VAR
 
   CASE Value 
   OF
-  
-    UnitLimitAxis.PERCENTAGE  : StrReplace('PERCENTAGE ({0})'  ,'{0}' , USINT_TO_STRING(Value));
-    UnitLimitAxis.NEWTONMETER : StrReplace('NEWTONMETER ({0})' ,'{0}' , USINT_TO_STRING(Value));
-    UnitLimitAxis.MILLIAMPERE : StrReplace('MILLIAMPERE ({0})' ,'{0}' , USINT_TO_STRING(Value));
-  
+    UnitLimitAxis.PERCENTAGE  : UNIT_LIMIT_AXIS_TO_STRING := StrReplace('PERCENTAGE ({0})'  ,'{0}' , USINT_TO_STRING(Value));
+    UnitLimitAxis.NEWTONMETER : UNIT_LIMIT_AXIS_TO_STRING := StrReplace('NEWTONMETER ({0})' ,'{0}' , USINT_TO_STRING(Value));
+    UnitLimitAxis.MILLIAMPERE : UNIT_LIMIT_AXIS_TO_STRING := StrReplace('MILLIAMPERE ({0})' ,'{0}' , USINT_TO_STRING(Value));
+  ELSE
+    UNIT_LIMIT_AXIS_TO_STRING := CONCAT('UNIT_LIMIT_AXIS_TO_STRING Function: Error -> no parsing for value ', USINT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

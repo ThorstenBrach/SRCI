@@ -27,13 +27,13 @@ END_VAR
 
   CASE Value 
   OF
-  
-    ArmConfigShoulder.USE_CONFIG : StrReplace('Shoulder = USE_CONFIG ({0})','{0}' , INT_TO_STRING(Value));
-    ArmConfigShoulder.SAME       : StrReplace('Shoulder = SAME ({0})'      ,'{0}' , INT_TO_STRING(Value));
-    ArmConfigShoulder.FREE       : StrReplace('Shoulder = FREE ({0})'      ,'{0}' , INT_TO_STRING(Value));
-    ArmConfigShoulder.BACK       : StrReplace('Shoulder = BACK ({0})'      ,'{0}' , INT_TO_STRING(Value));
-    ArmConfigShoulder.FRONT      : StrReplace('Shoulder = FRONT ({0})'     ,'{0}' , INT_TO_STRING(Value));
-    
+    ArmConfigShoulder.USE_CONFIG : ARM_CONFIG_SHOULDER_TO_STRING := StrReplace('Shoulder = USE_CONFIG ({0})','{0}' , INT_TO_STRING(Value));
+    ArmConfigShoulder.SAME       : ARM_CONFIG_SHOULDER_TO_STRING := StrReplace('Shoulder = SAME ({0})'      ,'{0}' , INT_TO_STRING(Value));
+    ArmConfigShoulder.FREE       : ARM_CONFIG_SHOULDER_TO_STRING := StrReplace('Shoulder = FREE ({0})'      ,'{0}' , INT_TO_STRING(Value));
+    ArmConfigShoulder.BACK       : ARM_CONFIG_SHOULDER_TO_STRING := StrReplace('Shoulder = BACK ({0})'      ,'{0}' , INT_TO_STRING(Value));
+    ArmConfigShoulder.FRONT      : ARM_CONFIG_SHOULDER_TO_STRING := StrReplace('Shoulder = FRONT ({0})'     ,'{0}' , INT_TO_STRING(Value));
+  ELSE
+    ARM_CONFIG_SHOULDER_TO_STRING := CONCAT('ARM_CONFIG_SHOULDER_TO_STRING Function: Error -> no parsing for value ', INT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

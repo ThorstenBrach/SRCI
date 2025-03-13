@@ -27,10 +27,10 @@ END_VAR
 
   CASE Value 
   OF
-  
-    ResistanceForceMode.RESISTANCE_FORCE_TCP  : StrReplace('RESISTANCE_FORCE_TCP ({0})'  ,'{0}' , USINT_TO_STRING(Value));
-    ResistanceForceMode.RESISTANCE_FORCE_AXIS : StrReplace('RESISTANCE_FORCE_AXIS ({0})' ,'{0}' , USINT_TO_STRING(Value));
-  
+    ResistanceForceMode.RESISTANCE_FORCE_TCP  : RESISTANT_FORCE_MODE_TO_STRING := StrReplace('RESISTANCE_FORCE_TCP ({0})'  ,'{0}' , USINT_TO_STRING(Value));
+    ResistanceForceMode.RESISTANCE_FORCE_AXIS : RESISTANT_FORCE_MODE_TO_STRING := StrReplace('RESISTANCE_FORCE_AXIS ({0})' ,'{0}' , USINT_TO_STRING(Value));
+  ELSE
+    RESISTANT_FORCE_MODE_TO_STRING := CONCAT('RESISTANT_FORCE_MODE_TO_STRING Function: Error -> no parsing for value ', USINT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

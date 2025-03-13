@@ -27,12 +27,12 @@ END_VAR
 
   CASE Value 
   OF
-  
-    CircMode.BORDER            : StrReplace('BORDER ({0})'            ,'{0}' , SINT_TO_STRING(Value));
-    CircMode.CENTER            : StrReplace('CENTER ({0})'            ,'{0}' , SINT_TO_STRING(Value));
-    CircMode.CENTER_WITH_ANGLE : StrReplace('CENTER_WITH_ANGLE ({0})' ,'{0}' , SINT_TO_STRING(Value));
-    CircMode.RADIUS            : StrReplace('RADIUS ({0})'            ,'{0}' , SINT_TO_STRING(Value));
-  
+    CircMode.BORDER            : CIRC_MODE_TO_STRING := StrReplace('BORDER ({0})'            ,'{0}' , SINT_TO_STRING(Value));
+    CircMode.CENTER            : CIRC_MODE_TO_STRING := StrReplace('CENTER ({0})'            ,'{0}' , SINT_TO_STRING(Value));
+    CircMode.CENTER_WITH_ANGLE : CIRC_MODE_TO_STRING := StrReplace('CENTER_WITH_ANGLE ({0})' ,'{0}' , SINT_TO_STRING(Value));
+    CircMode.RADIUS            : CIRC_MODE_TO_STRING := StrReplace('RADIUS ({0})'            ,'{0}' , SINT_TO_STRING(Value));
+  ELSE
+    CIRC_MODE_TO_STRING := CONCAT('CIRC_MODE_TO_STRING Function: Error -> no parsing for value ', SINT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

@@ -314,7 +314,7 @@ END_VAR
   // add command.Enable
   CreateCommandPayload.AddBool(_command.Enable);
   // add command.Reserve 
-  CreateCommandPayload.AddByte(0); {warning 'ToDo: Not in Spec'}
+  CreateCommandPayload.AddByte(0); {warning 'ToDo: Not in SRCI Spec V1.3'}
   
   // add command.ToolNo
   CreateCommandPayload.AddUsint(_command.ToolNo);
@@ -323,7 +323,7 @@ END_VAR
   // add command.Mode
   CreateCommandPayload.AddUsint(_command.Mode);
   // add command.Reserve 
-  CreateCommandPayload.AddByte(0); {warning 'ToDo: Not in Spec'}
+  CreateCommandPayload.AddByte(0); {warning 'ToDo: Not in SRCI Spec V1.3'}
   
   // add command.IncrementalTranslation
   CreateCommandPayload.AddReal(_command.IncrementalTranslation);

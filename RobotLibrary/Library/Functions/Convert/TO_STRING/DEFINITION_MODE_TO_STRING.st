@@ -27,10 +27,10 @@ END_VAR
 
   CASE Value 
   OF
-  
-    DefinitionMode.CENTER : StrReplace('CENTER ({0})','{0}' , USINT_TO_STRING(Value));
-    DefinitionMode.FACE   : StrReplace('FACE ({0})'  ,'{0}' , USINT_TO_STRING(Value));
-  
+    DefinitionMode.CENTER : DEFINITION_MODE_TO_STRING := StrReplace('CENTER ({0})','{0}' , USINT_TO_STRING(Value));
+    DefinitionMode.FACE   : DEFINITION_MODE_TO_STRING := StrReplace('FACE ({0})'  ,'{0}' , USINT_TO_STRING(Value));
+  ELSE
+    DEFINITION_MODE_TO_STRING := CONCAT('DEFINITION_MODE_TO_STRING Function: Error -> no parsing for value ', USINT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

@@ -27,11 +27,11 @@ END_VAR
 
   CASE Value 
   OF
-  
-    LogonMode.PASSWORD_ONLY         : StrReplace('PASSWORD_ONLY ({0})'         ,'{0}' , SINT_TO_STRING(Value));
-    LogonMode.USERNAME_AND_PASSWORD : StrReplace('USERNAME_AND_PASSWORD ({0})' ,'{0}' , SINT_TO_STRING(Value));
-    LogonMode.LEVEL_ID_AND_PASSWORD : StrReplace('LEVEL_ID_AND_PASSWORD ({0})' ,'{0}' , SINT_TO_STRING(Value));
-  
+    LogonMode.PASSWORD_ONLY         : LOGON_MODE_TO_STRING := StrReplace('PASSWORD_ONLY ({0})'         ,'{0}' , SINT_TO_STRING(Value));
+    LogonMode.USERNAME_AND_PASSWORD : LOGON_MODE_TO_STRING := StrReplace('USERNAME_AND_PASSWORD ({0})' ,'{0}' , SINT_TO_STRING(Value));
+    LogonMode.LEVEL_ID_AND_PASSWORD : LOGON_MODE_TO_STRING := StrReplace('LEVEL_ID_AND_PASSWORD ({0})' ,'{0}' , SINT_TO_STRING(Value));
+  ELSE
+    LOGON_MODE_TO_STRING := CONCAT('LOGON_MODE_TO_STRING Function: Error -> no parsing for value ', SINT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

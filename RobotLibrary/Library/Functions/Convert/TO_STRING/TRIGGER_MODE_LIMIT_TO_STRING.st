@@ -27,13 +27,13 @@ END_VAR
 
   CASE Value 
   OF
-  
-    TriggerModeLimit.INVALID         : StrReplace('INVALID ({0})'         ,'{0}' , SINT_TO_STRING(Value));
-    TriggerModeLimit.JOINT_CURRENT   : StrReplace('JOINT_CURRENT ({0})'   ,'{0}' , SINT_TO_STRING(Value));
-    TriggerModeLimit.FORCE           : StrReplace('FORCE ({0})'           ,'{0}' , SINT_TO_STRING(Value));
-    TriggerModeLimit.FOLLOWING_ERROR : StrReplace('FOLLOWING_ERROR ({0})' ,'{0}' , SINT_TO_STRING(Value));
-    TriggerModeLimit.TEMPERATURE     : StrReplace('TEMPERATURE ({0})'     ,'{0}' , SINT_TO_STRING(Value));
-  
+    TriggerModeLimit.INVALID         : TRIGGER_MODE_LIMIT_TO_STRING := StrReplace('INVALID ({0})'         ,'{0}' , SINT_TO_STRING(Value));
+    TriggerModeLimit.JOINT_CURRENT   : TRIGGER_MODE_LIMIT_TO_STRING := StrReplace('JOINT_CURRENT ({0})'   ,'{0}' , SINT_TO_STRING(Value));
+    TriggerModeLimit.FORCE           : TRIGGER_MODE_LIMIT_TO_STRING := StrReplace('FORCE ({0})'           ,'{0}' , SINT_TO_STRING(Value));
+    TriggerModeLimit.FOLLOWING_ERROR : TRIGGER_MODE_LIMIT_TO_STRING := StrReplace('FOLLOWING_ERROR ({0})' ,'{0}' , SINT_TO_STRING(Value));
+    TriggerModeLimit.TEMPERATURE     : TRIGGER_MODE_LIMIT_TO_STRING := StrReplace('TEMPERATURE ({0})'     ,'{0}' , SINT_TO_STRING(Value));
+  ELSE
+    TRIGGER_MODE_LIMIT_TO_STRING := CONCAT('TRIGGER_MODE_LIMIT_TO_STRING Function: Error -> no parsing for value ', SINT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

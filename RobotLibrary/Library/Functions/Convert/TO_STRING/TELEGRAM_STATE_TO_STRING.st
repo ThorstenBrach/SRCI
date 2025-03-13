@@ -25,8 +25,8 @@ VAR_INPUT
   State : TelegramState;
 END_VAR
 
-  CASE State OF
-  
+  CASE State 
+  OF
     TelegramState.UNDEFINED                : TELEGRAM_STATE_TO_STRING := StrReplace('UNDEFINED ({0})'               ,'{0}', USINT_TO_STRING(State));
     TelegramState.ERROR_161                : TELEGRAM_STATE_TO_STRING := StrReplace('ERROR_161 ({0})'               ,'{0}', USINT_TO_STRING(State));
     TelegramState.ERROR_162                : TELEGRAM_STATE_TO_STRING := StrReplace('ERROR_162 ({0})'               ,'{0}', USINT_TO_STRING(State));
@@ -40,11 +40,12 @@ END_VAR
     TelegramState.ERROR_170                : TELEGRAM_STATE_TO_STRING := StrReplace('ERROR_170 ({0})'               ,'{0}', USINT_TO_STRING(State));
     TelegramState.ERROR_171                : TELEGRAM_STATE_TO_STRING := StrReplace('ERROR_171 ({0})'               ,'{0}', USINT_TO_STRING(State));
     TelegramState.ERROR_172                : TELEGRAM_STATE_TO_STRING := StrReplace('ERROR_172 ({0})'               ,'{0}', USINT_TO_STRING(State));
+    TelegramState.ERROR_173                : TELEGRAM_STATE_TO_STRING := StrReplace('ERROR_173 ({0})'               ,'{0}', USINT_TO_STRING(State));
     TelegramState.READY_TO_RESUME          : TELEGRAM_STATE_TO_STRING := StrReplace('READY_TO_RESUME ({0})'         ,'{0}', USINT_TO_STRING(State));
     TelegramState.READY_FOR_INITIALIZATION : TELEGRAM_STATE_TO_STRING := StrReplace('READY_FOR_INITIALIZATION ({0})','{0}', USINT_TO_STRING(State));
     TelegramState.INITIALIZED              : TELEGRAM_STATE_TO_STRING := StrReplace('INITIALIZED ({0})'             ,'{0}', USINT_TO_STRING(State));  
   ELSE
-    TELEGRAM_STATE_TO_STRING := CONCAT('TelegramStateToString-Function: Error -> no parsing for value ', USINT_TO_STRING(State));
+    TELEGRAM_STATE_TO_STRING := CONCAT('TELEGRAM_STATE_TO_STRING Function: Error -> no parsing for value ', USINT_TO_STRING(State));
   END_CASE
 
 END_FUNCTION

@@ -27,11 +27,11 @@ END_VAR
 
   CASE Value 
   OF
-  
-    SingularityAvoidanceMode.NO_CHANGE        : StrReplace('NO_CHANGE ({0})'        ,'{0}' , USINT_TO_STRING(Value));
-    SingularityAvoidanceMode.LOCK_J4          : StrReplace('LOCK_J4 ({0})'          ,'{0}' , USINT_TO_STRING(Value));
-    SingularityAvoidanceMode.TOOL_ORIENTATION : StrReplace('TOOL_ORIENTATION ({0})' ,'{0}' , USINT_TO_STRING(Value));
-  
+    SingularityAvoidanceMode.NO_CHANGE        : SINGULARITY_AVOIDANCE_MODE_TO_STRING := StrReplace('NO_CHANGE ({0})'        ,'{0}' , USINT_TO_STRING(Value));
+    SingularityAvoidanceMode.LOCK_J4          : SINGULARITY_AVOIDANCE_MODE_TO_STRING := StrReplace('LOCK_J4 ({0})'          ,'{0}' , USINT_TO_STRING(Value));
+    SingularityAvoidanceMode.TOOL_ORIENTATION : SINGULARITY_AVOIDANCE_MODE_TO_STRING := StrReplace('TOOL_ORIENTATION ({0})' ,'{0}' , USINT_TO_STRING(Value));
+  ELSE
+    SINGULARITY_AVOIDANCE_MODE_TO_STRING := CONCAT('SINGULARITY_AVOIDANCE_MODE_TO_STRING Function: Error -> no parsing for value ', USINT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

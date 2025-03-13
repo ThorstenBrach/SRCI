@@ -26,12 +26,12 @@ VAR_INPUT
 END_VAR
 
   CASE Value 
-  OF
-    
+  OF  
     JogMode.JOG_FRAME : JOG_MODE_TO_STRING := StrReplace('JOG_FRAME ({0})','{0}' , USINT_TO_STRING(Value));
     JogMode.JOG_TOOL  : JOG_MODE_TO_STRING := StrReplace('JOG_TOOL ({0})','{0}'  , USINT_TO_STRING(Value));
     JogMode.JOG_AXES  : JOG_MODE_TO_STRING := StrReplace('JOG_AXES ({0})','{0}'  , USINT_TO_STRING(Value));
-  
+  ELSE
+    JOG_MODE_TO_STRING := CONCAT('JOG_MODE_TO_STRING Function: Error -> no parsing for value ', USINT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

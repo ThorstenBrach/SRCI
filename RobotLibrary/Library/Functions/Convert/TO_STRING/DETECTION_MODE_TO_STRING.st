@@ -27,12 +27,12 @@ END_VAR
 
   CASE Value 
   OF
-  
-    DetectionMode.TORQUE             : StrReplace('TORQUE ({0})'             ,'{0}' , USINT_TO_STRING(Value));
-    DetectionMode.FORCE              : StrReplace('FORCE ({0})'              ,'{0}' , USINT_TO_STRING(Value));
-    DetectionMode.ELECTRICAL_CURRENT : StrReplace('ELECTRICAL_CURRENT ({0})' ,'{0}' , USINT_TO_STRING(Value));
-    DetectionMode.FOLLOWING_ERROR    : StrReplace('FOLLOWING_ERROR ({0})'    ,'{0}' , USINT_TO_STRING(Value));
-  
+    DetectionMode.TORQUE             : DETECTION_MODE_TO_STRING := StrReplace('TORQUE ({0})'             ,'{0}' , USINT_TO_STRING(Value));
+    DetectionMode.FORCE              : DETECTION_MODE_TO_STRING := StrReplace('FORCE ({0})'              ,'{0}' , USINT_TO_STRING(Value));
+    DetectionMode.ELECTRICAL_CURRENT : DETECTION_MODE_TO_STRING := StrReplace('ELECTRICAL_CURRENT ({0})' ,'{0}' , USINT_TO_STRING(Value));
+    DetectionMode.FOLLOWING_ERROR    : DETECTION_MODE_TO_STRING := StrReplace('FOLLOWING_ERROR ({0})'    ,'{0}' , USINT_TO_STRING(Value));
+  ELSE
+    DETECTION_MODE_TO_STRING := CONCAT('DETECTION_MODE_TO_STRING Function: Error -> no parsing for value ', USINT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

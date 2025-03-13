@@ -344,29 +344,32 @@ END_VAR
 // --------------------------
 // Datablock
 // --------------------------
-// Byte 04  : UINT  - ToolNo LW HB
-// Byte 05  :       - ToolNo LW LB
-// Byte 06  : UINT  - FrameNo LW HB
-// Byte 07  :       - FrameNo LW LB
-// Byte 08  : UINT  - VelocityRate LW HB
-// Byte 09  :       - VelocityRate LW LB
-// Byte 10  : UINT  - AccelerationRate LW HB
-// Byte 11  :       - AccelerationRate LW LB
-// Byte 12  : UINT  - DecelerationRate LW HB
-// Byte 13  :       - DecelerationRate LW LB
-// Byte 14  : UINT  - JerkRate LW HB
-// Byte 15  :       - JerkRate LW LB
-// Byte 16  : REAL  - Limit HW HB
-// Byte 17  :       - Limit HW LB
-// Byte 18  :       - Limit LW HB
-// Byte 19  :       - Limit LW LB
-// Byte 20  : BOOL  - ReturnMode
-// Byte 21  : BOOL  - TrajectoryMode
-// Byte 22  : UINT  - Time LW HB
-// Byte 23  : UINT  - Time LW LB
-
+// Byte 04  : UINT  - VelocityRate LW HB
+// Byte 05  :       - VelocityRate LW LB
+// Byte 06  : UINT  - AccelerationRate LW HB
+// Byte 07  :       - AccelerationRate LW LB
+// Byte 08  : UINT  - DecelerationRate LW HB
+// Byte 09  :       - DecelerationRate LW LB
+// Byte 10  : UINT  - JerkRate LW HB
+// Byte 11  :       - JerkRate LW LB
+// Byte 12  : REAL  - Limit HW HB
+// Byte 13  :       - Limit HW LB
+// Byte 14  :       - Limit LW HB
+// Byte 15  :       - Limit LW LB
+// Byte 16  : USINT - ToolNo 
+// Byte 17  : USINT - FrameNo 
+// Byte 18  : UINT  - Time LW HB
+// Byte 19  : UINT  - Time LW LB
+// Byte 20  : BYTE  - BIT 00 : ReturnMode
+//                    BIT 01 : TrajectoryMode
+//                    BIT 02 : Enable
+//                    BIT 03 : AllowDifferences
+// Byte 21  : BYTE  - PaddingByte
 
 // --------------------------
+VAR
+ _tmpByte : BYTE;
+END_VAR
 
   // set command parameter 
   _command.CmdTyp            :=  CmdType.ReturnToPrimary;
@@ -383,6 +386,7 @@ END_VAR
   _command.ReturnMode        :=(_parCmd.ReturnMode = ReturnMode.END_POSITION);
   _command.TrajectoryMode    := _parCmd.TrajectoryMode = TrajectoryMode.PTP_MOVEMENT;
   _command.MoveTime          :=  TIME_TO_UINT(_parCmd.MoveTime);
+  _command.Enable            :=  Enable;
   
   
   // copy command data to header
@@ -390,10 +394,8 @@ END_VAR
   // call base implementation to copy header to payload buffer
   CreateCommandPayload := SUPER^.CreateCommandPayload(AxesGroup := AxesGroup);
   
-  // add command.ToolNo
-  CreateCommandPayload.AddUint(_command.ToolNo);
-  // add command.FrameNo
-  CreateCommandPayload.AddUint(_command.FrameNo);
+  {warning 'ToDo: Changes in Spec V1.5, which are different to Spec V1.3'}
+  
   // add command.VelocityRate
   CreateCommandPayload.AddUint(_command.VelocityRate);
   // add command.AccelerationRate
@@ -404,12 +406,20 @@ END_VAR
   CreateCommandPayload.AddUint(_command.JerkRate);
   // add command.DistanceLimit
   CreateCommandPayload.AddReal(_command.DistanceLimit);
-  // add command.ReturnMode
-  CreateCommandPayload.AddBool(_command.ReturnMode);
-  // add command.TrajectoryMode
-  CreateCommandPayload.AddBool(_command.TrajectoryMode);
+  // add command.ToolNo
+  CreateCommandPayload.AddUsint(_command.ToolNo);
+  // add command.FrameNo
+  CreateCommandPayload.AddUsint(_command.FrameNo);
   // add command.MoveTime
   CreateCommandPayload.AddUint(_command.MoveTime);
+  
+  _tmpByte.0 := _command.ReturnMode;
+  _tmpByte.1 := _command.TrajectoryMode;
+  _tmpByte.2 := _command.Enable;
+  _tmpByte.3 := _command.AllowDifferences;
+  
+  // add command.ReturnMode
+  CreateCommandPayload.AddByte(_tmpByte);
   
   // Create logging
   CreateCommandPayloadLog(AxesGroup := AxesGroup);
@@ -651,8 +661,8 @@ END_VAR
 // Byte 07 :       - RemainingDistance HW LB
 // Byte 08 :       - RemainingDistance LW HB
 // Byte 09 :       - RemainingDistance LW LB
-// Byte 10 : UINT  - PrimaryPosToolNo LW HB
-// Byte 11 :       - PrimaryPosToolNo LW LB
+// Byte 10 : USINT - PrimaryPosToolNo 
+// Byte 11 : USINT - PrimaryPosToolNo 
 // --------------------------
 
   // call base implementation to parse the header from payload buffer
@@ -669,9 +679,9 @@ END_VAR
   // Get Response.RemainingDistance
   _response.RemainingDistance    := ResponseData.GetReal();
   // Get Response.PrimaryPosToolNo
-  _response.PrimaryPosToolNo     := ResponseData.GetUint();
+  _response.PrimaryPosToolNo     := ResponseData.GetUsint();
   // Get Response.PrimaryPosFrameNo
-  _response.PrimaryPosFrameNo    := ResponseData.GetUint();
+  _response.PrimaryPosFrameNo    := ResponseData.GetUsint();
   
   // Create logging
   ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);

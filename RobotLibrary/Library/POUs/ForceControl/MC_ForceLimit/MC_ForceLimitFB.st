@@ -160,7 +160,7 @@ END_VAR
                               MessageType := MessageType.CMD,
                               Severity    := Severity.ERROR,
                               MessageCode := ErrorID,
-                              MessageText := 'Invalid Parameter ParCmd.SensorValue[_idx] = {1}',
+                              MessageText := 'Invalid Parameter ParCmd.SensorValue[{2}] = {1}',
                               Para1       := VALID_REAL_TO_STRING(ParCmd.SensorValue[_idx]),
                               Para2       := DINT_TO_STRING(_idx));
       EXIT;                            
@@ -222,7 +222,7 @@ END_VAR
                               MessageType := MessageType.CMD,
                               Severity    := Severity.ERROR,
                               MessageCode := ErrorID,
-                              MessageText := 'Invalid Parameter ParCmd.ForceLimit[_idx] = {1}',
+                              MessageText := 'Invalid Parameter ParCmd.ForceLimit[{2}] = {1}',
                               Para1       := VALID_REAL_TO_STRING(ParCmd.ForceLimit[_idx]),
                               Para2       := DINT_TO_STRING(_idx));
       EXIT;                            
@@ -265,7 +265,7 @@ END_VAR
                               MessageType := MessageType.CMD,
                               Severity    := Severity.ERROR,
                               MessageCode := ErrorID,
-                              MessageText := 'Invalid Parameter ParCmd.SensorFrame[_idx] = {1}',
+                              MessageText := 'Invalid Parameter ParCmd.SensorFrame[{2}] = {1}',
                               Para1       := VALID_REAL_TO_STRING(ParCmd.SensorFrame[_idx]),
                               Para2       := DINT_TO_STRING(_idx));
       EXIT;                            

@@ -27,10 +27,10 @@ END_VAR
 
   CASE Value 
   OF
-  
-    ReferenceType.TOOL  : StrReplace('TOOL ({0})'  ,'{0}' , USINT_TO_STRING(Value));
-    ReferenceType.FRAME : StrReplace('FRAME ({0})' ,'{0}' , USINT_TO_STRING(Value));
-  
+    ReferenceType.TOOL  : REFERENCE_TYPE_TO_STRING := StrReplace('TOOL ({0})'  ,'{0}' , USINT_TO_STRING(Value));
+    ReferenceType.FRAME : REFERENCE_TYPE_TO_STRING := StrReplace('FRAME ({0})' ,'{0}' , USINT_TO_STRING(Value));
+  ELSE
+    REFERENCE_TYPE_TO_STRING := CONCAT('REFERENCE_TYPE_TO_STRING Function: Error -> no parsing for value ', USINT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

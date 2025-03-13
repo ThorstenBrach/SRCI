@@ -27,12 +27,12 @@ END_VAR
 
   CASE Value 
   OF
-  
-    LoadMeasurementMode.ONE_POSITION         : StrReplace('ONE_POSITION ({0})'        ,'{0}' , USINT_TO_STRING(Value));
-    LoadMeasurementMode.CONFIGURATION_ANGLE  : StrReplace('CONFIGURATION_ANGLE ({0})' ,'{0}' , USINT_TO_STRING(Value));
-    LoadMeasurementMode.AREA                 : StrReplace('AREA ({0})'                ,'{0}' , USINT_TO_STRING(Value));
-    LoadMeasurementMode.TWO_POSITIONS        : StrReplace('TWO_POSITIONS ({0})'       ,'{0}' , USINT_TO_STRING(Value));
-  
+    LoadMeasurementMode.ONE_POSITION         : LOAD_MEASUREMENT_MODE_TO_STRING := StrReplace('ONE_POSITION ({0})'        ,'{0}' , USINT_TO_STRING(Value));
+    LoadMeasurementMode.CONFIGURATION_ANGLE  : LOAD_MEASUREMENT_MODE_TO_STRING := StrReplace('CONFIGURATION_ANGLE ({0})' ,'{0}' , USINT_TO_STRING(Value));
+    LoadMeasurementMode.AREA                 : LOAD_MEASUREMENT_MODE_TO_STRING := StrReplace('AREA ({0})'                ,'{0}' , USINT_TO_STRING(Value));
+    LoadMeasurementMode.TWO_POSITIONS        : LOAD_MEASUREMENT_MODE_TO_STRING := StrReplace('TWO_POSITIONS ({0})'       ,'{0}' , USINT_TO_STRING(Value));
+  ELSE
+    LOAD_MEASUREMENT_MODE_TO_STRING := CONCAT('LOAD_MEASUREMENT_MODE_TO_STRING Function: Error -> no parsing for value ', USINT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

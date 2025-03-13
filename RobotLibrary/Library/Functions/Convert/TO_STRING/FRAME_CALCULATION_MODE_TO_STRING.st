@@ -27,11 +27,11 @@ END_VAR
 
   CASE Value 
   OF
-  
-    FrameCalculationMode.THREE_POINT_METHOD : StrReplace('THREE_POINT_METHOD ({0})','{0}' , SINT_TO_STRING(Value));
-    FrameCalculationMode.FOUR_POINT_METHOD  : StrReplace('FOUR_POINT_METHOD ({0})' ,'{0}' , SINT_TO_STRING(Value));
-    FrameCalculationMode.ONE_POINT_METHOD   : StrReplace('ONE_POINT_METHOD ({0})'  ,'{0}' , SINT_TO_STRING(Value));
-  
+    FrameCalculationMode.THREE_POINT_METHOD : FRAME_CALCULATION_MODE_TO_STRING := StrReplace('THREE_POINT_METHOD ({0})','{0}' , SINT_TO_STRING(Value));
+    FrameCalculationMode.FOUR_POINT_METHOD  : FRAME_CALCULATION_MODE_TO_STRING := StrReplace('FOUR_POINT_METHOD ({0})' ,'{0}' , SINT_TO_STRING(Value));
+    FrameCalculationMode.ONE_POINT_METHOD   : FRAME_CALCULATION_MODE_TO_STRING := StrReplace('ONE_POINT_METHOD ({0})'  ,'{0}' , SINT_TO_STRING(Value));
+  ELSE
+    FRAME_CALCULATION_MODE_TO_STRING := CONCAT('FRAME_CALCULATION_MODE_TO_STRING Function: Error -> no parsing for value ', SINT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

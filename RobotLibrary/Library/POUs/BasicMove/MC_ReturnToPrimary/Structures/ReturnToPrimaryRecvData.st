@@ -33,11 +33,11 @@ STRUCT
   /// Tool index of target position of ReturnToPrimary
   /// • 0: Flange
   /// • 1..254: Tool frames
-  PrimaryPosToolNo   : UINT;
+  PrimaryPosToolNo   : USINT;
   /// Frame index of target position of ReturnToPrimary
   /// • 0: WCS
   ///• 1..254: User frames
-  PrimaryPosFrameNo  : UINT;
+  PrimaryPosFrameNo  : USINT;
 END_STRUCT
 END_TYPE
 

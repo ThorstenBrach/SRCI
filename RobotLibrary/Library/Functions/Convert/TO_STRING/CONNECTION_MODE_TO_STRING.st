@@ -27,10 +27,10 @@ END_VAR
 
   CASE Value 
   OF
-  
-    ConnectionMode.RC_CONNECTED  : StrReplace('RC_CONNECTED ({0})'  ,'{0}' , SINT_TO_STRING(Value));
-    ConnectionMode.PLC_CONNECTED : StrReplace('PLC_CONNECTED ({0})' ,'{0}' , SINT_TO_STRING(Value));
-  
+    ConnectionMode.RC_CONNECTED  : CONNECTION_MODE_TO_STRING := StrReplace('RC_CONNECTED ({0})'  ,'{0}' , SINT_TO_STRING(Value));
+    ConnectionMode.PLC_CONNECTED : CONNECTION_MODE_TO_STRING := StrReplace('PLC_CONNECTED ({0})' ,'{0}' , SINT_TO_STRING(Value));
+  ELSE
+    CONNECTION_MODE_TO_STRING := CONCAT('CONNECTION_MODE_TO_STRING Function: Error -> no parsing for value ', SINT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

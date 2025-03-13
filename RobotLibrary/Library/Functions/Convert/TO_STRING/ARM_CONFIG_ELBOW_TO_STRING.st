@@ -27,13 +27,13 @@ END_VAR
 
   CASE Value 
   OF
-  
-    ArmConfigElbow.USE_CONFIG : StrReplace('Elbow = USE_CONFIG ({0})','{0}' , INT_TO_STRING(Value));
-    ArmConfigElbow.SAME       : StrReplace('Elbow = SAME ({0})'      ,'{0}' , INT_TO_STRING(Value));
-    ArmConfigElbow.FREE       : StrReplace('Elbow = FREE ({0})'      ,'{0}' , INT_TO_STRING(Value));
-    ArmConfigElbow.DOWN       : StrReplace('Elbow = DOWN ({0})'      ,'{0}' , INT_TO_STRING(Value));
-    ArmConfigElbow.UP         : StrReplace('Elbow = UP ({0})'        ,'{0}' , INT_TO_STRING(Value));
-    
+    ArmConfigElbow.USE_CONFIG : ARM_CONFIG_ELBOW_TO_STRING := StrReplace('Elbow = USE_CONFIG ({0})','{0}' , INT_TO_STRING(Value));
+    ArmConfigElbow.SAME       : ARM_CONFIG_ELBOW_TO_STRING := StrReplace('Elbow = SAME ({0})'      ,'{0}' , INT_TO_STRING(Value));
+    ArmConfigElbow.FREE       : ARM_CONFIG_ELBOW_TO_STRING := StrReplace('Elbow = FREE ({0})'      ,'{0}' , INT_TO_STRING(Value));
+    ArmConfigElbow.DOWN       : ARM_CONFIG_ELBOW_TO_STRING := StrReplace('Elbow = DOWN ({0})'      ,'{0}' , INT_TO_STRING(Value));
+    ArmConfigElbow.UP         : ARM_CONFIG_ELBOW_TO_STRING := StrReplace('Elbow = UP ({0})'        ,'{0}' , INT_TO_STRING(Value));
+  ELSE
+    ARM_CONFIG_ELBOW_TO_STRING := CONCAT('ARM_CONFIG_ELBOW_TO_STRING Function: Error -> no parsing for value ', INT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

@@ -27,13 +27,13 @@ END_VAR
 
   CASE Value 
   OF
-  
-    ArmConfigWrist.USE_CONFIG : StrReplace('Wrist = USE_CONFIG ({0})','{0}' , INT_TO_STRING(Value));
-    ArmConfigWrist.SAME       : StrReplace('Wrist = SAME ({0})'      ,'{0}' , INT_TO_STRING(Value));
-    ArmConfigWrist.FREE       : StrReplace('Wrist = FREE ({0})'      ,'{0}' , INT_TO_STRING(Value));
-    ArmConfigWrist.FLIP       : StrReplace('Wrist = FLIP ({0})'      ,'{0}' , INT_TO_STRING(Value));
-    ArmConfigWrist.NON_FLIP   : StrReplace('Wrist = NON_FLIP ({0})'  ,'{0}' , INT_TO_STRING(Value));
-  
+    ArmConfigWrist.USE_CONFIG : ARM_CONFIG_WRIST_TO_STRING := StrReplace('Wrist = USE_CONFIG ({0})','{0}' , INT_TO_STRING(Value));
+    ArmConfigWrist.SAME       : ARM_CONFIG_WRIST_TO_STRING := StrReplace('Wrist = SAME ({0})'      ,'{0}' , INT_TO_STRING(Value));
+    ArmConfigWrist.FREE       : ARM_CONFIG_WRIST_TO_STRING := StrReplace('Wrist = FREE ({0})'      ,'{0}' , INT_TO_STRING(Value));
+    ArmConfigWrist.FLIP       : ARM_CONFIG_WRIST_TO_STRING := StrReplace('Wrist = FLIP ({0})'      ,'{0}' , INT_TO_STRING(Value));
+    ArmConfigWrist.NON_FLIP   : ARM_CONFIG_WRIST_TO_STRING := StrReplace('Wrist = NON_FLIP ({0})'  ,'{0}' , INT_TO_STRING(Value));
+  ELSE
+    ARM_CONFIG_WRIST_TO_STRING := CONCAT('ARM_CONFIG_WRIST_TO_STRING Function: Error -> no parsing for value ', INT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

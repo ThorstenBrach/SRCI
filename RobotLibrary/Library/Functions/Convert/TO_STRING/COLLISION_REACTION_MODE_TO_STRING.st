@@ -27,10 +27,10 @@ END_VAR
 
   CASE Value 
   OF
-  
-    CollisionReactionMode.REVERSED_MOVEMENT : StrReplace('REVERSED_MOVEMENT ({0})','{0}' , USINT_TO_STRING(Value));
-    CollisionReactionMode.STANDING_STILL    : StrReplace('STANDING_STILL ({0})'   ,'{0}' , USINT_TO_STRING(Value));
-  
+    CollisionReactionMode.REVERSED_MOVEMENT : COLLISION_REACTION_MODE_TO_STRING := StrReplace('REVERSED_MOVEMENT ({0})','{0}' , USINT_TO_STRING(Value));
+    CollisionReactionMode.STANDING_STILL    : COLLISION_REACTION_MODE_TO_STRING := StrReplace('STANDING_STILL ({0})'   ,'{0}' , USINT_TO_STRING(Value));
+  ELSE
+    COLLISION_REACTION_MODE_TO_STRING := CONCAT('COLLISION_REACTION_MODE_TO_STRING Function: Error -> no parsing for value ', USINT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

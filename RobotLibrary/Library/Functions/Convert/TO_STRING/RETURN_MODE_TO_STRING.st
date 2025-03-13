@@ -27,10 +27,10 @@ END_VAR
 
   CASE Value 
   OF
-  
-    ReturnMode.INTERRUPT_POSITION : StrReplace('INTERRUPT_POSITION ({0})','{0}' , USINT_TO_STRING(Value));
-    ReturnMode.END_POSITION       : StrReplace('END_POSITION ({0})'      ,'{0}' , USINT_TO_STRING(Value));
-  
+    ReturnMode.INTERRUPT_POSITION : RETURN_MODE_TO_STRING := StrReplace('INTERRUPT_POSITION ({0})','{0}' , USINT_TO_STRING(Value));
+    ReturnMode.END_POSITION       : RETURN_MODE_TO_STRING := StrReplace('END_POSITION ({0})'      ,'{0}' , USINT_TO_STRING(Value));
+  ELSE
+    RETURN_MODE_TO_STRING := CONCAT('RETURN_MODE_TO_STRING Function: Error -> no parsing for value ', USINT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

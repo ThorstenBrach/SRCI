@@ -22,7 +22,7 @@
 // -------------------------------------------------------------------------
 VAR_GLOBAL CONSTANT
   /// Maximal amount of input data
-  ROBOT_IN_DATA_MAX                   : UINT := 255;
+  ROBOT_IN_DATA_MAX                   : UINT := 255; 
   /// Maximal amount of output data
   ROBOT_OUT_DATA_MAX                  : UINT := 255;
   /// Maximal amount of tools

@@ -27,12 +27,12 @@ END_VAR
 
   CASE Value 
   OF
-  
-    SyncInMode.IN_SYNC_IN_ZONE : StrReplace('IN_SYNC_IN_ZONE ({0})','{0}' , USINT_TO_STRING(Value));
-    SyncInMode.AFTER_DISTANCE  : StrReplace('AFTER_DISTANCE ({0})' ,'{0}' , USINT_TO_STRING(Value));
-    SyncInMode.AFTER_TIME      : StrReplace('AFTER_TIME ({0})'     ,'{0}' , USINT_TO_STRING(Value));
-    SyncInMode.IMMEDIATELY     : StrReplace('IMMEDIATELY ({0})'    ,'{0}' , USINT_TO_STRING(Value));
-  
+    SyncInMode.IN_SYNC_IN_ZONE : SYNC_IN_MODE_TO_STRING := StrReplace('IN_SYNC_IN_ZONE ({0})','{0}' , USINT_TO_STRING(Value));
+    SyncInMode.AFTER_DISTANCE  : SYNC_IN_MODE_TO_STRING := StrReplace('AFTER_DISTANCE ({0})' ,'{0}' , USINT_TO_STRING(Value));
+    SyncInMode.AFTER_TIME      : SYNC_IN_MODE_TO_STRING := StrReplace('AFTER_TIME ({0})'     ,'{0}' , USINT_TO_STRING(Value));
+    SyncInMode.IMMEDIATELY     : SYNC_IN_MODE_TO_STRING := StrReplace('IMMEDIATELY ({0})'    ,'{0}' , USINT_TO_STRING(Value));
+  ELSE
+    SYNC_IN_MODE_TO_STRING := CONCAT('SYNC_IN_MODE_TO_STRING Function: Error -> no parsing for value ', USINT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

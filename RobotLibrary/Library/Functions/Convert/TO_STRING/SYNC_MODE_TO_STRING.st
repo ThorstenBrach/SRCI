@@ -27,12 +27,12 @@ END_VAR
 
   CASE Value 
   OF
-  
-    SyncMode.NO_SYNCHRONIZATION : StrReplace('NO_SYNCHRONIZATION ({0})','{0}' , USINT_TO_STRING(Value));
-    SyncMode.CLIENT_TO_SERVER   : StrReplace('CLIENT_TO_SERVER ({0})'  ,'{0}' , USINT_TO_STRING(Value));
-    SyncMode.SERVER_TO_CLIENT   : StrReplace('SERVER_TO_CLIENT ({0})'  ,'{0}' , USINT_TO_STRING(Value));
-    SyncMode.AUTOMATIC          : StrReplace('AUTOMATIC ({0})'         ,'{0}' , USINT_TO_STRING(Value));
-  
+    SyncMode.NO_SYNCHRONIZATION : SYNC_MODE_TO_STRING := StrReplace('NO_SYNCHRONIZATION ({0})','{0}' , USINT_TO_STRING(Value));
+    SyncMode.CLIENT_TO_SERVER   : SYNC_MODE_TO_STRING := StrReplace('CLIENT_TO_SERVER ({0})'  ,'{0}' , USINT_TO_STRING(Value));
+    SyncMode.SERVER_TO_CLIENT   : SYNC_MODE_TO_STRING := StrReplace('SERVER_TO_CLIENT ({0})'  ,'{0}' , USINT_TO_STRING(Value));
+    SyncMode.AUTOMATIC          : SYNC_MODE_TO_STRING := StrReplace('AUTOMATIC ({0})'         ,'{0}' , USINT_TO_STRING(Value));
+  ELSE
+    SYNC_MODE_TO_STRING := CONCAT('SYNC_MODE_TO_STRING Function: Error -> no parsing for value ', USINT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION

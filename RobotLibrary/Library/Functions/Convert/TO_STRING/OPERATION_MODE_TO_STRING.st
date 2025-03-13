@@ -27,14 +27,14 @@ END_VAR
 
   CASE Value 
   OF
-  
-    OperationMode.T1_LOCAL : StrReplace('T1_LOCAL ({0})' ,'{0}' , USINT_TO_STRING(Value));
-    OperationMode.T2_LOCAL : StrReplace('T2_LOCAL ({0})' ,'{0}' , USINT_TO_STRING(Value));
-    OperationMode.AUTO     : StrReplace('AUTO ({0})'     ,'{0}' , USINT_TO_STRING(Value));
-    OperationMode.AUTO_EXT : StrReplace('AUTO_EXT ({0})' ,'{0}' , USINT_TO_STRING(Value));
-    OperationMode.T1_EXT   : StrReplace('T1_EXT ({0})'   ,'{0}' , USINT_TO_STRING(Value));
-    OperationMode.T2_EXT   : StrReplace('T2_EXT ({0})'   ,'{0}' , USINT_TO_STRING(Value));
-  
+    OperationMode.T1_LOCAL : OPERATION_MODE_TO_STRING := StrReplace('T1_LOCAL ({0})' ,'{0}' , USINT_TO_STRING(Value));
+    OperationMode.T2_LOCAL : OPERATION_MODE_TO_STRING := StrReplace('T2_LOCAL ({0})' ,'{0}' , USINT_TO_STRING(Value));
+    OperationMode.AUTO     : OPERATION_MODE_TO_STRING := StrReplace('AUTO ({0})'     ,'{0}' , USINT_TO_STRING(Value));
+    OperationMode.AUTO_EXT : OPERATION_MODE_TO_STRING := StrReplace('AUTO_EXT ({0})' ,'{0}' , USINT_TO_STRING(Value));
+    OperationMode.T1_EXT   : OPERATION_MODE_TO_STRING := StrReplace('T1_EXT ({0})'   ,'{0}' , USINT_TO_STRING(Value));
+    OperationMode.T2_EXT   : OPERATION_MODE_TO_STRING := StrReplace('T2_EXT ({0})'   ,'{0}' , USINT_TO_STRING(Value));
+  ELSE
+    OPERATION_MODE_TO_STRING := CONCAT('OPERATION_MODE_TO_STRING Function: Error -> no parsing for value ', USINT_TO_STRING(Value));
   END_CASE
 
 END_FUNCTION
