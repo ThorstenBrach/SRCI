@@ -23,7 +23,7 @@ FUNCTION_BLOCK RobotLibraryRecvDataFB
 // -------------------------------------------------------------------------
 VAR_INPUT
   /// Payload
-  Payload    : ARRAY [0..RobotLibraryParameter.TELEGRAM_PAYLOAD_MAX] OF BYTE;
+  Payload    : ARRAY [0..RobotLibraryParameter.ROBOT_IN_DATA_MAX] OF BYTE;
   /// Payload length
   PayloadLen : UDINT;
   /// Payload pointer

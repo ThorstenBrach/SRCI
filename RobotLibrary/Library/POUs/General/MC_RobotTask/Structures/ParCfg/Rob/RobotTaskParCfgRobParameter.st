@@ -45,6 +45,8 @@ STRUCT
   SyncReaction               : SyncReaction;
   /// Enable datas to synchronize
   DataEnableSync             : DataEnableSync;
+  /// Defines up to which level of severity messages will be transmitted to the PLC’s message buffer
+  MessageLevel               : MessageLevel := MessageLevelEnum.WARNING;
 END_STRUCT
 END_TYPE
 

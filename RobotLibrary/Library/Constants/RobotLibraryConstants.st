@@ -44,14 +44,13 @@ VAR_GLOBAL CONSTANT
   /// Bit 0-4 : Minor version = Features        (0..31)
   /// Bit 5-7 : Major version = Breaking change (0..07)
   SRCIVersion            : VersionStruct := ( MajorVersion := 1, MinorVersion := 3, PatchVersion := 0);
-
+  /// Version of the PLC library
+  PLCLibraryVersion      : VersionStruct := ( MajorVersion := 0, MinorVersion := 0, PatchVersion := 39);
 
   /// Minimal axes group ID
   AXES_GROUP_ID_MIN    : BYTE := 0;  
   /// Maximal axes groups ID
   AXES_GROUP_ID_MAX    : BYTE := 15;  
-
-
 
   /// OK = 0
   OK                   : DINT := 0;
@@ -61,16 +60,12 @@ VAR_GLOBAL CONSTANT
   XNULL                : DWORD := 0;
   /// Null pointer
   NULL_POINTER         : POINTER TO BYTE := 0;
-  
   /// Real conversion factor ( REAL * 100 -> TO_INT )
   REAL_CONVERSION_FACTOR  : REAL := 100;
-
-
   /// Active command
   ACTIVE_CMD           : UDINT := 1;
   /// Buffered command
   BUFFER_CMD           : UDINT := 2;
-  
   /// Maximal length of additional text 
   MAX_ADD_TEXT_LENGTH  : DINT := 40; 
 END_VAR

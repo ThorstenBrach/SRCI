@@ -46,16 +46,6 @@ STRUCT
   Turns_E1             : BYTE;
   /// Position of first external axis
   E1                   : REAL;  
-  /// Position of second external axis
-  E2                   : REAL;
-  /// Position of third external axis
-  E3                   : REAL;
-  /// Position of fourth external axis
-  E4                   : REAL;
-  /// Position of fifth external axis
-  E5                   : REAL;
-  /// Position of sixth external axis
-  E6                   : REAL;      
   /// Tool Number
   ToolNo               : USINT;
   /// Frane Number

@@ -1,5 +1,11 @@
 [
   {
+    "Name": "Tc2_Standard",
+    "Version": "*",
+    "DistributorName": "Beckhoff Automation GmbH",
+    "Namespace": null
+  },
+  {
     "Name": "Tc2_System",
     "Version": "*",
     "DistributorName": "Beckhoff Automation GmbH",

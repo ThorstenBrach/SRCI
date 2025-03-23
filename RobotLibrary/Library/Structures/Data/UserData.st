@@ -39,19 +39,19 @@ STRUCT
   /// Set TRUE to define two sequences in one Telegram.
   ActivateTwoSequences           : BOOL;
   /// Define direction of synchronization for tool data according to Table 6-4
-  SyncModeTool                   : SINT;
+  SyncModeTool                   : SyncMode;
   /// Define direction of synchronization for frame data according to Table 6-4  
-  SyncModeFrame                  : SINT;
+  SyncModeFrame                  : SyncMode;
   /// Define direction of synchronization for load data according to Table 6-4
-  SyncModeLoad                   : SINT;
+  SyncModeLoad                   : SyncMode;
   /// Define direction of synchronization for work area data according to Table 6-4
-  SyncModeWorkAreas              : SINT;
+  SyncModeWorkAreas              : SyncMode;
   /// Define direction of synchronization for software limits according to Table 6-4
-  SyncModeSWLimits               : SINT;
+  SyncModeSWLimits               : SyncMode;
   /// Define direction of synchronization for default dynamics according to Table 6-4
-  SyncModeDefaultDynamics        : SINT;
+  SyncModeDefaultDynamics        : SyncMode;
   /// Define direction of synchronization for reference dynamics according to Table 6-4
-  SyncModeReferenceDynamics      : SINT;
+  SyncModeReferenceDynamics      : SyncMode;
   /// Defines waiting time [ms] of RC between receiving a first move command when motion queue is empty and starting the first movement. See also chapter 5.6.8.
   DelayTime                      : UINT; 
   /// Define number of points required to calculate the blending. See also chapter 5.6.8
@@ -74,7 +74,7 @@ STRUCT
   /// • <10 ms: Invalid
   /// • 50 ms: default
   /// See also chapter 5.6.6.2.
-  LifeSignTimeOut                : UINT;
+  LifeSignTimeOut                : TIME;
   /// Specifies system reaction in case inconsistency of synchronization data is detected according to Table 6-81. For more information refer to chapter 5.6.7.2
   SyncReaction                   : USINT;
   /// Defines a delay time [ms] between detecting an inconsistency of configuration data between server and client an executing the defined SyncReaction.
@@ -102,13 +102,13 @@ STRUCT
   /// Version of SRCI specification on which server implementation is based in format (X.X.X)  
   RCSRCIVersion                  : VersionStruct;
   /// TRUE  = Axis used in Robot, FALSE = Axis NOT used. See Table 6-13 for bit assignment.
-  AxisJointUsed                  : BYTE;
+  AxisJointUsed                  : AxisJointUsed;
   /// TRUE = Axis used by Robot, FALSE = Axis NOT used. See Table 6-13 for bit assignment.
-  AxisExternalUsed               : BYTE;
+  AxisExternalUsed               : AxisExternalUsed;
   /// TRUE = mm, FALSE = °. See Table 6-13 for bit assignment.
-  AxisJointUnit                  : BYTE;
+  AxisJointUnit                  : AxisJointUnit;
   /// TRUE = mm, FALSE = °. See Table 6-13 for bit assignment.
-  AxisExternalUnit               : BYTE;
+  AxisExternalUnit               : AxisExternalUnit;
   /// Interface is initialized and ready to process commands.
   Initialized                    : BOOL;
   /// All synchronization-related configuration data between client and server is synchronized.
@@ -152,7 +152,7 @@ STRUCT
   /// TRUE, when robot is currently blending between to move commands. Can only be TRUE in sequence state "Executing". Default: FALSE
   IsBlending                     : BOOL;  
   /// Operation Mode (see chapter 5.5.1)
-  OperationMode                  : USINT;
+  OperationMode                  : OperationMode;
   /// PathAccuracyMode is active (see chapter 6.5.22) 
   PathAccuracyMode               : BOOL;
   /// AvoidSingularity is active (see chapter 6.5.23) 
@@ -164,7 +164,7 @@ STRUCT
   /// TRUE, when the RC requests a restart of the RC induced through the functions "WriteRobotSWLimits" (chapter 6.2.16) or "WriteSystemVariable" (chapter 6.5.8) Default: FALSE 
   RestartRequested               : BOOL;
   /// Actual override
-  ActualOverride                 : UINT;
+  ActualOverride                 : REAL;
   /// StepMode is active and set to ExactStop (see chapter 6.1.3) 
   StepModeExactStopActive        : BOOL;
   /// StepMode is active and set to Blending (see chapter 6.1.3) 

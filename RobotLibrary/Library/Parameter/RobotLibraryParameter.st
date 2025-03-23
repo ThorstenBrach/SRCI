@@ -39,12 +39,10 @@ VAR_GLOBAL CONSTANT
   MESSAGE_LOG_MAX                     : DINT := 100;  
   /// Maximal amount of List entries 
   LIST_ENTRIES_MAX                    : DINT := 100;
-  /// Maximal amount of bytes for the telegram payload
-  TELEGRAM_PAYLOAD_MAX                : UDINT := 255;  
   /// Maximal amount of bytes for the parameter payload
-  PARAMETER_PAYLOAD_MAX               : DINT := 128;  
+  PARAMETER_PAYLOAD_MAX               : DINT := 255;  
   /// Maximal amount of bytes for the response payload
-  RESPONSE_PAYLOAD_MAX                : DINT := 128;  
+  RESPONSE_PAYLOAD_MAX                : DINT := 255;  
   /// Maximal amount of bytes that can be exchanged with the sub program on the RC
   SUB_PROGRAM_DATA_MAX                : DINT := 189;
   /// Maximal amount of spline data
@@ -59,8 +57,6 @@ VAR_GLOBAL CONSTANT
   TWO_SEQUENCES                       : BOOL := FALSE; 
   /// Flag to indicate that the byte order must be changed
   SWAP_BYTE_ORDER                     : BOOL := TRUE; 
-  /// Life Sign Timeout
-  LIFE_SIGN_TIMEOUT                   : TIME := T#40MS;
   /// Timeout for checking for invalid frames
   INVALID_FRAMES_CHECK_TIMEOUT        : TIME := T#60S;
 END_VAR

@@ -223,10 +223,10 @@ END_VAR
              OutCmd.RASerialNumber       :=                              _response.RASerialNumber;
              OutCmd.RCFirmwareVersion    :=                              _response.RCFirmwareVersion;
              OutCmd.RCInterpreterVersion :=                              _response.RCInterpreterVersion;
-             OutCmd.AxisJointUsed        :=                              _response.AxisJointUsed;
-             OutCmd.AxisExternalUsed     :=                              _response.AxisExternalUsed;
-             OutCmd.AxisJointUnit        :=                              _response.AxisJointUnit;
-             OutCmd.AxisExternalUnit     :=                              _response.AxisExternalUnit;
+             OutCmd.AxisJointUsed        :=  ByteToAxisJointUsed        (_response.AxisJointUsed);           
+             OutCmd.AxisExternalUsed     :=  ByteToAxisExternalUsed     (_response.AxisExternalUsed);
+             OutCmd.AxisJointUnit        :=  ByteToAxisJointUnit        (_response.AxisJointUnit);
+             OutCmd.AxisExternalUnit     :=  ByteToAxisExternalUnit     (_response.AxisExternalUnit);
              OutCmd.RCSupportedFunctions :=  BytesToRCSupportedFunctions(_response.RCSupportedFunctions);
              OutCmd.RobotID              :=                              _response.RobotID;  
              OutCmd.InterpreterCycleTime :=                              _response.InterpreterCycleTime;

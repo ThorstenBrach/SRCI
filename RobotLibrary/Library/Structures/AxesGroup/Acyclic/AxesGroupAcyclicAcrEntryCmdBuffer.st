@@ -27,7 +27,7 @@ STRUCT
   /// Buffer state
   State             : BufferStateCmd;
   /// Payload defined by type per CMD definition. Processed by Appl. Layer Task.
-  Payload           : ARRAY[0..RobotLibraryParameter.TELEGRAM_PAYLOAD_MAX] OF BYTE;
+  Payload           : ARRAY[0..RobotLibraryParameter.PARAMETER_PAYLOAD_MAX] OF BYTE;
   /// Payload length
   PayloadLen        : UDINT;  
   /// Payload poiner position   

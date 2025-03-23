@@ -184,16 +184,15 @@ END_VAR
   HandleAxesGroupState         ( AxesGroup    := AxesGroup);
   
   HandleLifeSign               ( AxesGroup    := AxesGroup);
-  HandleInvalidFrames          ( AxesGroup    := AxesGroup, 
-                                 RobotInData  := RobotInData);
+  HandleInvalidFrames          ( AxesGroup    := AxesGroup, RobotInData := RobotInData);
   HandleTelegramStateCtrl();
   HandleAliveBit               (RobotInData[1]);
   HandleSeqAck                 ( AxesGroup    := AxesGroup);
+  HandleUserData               ( AxesGroup    := AxesGroup, UserData := UserData );
   
   OnCall                       ( AxesGroup    := AxesGroup);
   OnExecRun                    ( AxesGroup    := AxesGroup);
   OnErrorClear                 ( AxesGroup    := AxesGroup);
-  
   
   
   AxesGroupToTelegram  ( AxesGroup    := AxesGroup );
@@ -631,6 +630,9 @@ VAR
  _idx                       : DINT;
   /// internal sequence index
  _seqIdx                    : DINT;
+   /// Amount of sequences
+ _seqCount                  : DINT;
+
   /// internal fragment index
  _fragIdx                   : DINT;
   /// internal register index
@@ -645,8 +647,211 @@ VAR
  _fragmentActionString      : STRING;
   /// maximount amount of bytes per sequence
   SEQUENCE_MAX_PAYLOAD_SIZE : UDINT;
+  
+  /// current length of telegram 
+ _telegramLengthCurrent    : UINT;
 END_VAR
 
+  // Check 2nd sequence active ? 
+  IF ( RobotLibraryParameter.TWO_SEQUENCES )
+  THEN
+    // inc sequence counter
+   _seqCount := _seqCount + 1;
+    
+    SEQUENCE_MAX_PAYLOAD_SIZE := CalculateSequencePayloadMax(AxesGroup := AxesGroup, 
+                                                             Direction := ComDirection.PLC_TO_ROB, 
+                                                             Sequence  := SequenceFlag.SECONDARY_SEQUENCE ) - FOOTER_SIZE;
+  ELSE
+    SEQUENCE_MAX_PAYLOAD_SIZE := CalculateSequencePayloadMax(AxesGroup := AxesGroup, 
+                                                             Direction := ComDirection.PLC_TO_ROB, 
+                                                             Sequence  := SequenceFlag.PRIMARY_SEQUENCE   ) - FOOTER_SIZE;
+  END_IF   
+  
+  
+  FOR _seqIdx := 0 TO _seqCount
+  DO
+    // set current SEQ / ACk index
+    Telegram.PlcToRob.Sequence[_seqIdx].Header.SEQ_ACK := AxesGroup.InternalData.CurrentSEQ[_seqIdx];
+  
+    // only update telegram content if a new sequence SEQ is set
+    IF ( AxesGroup.InternalData.NewSEQ[_seqIdx] ) 
+    THEN
+      // only reset counters in case of new telegram to send  
+      AxesGroup.InternalData.SequenceCountSend := 0;
+      AxesGroup.InternalData.FragmentCountSend[_seqIdx] := 0;
+      
+      // calc current telegram payload length
+     _telegramLengthCurrent := CalculateTelegramLengthPlcToRob(AxesGroup := AxesGroup);
+      
+      // Bedingung anpassen und TWO_SEQUENCES berücksichtigen
+      WHILE (( _parCfg.Com.TelegramLengthPlcToRob - _telegramLengthCurrent ) >= FRAGMENT_HEADER_SIZE + MIN_PAYLOAD_SIZE ) 
+      DO
+        // Check command in Execution-Order-List available ?
+        IF ( AxesGroup.Acyclic.ActiveCommandRegister.ExecutionOrderList[_listIdx] > EMPTY_EOL_ENTRY)
+        THEN
+          // set current SEQ / ACk index
+          Telegram.PlcToRob.Sequence[_seqIdx].Header.SEQ_ACK := AxesGroup.InternalData.CurrentSEQ[_seqIdx];
+          
+          // get active command register index
+         _regIdx := AxesGroup.Acyclic.ActiveCommandRegister.ExecutionOrderList[_listIdx];
+      
+          // check State of the current ACR entry ?
+          IF (( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].State >= BufferStateCmd.CREATED  ) AND
+              ( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].State <= BufferStateCmd.SENDING  ))
+          THEN
+            // add size of fragement header      
+            Telegram.PlcToRob.Sequence[_seqIdx].Header.PayloadLength :=
+              Telegram.PlcToRob.Sequence[_seqIdx].Header.PayloadLength + SIZEOF(Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header); 
+              
+              
+            Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.CmdID          := AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].UniqueID;
+            Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.Reserve        := 
+            Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.FragmentAction := 0; // will be set below
+            Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadPointer := AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr; 
+            
+            // The 1st message resets the ARC entry on the server side  
+           _fragmentAction.Reset := (( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].State      = BufferStateCmd.CREATED ) AND
+                                     ( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr = 0                      ));
+                                     
+            // Update messages must clear the ARC entry on the server side  
+           _fragmentAction.Clear := (( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].State      = BufferStateCmd.UPDATE_AVAILABLE  ) AND
+                                     ( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr = 0                                )); 
+      
+            
+            // fill telegramm header - just for later debugging ( the header is part of the command payload itselfy ) {{{
+            Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.CmdType       := CombineBytesToUint ( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[0],
+                                                                                                                        AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[1]);
+            Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.ExecMode.0    :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[2].0;
+            Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.ExecMode.1    :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[2].1;
+            Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.ExecMode.2    :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[2].2;
+            Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.ExecMode.3    :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[2].3;
+            Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.Prio.0        :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[3].0;
+            Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.Prio.1        :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[3].1;
+            Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.Prio.2        :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[3].2;
+            Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.Prio.3        :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[3].3;
+            Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.ParSequence.0 :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[3].4;
+            Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.ParSequence.1 :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[3].5;
+            Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.ParSequence.2 :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[3].6;
+            Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.ParSequence.3 :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[3].7;
+            // }}}
+            // loop through the payload
+            FOR _payLoadPtr := AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr TO AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayloadLen -1  
+            DO
+              // copy payload
+              Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Payload[_payLoadPtr] 
+                := AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[_payLoadPtr];
+          
+              // inc current sequence payload length
+              Telegram.PlcToRob.Sequence[_seqIdx].Header.PayloadLength
+                := Telegram.PlcToRob.Sequence[_seqIdx].Header.PayloadLength + 1;  
+          
+              // inc current fragment payload length
+              Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadLength 
+                := Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadLength + 1;
+          
+              // inc payload pointer in active command register
+              AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr 
+                := AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr + 1;
+            
+              // set command state
+              IF ( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr >= AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadLen) 
+              THEN
+                AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].State := BufferStateCmd.PROCESSED;
+              ELSE
+                AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].State := BufferStateCmd.SENDING;  
+              END_IF 
+      
+              // calc current telegram payload length
+             _telegramLengthCurrent := CalculateTelegramLengthPlcToRob(AxesGroup := AxesGroup);
+        
+              // check limit reached ?
+              IF ( _telegramLengthCurrent >= _parCfg.Com.TelegramLengthPlcToRob) 
+              THEN  
+                EXIT; // -> abort for loop 
+              END_IF  
+            END_FOR
+      
+            // check payload complete ?
+           _fragmentAction.Complete := AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr 
+                                    >= AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayloadLen;
+      
+            // just for brakepoint
+            IF (_fragmentAction.Complete)
+            THEN
+             _fragmentAction.Complete := _fragmentAction.Complete; 
+            END_IF
+      
+            // set fragment action
+            Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.FragmentAction := FragmentActionToByte(_fragmentAction);
+          END_IF
+        END_IF
+        
+        // inc execution order list index 
+       _listIdx := _listIdx + 1;
+        // inc fragment index 
+       _fragIdx := _fragIdx + 1;
+    
+        // check abort conditions
+        IF (( _telegramLengthCurrent                                                >= _parCfg.Com.TelegramLengthPlcToRob  ) OR  // Payload limit reached 
+            ( _fragIdx                                                              >=  RobotLibraryParameter.FRAGMENT_MAX ) OR  // Max fragment limit reached
+            (  AxesGroup.Acyclic.ActiveCommandRegister.ExecutionOrderList[_listIdx]  =  EMPTY_EOL_ENTRY                    ))    // No entry in ExecutionOrderList left
+        THEN
+          EXIT;// -> Abort while loop
+        END_IF         
+      END_WHILE  
+      
+      AxesGroup.InternalData.SequenceCountSend          := _seqIdx;
+      AxesGroup.InternalData.FragmentCountSend[_seqIdx] := _fragIdx;
+      
+    END_IF  
+  END_FOR
+
+END_METHOD
+
+METHOD PRIVATE AxesGroupToTelegramSequence_work : DINT
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup;
+END_VAR
+
+VAR 
+  /// internal index
+ _idx                       : DINT;
+  /// internal sequence index
+ _seqIdx                    : DINT;
+  /// internal fragment index
+ _fragIdx                   : DINT;
+  /// internal register index
+ _regIdx                    : DINT;
+  /// internal execution order list index
+ _listIdx                   : DINT := 1;
+  /// internal payload pointer
+ _payLoadPtr                : DWORD;
+  /// internal fragment action
+ _fragmentAction            : FragmentAction;
+  /// internal fragment action as string
+ _fragmentActionString      : STRING;
+  /// maximount amount of bytes per sequence
+  SEQUENCE_MAX_PAYLOAD_SIZE : UDINT;
+  
+  /// current length of telegram 
+ _telegramLengthCurrent    : UINT;
+END_VAR
+
+  // Check 2nd sequence active ? 
+  IF ( RobotLibraryParameter.TWO_SEQUENCES )
+  THEN
+    SEQUENCE_MAX_PAYLOAD_SIZE := CalculateSequencePayloadMax(AxesGroup := AxesGroup, 
+                                                             Direction := ComDirection.PLC_TO_ROB, 
+                                                             Sequence  := SequenceFlag.SECONDARY_SEQUENCE ) - FOOTER_SIZE;
+  ELSE
+    SEQUENCE_MAX_PAYLOAD_SIZE := CalculateSequencePayloadMax(AxesGroup := AxesGroup, 
+                                                             Direction := ComDirection.PLC_TO_ROB, 
+                                                             Sequence  := SequenceFlag.PRIMARY_SEQUENCE   ) - FOOTER_SIZE;
+  END_IF   
+  
+  
+  
   // set current SEQ / ACk index
   Telegram.PlcToRob.Sequence[0].Header.SEQ_ACK := AxesGroup.InternalData.CurrentSEQ[0];
   Telegram.PlcToRob.Sequence[1].Header.SEQ_ACK := AxesGroup.InternalData.CurrentSEQ[1];
@@ -658,19 +863,12 @@ END_VAR
     // only reset counters in case of new telegram to send  
     AxesGroup.InternalData.SequenceCountSend := 0;
     AxesGroup.InternalData.FragmentCountSend[_seqIdx] := 0;
-  
-    IF ( RobotLibraryParameter.TWO_SEQUENCES )
-    THEN
-      SEQUENCE_MAX_PAYLOAD_SIZE := RobotLibraryParameter.TELEGRAM_PAYLOAD_MAX - FOOTER_SIZE - Telegram.PlcToRob.Header.TelegramLengthPlcToRob  / 2;
-    ELSE
-      SEQUENCE_MAX_PAYLOAD_SIZE := RobotLibraryParameter.TELEGRAM_PAYLOAD_MAX - FOOTER_SIZE - Telegram.PlcToRob.Header.TelegramLengthPlcToRob  / 1;
-    END_IF  
     
     // calc current telegram payload length
-    Telegram.PlcToRob.Header.TelegramLengthPlcToRob := CalcTelegramLengthPlcToRob(AxesGroup := AxesGroup);
+   _telegramLengthCurrent := CalculateTelegramLengthPlcToRob(AxesGroup := AxesGroup);
     
     // Bedingung anpassen und TWO_SEQUENCES berücksichtigen
-    WHILE (( RobotLibraryParameter.TELEGRAM_PAYLOAD_MAX - Telegram.PlcToRob.Header.TelegramLengthPlcToRob ) >= FRAGMENT_HEADER_SIZE + MIN_PAYLOAD_SIZE ) 
+    WHILE (( _parCfg.Com.TelegramLengthPlcToRob - _telegramLengthCurrent ) >= FRAGMENT_HEADER_SIZE + MIN_PAYLOAD_SIZE ) 
     DO
       // Check command in Execution-Order-List available ?
       IF ( AxesGroup.Acyclic.ActiveCommandRegister.ExecutionOrderList[_listIdx] > EMPTY_EOL_ENTRY)
@@ -748,10 +946,10 @@ END_VAR
             END_IF 
     
             // calc current telegram payload length
-            Telegram.PlcToRob.Header.TelegramLengthPlcToRob := CalcTelegramLengthPlcToRob(AxesGroup := AxesGroup);
+           _telegramLengthCurrent := CalculateTelegramLengthPlcToRob(AxesGroup := AxesGroup);
       
             // check limit reached ?
-            IF ( Telegram.PlcToRob.Header.TelegramLengthPlcToRob >= RobotLibraryParameter.TELEGRAM_PAYLOAD_MAX) 
+            IF ( _telegramLengthCurrent >= _parCfg.Com.TelegramLengthPlcToRob) 
             THEN  
               EXIT; // -> abort for loop 
             END_IF  
@@ -759,7 +957,7 @@ END_VAR
     
           // check payload complete ?
          _fragmentAction.Complete := AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr 
-                                     >= AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayloadLen;
+                                  >= AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayloadLen;
     
           // just for brakepoint
           IF (_fragmentAction.Complete)
@@ -783,9 +981,9 @@ END_VAR
       END_IF    
     
       // check abort conditions
-      IF (( Telegram.PlcToRob.Header.TelegramLengthPlcToRob                       >= RobotLibraryParameter.TELEGRAM_PAYLOAD_MAX ) OR  // Payload limit reached 
-          ( _fragIdx                                                              >= RobotLibraryParameter.FRAGMENT_MAX         ) OR  // Max fragment limit reached
-          (  AxesGroup.Acyclic.ActiveCommandRegister.ExecutionOrderList[_listIdx]  = EMPTY_EOL_ENTRY                            ))    // No entry in ExecutionOrderList left
+      IF (( _telegramLengthCurrent                                                >= _parCfg.Com.TelegramLengthPlcToRob  ) OR  // Payload limit reached 
+          ( _fragIdx                                                              >=  RobotLibraryParameter.FRAGMENT_MAX ) OR  // Max fragment limit reached
+          (  AxesGroup.Acyclic.ActiveCommandRegister.ExecutionOrderList[_listIdx]  =  EMPTY_EOL_ENTRY                    ))    // No entry in ExecutionOrderList left
       THEN
         EXIT;// -> Abort while loop
       END_IF         
@@ -794,98 +992,288 @@ END_VAR
     AxesGroup.InternalData.SequenceCountSend          := _seqIdx;
     AxesGroup.InternalData.FragmentCountSend[_seqIdx] := _fragIdx;
     
-    {warning 'ToDo: take a loacal var for length and do not overwrite header telegram length'}
-    Telegram.PlcToRob.Header.TelegramLengthPlcToRob := ParCfg.Com.TelegramLengthPlcToRob;
-    Telegram.PlcToRob.Header.TelegramLengthRobToPlc := ParCfg.Com.TelegramLengthRobToPlc;
   END_IF
 
 END_METHOD
 
-METHOD PRIVATE CalcTelegramLengthPlcToRob : UINT
+METHOD CalculateCyclicDataLength : UINT
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup;
+END_VAR
+VAR_INPUT
+  /// Communication direction
+  Direction : ComDirection;
+END_VAR
+
+VAR CONSTANT
+  /// Size of the header
+  ROB_TO_PLC_HEADER_SIZE : UINT := 10;
+END_VAR
+
+  // ------------------------------------
+  // PLC -> ROB
+  // ------------------------------------
+  IF (Direction = ComDirection.PLC_TO_ROB)
+  THEN  
+    // Add Header size 
+    CalculateCyclicDataLength := CalculateCyclicDataLength + SIZEOF(Telegram.PlcToRob.Header);  
+    // Add Cyclic size 
+    CalculateCyclicDataLength := CalculateCyclicDataLength + SIZEOF(Telegram.PlcToRob.Cyclic);
+    
+    // Check SubProgramData active ? 
+    IF ( AxesGroup.CyclicOptional.PlcToRob.SubProgramData.Active )
+    THEN
+      // Add SubProgramData size 
+      CalculateCyclicDataLength := CalculateCyclicDataLength + SIZEOF(Telegram.PlcToRob.CyclicOptional.SubProgramData);
+    END_IF
+      
+    // Check CartesianPosition active ? 
+    IF ( AxesGroup.CyclicOptional.PlcToRob.CartesianPosition.Active )
+    THEN
+      // Add CartesianPosition size 
+      CalculateCyclicDataLength := CalculateCyclicDataLength + SIZEOF(Telegram.PlcToRob.CyclicOptional.CartesianPosition);
+    END_IF
+    
+    // Check JointPosition active ? 
+    IF ( AxesGroup.CyclicOptional.PlcToRob.JointPosition.Active )
+    THEN
+      // Add JointPosition size 
+      CalculateCyclicDataLength := CalculateCyclicDataLength + SIZEOF(Telegram.PlcToRob.CyclicOptional.JointPosition);
+    END_IF  
+    
+    // Check Force active ? 
+    IF ( AxesGroup.CyclicOptional.PlcToRob.Force.Active )
+    THEN
+      // Add Force size 
+      CalculateCyclicDataLength := CalculateCyclicDataLength + SIZEOF(Telegram.PlcToRob.CyclicOptional.Force);
+    END_IF  
+      
+    // Check CartesianPositionExt acive ? 
+    IF ( AxesGroup.CyclicOptional.PlcToRob.CartesianPositionExt.Active )
+    THEN
+      // Add CartesianPositionExt size 
+      CalculateCyclicDataLength := CalculateCyclicDataLength + SIZEOF(Telegram.PlcToRob.CyclicOptional.CartesianPositionExt);
+    END_IF   
+      
+    // Check JointPositionExt active ?
+    IF ( AxesGroup.CyclicOptional.PlcToRob.JointPositionExt.Active )
+    THEN
+      // Add JointPositionExt size 
+      CalculateCyclicDataLength := CalculateCyclicDataLength + SIZEOF(Telegram.PlcToRob.CyclicOptional.JointPositionExt);
+    END_IF  
+          
+    // Check ForceExt active ?
+    IF ( AxesGroup.CyclicOptional.PlcToRob.ForceExt.Active )
+    THEN
+      // Add ForceExt size 
+      CalculateCyclicDataLength := CalculateCyclicDataLength + SIZEOF(Telegram.PlcToRob.CyclicOptional.ForceExt);
+    END_IF
+  END_IF
+  
+  // ------------------------------------
+  // ROB -> PLC
+  // ------------------------------------
+  IF (Direction = ComDirection.ROB_TO_PLC)
+  THEN
+    // Add Header size 
+    CalculateCyclicDataLength := CalculateCyclicDataLength + ROB_TO_PLC_HEADER_SIZE; 
+    {warning 'ToDo: Used a constant because SizeOf(Telegram.RobToPlc.Header) return a wrong value,  because of VersionStruct instead of Byte'}
+    
+    // Check SubProgramData active ? 
+    IF ( AxesGroup.CyclicOptional.RobToPlc.SubProgramData.Active )
+    THEN
+      // Add SubProgramData size 
+      CalculateCyclicDataLength := CalculateCyclicDataLength + SIZEOF(Telegram.RobToPlc.CyclicOptional.SubProgramData);
+    END_IF
+      
+    // Check CartesianPosition active ? 
+    IF ( AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.Active )
+    THEN
+      // Add CartesianPosition size 
+      CalculateCyclicDataLength := CalculateCyclicDataLength + SIZEOF(Telegram.RobToPlc.CyclicOptional.CartesianPosition);
+    END_IF
+    
+    // Check JointPosition active ? 
+    IF ( AxesGroup.CyclicOptional.RobToPlc.JointPosition.Active )
+    THEN
+      // Add JointPosition size 
+      CalculateCyclicDataLength := CalculateCyclicDataLength + SIZEOF(Telegram.RobToPlc.CyclicOptional.JointPosition);
+    END_IF  
+    
+    // Check Force active ? 
+    IF ( AxesGroup.CyclicOptional.RobToPlc.Force.Active )
+    THEN
+      // Add Force size 
+      CalculateCyclicDataLength := CalculateCyclicDataLength + SIZEOF(Telegram.RobToPlc.CyclicOptional.Force);
+    END_IF  
+      
+    // Check Current acive ? 
+    IF ( AxesGroup.CyclicOptional.RobToPlc.Current.Active )
+    THEN
+      // Add Current size 
+      CalculateCyclicDataLength := CalculateCyclicDataLength + SIZEOF(Telegram.RobToPlc.CyclicOptional.Current);
+    END_IF    
+      
+    // Check CartesianPositionExt acive ? 
+    IF ( AxesGroup.CyclicOptional.RobToPlc.CartesianPositionExt.Active )
+    THEN
+      // Add CartesianPositionExt size 
+      CalculateCyclicDataLength := CalculateCyclicDataLength + SIZEOF(Telegram.RobToPlc.CyclicOptional.CartesianPositionExt);
+    END_IF  
+      
+    // Check JointPositionExt active ?
+    IF ( AxesGroup.CyclicOptional.RobToPlc.JointPositionExt.Active )
+    THEN
+      // Add JointPositionExt size 
+      CalculateCyclicDataLength := CalculateCyclicDataLength + SIZEOF(Telegram.RobToPlc.CyclicOptional.JointPositionExt);
+    END_IF  
+          
+    // Check ForceExt active ?
+    IF ( AxesGroup.CyclicOptional.RobToPlc.ForceExt.Active )
+    THEN
+      // Add ForceExt size 
+      CalculateCyclicDataLength := CalculateCyclicDataLength + SIZEOF(Telegram.RobToPlc.CyclicOptional.ForceExt);
+    END_IF
+      
+    // Check CurrentExt active ? 
+    IF ( AxesGroup.CyclicOptional.RobToPlc.CurrentExt.Active )
+    THEN
+      // Add CurrentExt size 
+      CalculateCyclicDataLength := CalculateCyclicDataLength + SIZEOF(Telegram.RobToPlc.CyclicOptional.CurrentExt);
+    END_IF
+  END_IF
+
+END_METHOD
+
+METHOD CalculateSequencePayloadMax : UINT
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup;
+END_VAR
+VAR_INPUT
+  /// Communication direction
+  Direction : ComDirection;
+  /// Sequeunce
+  Sequence : SequenceFlag;  
+END_VAR
+
+VAR
+  /// Length of the cyclic header
+ _cyclicDataLength      : UINT;
+END_VAR
+
+  // calculate cyclic header length
+  _cyclicDataLength := CalculateCyclicDataLength(AxesGroup := AxesGroup, Direction := Direction);
+  
+  
+  CASE (Sequence) 
+  OF
+    SequenceFlag.PRIMARY_SEQUENCE   : 
+  
+      IF (Direction = ComDirection.PLC_TO_ROB)
+      THEN  
+        // calculate sequence payload length
+        CalculateSequencePayloadMax := ( _parCfg.Com.TelegramLengthPlcToRob - _cyclicDataLength );
+      END_IF
+  
+      IF (Direction = ComDirection.ROB_TO_PLC)
+      THEN  
+        // calculate sequence payload length
+        CalculateSequencePayloadMax := ( _parCfg.Com.TelegramLengthRobToPlc - _cyclicDataLength );
+      END_IF
+      
+  
+    SequenceFlag.SECONDARY_SEQUENCE :
+    
+      IF (Direction = ComDirection.PLC_TO_ROB)
+      THEN  
+        // calculate sequence payload length
+        CalculateSequencePayloadMax := (( _parCfg.Com.TelegramLengthPlcToRob - _cyclicDataLength ) / 2);
+      END_IF
+  
+      IF (Direction = ComDirection.ROB_TO_PLC)
+      THEN  
+        // calculate sequence payload length
+        CalculateSequencePayloadMax := (( _parCfg.Com.TelegramLengthRobToPlc - _cyclicDataLength ) / 2);
+      END_IF
+  
+      
+  END_CASE
+
+END_METHOD
+
+METHOD CalculateSequencePayloadStartAdr : UINT
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup;
+END_VAR
+VAR_INPUT
+  /// Communication direction
+  Direction : ComDirection;
+  /// Sequeunce
+  Sequence : SequenceFlag;  
+END_VAR
+
+VAR
+  /// Length of the cyclic header
+ _cyclicDataLength      : UINT;
+  /// Length of the sequnce payload
+ _sequencePayloadLength : UINT;
+END_VAR
+
+  // calculate cyclic header length
+  _cyclicDataLength := CalculateCyclicDataLength(AxesGroup := AxesGroup, Direction := Direction);
+  
+  CASE (Sequence) 
+  OF
+  
+    SequenceFlag.PRIMARY_SEQUENCE   : 
+    
+      // return start address
+      CalculateSequencePayloadStartAdr := _cyclicDataLength;
+  
+    SequenceFlag.SECONDARY_SEQUENCE :
+    
+      // calculate sequence payload max
+     _sequencePayloadLength 
+       := CalculateSequencePayloadMax( AxesGroup := AxesGroup, 
+                                       Direction := Direction, 
+                                       Sequence  := Sequence );
+                                       
+      // return start address
+      CalculateSequencePayloadStartAdr := _cyclicDataLength + _sequencePayloadLength;
+      
+  END_CASE
+
+END_METHOD
+
+METHOD PRIVATE CalculateTelegramLengthPlcToRob : UINT
 VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup;
 END_VAR
 VAR
-  /// length of the optional cyclic data block
- _cyclicOptionalDataLength : UINT;
+  /// length of the cyclic data block
+ _cyclicDataLength : UINT;
 END_VAR
 
-  // CyclicOptional {{{
-  
-  // AxesGroup.CyclicOptional.PlcToRob.SubProgramData
-  IF (AxesGroup.CyclicOptional.PlcToRob.SubProgramData.Active)
-  THEN
-    // inc cyclic optional data length
-   _cyclicOptionalDataLength 
-     := _cyclicOptionalDataLength + SIZEOF(Telegram.PlcToRob.CyclicOptional.SubProgramData);    
-  END_IF
-  
-  // AxesGroup.CyclicOptional.PlcToRob.CartesianPosition  
-  IF (AxesGroup.CyclicOptional.PlcToRob.CartesianPosition.Active)
-  THEN
-    // inc cyclic optional data length
-   _cyclicOptionalDataLength 
-     := _cyclicOptionalDataLength + SIZEOF(Telegram.PlcToRob.CyclicOptional.CartesianPosition);    
-  END_IF  
-    
-  // AxesGroup.CyclicOptional.PlcToRob.CartesianPositionExt 
-  IF ( AxesGroup.CyclicOptional.PlcToRob.CartesianPositionExt.Active) 
-  THEN
-    // inc cyclic optional data length
-   _cyclicOptionalDataLength 
-     := _cyclicOptionalDataLength + SIZEOF(Telegram.PlcToRob.CyclicOptional.CartesianPositionExt);    
-  END_IF
-  
-  // AxesGroup.CyclicOptional.PlcToRob.JointPosition
-  IF ( AxesGroup.CyclicOptional.PlcToRob.JointPosition.Active) 
-  THEN
-    // inc cyclic optional data length
-   _cyclicOptionalDataLength 
-     := _cyclicOptionalDataLength + SIZEOF(Telegram.PlcToRob.CyclicOptional.JointPosition);    
-  END_IF
-  
-  // AxesGroup.CyclicOptional.PlcToRob.JointPositionExt
-  IF ( AxesGroup.CyclicOptional.PlcToRob.JointPositionExt.Active) 
-  THEN
-    // inc cyclic optional data length
-   _cyclicOptionalDataLength 
-     := _cyclicOptionalDataLength + SIZEOF(Telegram.PlcToRob.CyclicOptional.JointPositionExt);    
-  END_IF  
-       
-  // AxesGroup.CyclicOptional.PlcToRob.Force
-  IF ( AxesGroup.CyclicOptional.PlcToRob.Force.Active) 
-  THEN
-    // inc cyclic optional data length
-   _cyclicOptionalDataLength 
-     := _cyclicOptionalDataLength + SIZEOF(Telegram.PlcToRob.CyclicOptional.Force);    
-  END_IF  
-                      
-  // AxesGroup.CyclicOptional.PlcToRob.ForceExt
-  IF ( AxesGroup.CyclicOptional.PlcToRob.ForceExt.Active) 
-  THEN
-    // inc cyclic optional data length
-   _cyclicOptionalDataLength 
-     := _cyclicOptionalDataLength + SIZEOF(Telegram.PlcToRob.CyclicOptional.ForceExt);    
-  END_IF                    
-  // }}}
+  _cyclicDataLength := CalculateCyclicDataLength(AxesGroup := AxesGroup, Direction := ComDirection.PLC_TO_ROB); 
   
   
   IF ( RobotLibraryParameter.TWO_SEQUENCES )
   THEN
-    CalcTelegramLengthPlcToRob :=    SIZEOF(Telegram.PlcToRob.Header)
-                                   +       _cyclicOptionalDataLength
-                                   + SIZEOF(Telegram.PlcToRob.Sequence[  PRIMARY_SEQUENCE].Header)
-                                   +       (Telegram.PlcToRob.Sequence[  PRIMARY_SEQUENCE].Header.PayloadLength)
-                                   + SIZEOF(Telegram.PlcToRob.Sequence[SECONDARY_SEQUENCE].Header)
-                                   +       (Telegram.PlcToRob.Sequence[SECONDARY_SEQUENCE].Header.PayloadLength)
-                                   + SIZEOF(Telegram.PlcToRob.Footer);  
+    CalculateTelegramLengthPlcToRob := _cyclicDataLength
+                                      + SIZEOF(Telegram.PlcToRob.Sequence[  PRIMARY_SEQUENCE].Header)
+                                      +       (Telegram.PlcToRob.Sequence[  PRIMARY_SEQUENCE].Header.PayloadLength)
+                                      + SIZEOF(Telegram.PlcToRob.Sequence[SECONDARY_SEQUENCE].Header)
+                                      +       (Telegram.PlcToRob.Sequence[SECONDARY_SEQUENCE].Header.PayloadLength)
+                                      + SIZEOF(Telegram.PlcToRob.Footer);  
   ELSE
-    CalcTelegramLengthPlcToRob :=    SIZEOF(Telegram.PlcToRob.Header)
-                                   +       _cyclicOptionalDataLength
-                                   + SIZEOF(Telegram.PlcToRob.Sequence[PRIMARY_SEQUENCE].Header)
-                                   +       (Telegram.PlcToRob.Sequence[PRIMARY_SEQUENCE].Header.PayloadLength)
-                                   + SIZEOF(Telegram.PlcToRob.Footer);
+    CalculateTelegramLengthPlcToRob := _cyclicDataLength
+                                      + SIZEOF(Telegram.PlcToRob.Sequence[PRIMARY_SEQUENCE].Header)
+                                      +       (Telegram.PlcToRob.Sequence[PRIMARY_SEQUENCE].Header.PayloadLength)
+                                      + SIZEOF(Telegram.PlcToRob.Footer);
   END_IF
 
 END_METHOD
@@ -1093,9 +1481,8 @@ END_VAR
   
   
   // Check ParCfg.Com.TelegramLengthPlcToRob
-  IF (( ParCfg.Com.TelegramLengthPlcToRob < 64                                             ) OR
-      ( ParCfg.Com.TelegramLengthPlcToRob > RobotLibraryParameter.ROBOT_OUT_DATA_MAX   + 1 ) OR
-      ( ParCfg.Com.TelegramLengthPlcToRob > RobotLibraryParameter.TELEGRAM_PAYLOAD_MAX + 1 ))
+  IF (( ParCfg.Com.TelegramLengthPlcToRob < 64                                           ) OR
+      ( ParCfg.Com.TelegramLengthPlcToRob > RobotLibraryParameter.ROBOT_OUT_DATA_MAX + 1 ))
   THEN
     // parameter(s) not valid
     CheckParameterValid := FALSE;
@@ -1115,9 +1502,8 @@ END_VAR
   END_IF
   
   // Check ParCfg.Com.TelegramLengthRobToPlc
-  IF (( ParCfg.Com.TelegramLengthRobToPlc < 64                                             ) OR
-      ( ParCfg.Com.TelegramLengthRobToPlc > RobotLibraryParameter.ROBOT_IN_DATA_MAX    + 1 ) OR
-      ( ParCfg.Com.TelegramLengthRobToPlc > RobotLibraryParameter.TELEGRAM_PAYLOAD_MAX + 1 ))
+  IF (( ParCfg.Com.TelegramLengthRobToPlc < 64                                          ) OR
+      ( ParCfg.Com.TelegramLengthRobToPlc > RobotLibraryParameter.ROBOT_IN_DATA_MAX + 1 ))
   THEN
     // parameter(s) not valid
     CheckParameterValid := FALSE;
@@ -1348,8 +1734,8 @@ VAR
   _lifeSignIdxFooter : DINT;
 END_VAR
 
-  IF (( _parCfg.Com.TelegramLengthPlcToRob    >= 1                                          ) AND 
-      ( _parCfg.Com.TelegramLengthPlcToRob -1 <= RobotLibraryParameter.TELEGRAM_PAYLOAD_MAX ))
+  IF (( _parCfg.Com.TelegramLengthPlcToRob    >= 1                                           ) AND 
+      ( _parCfg.Com.TelegramLengthPlcToRob    <= RobotLibraryParameter.ROBOT_OUT_DATA_MAX +1 ))
   THEN
     // set index of life sign byte
    _lifeSignIdxFooter := _parCfg.Com.TelegramLengthPlcToRob -1;
@@ -1620,8 +2006,9 @@ END_VAR
   AxesGroup.InternalData.GroupReset_R(CLK := AxesGroup.InternalData.GroupReset);
   AxesGroup.InternalData.GroupReset_F(CLK := AxesGroup.InternalData.GroupReset);
   
-  // Copy supported Functions 
-  AxesGroup.InternalData.RobotData.RCSupportedFunctions := ReadRobotData.OutCmd.RCSupportedFunctions;
+  // Copy function block results 
+  AxesGroup.InternalData.RobotData         := ReadRobotData.OutCmd;
+  AxesGroup.InternalData.ConfigurationData := ExchangeConfiguration.OutCmd;
 
 END_METHOD
 
@@ -1904,6 +2291,122 @@ END_VAR
 
 END_METHOD
 
+METHOD HandleUserData
+VAR_IN_OUT
+   /// Robot assignment of function
+  AxesGroup    : AxesGroup;
+  ///  User data stored on the PLC according to Table 6-10
+  UserData     : UserData;
+END_VAR
+
+  // Common
+  UserData.LogLevel                       := LogLevel;
+  UserData.PLCLibraryVersion              := RobotLibraryConstants.PLCLibraryVersion;
+  
+  // Communication
+  UserData.LifeSignTimeOut                := _parCfg.Com.LifeSignTimeOut;
+  
+  // Plc Parameter
+  UserData.SyncModeTool                   := _parCfg.Plc.Parameter.SynchronizationModes.Tool;
+  UserData.SyncModeFrame                  := _parCfg.Plc.Parameter.SynchronizationModes.Frame;
+  UserData.SyncModeLoad                   := _parCfg.Plc.Parameter.SynchronizationModes.Load;
+  UserData.SyncModeWorkAreas              := _parCfg.Plc.Parameter.SynchronizationModes.WorkAreas;
+  UserData.SyncModeSWLimits               := _parCfg.Plc.Parameter.SynchronizationModes.SWLimits;
+  UserData.SyncModeDefaultDynamics        := _parCfg.Plc.Parameter.SynchronizationModes.DefaultDynamics;
+  UserData.SyncModeReferenceDynamics      := _parCfg.Plc.Parameter.SynchronizationModes.ReferenceDynamics;
+  
+  // Robot Parameter
+  UserData.EnableSyncTool                 := _parCfg.Rob.Parameter.DataEnableSync.EnableSyncTool;
+  UserData.EnableSyncFrame                := _parCfg.Rob.Parameter.DataEnableSync.EnableSyncFrame;
+  UserData.EnableSyncLoad                 := _parCfg.Rob.Parameter.DataEnableSync.EnableSyncLoad;
+  UserData.EnableSyncWorkArea             := _parCfg.Rob.Parameter.DataEnableSync.EnableSyncWorkArea;
+  UserData.EnableSyncSWLimits             := _parCfg.Rob.Parameter.DataEnableSync.EnableSyncSWLimits;
+  UserData.EnableSyncDefaultDynamics      := _parCfg.Rob.Parameter.DataEnableSync.EnableSyncDefaultDynamics;
+  UserData.EnableSyncReferenceDynamics    := _parCfg.Rob.Parameter.DataEnableSync.EnableSyncReferenceDynamics;
+  UserData.DelayTime                      := _parCfg.Rob.Parameter.DelayTime;
+  UserData.WaitForNrOfCmd                 := _parCfg.Rob.Parameter.WaitForNrOfCmd;
+  UserData.WaitAtBlendingZone             := _parCfg.Rob.Parameter.WaitAtBlendingZone;
+  UserData.AllowSecSeqWhileSubprogram     := _parCfg.Rob.Parameter.AllowSecSeqWhileSubprogram;
+  UserData.AllowDynamicBlending           := _parCfg.Rob.Parameter.AllowDynamicBlending;
+  UserData.SyncReaction                   := _parCfg.Rob.Parameter.SyncReaction;
+  UserData.SyncDelay                      := _parCfg.Rob.Parameter.SyncDelay;
+  UserData.MessageLevel                   := _parcfg.Rob.Parameter.MessageLevel;
+  
+  // ReadRobotData
+  UserData.RCManufacturer                    := AxesGroup.InternalData.RobotData.RCManufacturer; 
+  UserData.RCOrderID                         := AxesGroup.InternalData.RobotData.RCOrderID; 
+  UserData.RCSerialNumber                    := AxesGroup.InternalData.RobotData.RCSerialNumber;
+  UserData.RASerialNumber                    := AxesGroup.InternalData.RobotData.RASerialNumber;
+  UserData.RCFirmwareVersion                 := AxesGroup.InternalData.RobotData.RCFirmwareVersion;
+  
+  UserData.RCInterpreterVersion.MajorVersion := STRING_TO_USINT(MID(AxesGroup.InternalData.RobotData.RCInterpreterVersion, LEN := 1, POS := 1));
+  UserData.RCInterpreterVersion.MinorVersion := STRING_TO_USINT(MID(AxesGroup.InternalData.RobotData.RCInterpreterVersion, LEN := 1, POS := 2));
+  UserData.RCInterpreterVersion.PatchVersion := STRING_TO_USINT(MID(AxesGroup.InternalData.RobotData.RCInterpreterVersion, LEN := 1, POS := 3));
+  
+  UserData.AxisJointUsed                  := AxesGroup.InternalData.RobotData.AxisJointUsed;
+  UserData.AxisExternalUsed               := AxesGroup.InternalData.RobotData.AxisExternalUsed;
+  UserData.AxisJointUnit                  := AxesGroup.InternalData.RobotData.AxisJointUnit;
+  UserData.AxisExternalUnit               := AxesGroup.InternalData.RobotData.AxisExternalUnit;
+  UserData.RCSupportedFunctions           := AxesGroup.InternalData.RobotData.RCSupportedFunctions;
+  
+  UserData.BrakeTestRequired              := AxesGroup.InternalData.ConfigurationData.BrakeTestRequired;
+  UserData.PathAccuracyMode               := AxesGroup.InternalData.ConfigurationData.PathAccuracyMode;
+  UserData.AvoidSingularity               := AxesGroup.InternalData.ConfigurationData.AvoidSingularity;
+  UserData.ConstantVelocitySupported      := AxesGroup.InternalData.ConfigurationData.ConstantVelocitySupported;
+  UserData.StepModeExactStopActive        := AxesGroup.InternalData.ConfigurationData.StepModeExactStopActive;
+  UserData.StepModeBlendingActive         := AxesGroup.InternalData.ConfigurationData.StepModeBlendingActive;
+  UserData.AcceleratingSupported          := AxesGroup.InternalData.ConfigurationData.AcceleratingSupported;
+  UserData.DeceleratingSupported          := AxesGroup.InternalData.ConfigurationData.DecceleratingSupported;
+  
+  UserData.Initialized                    := Initialized;
+  UserData.Synchronized                   := Synchronized;
+  
+  // Cyclic data
+  UserData.RCSRCIVersion                  := AxesGroup.Cyclic.RobToPlc.SRCIVersion;
+  UserData.IsMoving                       := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.IsMoving;
+  UserData.PrimarySequencePaused          := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.PrimarySequencePaused;
+  UserData.InPrimaryPos                   := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.InPrimaryPos;
+  UserData.SecondarySequenceActive        := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.SecondarySequenceActive;
+  UserData.ErrorPending                   := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.ErrorPending;
+  UserData.RestartInProgress              := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.RestartInProgress;
+  UserData.Enabled                        := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.Enabled;
+  UserData.Idle                           := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.RaSequenceState = RaSequenceState.IDLE;
+  UserData.Executing                      := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.RaSequenceState = RaSequenceState.EXECUTING;
+  UserData.Interrupted                    := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.RaSequenceState = RaSequenceState.INTERRUPTED;
+  UserData.IsBlending                     := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.IsBlending;  
+  UserData.OperationMode                  := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.OperationMode;
+  UserData.CollisionDetectionEnabled      := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.CollisionDetectedEnabled;
+  UserData.CollisionDetected              := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.CollisionDetected;
+  UserData.RestartRequested               := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.RestartRequested;
+  UserData.ActualOverride                 := AxesGroup.Cyclic.RobToPlc.Override;
+  UserData.Accelerating                   := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.Accelerating;
+  UserData.Decelerating                   := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.Decelerating;
+  UserData.ConstantVelocity               := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.ConstantVelocity;
+  
+  // Cyclic optional data
+  UserData.CartesianPosition              := AxesGroup.CyclicOptional.RobToPlc.CartesianPosition;
+  UserData.ExtCartesianPosition           := AxesGroup.CyclicOptional.RobToPlc.CartesianPositionExt;  
+  UserData.JointPosition                  := AxesGroup.CyclicOptional.RobToPlc.JointPosition;
+  UserData.ExtJointPosition               := AxesGroup.CyclicOptional.RobToPlc.JointPositionExt;
+  
+  
+  {warning 'ToDo: Check where to get the missing informations'}
+  
+  UserData.ActivateTwoSequences           := FALSE;
+  UserData.ReadingCartesianPosition       := FALSE;
+  UserData.ReadingExtCartesianPosition    := FALSE;
+  UserData.ReadingJointPosition           := FALSE;
+  UserData.ReadingExtJointPosition        := FALSE;
+  UserData.ToolDataSynchronizing          := FALSE;
+  UserData.FrameDataSynchronizing         := FALSE;
+  UserData.LoadDataSynchronizing          := FALSE;
+  UserData.WorkAreaDataSynchronizing      := FALSE;
+  UserData.SWLimitsSynchronizing          := FALSE;
+  UserData.DefaultDynamicsSynchronizing   := FALSE;
+  UserData.ReferenceDynamicsSynchronizing := FALSE;
+
+END_METHOD
+
 METHOD PRIVATE OnCall
 VAR_IN_OUT
    /// Robot assignment of function
@@ -1918,9 +2421,8 @@ END_VAR
   Error := ErrorID <> RobotLibraryConstants.OK ;
   
   // Check Payload and In/Out data size
-  IF (( RobotLibraryParameter.ROBOT_IN_DATA_MAX     <> RobotLibraryParameter.TELEGRAM_PAYLOAD_MAX ) OR
-      ( RobotLibraryParameter.ROBOT_OUT_DATA_MAX    <> RobotLibraryParameter.TELEGRAM_PAYLOAD_MAX ) OR
-      ( RobotLibraryParameter.PARAMETER_PAYLOAD_MAX >= RobotLibraryParameter.TELEGRAM_PAYLOAD_MAX ))
+  IF (( RobotLibraryParameter.ROBOT_IN_DATA_MAX     < 64 ) OR
+      ( RobotLibraryParameter.ROBOT_OUT_DATA_MAX    < 64 ))
   THEN
     ErrorID := RobotLibraryEvents.ERR_INVALID_LIBRARY_PARA;
     RETURN;
@@ -2109,13 +2611,19 @@ END_VAR
   
            TelegramState.UNDEFINED : ;
            
-           TelegramState.ERROR_161..TelegramState.ERROR_173:
+           TelegramState.ERROR_161..TelegramState.ERROR_172:
   
              // clear error
              AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.ACK_ERROR;        
   
+           TelegramState.ERROR_173:
+  
+             // Reset interface including the ARC register on server side
+             AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.RESET;        
+             
            TelegramState.READY_TO_RESUME :  
-             // clear error
+           
+             // Resume
              AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.RESUME;        
            
            TelegramState.READY_FOR_INITIALIZATION: 
@@ -2316,6 +2824,9 @@ END_VAR
         THEN
           // start function block
           ReadMessages.Enable := TRUE;
+          ReadMessages.ParCmd.MsgID;
+          ReadMessages.ParCmd.MessageLevel := _parcfg.Rob.Parameter.MessageLevel;
+          
           // set timeout
           SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
           // inc step counter
@@ -2447,7 +2958,7 @@ END_VAR
   // Reset payload
   RecvData.Reset();
   // Copy inputs to payload  
-  SysDepMemCpy( pDest := ADR(RecvData.Payload) , pSrc  := ADR(RobotInData), DataLen := RobotLibraryParameter.TELEGRAM_PAYLOAD_MAX +1);
+  SysDepMemCpy( pDest := ADR(RecvData.Payload) , pSrc  := ADR(RobotInData), DataLen := RobotLibraryParameter.ROBOT_IN_DATA_MAX +1);
   
   // check new data to receive ? 
   IF ( Telegram.RobToPlc.Sequence[0].Header.SEQ_ACK <> AxesGroup.InternalData.LastACK[0]) {warning 'ToDo: handle 2nd sequence'} 
@@ -2620,8 +3131,8 @@ VAR
   _lifeSignIdxFooter : DINT;
 END_VAR
 
-  IF (( _parCfg.Com.TelegramLengthRobToPlc    >= 1                                          ) AND 
-      ( _parCfg.Com.TelegramLengthRobToPlc -1 <= RobotLibraryParameter.TELEGRAM_PAYLOAD_MAX ))
+  IF (( _parCfg.Com.TelegramLengthRobToPlc >= 1                                           ) AND 
+      ( _parCfg.Com.TelegramLengthRobToPlc <= RobotLibraryParameter.ROBOT_IN_DATA_MAX + 1 ))
   THEN
     // set index of last byte
    _lifeSignIdxFooter := _parCfg.Com.TelegramLengthRobToPlc -1;
@@ -2713,97 +3224,155 @@ END_METHOD
 METHOD PRIVATE ParseRecvPayloadSequence
 VAR_IN_OUT
   /// Robot assignment of function
-  AxesGroup    : AxesGroup;
+  AxesGroup        : AxesGroup;
 END_VAR
 
 VAR
   /// internal index
- _idx             : DINT;
-  /// temporary DWORD
- _tmpDword        : DWORD;
-  /// length of data block
- _dataBlockLength : UINT;
-  /// internal payload length
- _payLoadLen      : DWORD;  
-  /// internal payload pointer
- _payLoadPtr      : DWORD;  
-  /// sequence counter
- _seqCount        : DINT;
+ _idx              : DINT;
+  /// index for sequence
+ _seqIdx           : DINT;
+  /// index for fragment
+ _fragIdx          : DINT; 
+  /// Amount of sequences
+ _seqCount         : DINT;
+  /// current payload pointer of the current sequence
+ _seqPayloadPtr    : UINT; 
 END_VAR
 
-
-VAR_INST
-  /// last received acknowledge
- _lastACK : ARRAY[0..1] OF UDINT;
-END_VAR
-
-  // Sequence Data
-  Telegram.RobToPlc.Sequence[0].Header.SEQ_ACK       := RecvData.GetUint();
-  Telegram.RobToPlc.Sequence[0].Header.PayloadLength := RecvData.GetUint();
-  
-  
-  
-  // check new data ? 
-  IF ( Telegram.RobToPlc.Sequence[0].Header.SEQ_ACK <> AxesGroup.InternalData.LastACK[0])  {warning 'ToDo Handle 2nd sequence'} 
-  THEN
-  
-    IF (Telegram.RobToPlc.Sequence[0].Header.PayloadLength > 0)
-    THEN
-      // Create log entry
-      CreateLogMessagePara4 ( Timestamp   := SystemTime,
-                              MessageType := MessageType.CMD,
-                              Severity    := Severity.DEBUG,
-                              MessageCode := 0,
-                              MessageText := 'RecvData: ACK = {1}, received Sequence [{2}] with PayloadLength = {3}, Lifesign = {4}',
-                              Para1       :=  UINT_TO_STRING(Telegram.RobToPlc.Sequence[0].Header.SEQ_ACK),
-                              Para2       :=  DINT_TO_STRING(0), {warning 'Add seqIdx'}
-                              Para3       :=  UINT_TO_STRING(Telegram.RobToPlc.Sequence[0].Header.PayloadLength),
-                              Para4       :=  BYTE_TO_STRING(Telegram.RobToPlc.Header.LifeSign));
-  
-      Telegram.RobToPlc.Sequence[0].Fragment[0].Header.CmdID               := RecvData.GetUint();
-      Telegram.RobToPlc.Sequence[0].Fragment[0].Header.Reserve             := RecvData.GetByte();
-      Telegram.RobToPlc.Sequence[0].Fragment[0].Header.FragmentAction      := RecvData.GetByte();
-      Telegram.RobToPlc.Sequence[0].Fragment[0].Header.PayloadPointer      := RecvData.GetUint();
-      Telegram.RobToPlc.Sequence[0].Fragment[0].Header.PayloadLength       := RecvData.GetUint();
-      
-      
-      IF (Telegram.RobToPlc.Sequence[0].Fragment[0].Header.PayloadLength > 0)
-      THEN
-        // Fill Respone payload
-        FOR _idx := Telegram.RobToPlc.Sequence[0].Fragment[0].Header.PayloadPointer TO Telegram.RobToPlc.Sequence[0].Fragment[0].Header.PayloadLength
-        DO
-          Telegram.RobToPlc.Sequence[0].Fragment[0].Command.Payload[_idx] := RecvData.GetByte();
-        END_FOR
-        
-        // Add Response to ACR
-        AxesGroup.Acyclic.ActiveCommandRegister.AddRsp(Telegram.RobToPlc.Sequence[0].Fragment[0]);
-      
-        // Only for debugging
-        Telegram.RobToPlc.Sequence[0].Fragment[0].Command.Header.State                 := GetHalfeByteLo(Telegram.RobToPlc.Sequence[0].Fragment[0].Command.Payload[0]);
-        Telegram.RobToPlc.Sequence[0].Fragment[0].Command.Header.ParSeq                := GetHalfeByteHi(Telegram.RobToPlc.Sequence[0].Fragment[0].Command.Payload[0]);
-        Telegram.RobToPlc.Sequence[0].Fragment[0].Command.Header.AlarmMessageSeverity  :=   BYTE_TO_SINT(Telegram.RobToPlc.Sequence[0].Fragment[0].Command.Payload[1]);
-        Telegram.RobToPlc.Sequence[0].Fragment[0].Command.Header.AlarmMessageCode      :=  CombineBytesToUint( HiByte := Telegram.RobToPlc.Sequence[0].Fragment[0].Command.Payload[2],
-                                                                                                               LoByte := Telegram.RobToPlc.Sequence[0].Fragment[0].Command.Payload[3]);
-        // Create log entry
-        CreateLogMessagePara5 ( Timestamp   := SystemTime,
-                                MessageType := MessageType.CMD,
-                                Severity    := Severity.DEBUG,
-                                MessageCode := 0,
-                                MessageText := 'RecvData: received Fragment [{1}] with PayloadLength = {2}, CmdID <{3}> , CmdState: {4}, Fragment-Action Bits: {5}',
-                                Para1       :=  DINT_TO_STRING(0), {warning 'Add seqIdx'}
-                                Para2       :=  UINT_TO_STRING              (Telegram.RobToPlc.Sequence[0].Fragment[0].Header.PayloadLength),
-                                Para3       :=  DINT_TO_STRING              (Telegram.RobToPlc.Sequence[0].Fragment[0].Header.CmdID),
-                                Para4       :=  CMD_MESSAGE_STATE_TO_STRING (Telegram.RobToPlc.Sequence[0].Fragment[0].Command.Header.State),
-                                Para5       :=    FRAGMENT_ACTION_TO_STRING (Telegram.RobToPlc.Sequence[0].Fragment[0].Header.FragmentAction));
-                                //Para6       :=  BYTE_TO_STRING(Telegram.RobToPlc.Header.LifeSign)
-      END_IF    
-    END_IF
-  END_IF  
-  
-  IF ( RobotLibraryParameter.TWO_SEQUENCES ) {warning 'ToDo'}
+  // Check 2nd sequence active ? 
+  IF ( RobotLibraryParameter.TWO_SEQUENCES )
   THEN
    _seqCount := _seqCount + 1;
   END_IF
+  
+  FOR _seqIdx := 0 TO _seqCount
+  DO
+    // Check 2nd sequence ? -> goto 2nd sequence payload address  
+    IF ( _seqIdx = SECONDARY_SEQUENCE )
+    THEN
+      RecvData.PayloadPtr := CalculateSequencePayloadStartAdr(AxesGroup := AxesGroup, 
+                                                              Direction := ComDirection.ROB_TO_PLC,
+                                                              Sequence  := SequenceFlag.SECONDARY_SEQUENCE);
+  	END_IF
+  
+    // parste sequence header
+    Telegram.RobToPlc.Sequence[_seqIdx].Header.SEQ_ACK       := RecvData.GetUint();
+    Telegram.RobToPlc.Sequence[_seqIdx].Header.PayloadLength := RecvData.GetUint();
+    
+    // check new data available ? 
+    IF ( Telegram.RobToPlc.Sequence[_seqIdx].Header.SEQ_ACK <> AxesGroup.InternalData.LastACK[_seqIdx]) 
+    THEN
+      // Check sequence payload available ? 
+      IF (Telegram.RobToPlc.Sequence[_seqIdx].Header.PayloadLength > 0)
+      THEN
+        // Check sequence payload length is valid ? 
+        IF ( Telegram.RobToPlc.Sequence[_seqIdx].Header.PayloadLength > _parCfg.Com.TelegramLengthRobToPlc )
+        THEN 
+          // Create log entry for payload not valid 
+          CreateLogMessagePara2 ( Timestamp   := SystemTime,
+                                  MessageType := MessageType.CMD,
+                                  Severity    := Severity.DEBUG,
+                                  MessageCode := 0,
+                                  MessageText := 'Invalid sequence payload length, Sequence = {1}, PayloadLength = {2} ',
+                                  Para1       :=  DINT_TO_STRING(_seqIdx),
+                                  Para2       :=  UINT_TO_STRING(Telegram.RobToPlc.Sequence[_seqIdx].Header.PayloadLength));
+                                  RETURN;
+        ELSE
+          // Create log entry
+          CreateLogMessagePara4 ( Timestamp   := SystemTime,
+                                  MessageType := MessageType.CMD,
+                                  Severity    := Severity.DEBUG,
+                                  MessageCode := 0,
+                                  MessageText := 'RecvData: ACK = {1}, received Sequence [{2}] with PayloadLength = {3}, Lifesign = {4}',
+                                  Para1       :=  UINT_TO_STRING(Telegram.RobToPlc.Sequence[_seqIdx].Header.SEQ_ACK),
+                                  Para2       :=  DINT_TO_STRING(_seqIdx),
+                                  Para3       :=  UINT_TO_STRING(Telegram.RobToPlc.Sequence[_seqIdx].Header.PayloadLength),
+                                  Para4       :=  BYTE_TO_STRING(Telegram.RobToPlc.Header.LifeSign));
+        END_IF
+      
+        // processing sequence payload                                  
+        WHILE ( _seqPayloadPtr < Telegram.RobToPlc.Sequence[_seqIdx].Header.PayloadLength )
+        DO                        
+          // parse header
+          Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Header.CmdID          := RecvData.GetUint();
+          Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Header.Reserve        := RecvData.GetByte();
+          Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Header.FragmentAction := RecvData.GetByte();
+          Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadPointer := RecvData.GetUint();
+          Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadLength  := RecvData.GetUint();
+         
+          // add header size to payload pointer 
+         _seqPayloadPtr := _seqPayloadPtr + SIZEOF(Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Header);
+          
+          // Check fragment payload available ? 
+          IF (Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadLength > 0)
+          THEN
+            // Check fragment payload length is valid ? 
+            IF ( Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadLength > _parCfg.Com.TelegramLengthRobToPlc )
+            THEN 
+              // Create log entry for payload not valid 
+              CreateLogMessagePara2 ( Timestamp   := SystemTime,
+                                      MessageType := MessageType.CMD,
+                                      Severity    := Severity.DEBUG,
+                                      MessageCode := 0,
+                                      MessageText := 'Invalid fragment payload length, Sequence = {1}, PayloadLength = {2} ',
+                                      Para1       :=  DINT_TO_STRING(_seqIdx),
+                                      Para2       :=  UINT_TO_STRING(Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadLength));
+                                      RETURN;
+            END_IF
+          
+            // Fill Response payload
+            FOR _idx := Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadPointer TO Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadLength -1
+            DO
+              Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Command.Payload[_idx] := RecvData.GetByte();
+              // inc payload pointer
+             _seqPayloadPtr := _seqPayloadPtr + SIZEOF(BYTE);
+            END_FOR
+            
+            // Add Response to ACR
+            AxesGroup.Acyclic.ActiveCommandRegister.AddRsp(Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx]);
+          
+            // Only for debugging - header is part of the payload itself
+            Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.State                 :=      GetHalfeByteLo( Value :=  Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Command.Payload[0]);
+            Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.ParSeq                :=      GetHalfeByteHi( Value :=  Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Command.Payload[0]);
+            Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.AlarmMessageSeverity  :=        BYTE_TO_SINT(           Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Command.Payload[1]);
+            Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.AlarmMessageCode      :=  CombineBytesToUint( HiByte := Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Command.Payload[2],
+                                                                                                                                LoByte := Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Command.Payload[3]);
+            // Create log entry
+            CreateLogMessagePara5 ( Timestamp   := SystemTime,
+                                    MessageType := MessageType.CMD,
+                                    Severity    := Severity.DEBUG,
+                                    MessageCode := 0,
+                                    MessageText := 'RecvData: received Fragment [{1}] with PayloadLength = {2}, CmdID <{3}> , CmdState: {4}, Fragment-Action Bits: {5}',
+                                    Para1       :=  DINT_TO_STRING(_seqIdx),
+                                    Para2       :=  UINT_TO_STRING              (Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadLength),
+                                    Para3       :=  DINT_TO_STRING              (Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Header.CmdID),
+                                    Para4       :=  CMD_MESSAGE_STATE_TO_STRING (Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.State),
+                                    Para5       :=    FRAGMENT_ACTION_TO_STRING (Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Header.FragmentAction));
+          END_IF
+          
+          // Check still payload left ? -> goto next fragment  
+          IF ( _seqPayloadPtr < Telegram.RobToPlc.Sequence[_seqIdx].Header.PayloadLength )
+          THEN
+           _fragIdx := _fragIdx + 1;        
+          END_IF
+          
+          // Check fragment index limit reached ? 
+          IF ( _fragIdx > RobotLibraryParameter.FRAGMENT_MAX ) 
+          THEN 
+            // Create log entry
+            CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                                    MessageType := MessageType.CMD,
+                                    Severity    := Severity.DEBUG,
+                                    MessageCode := 0,
+                                    MessageText := 'Fragment index out of range, _fragIdx = {1} ',
+                                    Para1       :=  DINT_TO_STRING(_fragIdx));
+                                    RETURN;
+          END_IF        
+        END_WHILE    
+      END_IF
+    END_IF    
+  END_FOR
 
 END_METHOD
 

@@ -111,7 +111,7 @@ END_VAR
   CheckParameterValid := TRUE;
   
   // Check ParCmd.ParCmd.RobotAxesBrakeRelease.AxisJ1 valid ? 
-  IF (( ParCmd.RobotAxesBrakeRelease.AxisJ1) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.1 ))   
+  IF (( ParCmd.RobotAxesBrakeRelease.AxisJ1) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.J1 ))   
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
@@ -129,7 +129,7 @@ END_VAR
   
   
   // Check ParCmd.ParCmd.RobotAxesBrakeRelease.AxisJ2 valid ? 
-  IF (( ParCmd.RobotAxesBrakeRelease.AxisJ2) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.2 ))   
+  IF (( ParCmd.RobotAxesBrakeRelease.AxisJ2) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.J2 ))   
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
@@ -147,7 +147,7 @@ END_VAR
   
   
   // Check ParCmd.ParCmd.RobotAxesBrakeRelease.AxisJ3 valid ? 
-  IF (( ParCmd.RobotAxesBrakeRelease.AxisJ3) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.3 ))   
+  IF (( ParCmd.RobotAxesBrakeRelease.AxisJ3) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.J3 ))   
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
@@ -165,7 +165,7 @@ END_VAR
   
   
   // Check ParCmd.ParCmd.RobotAxesBrakeRelease.AxisJ4 valid ? 
-  IF (( ParCmd.RobotAxesBrakeRelease.AxisJ4) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.4 ))   
+  IF (( ParCmd.RobotAxesBrakeRelease.AxisJ4) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.J4 ))   
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
@@ -183,7 +183,7 @@ END_VAR
   
   
   // Check ParCmd.ParCmd.RobotAxesBrakeRelease.AxisJ5 valid ? 
-  IF (( ParCmd.RobotAxesBrakeRelease.AxisJ5) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.5 ))   
+  IF (( ParCmd.RobotAxesBrakeRelease.AxisJ5) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.J5 ))   
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
@@ -201,7 +201,7 @@ END_VAR
   
   
   // Check ParCmd.ParCmd.RobotAxesBrakeRelease.AxisJ6 valid ? 
-  IF (( ParCmd.RobotAxesBrakeRelease.AxisJ6) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.6 ))   
+  IF (( ParCmd.RobotAxesBrakeRelease.AxisJ6) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.J6 ))   
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
@@ -219,7 +219,7 @@ END_VAR
   
   
   // Check ParCmd.ParCmd.ExternalAxesBrakeRelease.AxisE1 valid ? 
-  IF (( ParCmd.ExternalAxesBrakeRelease.AxisE1) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.1 ))   
+  IF (( ParCmd.ExternalAxesBrakeRelease.AxisE1) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.E1 ))   
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
@@ -237,7 +237,7 @@ END_VAR
   
   
   // Check ParCmd.ParCmd.ExternalAxesBrakeRelease.AxisE2 valid ? 
-  IF (( ParCmd.ExternalAxesBrakeRelease.AxisE2) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.2 ))   
+  IF (( ParCmd.ExternalAxesBrakeRelease.AxisE2) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.E2 ))   
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
@@ -255,7 +255,7 @@ END_VAR
   
   
   // Check ParCmd.ParCmd.ExternalAxesBrakeRelease.AxisE3 valid ? 
-  IF (( ParCmd.ExternalAxesBrakeRelease.AxisE3) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.3 ))   
+  IF (( ParCmd.ExternalAxesBrakeRelease.AxisE3) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.E3 ))   
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
@@ -273,7 +273,7 @@ END_VAR
   
   
   // Check ParCmd.ParCmd.ExternalAxesBrakeRelease.AxisE4 valid ? 
-  IF (( ParCmd.ExternalAxesBrakeRelease.AxisE4) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.4 ))   
+  IF (( ParCmd.ExternalAxesBrakeRelease.AxisE4) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.E4 ))   
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
@@ -291,7 +291,7 @@ END_VAR
   
   
   // Check ParCmd.ParCmd.ExternalAxesBrakeRelease.AxisE5 valid ? 
-  IF (( ParCmd.ExternalAxesBrakeRelease.AxisE5) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.5 ))   
+  IF (( ParCmd.ExternalAxesBrakeRelease.AxisE5) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.E5 ))   
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
@@ -309,7 +309,7 @@ END_VAR
   
   
   // Check ParCmd.ParCmd.ExternalAxesBrakeRelease.AxisE6 valid ? 
-  IF (( ParCmd.ExternalAxesBrakeRelease.AxisE6) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.6 ))   
+  IF (( ParCmd.ExternalAxesBrakeRelease.AxisE6) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.E6 ))   
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;

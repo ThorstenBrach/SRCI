@@ -25,7 +25,7 @@ STRUCT
   /// Header
   Header   : TelegramRobToPlcSequenceHeader;
   /// Fragment
-  Fragment : ARRAY[0..9] OF TelegramRobToPlcFragment;
+  Fragment : ARRAY[0..RobotLibraryParameter.FRAGMENT_MAX] OF TelegramRobToPlcFragment;
 END_STRUCT
 END_TYPE
 

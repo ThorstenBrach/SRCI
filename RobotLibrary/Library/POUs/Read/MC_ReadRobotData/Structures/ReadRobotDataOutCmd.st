@@ -35,13 +35,13 @@ STRUCT
   /// 
   RCInterpreterVersion : STRING(3);
   /// TRUE = Axis used in Robot FALSE = Axis NOT used. See Table 6-13 for bit assignment
-  AxisJointUsed        : BYTE;
+  AxisJointUsed        : AxisJointUsed;
   /// TRUE = Axis used by Robot FALSE = Axis NOT used. See Table 6-13 for bit assignment.
-  AxisExternalUsed     : BYTE;
+  AxisExternalUsed     : AxisExternalUsed;
   /// TRUE = mm FALSE = ° See Table 6-13 for bit assignment.
-  AxisJointUnit        : BYTE;
+  AxisJointUnit        : AxisJointUnit;
   /// TRUE = mm FALSE = ° See Table 6-13 for bit assignment
-  AxisExternalUnit     : BYTE;
+  AxisExternalUnit     : AxisExternalUnit;
   /// • TRUE: Function is supported by RC • FALSE: Function is not supported by RC See Table 6-14 for bit assignment.
   RCSupportedFunctions  : RCSupportedFunctions;
   /// Unique and unmodifiable identification of the RA.

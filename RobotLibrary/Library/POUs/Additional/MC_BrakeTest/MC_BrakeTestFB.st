@@ -156,12 +156,12 @@ END_VAR
   
   
   // Check RobotAxesActive valid ? 
-  IF ((( ParCmd.RobotAxesActive.AxisJ1 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.1 )) OR
-      (( ParCmd.RobotAxesActive.AxisJ2 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.2 )) OR
-      (( ParCmd.RobotAxesActive.AxisJ3 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.3 )) OR
-      (( ParCmd.RobotAxesActive.AxisJ4 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.4 )) OR
-      (( ParCmd.RobotAxesActive.AxisJ5 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.5 )) OR
-      (( ParCmd.RobotAxesActive.AxisJ6 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.6 )))  
+  IF ((( ParCmd.RobotAxesActive.AxisJ1 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.J1 )) OR
+      (( ParCmd.RobotAxesActive.AxisJ2 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.J2 )) OR
+      (( ParCmd.RobotAxesActive.AxisJ3 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.J3 )) OR
+      (( ParCmd.RobotAxesActive.AxisJ4 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.J4 )) OR
+      (( ParCmd.RobotAxesActive.AxisJ5 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.J5 )) OR
+      (( ParCmd.RobotAxesActive.AxisJ6 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.J6 )))  
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
@@ -179,12 +179,12 @@ END_VAR
   
   
   // Check ExternalAxesActive valid ? 
-  IF ((( ParCmd.ExternalAxesActive.AxisE1 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.1 )) OR
-      (( ParCmd.ExternalAxesActive.AxisE2 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.2 )) OR
-      (( ParCmd.ExternalAxesActive.AxisE3 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.3 )) OR
-      (( ParCmd.ExternalAxesActive.AxisE4 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.4 )) OR
-      (( ParCmd.ExternalAxesActive.AxisE5 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.5 )) OR
-      (( ParCmd.ExternalAxesActive.AxisE6 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.6 )))  
+  IF ((( ParCmd.ExternalAxesActive.AxisE1 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.E1 )) OR
+      (( ParCmd.ExternalAxesActive.AxisE2 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.E2 )) OR
+      (( ParCmd.ExternalAxesActive.AxisE3 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.E3 )) OR
+      (( ParCmd.ExternalAxesActive.AxisE4 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.E4 )) OR
+      (( ParCmd.ExternalAxesActive.AxisE5 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.E5 )) OR
+      (( ParCmd.ExternalAxesActive.AxisE6 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.E6 )))  
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;

@@ -24,11 +24,10 @@ TYPE AxesGroupInternalData :
 STRUCT
   /// Current System Time
   SystemTime           : SystemTime;
-    /// • TRUE: Function is supported by RC • FALSE: Function is not supported by RC See Table 6-14 for bit assignment.
-  //RCSupportedFunctions : RCSupportedFunctions;
-  
+  /// Read Robot data 
   RobotData            : ReadRobotDataOutCmd;
-  
+  /// Read configuration data
+  ConfigurationData    : ExchangeConfigurationOutCmd;
   /// Online Change detected
   OnlineChange         : BOOL;  
   /// Rising edge for Online Change detected
