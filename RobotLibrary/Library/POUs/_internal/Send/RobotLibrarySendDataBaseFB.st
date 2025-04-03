@@ -1,10 +1,10 @@
 {attribute 'pack_mode' := '1'} 
-FUNCTION_BLOCK RobotLibrarySendDataFB
+FUNCTION_BLOCK RobotLibrarySendDataBaseFB
 // ------------------------------------------------------------------------- 
 //  SRCI Robot Library                                                
 // ------------------------------------------------------------------------- 
 //                                                                           
-//  Object:      SendData                                      
+//  Object:      RobotLibrarySendDataFB                                      
 //  Author:      Thorsten Brach                                                
 //  Date:        2024-06-01
 //
@@ -22,12 +22,16 @@ FUNCTION_BLOCK RobotLibrarySendDataFB
 //
 // -------------------------------------------------------------------------
 VAR_INPUT
-  /// Payload
-  Payload    : ARRAY [0..RobotLibraryParameter.ROBOT_OUT_DATA_MAX] OF BYTE;
   /// Payload length
   PayloadLen : UDINT;
   /// Payload pointer
   PayloadPtr : UDINT;
+END_VAR
+
+
+VAR
+  /// internal pointer to payload 
+  pPayload : POINTER TO BYTE;
 END_VAR
 
 
@@ -70,9 +74,19 @@ VAR
  _tmpByte : BYTE := 0;
 END_VAR
 
+  // update internal pointer
+  UpdatePointer();
+  
+  // check pointer is valid ? 
+  IF (pPayload = RobotLibraryConstants.NULL_POINTER)
+  THEN
+    RETURN;
+  END_IF
+  
+  
   _tmpByte.0 := Value;
   // copy data 
-  SysDepMemCpy(pDest := ADR(Payload[PayloadPtr]), pSrc := ADR(_tmpByte), DataLen := SIZEOF(_tmpByte));
+  SysDepMemCpy(pDest := pPayload + PayloadPtr, pSrc := ADR(_tmpByte), DataLen := SIZEOF(_tmpByte));
   // inc payload pointer 
   PayloadPtr := PayloadPtr + SIZEOF(_tmpByte);
   // return payload len
@@ -87,9 +101,19 @@ VAR_INPUT
   Value : BYTE;
 END_VAR
 
+  // update internal pointer
+  UpdatePointer();
+  
+  // check pointer is valid ? 
+  IF (pPayload = RobotLibraryConstants.NULL_POINTER)
+  THEN
+    RETURN;
+  END_IF
+  
+  
   Value := Value;
   // copy data 
-  SysDepMemCpy( pDest := ADR(Payload[PayloadPtr]), pSrc := ADR(Value), DataLen := SIZEOF(Value));
+  SysDepMemCpy( pDest := pPayload + PayloadPtr, pSrc := ADR(Value), DataLen := SIZEOF(Value));
   // inc payload pointer 
   PayloadPtr := PayloadPtr + SIZEOF(Value);
   // return payload len
@@ -106,13 +130,23 @@ VAR_INPUT
   Size   : UDINT;
 END_VAR
 
+  // update internal pointer
+  UpdatePointer();
+  
+  // check pointer is valid ? 
+  IF (pPayload = RobotLibraryConstants.NULL_POINTER)
+  THEN
+    RETURN;
+  END_IF
+  
+  
   IF (pValue = 0) OR (Size = 0 )
   THEN
     RETURN;
   END_IF
   
   // copy data 
-  SysDepMemCpy( pDest := ADR(Payload[PayloadPtr]), pSrc := pValue, DataLen := Size);
+  SysDepMemCpy( pDest := pPayload + PayloadPtr, pSrc := pValue, DataLen := Size);
   // inc payload pointer 
   PayloadPtr := PayloadPtr + Size;
   // return payload len
@@ -142,7 +176,6 @@ END_VAR
   _tmpByte.5 := Value.EnableSyncDefaultDynamics;
   _tmpByte.6 := Value.EnableSyncReferenceDynamics;
   _tmpByte.7 := Value.AllowDynamicBlending;
-  
   
   
   AddByte(_tmpByte);
@@ -187,10 +220,20 @@ VAR_INPUT
   Value : DWORD;
 END_VAR
 
+  // update internal pointer
+  UpdatePointer();
+  
+  // check pointer is valid ? 
+  IF (pPayload = RobotLibraryConstants.NULL_POINTER)
+  THEN
+    RETURN;
+  END_IF
+  
+  
   // swap byte order
   Value := SwapDword(Value);
   // copy data 
-  SysDepMemCpy(pDest := ADR(Payload[PayloadPtr]), pSrc := ADR(Value), DataLen := SIZEOF(Value));
+  SysDepMemCpy(pDest := pPayload + PayloadPtr, pSrc := ADR(Value), DataLen := SIZEOF(Value));
   // inc data index 
   PayloadPtr := PayloadPtr + SIZEOF(Value);
   // return payload len
@@ -212,9 +255,19 @@ VAR
  _value : BYTE;
 END_VAR
 
+  // update internal pointer
+  UpdatePointer();
+  
+  // check pointer is valid ? 
+  IF (pPayload = RobotLibraryConstants.NULL_POINTER)
+  THEN
+    RETURN;
+  END_IF
+  
+  
   _value := CombineHalfBytes( HalfByteHi := HalfByteHi, HalfByteLo := HalfByteLo);
   // copy data 
-  SysDepMemCpy(pDest := ADR(Payload[PayloadPtr]), pSrc := ADR(_value), DataLen := SIZEOF(_value));
+  SysDepMemCpy(pDest := pPayload + PayloadPtr, pSrc := ADR(_value), DataLen := SIZEOF(_value));
   // inc payload pointer 
   PayloadPtr := PayloadPtr + SIZEOF(_value);
   // return payload len
@@ -229,9 +282,19 @@ VAR_INPUT
   Value : IEC_DATE;
 END_VAR
 
+  // update internal pointer
+  UpdatePointer();
+  
+  // check pointer is valid ? 
+  IF (pPayload = RobotLibraryConstants.NULL_POINTER)
+  THEN
+    RETURN;
+  END_IF
+  
+  
   Value := SwapIecDate(Value);
   // copy data 
-  SysDepMemCpy(pDest := ADR(Payload[PayloadPtr]), pSrc := ADR(Value), DataLen := SIZEOF(Value));
+  SysDepMemCpy(pDest := pPayload + PayloadPtr, pSrc := ADR(Value), DataLen := SIZEOF(Value));
   // inc payload pointer 
   PayloadPtr := PayloadPtr + SIZEOF(Value);
   // return payload len
@@ -246,9 +309,19 @@ VAR_INPUT
   Value : IEC_TIME;
 END_VAR
 
+  // update internal pointer
+  UpdatePointer();
+  
+  // check pointer is valid ? 
+  IF (pPayload = RobotLibraryConstants.NULL_POINTER)
+  THEN
+    RETURN;
+  END_IF
+  
+  
   Value := SwapIecTime(Value);
   // copy data 
-  SysDepMemCpy(pDest := ADR(Payload[PayloadPtr]), pSrc := ADR(Value), DataLen := SIZEOF(Value));
+  SysDepMemCpy(pDest := pPayload + PayloadPtr, pSrc := ADR(Value), DataLen := SIZEOF(Value));
   // inc payload pointer 
   PayloadPtr := PayloadPtr + SIZEOF(Value);
   // return payload len
@@ -263,10 +336,20 @@ VAR_INPUT
   Value : INT;
 END_VAR
 
+  // update internal pointer
+  UpdatePointer();
+  
+  // check pointer is valid ? 
+  IF (pPayload = RobotLibraryConstants.NULL_POINTER)
+  THEN
+    RETURN;
+  END_IF
+  
+  
   // swap byte order
   Value := SwapInt(Value);
   // copy data 
-  SysDepMemCpy(pDest := ADR(Payload[PayloadPtr]), pSrc := ADR(Value), DataLen := SIZEOF(Value));
+  SysDepMemCpy(pDest := pPayload + PayloadPtr, pSrc := ADR(Value), DataLen := SIZEOF(Value));
   // inc data index 
   PayloadPtr := PayloadPtr + SIZEOF(Value);
   // return payload len
@@ -281,10 +364,20 @@ VAR_INPUT
   Value : REAL;
 END_VAR
 
+  // update internal pointer
+  UpdatePointer();
+  
+  // check pointer is valid ? 
+  IF (pPayload = RobotLibraryConstants.NULL_POINTER)
+  THEN
+    RETURN;
+  END_IF
+  
+  
   // swap byte order
   Value := SwapReal(Value);
   // copy data 
-  SysDepMemCpy(pDest := ADR(Payload[PayloadPtr]),pSrc := ADR(Value), DataLen := SIZEOF(Value));
+  SysDepMemCpy(pDest := pPayload + PayloadPtr,pSrc := ADR(Value), DataLen := SIZEOF(Value));
   // inc data index 
   PayloadPtr := PayloadPtr + SIZEOF(Value);
   // return payload len
@@ -299,9 +392,19 @@ VAR_INPUT
   Value : SINT;
 END_VAR
 
+  // update internal pointer
+  UpdatePointer();
+  
+  // check pointer is valid ? 
+  IF (pPayload = RobotLibraryConstants.NULL_POINTER)
+  THEN
+    RETURN;
+  END_IF
+  
+  
   Value := Value;
   // copy data 
-  SysDepMemCpy(pDest := ADR(Payload[PayloadPtr]), pSrc := ADR(Value), DataLen := SIZEOF(Value));
+  SysDepMemCpy(pDest := pPayload + PayloadPtr, pSrc := ADR(Value), DataLen := SIZEOF(Value));
   // inc payload pointer 
   PayloadPtr := PayloadPtr + SIZEOF(Value);
   // return payload len
@@ -316,13 +419,23 @@ VAR_INPUT
   Value : STRING(255);
 END_VAR
 
+  // update internal pointer
+  UpdatePointer();
+  
+  // check pointer is valid ? 
+  IF (pPayload = RobotLibraryConstants.NULL_POINTER)
+  THEN
+    RETURN;
+  END_IF
+  
+  
   IF ( LEN(Value) = 0 )
   THEN
     RETURN;
   END_IF
   
   // copy data 
-  SysDepMemCpy(pDest := ADR(Payload[PayloadPtr]), pSrc := ADR(Value), DataLen := DINT_TO_UDINT(LEN(Value)));
+  SysDepMemCpy(pDest := pPayload + PayloadPtr, pSrc := ADR(Value), DataLen := DINT_TO_UDINT(LEN(Value)));
   // inc payload pointer 
   PayloadPtr := PayloadPtr + DINT_TO_UDINT(LEN(Value));
   // return payload len
@@ -337,10 +450,20 @@ VAR_INPUT
   Value : TOD;
 END_VAR
 
+  // update internal pointer
+  UpdatePointer();
+  
+  // check pointer is valid ? 
+  IF (pPayload = RobotLibraryConstants.NULL_POINTER)
+  THEN
+    RETURN;
+  END_IF
+  
+  
   // swap byte order
   Value := SwapIecTime(Value);
   // copy data 
-  SysDepMemCpy(pDest := ADR(Payload[PayloadPtr]), pSrc := ADR(Value), DataLen := SIZEOF(Value));
+  SysDepMemCpy(pDest := pPayload + PayloadPtr, pSrc := ADR(Value), DataLen := SIZEOF(Value));
   // inc data index 
   PayloadPtr := PayloadPtr + SIZEOF(Value);
   // return payload len
@@ -378,10 +501,20 @@ VAR_INPUT
   Value : UDINT;
 END_VAR
 
+  // update internal pointer
+  UpdatePointer();
+  
+  // check pointer is valid ? 
+  IF (pPayload = RobotLibraryConstants.NULL_POINTER)
+  THEN
+    RETURN;
+  END_IF
+  
+  
   // swap byte order
   Value := SwapUdint(Value);
   // copy data 
-  SysDepMemCpy(pDest := ADR(Payload[PayloadPtr]), pSrc := ADR(Value), DataLen := SIZEOF(Value));
+  SysDepMemCpy(pDest := pPayload + PayloadPtr, pSrc := ADR(Value), DataLen := SIZEOF(Value));
   // inc data index 
   PayloadPtr := PayloadPtr + SIZEOF(Value);
   // return payload len
@@ -396,10 +529,20 @@ VAR_INPUT
   Value : UINT;
 END_VAR
 
+  // update internal pointer
+  UpdatePointer();
+  
+  // check pointer is valid ? 
+  IF (pPayload = RobotLibraryConstants.NULL_POINTER)
+  THEN
+    RETURN;
+  END_IF
+  
+  
   // swap byte order
   Value := SwapUint(Value);
   // copy data 
-  SysDepMemCpy(pDest := ADR(Payload[PayloadPtr]), pSrc := ADR(Value), DataLen := SIZEOF(Value));
+  SysDepMemCpy(pDest := pPayload + PayloadPtr, pSrc := ADR(Value), DataLen := SIZEOF(Value));
   // inc data index 
   PayloadPtr := PayloadPtr + SIZEOF(Value);
   // return payload len
@@ -414,9 +557,19 @@ VAR_INPUT
   Value : USINT;
 END_VAR
 
+  // update internal pointer
+  UpdatePointer();
+  
+  // check pointer is valid ? 
+  IF (pPayload = RobotLibraryConstants.NULL_POINTER)
+  THEN
+    RETURN;
+  END_IF
+  
+  
   Value := Value;
   // copy data 
-  SysDepMemCpy(pDest := ADR(Payload[PayloadPtr]), pSrc := ADR(Value), DataLen := SIZEOF(Value));
+  SysDepMemCpy(pDest := pPayload + PayloadPtr, pSrc := ADR(Value), DataLen := SIZEOF(Value));
   // inc payload pointer 
   PayloadPtr := PayloadPtr + SIZEOF(Value);
   // return payload len
@@ -429,9 +582,13 @@ METHOD Reset
 VAR_INPUT
 END_VAR
 
-  SysDepMemSet(pDest := ADR(Payload), Value := 0 , DataLen := SIZEOF(Payload));
-  PayloadLen := 0;
-  PayloadPtr := 0;
+
+END_METHOD
+
+METHOD UpdatePointer
+VAR_INPUT
+END_VAR
+
 
 END_METHOD
 

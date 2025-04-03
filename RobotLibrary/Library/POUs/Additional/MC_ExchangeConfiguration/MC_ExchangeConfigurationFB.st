@@ -297,7 +297,7 @@ END_VAR
 
 END_METHOD
 
-METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
+METHOD INTERNAL CreateCommandPayload : RobotLibraryCommandDataFB
 VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
@@ -513,12 +513,10 @@ END_VAR
   
   CASE _stepCmd OF
     
-    00:  IF ( _enable_R.Q ) 
+    00:  IF ( _enable_R.Q ) AND ( NOT Error) 
          THEN
            // reset the rising edge
           _enable_R();       
-           // reset the falling edge
-          _enable_F();       
   
            // Check function is supported and parameter are valid ?
            IF (( CheckFunctionSupported( AxesGroup := AxesGroup )) AND
@@ -556,59 +554,81 @@ END_VAR
              CmdMessageState.ACTIVE      : ParameterAccepted  := TRUE;  
              CmdMessageState.ERROR       : Error              := TRUE;
            END_CASE
+  
+           // Update Enabled flag
+           Enabled :=  _response.Enabled;
+           
+           // Update command outputs
+           OutCmd.LengthACR                 := _response.LengthACR;
+           OutCmd.HighestToolIndex          := _response.HighestToolIndex;
+           OutCmd.HighestFrameIndex         := _response.HighestFrameIndex;
+           OutCmd.HighestLoadIndex          := _response.HighestLoadIndex;
+           OutCmd.HighestWorkAreaIndex      := _response.HighestWorkAreaIndex;
+           OutCmd.DataInSync                := _response.DataInSync;
+           OutCmd.ChangeIndexTool           := _response.ChangeIndexTool;
+           OutCmd.ChangeIndexFrame          := _response.ChangeIndexFrame;
+           OutCmd.ChangeIndexLoad           := _response.ChangeIndexLoad;
+           OutCmd.ChangeIndexWorkArea       := _response.ChangeIndexWorkArea;
+           OutCmd.RAWorkingHours            := _response.RAWorkingHours;
+           OutCmd.BrakeTestRequired         := _response.StatusByte.0;
+           OutCmd.StepModeExactStopActive   := _response.StatusByte.1;
+           OutCmd.StepModeBlendingActive    := _response.StatusByte.2;
+           OutCmd.PathAccuracyMode          := _response.StatusByte.3;
+           OutCmd.AvoidSingularity          := _response.StatusByte.4;
+           OutCmd.CollisionDetectionEnabled := _response.StatusByte.5;
+           OutCmd.AcceleratingSupported     := _response.StatusByte.6;
+           OutCmd.DecceleratingSupported    := _response.StatusByte.7;
+           OutCmd.ConstantVelocitySupported := _response.ConstantVelocitySupported;
+           OutCmd.RCWorkingHours            := _response.RCWorkingHours;      
+  
+           // Enabled ? -> Reset Busy flag  
+           IF (Enabled)
+           THEN  
+             Busy := FALSE;
+  				 END_IF
                   
            // Active, Interrupted, Done, Aborted or Error ?
            IF (_response.State >= CmdMessageState.ACTIVE )
            THEN
+             // Reset Enabled Flag
+             Enabled := FALSE;
              // Reset Busy Flag
-             Busy := FALSE;
-             // Reset Enabled flag
-             Enabled := TRUE;
-             
-             OutCmd.LengthACR                 := _response.LengthACR;
-             OutCmd.HighestToolIndex          := _response.HighestToolIndex;
-             OutCmd.HighestFrameIndex         := _response.HighestFrameIndex;
-             OutCmd.HighestLoadIndex          := _response.HighestLoadIndex;
-             OutCmd.HighestWorkAreaIndex      := _response.HighestWorkAreaIndex;
-             OutCmd.DataInSync                := _response.DataInSync;
-             OutCmd.ChangeIndexTool           := _response.ChangeIndexTool;
-             OutCmd.ChangeIndexFrame          := _response.ChangeIndexFrame;
-             OutCmd.ChangeIndexLoad           := _response.ChangeIndexLoad;
-             OutCmd.ChangeIndexWorkArea       := _response.ChangeIndexWorkArea;
-             OutCmd.RAWorkingHours            := _response.RAWorkingHours;
-             OutCmd.BrakeTestRequired         := _response.StatusByte.0;
-             OutCmd.StepModeExactStopActive   := _response.StatusByte.1;
-             OutCmd.StepModeBlendingActive    := _response.StatusByte.2;
-             OutCmd.PathAccuracyMode          := _response.StatusByte.3;
-             OutCmd.AvoidSingularity          := _response.StatusByte.4;
-             OutCmd.CollisionDetectionEnabled := _response.StatusByte.5;
-             OutCmd.AcceleratingSupported     := _response.StatusByte.6;
-             OutCmd.DecceleratingSupported    := _response.StatusByte.7;
-             OutCmd.ConstantVelocitySupported := _response.ConstantVelocitySupported;
-             OutCmd.RCWorkingHours            := _response.RCWorkingHours;      
+             Busy := FALSE;             
              // set timeout
              SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
              // inc step counter
-            _stepCmd := _stepCmd + 1; 
+            _stepCmd := _stepCmd + 2; 
            END_IF
          END_IF
   
          // do not abort directly, so that the ParSeq update can be send
-         IF ( _enable_R.Q ) OR ( _enable_F.Q ) 
+         IF ( _enable_F.Q ) 
          THEN
+           // Set Busy flag
+           Busy := TRUE;
            // trigger parameter update to disable FB
           _parameterUpdateInternal := TRUE;
-           // reset the rising edge
-          _enable_R();       
            // reset the falling edge
-          _enable_F();       
+          _enable_F();
+           // set timeout
+           SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
+           // inc step counter
+          _stepCmd := _stepCmd + 1; 
          END_IF
   
-  
-    02: IF (NOT Enable)
+        // Wait for response received or timeout or not Initialized
+    02: IF ((   _responseReceived                                    ) OR 
+            (     CheckTimeout(_timerCmd) = RobotLibraryConstants.OK ) OR 
+            ( NOT AxesGroup.InternalData.Initialized                 ))
         THEN
           Reset();   
-        END_IF
+  	    END_IF
+        
+        // Wait for Enable = FALSE
+    03: IF ( NOT Enable )
+        THEN
+          Reset();   
+  	    END_IF
         
   ELSE
     // invalid step
@@ -629,7 +649,7 @@ END_METHOD
 METHOD INTERNAL ParseResponsePayload : DINT
 VAR_INPUT
   /// Response data
-  ResponseData : RobotLibraryRecvDataFB;
+  ResponseData : RobotLibraryResponseDataFB;
   /// Timestamp
   Timestamp    : SystemTime;  
 END_VAR
@@ -722,7 +742,7 @@ END_METHOD
 METHOD INTERNAL ParseResponsePayloadLog
 VAR_INPUT
   /// Response data
-  ResponseData : RobotLibraryRecvDataFB;
+  ResponseData : RobotLibraryResponseDataFB;
   /// Timestamp
   Timestamp    : SystemTime;  
 END_VAR

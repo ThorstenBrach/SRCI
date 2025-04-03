@@ -250,7 +250,7 @@ END_VAR
 
 END_METHOD
 
-METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
+METHOD INTERNAL CreateCommandPayload : RobotLibraryCommandDataFB
 VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
@@ -463,7 +463,7 @@ END_VAR
   
   CASE _stepCmd OF
     
-    00:  IF ( _execute_R.Q )  
+    00:  IF ( _execute_R.Q ) AND ( NOT Error)  
          THEN
            // Check function is supported and parameter are valid ?
            IF (( CheckFunctionSupported( AxesGroup := AxesGroup )) AND
@@ -553,7 +553,7 @@ END_METHOD
 METHOD INTERNAL ParseResponsePayload : DINT
 VAR_INPUT
   /// Response data
-  ResponseData : RobotLibraryRecvDataFB;
+  ResponseData : RobotLibraryResponseDataFB;
   /// Timestamp
   Timestamp    : SystemTime;  
 END_VAR
@@ -696,7 +696,7 @@ END_METHOD
 METHOD INTERNAL ParseResponsePayloadLog
 VAR_INPUT
   /// Response data
-  ResponseData : RobotLibraryRecvDataFB;
+  ResponseData : RobotLibraryResponseDataFB;
   /// Timestamp
   Timestamp    : SystemTime;  
 END_VAR

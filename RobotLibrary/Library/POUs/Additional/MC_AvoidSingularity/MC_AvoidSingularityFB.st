@@ -132,7 +132,7 @@ END_VAR
 
 END_METHOD
 
-METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
+METHOD INTERNAL CreateCommandPayload : RobotLibraryCommandDataFB
 VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
@@ -232,7 +232,7 @@ END_VAR
   
   CASE _stepCmd OF
     
-    00:  IF ( _enable_R.Q )
+    00:  IF ( _enable_R.Q ) AND ( NOT Error)
          THEN
            // Check function is supported and parameter are valid ?
            IF (( CheckFunctionSupported( AxesGroup := AxesGroup )) AND
@@ -240,8 +240,6 @@ END_VAR
            THEN
              // reset the rising edge
             _enable_R();       
-             // reset the falling edge
-            _enable_F();       
              // set busy flag
              Busy := TRUE;
              // Reset command outputs
@@ -275,37 +273,60 @@ END_VAR
              CmdMessageState.ERROR       : Error              := TRUE;
            END_CASE
            
-           // Update results
+           // Update enable flag
            Enabled := _response.Enabled;
+           
+           
+           // Enabled ? -> Reset Busy flag  
+           IF (Enabled)
+           THEN  
+             Busy := FALSE;
+  				 END_IF
                   
            // Done, Aborted or Error ?
            IF (_response.State >= CmdMessageState.DONE )
            THEN
              // Reset enabled flag
              Enabled := FALSE;
+             // Reset busy flag
+             Busy := FALSE;   
              // set timeout
              SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
              // inc step counter
-            _stepCmd := _stepCmd + 1; 
+            _stepCmd := _stepCmd + 2; 
            END_IF
          END_IF
          
          // do not abort directly, so that the ParSeq update can be send
-         IF ( _enable_R.Q ) OR ( _enable_F.Q ) 
+         IF ( _enable_F.Q ) 
          THEN
+           // Set Busy flag
+           Busy := TRUE;
            // trigger parameter update to disable FB
           _parameterUpdateInternal := TRUE;
-           // reset the rising edge
-          _enable_R();       
            // reset the falling edge
-          _enable_F();       
+          _enable_F();
+           // set timeout
+           SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
+           // inc step counter
+          _stepCmd := _stepCmd + 1; 
          END_IF
   
-  
-    02: IF (NOT Enable)
+        // Wait for response received or timeout or not Initialized
+    02: IF ((   _responseReceived                                    ) OR 
+            (     CheckTimeout(_timerCmd) = RobotLibraryConstants.OK ) OR 
+            ( NOT AxesGroup.InternalData.Initialized                 ))
         THEN
           Reset();   
-        END_IF
+  	    END_IF
+        
+        // Wait for Enable = FALSE
+    03: IF ( NOT Enable )
+        THEN
+          Reset();   
+  	    END_IF
+  
+        
   ELSE
     // invalid step
     ErrorID := RobotLibraryEvents.ERR_INVALID_STEP;
@@ -325,7 +346,7 @@ END_METHOD
 METHOD INTERNAL ParseResponsePayload : DINT
 VAR_INPUT
   /// Response data
-  ResponseData : RobotLibraryRecvDataFB;
+  ResponseData : RobotLibraryResponseDataFB;
   /// Timestamp
   Timestamp    : SystemTime;  
 END_VAR
@@ -364,7 +385,7 @@ END_METHOD
 METHOD INTERNAL ParseResponsePayloadLog
 VAR_INPUT
   /// Response data
-  ResponseData : RobotLibraryRecvDataFB;
+  ResponseData : RobotLibraryResponseDataFB;
   /// Timestamp
   Timestamp    : SystemTime;  
 END_VAR

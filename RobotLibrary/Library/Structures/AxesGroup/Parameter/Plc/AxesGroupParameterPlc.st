@@ -22,22 +22,10 @@
 // -------------------------------------------------------------------------
 TYPE AxesGroupParameterPlc :
 STRUCT
-  (*
-  /// Manufactured ID
-  ManufacturedID       : UINT;
-  /// Order ID
-  OrderID              : STRING(20);
-  /// Serial Number
-  SerialNumber         : STRING(16);
-  /// Firmware Version
-  FirmwareVersion      : STRING(8);
-  /// Client Interface Version
-  InterfaceVersion     : STRING(8);
-  /// Synchronization Modes
-  SynchronizationModes : SynchronizationModes;  
-*)
-  Parameter            : AxesGroupParameterPlcParameter;  
-  OptionalCyclic       : AxesGroupParameterPlcOptionalCyclic;
+  /// Parameter
+  Parameter      : AxesGroupParameterPlcParameter;
+  /// Optional cyclic
+  OptionalCyclic : AxesGroupParameterPlcOptionalCyclic;
 END_STRUCT
 END_TYPE
 

@@ -363,7 +363,7 @@ END_VAR
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    ErrorID := RobotLibraryErrorIdEnum.ERR_CONFIGMODE_SHOULDER_INVALID;
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
                             MessageType := MessageType.CMD,
@@ -385,7 +385,7 @@ END_VAR
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    ErrorID := RobotLibraryErrorIdEnum.ERR_CONFIGMODE_ELBOW_INVALID;
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
                             MessageType := MessageType.CMD,
@@ -407,7 +407,7 @@ END_VAR
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    ErrorID := RobotLibraryErrorIdEnum.ERR_CONFIGMODE_WRIST_INVALID;
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
                             MessageType := MessageType.CMD,
@@ -580,7 +580,7 @@ END_VAR
 
 END_METHOD
 
-METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
+METHOD INTERNAL CreateCommandPayload : RobotLibraryCommandDataFB
 VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
@@ -1001,7 +1001,7 @@ END_VAR
   
   CASE _stepCmd OF
     
-    00:  IF ( _enable_R.Q ) 
+    00:  IF ( _enable_R.Q ) AND ( NOT Error) 
          THEN
            // reset the rising edge
           _enable_R();       
@@ -1050,7 +1050,7 @@ END_VAR
            THEN
              // Update results
              OutCmd.OffsetReached     := _response.OffsetReached;
-             OutCmd.Progress          := _response.Progress;
+             OutCmd.Progress          :=  PERCENT_UINT_TO_REAL( Value := _response.Progress, IsOptional := FALSE);
              OutCmd.RemainingDistance := _response.RemainingDistance;
              
              // set timeout
@@ -1084,7 +1084,7 @@ END_METHOD
 METHOD INTERNAL ParseResponsePayload : DINT
 VAR_INPUT
   /// Response data
-  ResponseData : RobotLibraryRecvDataFB;
+  ResponseData : RobotLibraryResponseDataFB;
   /// Timestamp
   Timestamp    : SystemTime;  
 END_VAR
@@ -1132,7 +1132,7 @@ END_METHOD
 METHOD INTERNAL ParseResponsePayloadLog
 VAR_INPUT
   /// Response data
-  ResponseData : RobotLibraryRecvDataFB;
+  ResponseData : RobotLibraryResponseDataFB;
   /// Timestamp
   Timestamp    : SystemTime;  
 END_VAR

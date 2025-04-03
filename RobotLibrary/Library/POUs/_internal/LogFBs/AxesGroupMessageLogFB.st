@@ -1,4 +1,4 @@
-FUNCTION_BLOCK AxesGroupMessageLogFB
+FUNCTION_BLOCK AxesGroupMessageLogFB IMPLEMENTS IMessageLogger
 // ------------------------------------------------------------------------- 
 //  SRCI Robot Library                                                
 // ------------------------------------------------------------------------- 
@@ -34,7 +34,7 @@ VAR_OUTPUT
   /// Amount of message log entries
   MessagesEntries  : UINT := 0;
   /// System log
-  SystemLogs       : ARRAY[0..RobotLibraryParameter.SYSTEM_LOG_MAX] OF STRING(255);
+  SystemLogs       : ARRAY[0..RobotLibraryParameter.SYSTEM_LOG_MAX ] OF STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN);
   /// Message Log
   Messages         : ARRAY[0..RobotLibraryParameter.MESSAGE_LOG_MAX] OF AlarmMessage;  
 END_VAR
@@ -42,9 +42,9 @@ END_VAR
 
 END_FUNCTION_BLOCK
 
-METHOD PUBLIC AddMessage
+METHOD PUBLIC AddMessageLog
 VAR_INPUT
-  Message : ReadMessagesRecvData;
+  MessageLog : AlarmMessage;
 END_VAR
 
 VAR
@@ -57,7 +57,7 @@ VAR
 END_VAR
 
   // Check entry must be added ? 
-  IF (( LogLevel  <= Message.Severity        ) AND
+  IF (( LogLevel  <= MessageLog.Severity     ) AND
       ( LogLevel  >  LogLevelEnum.DEACTIVATE ))
   THEN
     // Check message buffer is full ? 
@@ -74,8 +74,8 @@ END_VAR
       FOR _idx := RobotLibraryParameter.MESSAGE_LOG_MAX TO 1 BY -1
       DO
         // message found ?
-        IF (( Messages[_idx].Severity <  Message.Severity ) AND
-            ( Messages[_idx].Severity <=  _lowestSeverity ))
+        IF (( Messages[_idx].Severity <   MessageLog.Severity ) AND
+            ( Messages[_idx].Severity <= _lowestSeverity      ))
         THEN
           // save index to delete 
          _idxFound := _idx;
@@ -102,12 +102,11 @@ END_VAR
     END_FOR
   
     // Add new message 
-    Messages[0].Timestamp.SystemDate := IEC_DATE_TO_DATE(Message.Timestamp.IEC_DATE);           
-    Messages[0].Timestamp.SystemTime := IEC_TIME_TO_TIME(Message.Timestamp.IEC_TIME);           
-    Messages[0].MessageType          :=                  Message.MsgType;
-    Messages[0].Severity             :=                  Message.Severity;
-    Messages[0].MessageText          :=                  Message.Text;
-    Messages[0].MessageCode          :=                  Message.ErrorCode;
+    Messages[0].Timestamp   := MessageLog.Timestamp;           
+    Messages[0].MessageType := MessageLog.MessageType;
+    Messages[0].Severity    := MessageLog.Severity;
+    Messages[0].MessageText := MessageLog.MessageText;
+    Messages[0].MessageCode := MessageLog.MessageCode;
     
     // inc message counter
     MessagesEntries := DINT_TO_UINT(LIMIT(0, MessagesEntries + 1, RobotLibraryParameter.MESSAGE_LOG_MAX));
@@ -115,23 +114,64 @@ END_VAR
 
 END_METHOD
 
+METHOD Public AddMessageLogByParameter
+VAR_INPUT
+  /// Timestamp
+  Timestamp   : SystemTime;
+  /// Type of message according to Table 5-46:
+  MessageType : MessageType;
+  /// Severity of message according to Table 5-47: Debug, Info, Warning, Error, Fatal error
+  Severity    : Severity;
+  /// Code of messages
+  MessageCode : DWORD;
+  /// Static text of message
+  MessageText : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN);    
+END_VAR
+
+VAR
+  /// temporary message 
+ _message : AlarmMessage;
+END_VAR
+
+  _message.Timestamp   := Timestamp;
+  _message.MessageType := MessageType;
+  _message.MessageCode := MessageCode;
+  _message.MessageText := MessageText;
+  _message.Severity    := Severity;
+  
+  // Add message to message buffer       
+  AddMessageLog(_message);
+
+END_METHOD
+
 METHOD PUBLIC AddSystemLog
 VAR_INPUT
+  /// system log message
   SystemLog : STRING(255);
 END_VAR
+
 
 VAR
   /// internal index
  _idx : DINT;
+  /// internal log message 
+ _message : AlarmMessage;
 END_VAR
 
+  // shift system log entries
   FOR _idx := RobotLibraryParameter.SYSTEM_LOG_MAX TO 1 BY -1
   DO
     SystemLogs[_idx] := SystemLogs[_idx-1]; 
   END_FOR
   
-  SystemLogs[0] := SystemLog;           
-  
+  // Delete CR from system log message
+  SystemLog := StrReplace(SystemLog, '$R', '');
+  // Delete LF from system log message          
+  SystemLog := StrReplace(SystemLog, '$N', '');    
+         
+  // Add System log to buffer 
+  SystemLogs[0] := SystemLog;
+   
   // inc SystemLog counter
   SystemLogEntries := DINT_TO_UINT(LIMIT(0, SystemLogEntries + 1, RobotLibraryParameter.SYSTEM_LOG_MAX));
 

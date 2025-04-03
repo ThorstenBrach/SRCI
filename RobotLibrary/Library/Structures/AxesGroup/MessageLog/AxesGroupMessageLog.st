@@ -29,7 +29,7 @@ STRUCT
   /// Logging level
   LogLevel         : LogLevel;
   /// System log
-  SystemLog        : ARRAY[0..RobotLibraryParameter.SYSTEM_LOG_MAX] OF STRING(255);
+  SystemLog        : ARRAY[0..RobotLibraryParameter.SYSTEM_LOG_MAX] OF STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN);
   /// Message Log
   Messages         : ARRAY[0..RobotLibraryParameter.MESSAGE_LOG_MAX] OF AlarmMessage;
   /// Interface to an external logger

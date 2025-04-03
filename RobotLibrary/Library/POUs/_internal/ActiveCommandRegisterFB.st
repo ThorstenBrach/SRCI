@@ -31,17 +31,21 @@ END_VAR
 
 VAR_OUTPUT
   /// Execution Order List 
-  ExecutionOrderList  : ARRAY [1..RobotLibraryParameter.ACTIVE_CMD_REGISTER_ENTRIES_MAX] OF DINT;
+  ExecutionOrderList    : ARRAY [1..RobotLibraryParameter.ACTIVE_CMD_REGISTER_ENTRIES_MAX] OF DINT;
+  /// Current amount of used registers
+  CurrentArcUsageCount  : DINT;  
+  /// Current percent of used registers
+  CurrenArcUsagePercent : REAL;    
 END_VAR
 
 
 VAR
   /// temporarty Active Command Register
-  TmpRegister        : ARRAY [1..RobotLibraryParameter.ACTIVE_CMD_REGISTER_ENTRIES_MAX] OF AxesGroupAcyclicAcrEntry;
+  TmpRegister                 : ARRAY [1..RobotLibraryParameter.ACTIVE_CMD_REGISTER_ENTRIES_MAX] OF AxesGroupAcyclicAcrEntry;
   /// last used unique ID 
-  LastUniqueID       : UINT;
-  ///
-  
+  LastUniqueID                : UINT;
+  /// Warning for ARC usage at 80%
+  WarningArcUsage             : R_TRIG;
 END_VAR
 
 VAR CONSTANT
@@ -52,10 +56,10 @@ VAR CONSTANT
   /// Empty ARC entry
   EMPTY_ARC_ENTRY      : AxesGroupAcyclicAcrEntry := (State := ActiveCommandRegisterState.IS_FREE);
   /// Empty command entry
-  EMPTY_CMD_ENTRY      : AxesGroupAcyclicAcrEntryCmdBuffer := (State := BufferStateCmd.EMPTY);
-  
+  EMPTY_CMD_ENTRY      : AxesGroupAcyclicAcrEntryCmdBuffer := (State := BufferStateCmd.EMPTY);  
   /// constant for byte index of priority in payload 
-  PRIORITY_IDX         : BYTE := 3;  /// bitmask to mask the priority out of the halfbyte
+  PRIORITY_IDX         : BYTE := 3;  
+  /// bitmask to mask the priority out of the halfbyte
   PRIORITY_BIT_MASK    : BYTE := 2#000_1111;   
 END_VAR
 
@@ -68,16 +72,18 @@ END_FUNCTION_BLOCK
 METHOD PUBLIC AddCmd : UDINT
 VAR_INPUT
   /// Pointer to the corresponding command-FB to enable a callback mechanism
-  pCommandFB   : POINTER TO RobotLibraryBaseFB;
+  pCommandFB        : POINTER TO RobotLibraryBaseFB;
 END_VAR
 
 VAR
   /// internal index for loops
- _regIdx     : DINT;
+ _regIdx            : DINT;
   /// internal command type 
- _cmdType    : CmdType;
+ _cmdType           : CmdType;
   /// log message
- _messageLog : AlarmMessage;  
+ _messageLog        : AlarmMessage;  
+  /// flag for free register found
+ _freeRegisterFound : BOOL;
 END_VAR
 
   // calculate the used length of the ARC 
@@ -85,21 +91,28 @@ END_VAR
   DO
     IF ( Register[_regIdx].State = ActiveCommandRegisterState.IS_FREE )
     THEN
-      Register[_regIdx].State                        := ActiveCommandRegisterState.IS_PROCESSING;
-      //Register[_regIdx].UniqueID                     := CreateUniqueID();
-      Register[_regIdx].UniqueID                     := DINT_TO_UINT(_regIdx);
-      Register[_regIdx].pCommandFB                   := pCommandFB;
+      Register[_regIdx].State      := ActiveCommandRegisterState.IS_PROCESSING;
+    //Register[_regIdx].UniqueID   := CreateUniqueID();
+      Register[_regIdx].UniqueID   := DINT_TO_UINT(_regIdx);
+      Register[_regIdx].pCommandFB := pCommandFB;
   
       // check pointer to command FB
       IF ( Register[_regIdx].pCommandFB <> RobotLibraryConstants.NULL_POINTER )
       THEN
         Register[_regIdx].Command[RobotLibraryConstants.ACTIVE_CMD].Timestamp  := SystemTime;
-        Register[_regIdx].Command[RobotLibraryConstants.ACTIVE_CMD].Payload    := pCommandFB^.CommandData.Payload;
+  
+        Register[_regIdx].Command[RobotLibraryConstants.ACTIVE_CMD].Payload    := pCommandFB^.CommandData.Payload; 
         Register[_regIdx].Command[RobotLibraryConstants.ACTIVE_CMD].PayloadLen := pCommandFB^.CommandData.PayloadLen;
         Register[_regIdx].Command[RobotLibraryConstants.ACTIVE_CMD].PayLoadPtr := 0;
         Register[_regIdx].Command[RobotLibraryConstants.ACTIVE_CMD].State      := BufferStateCmd.CREATED;
       END_IF
     
+      // set flag for free register found
+     _freeRegisterFound := TRUE;
+      
+      // Increment Current used register counter
+      CurrentArcUsageCount := CurrentArcUsageCount + 1;
+      
       // return Unique ID
       AddCmd := Register[_regIdx].UniqueID;
   
@@ -116,6 +129,18 @@ END_VAR
       EXIT;
     END_IF
   END_FOR
+  
+  // Check a free register could be found ? 
+  IF ( NOT _freeRegisterFound )
+  THEN
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.FATAL_ERROR,
+                            MessageCode := 0,
+                            MessageText := 'Not possible to add Cmd <{1}> to ACR - NO FREE REGISTER FOUND ! -> STOPPING SRCI INTERFACE...',
+                            Para1       :=  CMD_TYPE_TO_STRING(SwapUint(_cmdType)));                          
+  END_IF
 
 END_METHOD
 
@@ -314,7 +339,6 @@ END_VAR
       // delete entries with State.IS_Final 
       IF ( Register[_regIdx].State = ActiveCommandRegisterState.IS_FINAL )
       THEN
-      
         // get command type from payload
        _cmdType := CombineBytesToUint(HiByte := Register[_regIdx].Command[ACTIVE_CMD].Payload[0],
                                       LoByte := Register[_regIdx].Command[ACTIVE_CMD].Payload[1]);
@@ -330,10 +354,39 @@ END_VAR
                                Para3       :=  CMD_TYPE_TO_STRING(_cmdType));
     
                                
-        Register[_regIdx] := EMPTY_ARC_ENTRY;                           
+        // delete register entry                              
+        Register[_regIdx] := EMPTY_ARC_ENTRY;
+  
+        // decrement current used register counter
+        CurrentArcUsageCount := CurrentArcUsageCount - 1;                           
       END_IF
     END_IF
   END_FOR
+  
+  
+  // Calculate percent of register usage
+  IF ( CurrentArcUsageCount > 0)
+  THEN
+    CurrenArcUsagePercent :=  (DINT_TO_REAL(CurrentArcUsageCount) / DINT_TO_REAL(RegisterSize)) * 100.0;
+  ELSE
+    CurrenArcUsagePercent := 0.0;
+  END_IF
+  
+  // build rising edge for arc usage over 80% 
+  WarningArcUsage( CLK := CurrenArcUsagePercent > 80.0 );
+  
+  IF ( WarningArcUsage.Q )
+  THEN
+    // Create log entry
+    CreateLogMessagePara3( Timestamp   := SystemTime,
+                           MessageType := MessageType.CMD,
+                           Severity    := Severity.WARNING,
+                           MessageCode := 0,
+                           MessageText := 'ARC Register usage has reached the warning limit (80%): {1}/{2} = {3}%',
+                           Para1       :=  DINT_TO_STRING(CurrentArcUsageCount),
+                           Para2       :=  DINT_TO_STRING(RegisterSize),
+                           Para3       :=  REAL_TO_STRING(CurrenArcUsagePercent));  
+  END_IF
 
 END_METHOD
 
@@ -452,9 +505,17 @@ END_VAR
     THEN  
       // delete register entry
       SysDepMemSet(pDest := ADR(Register[_regIdx]), Value := 0 , DataLen := SIZEOF(Register[_regIdx]));
+      // decrement current used register counter
+      CurrentArcUsageCount := CurrentArcUsageCount - 1;
       EXIT;
     END_IF
   END_FOR
+
+END_METHOD
+
+METHOD PUBLIC Reset
+
+  SysDepMemSet( ADR(Register), 0, SIZEOF(Register));
 
 END_METHOD
 

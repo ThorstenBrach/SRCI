@@ -21,6 +21,8 @@ FUNCTION_BLOCK RobotLibraryLogFB
 //
 // -------------------------------------------------------------------------
 VAR_INPUT
+  /// Interface to an internal logger
+  InternalLogger : IMessageLogger;  
   /// Interface to an external logger
   ExternalLogger : IMessageLogger;  
   /// Logging level
@@ -35,7 +37,7 @@ END_VAR
 
 END_FUNCTION_BLOCK
 
-METHOD CreateLogMessage
+METHOD CreateLogMessage : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN)
 VAR_INPUT
   /// Timestamp
   Timestamp   : SystemTime;
@@ -46,31 +48,45 @@ VAR_INPUT
   /// Code of messages
   MessageCode : DWORD;
   /// Static text of message
-  MessageText : STRING(255);  
+  MessageText : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN);  
 END_VAR
 
 VAR
   /// internal log message 
- _logMessage : AlarmMessage;
+ _message    : AlarmMessage;
+  /// internal string
+ _tmpString  : STRING(255);
 END_VAR
 
-  IF (( ExternalLogger <> 0        ) AND 
-      ( LogLevel       <= Severity ))
+  IF ( LogLevel <= Severity )
   THEN
-   _logMessage.Timestamp   := Timestamp;
-   _logMessage.MessageType := MessageType;
-   _logMessage.Severity    := Severity;
-   _logMessage.MessageCode := MessageCode;
-   _logMessage.MessageText := StrPadRight(MyType,' ', RobotLibraryDefines.MaxTypeNameLength);
-   _logMessage.MessageText := CONCAT(_logMessage.MessageText, ': ');
-   _logMessage.MessageText := CONCAT(_logMessage.MessageText,MessageText);
+   _message.Timestamp   := Timestamp;
+   _message.MessageType := MessageType;
+   _message.Severity    := Severity;
+   _message.MessageCode := MessageCode;
+   _message.MessageText := StrPadRight(MyType,' ', RobotLibraryDefines.MaxTypeNameLength);
+   _message.MessageText := CONCAT(_message.MessageText, ': ');
+   _message.MessageText := CONCAT(_message.MessageText,MessageText);
+  
+    // return log message
+    CreateLogMessage := ALARM_MESSAGE_TO_STRING(_message);
     
-    ExternalLogger.AddMessageLog( _logMessage);
+    // Check internal logger valid ? 
+    IF ( InternalLogger <> 0 )
+    THEN  
+      InternalLogger.AddSystemLog( SystemLog := ALARM_MESSAGE_TO_STRING(_message));
+    END_IF
+  
+    // Check external logger valid ? 
+    IF ( ExternalLogger <> 0 )
+    THEN  
+      ExternalLogger.AddSystemLog( SystemLog := ALARM_MESSAGE_TO_STRING(_message));
+    END_IF
   END_IF
 
 END_METHOD
 
-METHOD CreateLogMessagePara1
+METHOD CreateLogMessagePara1 : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN)
 VAR_INPUT
   /// Timestamp
   Timestamp   : SystemTime;
@@ -81,9 +97,9 @@ VAR_INPUT
   /// Code of messages
   MessageCode : DWORD;
   /// Static text of message
-  MessageText : STRING(255);  
+  MessageText : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN);  
   /// sub string which will replace the placeholder {1}
-  Para1       : STRING(255);
+  Para1       : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN);
 END_VAR
 VAR
   /// internal log message 
@@ -92,15 +108,16 @@ END_VAR
 
   MessageText := StrReplace(MessageText,'{1}', Para1);
   
-  CreateLogMessage( Timestamp   := Timestamp,
-                    MessageType := MessageType,
-                    Severity    := Severity,
-                    MessageCode := MessageCode,
-                    MessageText := MessageText);
+  CreateLogMessagePara1 
+    := CreateLogMessage( Timestamp   := Timestamp,
+                         MessageType := MessageType,
+                         Severity    := Severity,
+                         MessageCode := MessageCode,
+                         MessageText := MessageText);
 
 END_METHOD
 
-METHOD CreateLogMessagePara2 : BOOL
+METHOD CreateLogMessagePara2 : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN)
 VAR_INPUT
   /// Timestamp
   Timestamp   : SystemTime;
@@ -111,11 +128,11 @@ VAR_INPUT
   /// Code of messages
   MessageCode : DWORD;
   /// Static text of message
-  MessageText : STRING(255);  
+  MessageText : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN);  
   /// sub string which will replace the placeholder {1}
-  Para1       : STRING(255);
+  Para1       : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN);
   /// sub string which will replace the placeholder {2}
-  Para2       : STRING(255);
+  Para2       : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN);
 END_VAR
 VAR
   /// internal log message 
@@ -124,16 +141,17 @@ END_VAR
 
   MessageText := StrReplace(MessageText,'{2}', Para2);
   
-  CreateLogMessagePara1( Timestamp   := Timestamp,
-                         MessageType := MessageType,
-                         Severity    := Severity,
-                         MessageCode := MessageCode,
-                         MessageText := MessageText,
-                         Para1       := Para1);
+  CreateLogMessagePara2 
+    := CreateLogMessagePara1( Timestamp   := Timestamp,
+                              MessageType := MessageType,
+                              Severity    := Severity,
+                              MessageCode := MessageCode,
+                              MessageText := MessageText,
+                              Para1       := Para1);
 
 END_METHOD
 
-METHOD CreateLogMessagePara3
+METHOD CreateLogMessagePara3 : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN)
 VAR_INPUT
   /// Timestamp
   Timestamp   : SystemTime;
@@ -144,13 +162,13 @@ VAR_INPUT
   /// Code of messages
   MessageCode : DWORD;
   /// Static text of message
-  MessageText : STRING(255);  
+  MessageText : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN);  
   /// sub string which will replace the placeholder {1}
-  Para1       : STRING(255);
+  Para1       : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN);
   /// sub string which will replace the placeholder {2}
-  Para2       : STRING(255);
+  Para2       : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN);
   /// sub string which will replace the placeholder {3}
-  Para3       : STRING(255);
+  Para3       : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN);
 END_VAR
 VAR
   /// internal log message 
@@ -159,17 +177,18 @@ END_VAR
 
   MessageText := StrReplace(MessageText,'{3}', Para3);
   
-  CreateLogMessagePara2( Timestamp   := Timestamp,
-                         MessageType := MessageType,
-                         Severity    := Severity,
-                         MessageCode := MessageCode,
-                         MessageText := MessageText,
-                         Para1       := Para1,
-                         Para2       := Para2);
+  CreateLogMessagePara3
+    := CreateLogMessagePara2( Timestamp   := Timestamp,
+                              MessageType := MessageType,
+                              Severity    := Severity,
+                              MessageCode := MessageCode,
+                              MessageText := MessageText,
+                              Para1       := Para1,
+                              Para2       := Para2);
 
 END_METHOD
 
-METHOD CreateLogMessagePara4 : BOOL
+METHOD CreateLogMessagePara4 : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN)
 VAR_INPUT
   /// Timestamp
   Timestamp   : SystemTime;
@@ -180,15 +199,15 @@ VAR_INPUT
   /// Code of messages
   MessageCode : DWORD;
   /// Static text of message
-  MessageText : STRING(255);  
+  MessageText : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN);  
   /// sub string which will replace the placeholder {1}
-  Para1       : STRING(255);
+  Para1       : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN);
   /// sub string which will replace the placeholder {2}
-  Para2       : STRING(255);
+  Para2       : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN);
   /// sub string which will replace the placeholder {3}
-  Para3       : STRING(255);
+  Para3       : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN);
   /// sub string which will replace the placeholder {4}
-  Para4       : STRING(255);
+  Para4       : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN);
 END_VAR
 VAR
   /// internal log message 
@@ -197,18 +216,19 @@ END_VAR
 
   MessageText := StrReplace(MessageText,'{4}', Para4);
   
-  CreateLogMessagePara3( Timestamp   := Timestamp,
-                         MessageType := MessageType,
-                         Severity    := Severity,
-                         MessageCode := MessageCode,
-                         MessageText := MessageText,
-                         Para1       := Para1,
-                         Para2       := Para2,
-                         Para3       := Para3);
+  CreateLogMessagePara4
+    := CreateLogMessagePara3( Timestamp   := Timestamp,
+                              MessageType := MessageType,
+                              Severity    := Severity,
+                              MessageCode := MessageCode,
+                              MessageText := MessageText,
+                              Para1       := Para1,
+                              Para2       := Para2,
+                              Para3       := Para3);
 
 END_METHOD
 
-METHOD CreateLogMessagePara5 
+METHOD CreateLogMessagePara5 : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN)
 VAR_INPUT
   /// Timestamp
   Timestamp   : SystemTime;
@@ -219,17 +239,17 @@ VAR_INPUT
   /// Code of messages
   MessageCode : DWORD;
   /// Static text of message
-  MessageText : STRING(255);  
+  MessageText : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN);  
   /// sub string which will replace the placeholder {1}
-  Para1       : STRING(255);
+  Para1       : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN);
   /// sub string which will replace the placeholder {2}
-  Para2       : STRING(255);
+  Para2       : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN);
   /// sub string which will replace the placeholder {3}
-  Para3       : STRING(255);
+  Para3       : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN);
   /// sub string which will replace the placeholder {4}
-  Para4       : STRING(255);
+  Para4       : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN);
   /// sub string which will replace the placeholder {5}
-  Para5       : STRING(255);
+  Para5       : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN);
 END_VAR
 VAR
   /// internal log message 
@@ -238,19 +258,20 @@ END_VAR
 
   MessageText := StrReplace(MessageText,'{5}', Para5);
   
-  CreateLogMessagePara4( Timestamp   := Timestamp,
-                         MessageType := MessageType,
-                         Severity    := Severity,
-                         MessageCode := MessageCode,
-                         MessageText := MessageText,
-                         Para1       := Para1,
-                         Para2       := Para2,
-                         Para3       := Para3,
-                         Para4       := Para4);
+  CreateLogMessagePara5
+    := CreateLogMessagePara4( Timestamp   := Timestamp,
+                              MessageType := MessageType,
+                              Severity    := Severity,
+                              MessageCode := MessageCode,
+                              MessageText := MessageText,
+                              Para1       := Para1,
+                              Para2       := Para2,
+                              Para3       := Para3,
+                              Para4       := Para4);
 
 END_METHOD
 
-METHOD CreateLogMessagePara6 
+METHOD CreateLogMessagePara6 : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN)
 VAR_INPUT
   /// Timestamp
   Timestamp   : SystemTime;
@@ -261,19 +282,19 @@ VAR_INPUT
   /// Code of messages
   MessageCode : DWORD;
   /// Static text of message
-  MessageText : STRING(255);  
+  MessageText : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN);  
   /// sub string which will replace the placeholder {1}
-  Para1       : STRING(255);
+  Para1       : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN);
   /// sub string which will replace the placeholder {2}
-  Para2       : STRING(255);
+  Para2       : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN);
   /// sub string which will replace the placeholder {3}
-  Para3       : STRING(255);
+  Para3       : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN);
   /// sub string which will replace the placeholder {4}
-  Para4       : STRING(255);
+  Para4       : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN);
   /// sub string which will replace the placeholder {5}
-  Para5       : STRING(255);
+  Para5       : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN);
   /// sub string which will replace the placeholder {6}
-  Para6       : STRING(255);
+  Para6       : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN);
 END_VAR
 VAR
   /// internal log message 
@@ -282,16 +303,17 @@ END_VAR
 
   MessageText := StrReplace(MessageText,'{6}', Para6);
   
-  CreateLogMessagePara5( Timestamp   := Timestamp,
-                         MessageType := MessageType,
-                         Severity    := Severity,
-                         MessageCode := MessageCode,
-                         MessageText := MessageText,
-                         Para1       := Para1,
-                         Para2       := Para2,
-                         Para3       := Para3,
-                         Para4       := Para4,
-                         Para5       := Para5);
+  CreateLogMessagePara6
+    := CreateLogMessagePara5( Timestamp   := Timestamp,
+                              MessageType := MessageType,
+                              Severity    := Severity,
+                              MessageCode := MessageCode,
+                              MessageText := MessageText,
+                              Para1       := Para1,
+                              Para2       := Para2,
+                              Para3       := Para3,
+                              Para4       := Para4,
+                              Para5       := Para5);
 
 END_METHOD
 

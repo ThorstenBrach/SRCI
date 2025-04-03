@@ -37,8 +37,6 @@ VAR_INPUT
   /// For convenience, an RC with only one RA must assign ID 1 to this RA. 
   /// An RC with multiple RAs must assign numeric values 1-15 to those RAs.
   AxesGroupID       : BYTE;
-  /// Flag for clear error
-  ErrorClear        : BOOL;
   /// Configuration parameter
   ParCfg            : RobotTaskParCfg;
 END_VAR
@@ -65,7 +63,7 @@ VAR_IN_OUT
   /// Reference dynamics stored on PLC. For more information refer to 5.5.7
   ReferenceDynamics : ReferenceDynamics;
   /// System log on PLC
-  SystemLog         : ARRAY[0..RobotLibraryParameter.SYSTEM_LOG_MAX ] OF STRING(255);
+  SystemLog         : ARRAY[0..RobotLibraryParameter.SYSTEM_LOG_MAX ] OF STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN);
   /// Message buffer on the PLC - For more information refer to 5.5.11
   MessageLog        : ARRAY[0..RobotLibraryParameter.MESSAGE_LOG_MAX] OF AlarmMessage;
   /// Robot assignment of function
@@ -192,7 +190,6 @@ END_VAR
   
   OnCall                       ( AxesGroup    := AxesGroup);
   OnExecRun                    ( AxesGroup    := AxesGroup);
-  OnErrorClear                 ( AxesGroup    := AxesGroup);
   
   
   AxesGroupToTelegram  ( AxesGroup    := AxesGroup );
@@ -1997,6 +1994,7 @@ END_VAR
   // Update internal data
   AxesGroup.InternalData.SystemTime   := SystemTime;
   AxesGroup.InternalData.OnlineChange := OnlineChange;
+  AxesGroup.InternalData.Initialized  := Initialized;
   
   // Create rising and falling edges for Online Change
   AxesGroup.InternalData.OnlineChange_R(CLK := OnlineChange);
@@ -2117,9 +2115,13 @@ VAR_IN_OUT
 END_VAR 
 VAR
   /// index of lifesign in header
-  _lifeSignIdxHeader : DINT;
+ _lifeSignIdxHeader : DINT;
+  /// Value of lifesign in header
+ _lifeSignHeader    : BYTE;
   /// index of lifesign in footer
-  _lifeSignIdxFooter : DINT;
+ _lifeSignIdxFooter : DINT;
+  /// Value of lifesign in footer
+ _lifeSignFooter    : BYTE;
 END_VAR
 VAR_INST
   /// Timeout for invalid frames counter check
@@ -2139,15 +2141,23 @@ END_VAR
   _lifeSignIdxHeader := 1;
   _lifeSignIdxFooter := _parCfg.Com.TelegramLengthRobToPlc -1;
   
+  IF ( AxesGroup.Cyclic.RobToPlc.TelegramState = TelegramState.INITIALIZED ) 
+  THEN
+    // Get lifesign values
+   _lifeSignHeader := GetHalfeByteHi( RobotInData[_lifeSignIdxHeader]);
+   _lifeSignFooter := GetHalfeByteHi( RobotInData[_lifeSignIdxFooter]);
+  END_IF
+  
   // Timer for invalid frame(s) message
   _invalidFrameCounterCheck_D( IN := TRUE , PT := RobotLibraryParameter.INVALID_FRAMES_CHECK_TIMEOUT);
   
   // Check Frame is valid : 
   // ----------------------
-  IF ( GetHalfeByteHi( RobotInData[_lifeSignIdxHeader]) <> GetHalfeByteHi(RobotInData[_lifeSignIdxFooter]))
+  IF ( _lifeSignHeader <> _lifeSignFooter )   
   THEN
     InvalidFrames := InvalidFrames + 1;
   END_IF
+  
   
   // Check timeout for invalid frame message
   IF ( _invalidFrameCounterCheck_D.Q )
@@ -2192,7 +2202,6 @@ VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup    : AxesGroup;
 END_VAR 
-
 VAR_INST
   /// flag for 1st cycle
  _first : BOOL := TRUE;
@@ -2204,11 +2213,12 @@ END_VAR
     AxesGroup.Cyclic.PlcToRob.LifeSign := 0;
     // reset first flag
    _first := FALSE;
+    // prevent inc LifeSign in the 1st cycle (Code below)
     RETURN;
   END_IF
   
   AxesGroup.Cyclic.PlcToRob.LifeSign := AxesGroup.Cyclic.PlcToRob.LifeSign + 1;
-  
+    
   IF ( AxesGroup.Cyclic.PlcToRob.LifeSign > 15 )
   THEN
     AxesGroup.Cyclic.PlcToRob.LifeSign := 1; // 0 is only in the very 1st cycle to indicate the system start in logging
@@ -2300,37 +2310,37 @@ VAR_IN_OUT
 END_VAR
 
   // Common
-  UserData.LogLevel                       := LogLevel;
-  UserData.PLCLibraryVersion              := RobotLibraryConstants.PLCLibraryVersion;
-  
-  // Communication
-  UserData.LifeSignTimeOut                := _parCfg.Com.LifeSignTimeOut;
-  
-  // Plc Parameter
-  UserData.SyncModeTool                   := _parCfg.Plc.Parameter.SynchronizationModes.Tool;
-  UserData.SyncModeFrame                  := _parCfg.Plc.Parameter.SynchronizationModes.Frame;
-  UserData.SyncModeLoad                   := _parCfg.Plc.Parameter.SynchronizationModes.Load;
-  UserData.SyncModeWorkAreas              := _parCfg.Plc.Parameter.SynchronizationModes.WorkAreas;
-  UserData.SyncModeSWLimits               := _parCfg.Plc.Parameter.SynchronizationModes.SWLimits;
-  UserData.SyncModeDefaultDynamics        := _parCfg.Plc.Parameter.SynchronizationModes.DefaultDynamics;
-  UserData.SyncModeReferenceDynamics      := _parCfg.Plc.Parameter.SynchronizationModes.ReferenceDynamics;
-  
-  // Robot Parameter
-  UserData.EnableSyncTool                 := _parCfg.Rob.Parameter.DataEnableSync.EnableSyncTool;
-  UserData.EnableSyncFrame                := _parCfg.Rob.Parameter.DataEnableSync.EnableSyncFrame;
-  UserData.EnableSyncLoad                 := _parCfg.Rob.Parameter.DataEnableSync.EnableSyncLoad;
-  UserData.EnableSyncWorkArea             := _parCfg.Rob.Parameter.DataEnableSync.EnableSyncWorkArea;
-  UserData.EnableSyncSWLimits             := _parCfg.Rob.Parameter.DataEnableSync.EnableSyncSWLimits;
-  UserData.EnableSyncDefaultDynamics      := _parCfg.Rob.Parameter.DataEnableSync.EnableSyncDefaultDynamics;
-  UserData.EnableSyncReferenceDynamics    := _parCfg.Rob.Parameter.DataEnableSync.EnableSyncReferenceDynamics;
-  UserData.DelayTime                      := _parCfg.Rob.Parameter.DelayTime;
-  UserData.WaitForNrOfCmd                 := _parCfg.Rob.Parameter.WaitForNrOfCmd;
-  UserData.WaitAtBlendingZone             := _parCfg.Rob.Parameter.WaitAtBlendingZone;
-  UserData.AllowSecSeqWhileSubprogram     := _parCfg.Rob.Parameter.AllowSecSeqWhileSubprogram;
-  UserData.AllowDynamicBlending           := _parCfg.Rob.Parameter.AllowDynamicBlending;
-  UserData.SyncReaction                   := _parCfg.Rob.Parameter.SyncReaction;
-  UserData.SyncDelay                      := _parCfg.Rob.Parameter.SyncDelay;
-  UserData.MessageLevel                   := _parcfg.Rob.Parameter.MessageLevel;
+  UserData.LogLevel                          := LogLevel;
+  UserData.PLCLibraryVersion                 := RobotLibraryConstants.PLCLibraryVersion;
+                                             
+  // Communication                           
+  UserData.LifeSignTimeOut                   := _parCfg.Com.LifeSignTimeOut;
+                                             
+  // Plc Parameter                           
+  UserData.SyncModeTool                      := _parCfg.Plc.Parameter.SynchronizationModes.Tool;
+  UserData.SyncModeFrame                     := _parCfg.Plc.Parameter.SynchronizationModes.Frame;
+  UserData.SyncModeLoad                      := _parCfg.Plc.Parameter.SynchronizationModes.Load;
+  UserData.SyncModeWorkAreas                 := _parCfg.Plc.Parameter.SynchronizationModes.WorkAreas;
+  UserData.SyncModeSWLimits                  := _parCfg.Plc.Parameter.SynchronizationModes.SWLimits;
+  UserData.SyncModeDefaultDynamics           := _parCfg.Plc.Parameter.SynchronizationModes.DefaultDynamics;
+  UserData.SyncModeReferenceDynamics         := _parCfg.Plc.Parameter.SynchronizationModes.ReferenceDynamics;
+                                             
+  // Robot Parameter                         
+  UserData.EnableSyncTool                    := _parCfg.Rob.Parameter.DataEnableSync.EnableSyncTool;
+  UserData.EnableSyncFrame                   := _parCfg.Rob.Parameter.DataEnableSync.EnableSyncFrame;
+  UserData.EnableSyncLoad                    := _parCfg.Rob.Parameter.DataEnableSync.EnableSyncLoad;
+  UserData.EnableSyncWorkArea                := _parCfg.Rob.Parameter.DataEnableSync.EnableSyncWorkArea;
+  UserData.EnableSyncSWLimits                := _parCfg.Rob.Parameter.DataEnableSync.EnableSyncSWLimits;
+  UserData.EnableSyncDefaultDynamics         := _parCfg.Rob.Parameter.DataEnableSync.EnableSyncDefaultDynamics;
+  UserData.EnableSyncReferenceDynamics       := _parCfg.Rob.Parameter.DataEnableSync.EnableSyncReferenceDynamics;
+  UserData.DelayTime                         := _parCfg.Rob.Parameter.DelayTime;
+  UserData.WaitForNrOfCmd                    := _parCfg.Rob.Parameter.WaitForNrOfCmd;
+  UserData.WaitAtBlendingZone                := _parCfg.Rob.Parameter.WaitAtBlendingZone;
+  UserData.AllowSecSeqWhileSubprogram        := _parCfg.Rob.Parameter.AllowSecSeqWhileSubprogram;
+  UserData.AllowDynamicBlending              := _parCfg.Rob.Parameter.AllowDynamicBlending;
+  UserData.SyncReaction                      := _parCfg.Rob.Parameter.SyncReaction;
+  UserData.SyncDelay                         := _parCfg.Rob.Parameter.SyncDelay;
+  UserData.MessageLevel                      := _parcfg.Rob.Parameter.MessageLevel;
   
   // ReadRobotData
   UserData.RCManufacturer                    := AxesGroup.InternalData.RobotData.RCManufacturer; 
@@ -2343,51 +2353,51 @@ END_VAR
   UserData.RCInterpreterVersion.MinorVersion := STRING_TO_USINT(MID(AxesGroup.InternalData.RobotData.RCInterpreterVersion, LEN := 1, POS := 2));
   UserData.RCInterpreterVersion.PatchVersion := STRING_TO_USINT(MID(AxesGroup.InternalData.RobotData.RCInterpreterVersion, LEN := 1, POS := 3));
   
-  UserData.AxisJointUsed                  := AxesGroup.InternalData.RobotData.AxisJointUsed;
-  UserData.AxisExternalUsed               := AxesGroup.InternalData.RobotData.AxisExternalUsed;
-  UserData.AxisJointUnit                  := AxesGroup.InternalData.RobotData.AxisJointUnit;
-  UserData.AxisExternalUnit               := AxesGroup.InternalData.RobotData.AxisExternalUnit;
-  UserData.RCSupportedFunctions           := AxesGroup.InternalData.RobotData.RCSupportedFunctions;
-  
-  UserData.BrakeTestRequired              := AxesGroup.InternalData.ConfigurationData.BrakeTestRequired;
-  UserData.PathAccuracyMode               := AxesGroup.InternalData.ConfigurationData.PathAccuracyMode;
-  UserData.AvoidSingularity               := AxesGroup.InternalData.ConfigurationData.AvoidSingularity;
-  UserData.ConstantVelocitySupported      := AxesGroup.InternalData.ConfigurationData.ConstantVelocitySupported;
-  UserData.StepModeExactStopActive        := AxesGroup.InternalData.ConfigurationData.StepModeExactStopActive;
-  UserData.StepModeBlendingActive         := AxesGroup.InternalData.ConfigurationData.StepModeBlendingActive;
-  UserData.AcceleratingSupported          := AxesGroup.InternalData.ConfigurationData.AcceleratingSupported;
-  UserData.DeceleratingSupported          := AxesGroup.InternalData.ConfigurationData.DecceleratingSupported;
-  
-  UserData.Initialized                    := Initialized;
-  UserData.Synchronized                   := Synchronized;
-  
-  // Cyclic data
-  UserData.RCSRCIVersion                  := AxesGroup.Cyclic.RobToPlc.SRCIVersion;
-  UserData.IsMoving                       := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.IsMoving;
-  UserData.PrimarySequencePaused          := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.PrimarySequencePaused;
-  UserData.InPrimaryPos                   := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.InPrimaryPos;
-  UserData.SecondarySequenceActive        := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.SecondarySequenceActive;
-  UserData.ErrorPending                   := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.ErrorPending;
-  UserData.RestartInProgress              := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.RestartInProgress;
-  UserData.Enabled                        := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.Enabled;
-  UserData.Idle                           := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.RaSequenceState = RaSequenceState.IDLE;
-  UserData.Executing                      := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.RaSequenceState = RaSequenceState.EXECUTING;
-  UserData.Interrupted                    := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.RaSequenceState = RaSequenceState.INTERRUPTED;
-  UserData.IsBlending                     := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.IsBlending;  
-  UserData.OperationMode                  := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.OperationMode;
-  UserData.CollisionDetectionEnabled      := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.CollisionDetectedEnabled;
-  UserData.CollisionDetected              := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.CollisionDetected;
-  UserData.RestartRequested               := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.RestartRequested;
-  UserData.ActualOverride                 := AxesGroup.Cyclic.RobToPlc.Override;
-  UserData.Accelerating                   := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.Accelerating;
-  UserData.Decelerating                   := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.Decelerating;
-  UserData.ConstantVelocity               := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.ConstantVelocity;
+  UserData.AxisJointUsed                     := AxesGroup.InternalData.RobotData.AxisJointUsed;
+  UserData.AxisExternalUsed                  := AxesGroup.InternalData.RobotData.AxisExternalUsed;
+  UserData.AxisJointUnit                     := AxesGroup.InternalData.RobotData.AxisJointUnit;
+  UserData.AxisExternalUnit                  := AxesGroup.InternalData.RobotData.AxisExternalUnit;
+  UserData.RCSupportedFunctions              := AxesGroup.InternalData.RobotData.RCSupportedFunctions;
+                                             
+  UserData.BrakeTestRequired                 := AxesGroup.InternalData.ConfigurationData.BrakeTestRequired;
+  UserData.PathAccuracyMode                  := AxesGroup.InternalData.ConfigurationData.PathAccuracyMode;
+  UserData.AvoidSingularity                  := AxesGroup.InternalData.ConfigurationData.AvoidSingularity;
+  UserData.ConstantVelocitySupported         := AxesGroup.InternalData.ConfigurationData.ConstantVelocitySupported;
+  UserData.StepModeExactStopActive           := AxesGroup.InternalData.ConfigurationData.StepModeExactStopActive;
+  UserData.StepModeBlendingActive            := AxesGroup.InternalData.ConfigurationData.StepModeBlendingActive;
+  UserData.AcceleratingSupported             := AxesGroup.InternalData.ConfigurationData.AcceleratingSupported;
+  UserData.DeceleratingSupported             := AxesGroup.InternalData.ConfigurationData.DecceleratingSupported;
+                                             
+  UserData.Initialized                       := Initialized;
+  UserData.Synchronized                      := Synchronized;
+                                             
+  // Cyclic data                             
+  UserData.RCSRCIVersion                     := AxesGroup.Cyclic.RobToPlc.SRCIVersion;
+  UserData.IsMoving                          := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.IsMoving;
+  UserData.PrimarySequencePaused             := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.PrimarySequencePaused;
+  UserData.InPrimaryPos                      := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.InPrimaryPos;
+  UserData.SecondarySequenceActive           := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.SecondarySequenceActive;
+  UserData.ErrorPending                      := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.ErrorPending;
+  UserData.RestartInProgress                 := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.RestartInProgress;
+  UserData.Enabled                           := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.Enabled;
+  UserData.Idle                              := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.RaSequenceState = RaSequenceState.IDLE;
+  UserData.Executing                         := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.RaSequenceState = RaSequenceState.EXECUTING;
+  UserData.Interrupted                       := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.RaSequenceState = RaSequenceState.INTERRUPTED;
+  UserData.IsBlending                        := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.IsBlending;  
+  UserData.OperationMode                     := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.OperationMode;
+  UserData.CollisionDetectionEnabled         := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.CollisionDetectedEnabled;
+  UserData.CollisionDetected                 := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.CollisionDetected;
+  UserData.RestartRequested                  := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.RestartRequested;
+  UserData.ActualOverride                    := AxesGroup.Cyclic.RobToPlc.Override;
+  UserData.Accelerating                      := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.Accelerating;
+  UserData.Decelerating                      := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.Decelerating;
+  UserData.ConstantVelocity                  := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.ConstantVelocity;
   
   // Cyclic optional data
-  UserData.CartesianPosition              := AxesGroup.CyclicOptional.RobToPlc.CartesianPosition;
-  UserData.ExtCartesianPosition           := AxesGroup.CyclicOptional.RobToPlc.CartesianPositionExt;  
-  UserData.JointPosition                  := AxesGroup.CyclicOptional.RobToPlc.JointPosition;
-  UserData.ExtJointPosition               := AxesGroup.CyclicOptional.RobToPlc.JointPositionExt;
+  UserData.CartesianPosition                 := AxesGroup.CyclicOptional.RobToPlc.CartesianPosition;
+  UserData.ExtCartesianPosition              := AxesGroup.CyclicOptional.RobToPlc.CartesianPositionExt;  
+  UserData.JointPosition                     := AxesGroup.CyclicOptional.RobToPlc.JointPosition;
+  UserData.ExtJointPosition                  := AxesGroup.CyclicOptional.RobToPlc.JointPositionExt;
   
   
   {warning 'ToDo: Check where to get the missing informations'}
@@ -2445,115 +2455,17 @@ END_VAR
   
   
   // Reset flag for initialization
-  IF ( AxesGroup.Cyclic.RobToPlc.TelegramState <> TelegramState.INITIALIZED)
+  IF ( Initialized ) AND ( AxesGroup.Cyclic.RobToPlc.TelegramState <> TelegramState.INITIALIZED)
   THEN
-    Initialized := FALSE; 
+    // Reset initialized flag
+    Initialized := FALSE;
+    // Set error 
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INIT_LOST_UNKNOWN_0x80A2;
   END_IF
   
   
   // Check configuration parameter changed ? 
   CheckParameterChanged(AxesGroup := AxesGroup);
-
-END_METHOD
-
-METHOD OnErrorClear : DINT
-VAR_IN_OUT
-  /// Robot assignment of function
-  AxesGroup         : AxesGroup;
-END_VAR
-
-  // building rising edge
-  _errorClear_R(CLK := ErrorClear);
-  
-  OnErrorClear := RobotLibraryConstants.RUNNING;
-  
-  
-  CASE _stepErrorClear OF
-    
-    00:  IF ( _errorClear_R.Q ) 
-         THEN
-           // reset the rising edge
-          _errorClear_R();       
-           // set busy flag
-           Busy := TRUE;
-                   
-           IF (( AxesGroup.Cyclic.RobToPlc.TelegramState >= TelegramState.ERROR_161  ) AND
-               ( AxesGroup.Cyclic.RobToPlc.TelegramState <= TelegramState.ERROR_173  )) 
-           THEN
-             // clear error
-             AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.ACK_ERROR;        
-             // set timeout
-             SetTimeout(PT := _timeoutErrorClear, rTimer := _timerErrorClear);
-             // inc step counter
-            _stepErrorClear := _stepErrorClear + 1;
-           ELSE 
-             // reset busy flag
-             Busy := FALSE;
-             // reset step counter
-            _stepErrorClear := 0;
-             // Finished OK 
-             OnErrorClear := RobotLibraryConstants.OK;
-           END_IF
-         END_IF
-       
-    01:  IF ( AxesGroup.Cyclic.RobToPlc.TelegramState = TelegramState.READY_TO_RESUME ) 
-         THEN
-           // Request resume
-           AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.RESUME;
-           // set timeout
-           SetTimeout(PT := _timeoutErrorClear, rTimer := _timerErrorClear);
-           // inc step counter
-          _stepErrorClear := _stepErrorClear + 1; 
-         ELSE
-           // timeout exceeded ? 
-           IF (( CheckTimeout(_timerErrorClear)           = RobotLibraryConstants.OK ) AND
-               ( AxesGroup.Cyclic.RobToPlc.TelegramState >= TelegramState.ERROR_161  ) AND
-               ( AxesGroup.Cyclic.RobToPlc.TelegramState <= TelegramState.ERROR_173  )) 
-           THEN
-             // TelegrammState in error          
-             ErrorID := AxesGroup.Cyclic.RobToPlc.TelegramState;
-             ErrorAddTxt := CONCAT('_stepErrorClear = ' , DINT_TO_STRING(_stepErrorClear));
-           END_IF
-         END_IF
-  
-  
-    02: IF (AxesGroup.Cyclic.RobToPlc.TelegramState = TelegramState.INITIALIZED)
-        THEN
-          // Request resume
-          AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.NONE;
-          // reset busy flag
-          Busy := FALSE;
-          // reset step counter
-         _stepErrorClear := 0;
-          // Finished OK 
-          OnErrorClear := RobotLibraryConstants.OK;
-        ELSE
-          // timeout exceeded ? 
-          IF (CheckTimeout(_timerErrorClear) = RobotLibraryConstants.OK)
-          THEN
-            ErrorID     := RobotLibraryEvents.ERR_TIMEOUT_CMD;
-            ErrorAddTxt := CONCAT('_stepErrorClear = ' , DINT_TO_STRING(_stepErrorClear));
-          END_IF
-        END_IF    
-  
-  ELSE
-    // invalid step
-    ErrorID     := RobotLibraryEvents.ERR_INVALID_STEP;
-    ErrorAddTxt := CONCAT('_stepErrorClear = ' , DINT_TO_STRING(_stepErrorClear));
-  END_CASE
-  
-  
-  // Reset FB
-  IF ( OnErrorClear <> RobotLibraryConstants.RUNNING)
-  THEN
-   _stepErrorClear := 0;
-    Busy           := FALSE;
-    Error          := FALSE;
-    ErrorID        := 0;
-    ErrorAddTxt    := '';
-    WarningID      := 0;
-    InfoID         := 0;  
-  END_IF
 
 END_METHOD
 
@@ -2579,24 +2491,23 @@ END_VAR
     
     00:  IF ( _enable_R.Q )
          THEN
-           IF ( _enable_R.Q )
-           THEN
-             // Create log entry
-             CreateLogMessage ( Timestamp   := SystemTime,
-                                MessageType := MessageType.CMD,
-                                Severity    := Severity.INFO,
-                                MessageCode := 0,
-                                MessageText := 'Robot Task Enabled');
-           END_IF
+           // Create log entry
+           CreateLogMessage ( Timestamp   := SystemTime,
+                              MessageType := MessageType.CMD,
+                              Severity    := Severity.INFO,
+                              MessageCode := 0,
+                              MessageText := 'Robot Task Enabled');
          
            // reset the rising edge
-          _enable_R();       
-           // reset the falling edge
-          _enable_F();
+          _enable_R();
            // set busy flag
            Busy := TRUE;
            // set timeout
            SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
+           // Reset FastStop       
+           AxesGroup.Cyclic.PlcToRob.FastStop := 0;
+           // Reset Active command register
+           AxesGroup.Acyclic.ActiveCommandRegister.Reset();
            // inc step counter
           _stepCmd := _stepCmd + 1; 
          END_IF
@@ -2625,6 +2536,9 @@ END_VAR
            
              // Resume
              AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.RESUME;        
+  
+             {warning 'ToDo: Siemens use reset when READY_TO_RESUM - missing implementation of RESUME ? '} 
+             AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.RESET;        
            
            TelegramState.READY_FOR_INITIALIZATION: 
   
@@ -2633,6 +2547,10 @@ END_VAR
              
            TelegramState.INITIALIZED: 
   
+             // Reset Telegram Control 
+             AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.NONE;
+             // set timeout
+             SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
              // inc step counter
             _stepCmd := _stepCmd + 1; 
   
@@ -2642,24 +2560,15 @@ END_VAR
            ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
          END_CASE
   
+         // timeout exceeded ? 
+         IF (CheckTimeout(_timerCmd) = RobotLibraryConstants.OK)
+         THEN
+           ErrorID     := RobotLibraryEvents.ERR_TIMEOUT_CMD;
+           ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
+         END_IF
   
-    02: IF (AxesGroup.Cyclic.RobToPlc.TelegramState = TelegramState.INITIALIZED)
-        THEN
-          // set timeout
-          SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
-          // inc step counter
-         _stepCmd := _stepCmd + 1; 
-        ELSE
-          // timeout exceeded ? 
-          IF (CheckTimeout(_timerCmd) = RobotLibraryConstants.OK)
-          THEN
-            ErrorID     := RobotLibraryEvents.ERR_TIMEOUT_CMD;
-            ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
-          END_IF
-        END_IF    
-  
-  
-    03: IF (( NOT ExchangeConfiguration.Busy  ) AND 
+         
+    02: IF (( NOT ExchangeConfiguration.Busy  ) AND 
             ( NOT ExchangeConfiguration.Error ))
         THEN
           ExchangeConfiguration.ParCmd.LogLevel                   := LogLevel; 
@@ -2697,8 +2606,12 @@ END_VAR
           END_IF
         END_IF
     
-    04: IF ( ExchangeConfiguration.Busy )
+    
+    03: IF (( NOT ExchangeConfiguration.Busy              ) AND
+            (     ExchangeConfiguration.ParameterAccepted ))
         THEN
+          // stop execution       
+          ExchangeConfiguration.Enable := FALSE;
           // set timeout
           SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
           // inc step counter
@@ -2718,35 +2631,9 @@ END_VAR
             ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
           END_IF
         END_IF
-    
-    
-    05: IF (( NOT ExchangeConfiguration.Busy              ) AND
-            (     ExchangeConfiguration.ParameterAccepted ))
-        THEN
-          // stop execution       
-          ExchangeConfiguration.Enable := FALSE;
-          // set timeout
-          SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
-          // inc step counter
-         _stepCmd := _stepCmd + 1;       
-         ELSE
-           // check error ? 
-           IF (ExchangeConfiguration.Error)
-           THEN
-             ErrorID     := ExchangeConfiguration.ErrorID;
-             ErrorAddTxt := ExchangeConfiguration.ErrorAddTxt;;
-           END_IF  
-         
-           // timeout exceeded ? 
-           IF (CheckTimeout(_timerCmd) = RobotLibraryConstants.OK)
-           THEN
-             ErrorID     := RobotLibraryEvents.ERR_TIMEOUT_CMD;
-             ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
-           END_IF
-         END_IF
   
          
-    06: IF (( NOT ReadRobotData.Busy  ) AND 
+    04: IF (( NOT ReadRobotData.Busy  ) AND 
             ( NOT ReadRobotData.Error )) 
         THEN
           // start function block
@@ -2769,31 +2656,9 @@ END_VAR
             ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
           END_IF
         END_IF
+      
     
-    07: IF ( ReadRobotData.Busy ) 
-        THEN
-          // set timeout
-          SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
-          // inc step counter
-         _stepCmd := _stepCmd + 1;       
-        ELSE
-          // check error ? 
-          IF (ReadRobotData.Error)
-          THEN
-            ErrorID     := ReadRobotData.ErrorID;
-            ErrorAddTxt := ReadRobotData.ErrorAddTxt;;
-          END_IF  
-         
-          // timeout exceeded ? 
-          IF (CheckTimeout(_timerCmd) = RobotLibraryConstants.OK)
-          THEN
-            ErrorID     := RobotLibraryEvents.ERR_TIMEOUT_CMD;
-            ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
-          END_IF
-        END_IF
-    
-    
-    08: IF (( NOT ReadRobotData.Busy  ) AND
+    05: IF (( NOT ReadRobotData.Busy  ) AND
             (     ReadRobotData.Done  ))
         THEN       
           // start function block
@@ -2819,7 +2684,7 @@ END_VAR
          END_IF
   
   
-    09: IF (( NOT ReadMessages.Busy  ) AND 
+    06: IF (( NOT ReadMessages.Busy  ) AND 
             ( NOT ReadMessages.Error )) 
         THEN
           // start function block
@@ -2846,30 +2711,8 @@ END_VAR
           END_IF
         END_IF
     
-    10: IF ( ReadMessages.Busy )
-        THEN
-          // set timeout
-          SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
-          // inc step counter
-         _stepCmd := _stepCmd + 1;       
-        ELSE
-          // check error ? 
-          IF (ReadMessages.Error)
-          THEN
-            ErrorID     := ReadMessages.ErrorID;
-            ErrorAddTxt := ReadMessages.ErrorAddTxt;;
-          END_IF  
-         
-          // timeout exceeded ? 
-          IF (CheckTimeout(_timerCmd) = RobotLibraryConstants.OK)
-          THEN
-            ErrorID     := RobotLibraryEvents.ERR_TIMEOUT_CMD;
-            ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
-          END_IF
-        END_IF
-    
-    
-    11: IF ((     ReadMessages.Enabled ) AND
+    07: IF ((     ReadMessages.Enabled ) AND
+            ( NOT ReadMessages.Busy ) AND
             ( NOT ReadMessages.Error   ))
         THEN       
           // set timeout
@@ -2892,7 +2735,7 @@ END_VAR
            END_IF
          END_IF
   
-    12:  // Reset busy flag
+    08:  // Reset busy flag
          Busy := FALSE;
          // set initialized flag
          Initialized := TRUE;
@@ -3388,10 +3231,16 @@ END_VAR
   ErrorID           := 0;
   WarningID         := 0;
   InfoID            := 0;  
+  
   // Reset internal functon blocks
   ReadMessages.Enable          := FALSE;
   ReadRobotData.Execute        := FALSE;
   ExchangeConfiguration.Enable := FALSE;
+  
+  // Set Client error to force server error
+  AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.CLIENT_ERROR;        
+  
+  
   // reset step counter
   _stepCmd := 0;
 

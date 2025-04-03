@@ -301,12 +301,10 @@ END_VAR
   
   CASE _stepCmd OF
     
-    00:  IF ( _enable_R.Q ) 
+    00:  IF ( _enable_R.Q ) AND ( NOT Error) 
          THEN
            // reset the rising edge
           _enable_R();       
-           // reset the falling edge
-          _enable_F();
           
            // Check function is supported and parameter are valid ?
            IF (( CheckFunctionSupported( AxesGroup := AxesGroup )) AND
@@ -396,10 +394,8 @@ END_VAR
            END_IF
          END_IF
          
-         IF ( NOT Enable)
+         IF ( _enable_F.Q)
          THEN
-           // reset the rising edge
-          _enable_R();       
            // reset the falling edge
           _enable_F();       
            // set timeout
@@ -407,7 +403,6 @@ END_VAR
            // inc step counter
           _stepCmd := _stepCmd + 1; 
          END_IF
-  
   
     02:  IF (NOT Enable)
          THEN

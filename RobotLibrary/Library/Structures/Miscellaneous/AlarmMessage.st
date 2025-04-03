@@ -31,7 +31,7 @@ STRUCT
   /// Code of messages
   MessageCode : DWORD;
   /// Static text of message
-  MessageText : STRING(255);  
+  MessageText : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN);  
 END_STRUCT
 END_TYPE
 

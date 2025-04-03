@@ -30,9 +30,9 @@ VAR_INPUT
 END_VAR
 VAR_OUTPUT
   /// Command data
-  CommandData  : RobotLibrarySendDataFB;
+  CommandData  : RobotLibraryCommandDataFB;
   /// response data
-  ResponseData : RobotLibraryRecvDataFB;
+  ResponseData : RobotLibraryResponseDataFB;
   /// An error occurred during the execution of the command
   Error        : BOOL;
   /// ErrorID reported by RC for error identification according to Table 7-1
@@ -159,7 +159,7 @@ END_VAR
 
 END_METHOD
 
-METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
+METHOD INTERNAL CreateCommandPayload : RobotLibraryCommandDataFB
 VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup    : AxesGroup; 
@@ -179,7 +179,7 @@ END_METHOD
 METHOD PROTECTED OnCall
 VAR_IN_OUT
   /// Robot assignment of function
-  AxesGroup         : AxesGroup; 
+  AxesGroup : AxesGroup; 
 END_VAR
 
   // map numeric value to enum, so that the corresponding message text is directly shown by the tooltip
@@ -189,13 +189,31 @@ END_VAR
   
   Error := ErrorID <> RobotLibraryConstants.OK;
   
-  ExternalLogger := AxesGroup.MessageLog.ExternalLogger;
-  LogLevel       := AxesGroup.MessageLog.LogLevel;
+  InternalLogger   := AxesGroup.MessageLog; 
+  ExternalLogger   := AxesGroup.MessageLog.ExternalLogger;
+  LogLevel         := AxesGroup.MessageLog.LogLevel;
   
   // building rising edges for error, warning, info number detected
   _error_R  ( CLK := ErrorID   <> RobotLibraryConstants.OK );
   _warning_R( CLK := WarningID <> RobotLibraryConstants.OK );
   _info_R   ( CLK := InfoID    <> RobotLibraryConstants.OK );
+  
+  
+  // Log Command events to message log 
+  IF  ( LogLevel < _rspHeader.AlarmMessageSeverity ) AND
+     (( _error_R  .Q                               ) OR 
+      ( _warning_R.Q                               ) OR 
+      ( _info_R   .Q                               ))
+  THEN
+    // Add command message to message buffer       
+    AxesGroup.MessageLog
+      .AddMessageLogByParameter(  Timestamp   :=   AxesGroup.InternalData.SystemTime,
+                                  MessageType :=   MessageType.CMD,
+                                  MessageCode :=  _rspHeader.AlarmMessageCode,
+                                  MessageText :=   CONCAT(MyType, CONCAT(' : ' , MESSAGE_CODE_TO_STRING(_rspHeader.AlarmMessageCode))),
+                                  Severity    :=  _rspHeader.AlarmMessageSeverity ); 
+  END_IF 
+  
   
   IF ( _error_R.Q)
   THEN
@@ -249,7 +267,7 @@ END_METHOD
 METHOD INTERNAL ParseResponsePayload : DINT
 VAR_INPUT
   /// Response data
-  ResponseData : RobotLibraryRecvDataFB;
+  ResponseData : RobotLibraryResponseDataFB;
   /// Timestamp
   Timestamp    : SystemTime;  
 END_VAR
@@ -283,6 +301,7 @@ END_VAR
   
   END_CASE
   
+  
   ParseResponsePayload := ResponseData.PayloadPtr;
 
 END_METHOD
@@ -292,6 +311,8 @@ VAR_INPUT
 END_VAR
 
   _parameterUpdateInternal := FALSE;
+  _responseReceived := FALSE;
+  
   _uniqueId := 0;
   _stepCmd  := 0;
   Error     := FALSE;

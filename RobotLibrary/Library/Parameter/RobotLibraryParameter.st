@@ -37,6 +37,8 @@ VAR_GLOBAL CONSTANT
   SYSTEM_LOG_MAX                      : DINT := 32;  
   /// Maximal amount of message logs
   MESSAGE_LOG_MAX                     : DINT := 100;  
+  /// Maximum string length for message texts
+  MESSAGE_TEXT_LEN                    : DINT := 255;
   /// Maximal amount of List entries 
   LIST_ENTRIES_MAX                    : DINT := 100;
   /// Maximal amount of bytes for the parameter payload

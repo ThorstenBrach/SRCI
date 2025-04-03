@@ -35,8 +35,6 @@ END_VAR
 
 
 VAR
-  /// step counter for finite state machine
- _fsmState        : FsmState;
   /// Rising edge for execute
  _execute_R       : R_TRIG;
   /// Falling edge for execute
@@ -61,115 +59,6 @@ END_VAR
 
 END_METHOD
 
-METHOD internal FSM : DINT
-VAR_IN_OUT
-  /// Robot assignment of function
-  AxesGroup : AxesGroup; 
-END_VAR
-VAR
-  /// internal return value
- _retVal : DINT;
-END_VAR
-
-  CASE _fsmState 
-  OF
-  
-    FsmState.READY :
-    
-      // Await start
-      IF (( NOT Busy        ) AND 
-          ( NOT Error       ) AND 
-          (    _execute_R.Q ))
-      THEN
-        // inc fsm step
-       _fsmState := FsmState.START;
-      END_IF
-        
-    FsmState.START :
-     
-     _retVal := OnExecStart(AxesGroup := AxesGroup);
-      
-      IF ( _retVal = RobotLibraryConstants.OK )
-      THEN
-       _fsmState := FsmState.RUNNING;
-      ELSE
-        // Cancel
-        IF ((      Busy        ) AND
-            (  NOT Error       ) AND
-            (     _execute_F.Q ))
-        THEN
-         _fsmState := FsmState.CANCEL;
-          RETURN;
-        END_IF
-      
-        // check error 
-        IF (_retVal < RobotLibraryConstants.OK)
-        THEN
-         _fsmState := FsmState.ERROR;
-          RETURN;
-        END_IF
-      END_IF
-  
-     FsmState.RUNNING :
-  
-        _retVal := OnExecRun(AxesGroup := AxesGroup);
-      
-         IF (_retVal = RobotLibraryConstants.OK )
-         THEN
-          _fsmState := FsmState.DONE;
-         ELSE
-           // Cancel
-           IF ((      Busy        ) AND
-               (  NOT Error       ) AND
-               (     _execute_F.Q ))
-           THEN
-            _fsmState := FsmState.CANCEL;
-             RETURN;
-           END_IF
-           
-           // error 
-           IF (_retVal < RobotLibraryConstants.OK)
-           THEN
-            _fsmState := 99;
-             RETURN;
-           END_IF         
-         END_IF
-  
-    FsmState.DONE :
-    
-     _fsmState := FsmState.READY;
-  
-    FsmState.CANCEL :
-  
-     _retVal := OnExecCancel(AxesGroup := AxesGroup);
-      
-      IF (_retVal = RobotLibraryConstants.OK )
-      THEN
-        _fsmState := FsmState.READY;
-      END_IF
-      
-    FsmState.ERROR :
-    
-      IF (NOT Execute)
-      THEN
-       _fsmState := FsmState.ERROR_CLEAR;
-      END_IF
-  
-    FsmState.ERROR_CLEAR :
-  
-     _retVal := OnExecErrorClear(AxesGroup := AxesGroup);
-      
-      IF (_retVal = RobotLibraryConstants.OK )
-      THEN
-        _fsmState := FsmState.READY;
-      END_IF
-         
-  ELSE
-    ;
-  END_CASE
-
-END_METHOD
-
 // Base implementation must be called ! 
 METHOD PROTECTED OnCall
 VAR_IN_OUT
@@ -183,8 +72,20 @@ END_VAR
   _execute_R( CLK := Execute);
   _execute_F( CLK := EXecute);
   
-  // call state machine
-  FSM(AxesGroup := AxesGroup);
+  
+  // Check command execution is allowed ?
+  IF ((     Execute                                ) AND
+      ( NOT AxesGroup.InternalData.Initialized     ) AND
+      (     MyType <> 'MC_ExchangeConfigurationFB' ) AND // is part of init sequence
+      (     MyType <> 'MC_ReadMessagesFB'          ) AND // is part of init sequence
+      (     MyType <> 'MC_ReadRobotDataFB'         ))    // is part of init sequence
+  THEN
+    ErrorID := RobotLibraryErrorIdEnum.ERR_COMMANDS_NOT_ENABLED;
+    Error   := TRUE;
+    Busy    := FALSE;
+  END_IF
+  
+  
   
   // Abort execution 
   IF (Busy) AND (_execute_F.Q) 

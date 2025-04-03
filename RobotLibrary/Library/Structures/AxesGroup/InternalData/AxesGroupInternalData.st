@@ -28,6 +28,8 @@ STRUCT
   RobotData            : ReadRobotDataOutCmd;
   /// Read configuration data
   ConfigurationData    : ExchangeConfigurationOutCmd;
+  /// Robot is initialized
+  Initialized          : BOOL;  
   /// Online Change detected
   OnlineChange         : BOOL;  
   /// Rising edge for Online Change detected

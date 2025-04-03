@@ -328,7 +328,7 @@ END_VAR
 
 END_METHOD
 
-METHOD INTERNAL CreateCommandPayload : RobotLibrarySendDataFB
+METHOD INTERNAL CreateCommandPayload : RobotLibraryCommandDataFB
 VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
@@ -548,7 +548,7 @@ END_VAR
   
   CASE _stepCmd OF
     
-    00:  IF ( _enable_R.Q )  
+    00:  IF ( _enable_R.Q ) AND ( NOT Error)  
          THEN
            // reset the rising edge
           _enable_R();       
@@ -603,7 +603,7 @@ END_VAR
              // Reset Busy flag
              Busy := FALSE;
              // Update results
-             OutCmd.Progress          := _response.Progress;
+             OutCmd.Progress          :=  PERCENT_UINT_TO_REAL( Value := _response.Progress, IsOptional := FALSE);
              OutCmd.RemainingDistance := _response.RemainingDistance;
              OutCmd.PrimaryPosToolNo  := UINT_TO_USINT(_response.PrimaryPosToolNo);  {warning 'ToDo'}
              OutCmd.PrimaryPosFrameNo := UINT_TO_USINT(_response.PrimaryPosFrameNo); {warning 'ToDo'}
@@ -640,7 +640,7 @@ END_METHOD
 METHOD INTERNAL ParseResponsePayload : DINT
 VAR_INPUT
   /// Response data
-  ResponseData : RobotLibraryRecvDataFB;
+  ResponseData : RobotLibraryResponseDataFB;
   /// Timestamp
   Timestamp    : SystemTime;  
 END_VAR
@@ -691,7 +691,7 @@ END_METHOD
 METHOD INTERNAL ParseResponsePayloadLog
 VAR_INPUT
   /// Response data
-  ResponseData : RobotLibraryRecvDataFB;
+  ResponseData : RobotLibraryResponseDataFB;
   /// Timestamp
   Timestamp    : SystemTime;  
 END_VAR

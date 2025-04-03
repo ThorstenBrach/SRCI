@@ -23,11 +23,11 @@
 TYPE RobotTaskParCfgPlc :
 STRUCT
   /// PLC cycle time
-  CycleTime           : TIME := T#10MS;
+  CycleTime      : TIME := T#10MS;
   /// parameter
-  Parameter           : RobotTaskParCfgPlcParameter;  
+  Parameter      : RobotTaskParCfgPlcParameter;  
   /// Configuration of optional cyclic data send to the Robot
-  OptionalCyclic      : AxesGroupParameterPlcOptionalCyclic; {warning 'Remove - this is already part of RobotTaskParCfgPlcParameter'}
+  OptionalCyclic : AxesGroupParameterPlcOptionalCyclic;
 END_STRUCT
 END_TYPE
 

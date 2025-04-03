@@ -1,10 +1,10 @@
 {attribute 'pack_mode' := '1'} 
-FUNCTION_BLOCK RobotLibraryRecvDataFB
+FUNCTION_BLOCK RobotLibraryRecvDataBaseFB
 // ------------------------------------------------------------------------- 
 //  SRCI Robot Library                                                
 // ------------------------------------------------------------------------- 
 //                                                                           
-//  Object:      RecvData                                       
+//  Object:      RobotLibraryRecvDataFB                                       
 //  Author:      Thorsten Brach                                                
 //  Date:        2024-06-01
 //
@@ -22,12 +22,15 @@ FUNCTION_BLOCK RobotLibraryRecvDataFB
 //
 // -------------------------------------------------------------------------
 VAR_INPUT
-  /// Payload
-  Payload    : ARRAY [0..RobotLibraryParameter.ROBOT_IN_DATA_MAX] OF BYTE;
   /// Payload length
   PayloadLen : UDINT;
   /// Payload pointer
   PayloadPtr : DINT;
+END_VAR
+
+VAR
+  /// internal pointer to payload 
+  pPayload : POINTER TO BYTE;
 END_VAR
 
 
@@ -84,19 +87,49 @@ END_METHOD
 
 /// returns a BOOL from the payload buffer from the current payload pointer address and increase the payload pointer afterwards
 METHOD GetBool : BOOL
+VAR
+  /// temporary byte
+  _tmpByte : BYTE;
+END_VAR
 
+  // update internal pointer
+  UpdatePointer();
+  
+  // check pointer is valid ? 
+  IF (pPayload = RobotLibraryConstants.NULL_POINTER)
+  THEN
+    RETURN;
+  END_IF
+  
+  
+  _tmpByte := GetByte();
+  
   // copy data
-  GetBool := Payload[PayloadPtr].0;
-  // inc payload pointer 
-  PayloadPtr := PayloadPtr + SIZEOF(BYTE);
+  GetBool := _tmpByte.0;
 
 END_METHOD
 
 /// returns a BYTE from the payload buffer from the current payload pointer address and increase the payload pointer afterwards
 METHOD GetByte : BYTE
+VAR
+  /// internal pointer to byte
+  _tmpPointer : POINTER TO BYTE;
+END_VAR
 
+  // update internal pointer
+  UpdatePointer();
+  
+  // check pointer is valid ? 
+  IF (pPayload = RobotLibraryConstants.NULL_POINTER)
+  THEN
+    RETURN;
+  END_IF
+  
+  
+  _tmpPointer := pPayload + DINT_TO_DWORD(PayloadPtr);
+  
   // copy data
-  GetByte := Payload[PayloadPtr];
+  GetByte := _tmpPointer^;
   // inc payload pointer 
   PayloadPtr := PayloadPtr + SIZEOF(BYTE);
 
@@ -113,6 +146,16 @@ VAR_INPUT
   IsString : BOOL;
 END_VAR
 
+  // update internal pointer
+  UpdatePointer();
+  
+  // check pointer is valid ? 
+  IF (pPayload = RobotLibraryConstants.NULL_POINTER)
+  THEN
+    RETURN;
+  END_IF
+  
+  
   IF ( pData <> RobotLibraryConstants.NULL_POINTER)
   THEN
     IF ( IsString)
@@ -121,7 +164,7 @@ END_VAR
     END_IF
   
     // copy data
-    SysDepMemCpy(pDest := pData, pSrc := ADR(Payload[PayloadPtr]), DataLen := Size);
+    SysDepMemCpy(pDest := pData, pSrc := pPayload + DINT_TO_DWORD(PayloadPtr), DataLen := Size);
     
     // inc payload pointer 
     PayloadPtr := PayloadPtr + UDINT_TO_DINT(Size);
@@ -136,8 +179,18 @@ VAR
  _tmpByte : BYTE;
 END_VAR
 
+  // update internal pointer
+  UpdatePointer();
+  
+  // check pointer is valid ? 
+  IF (pPayload = RobotLibraryConstants.NULL_POINTER)
+  THEN
+    RETURN;
+  END_IF
+  
+  
   // copy data
-  _tmpByte := Payload[PayloadPtr];
+  _tmpByte := GetByte();
   
   GetDataInSync.ToolsInSync             := _tmpByte.0;
   GetDataInSync.FramesInSync            := _tmpByte.1;
@@ -146,17 +199,23 @@ END_VAR
   GetDataInSync.SoftwareLimitsInSync    := _tmpByte.4;
   GetDataInSync.DefaultDynamicsInSync   := _tmpByte.5;
   GetDataInSync.ReferenceDynamicsInSync := _tmpByte.6;
-  
-  // inc payload pointer   
-  PayloadPtr := PayloadPtr + SIZEOF(BYTE);
 
 END_METHOD
 
 /// returns a DWORD from the payload buffer from the current payload pointer address and increase the payload pointer afterwards
 METHOD GetDword : DWORD
 
+  // update internal pointer
+  UpdatePointer();
+  
+  // check pointer is valid ? 
+  IF (pPayload = RobotLibraryConstants.NULL_POINTER)
+  THEN
+    RETURN;
+  END_IF
+  
   // copy data
-  SysDepMemCpy(pDest := ADR(GetDword), pSrc := ADR(Payload[PayloadPtr]), DataLen := SIZEOF(DWORD));
+  SysDepMemCpy(pDest := ADR(GetDword), pSrc := pPayload + DINT_TO_DWORD(PayloadPtr), DataLen := SIZEOF(DWORD));
   // inc payload pointer 
   PayloadPtr := PayloadPtr + SIZEOF(DWORD);
 
@@ -169,8 +228,17 @@ VAR
  _tmpByte : BYTE;
 END_VAR
 
+  // update internal pointer
+  UpdatePointer();
+  
+  // check pointer is valid ? 
+  IF (pPayload = RobotLibraryConstants.NULL_POINTER)
+  THEN
+    RETURN;
+  END_IF
+  
   // copy data
-  _tmpByte := Payload[PayloadPtr];
+  _tmpByte := GetByte();
   
   GetFragmentAction.Complete := _tmpByte.0;
   GetFragmentAction.Reset    := _tmpByte.1;
@@ -180,9 +248,6 @@ END_VAR
   GetFragmentAction.BIT05    := _tmpByte.5;
   GetFragmentAction.BIT06    := _tmpByte.6;
   GetFragmentAction.BIT07    := _tmpByte.7;
-  
-  // inc payload pointer   
-  PayloadPtr := PayloadPtr + SIZEOF(BYTE);
 
 END_METHOD
 
@@ -195,17 +260,29 @@ END_VAR
 
 VAR
   /// temporary byte
- _tmpByte : BYTE;
+ _tmpByte    : BYTE;
+  /// internal pointer to byte
+ _tmpPointer : POINTER TO BYTE;
 END_VAR
 
+  // update internal pointer
+  UpdatePointer();
+  
+  // check pointer is valid ? 
+  IF (pPayload = RobotLibraryConstants.NULL_POINTER)
+  THEN
+    RETURN;
+  END_IF
+  
+  // set pointer
+  _tmpPointer := pPayload + DINT_TO_DWORD(PayloadPtr); 
   // copy data
-  _tmpByte := Payload[PayloadPtr];
+  _tmpByte := _tmpPointer^;
   
   GetHalfeByte1.0 := _tmpByte.0;
   GetHalfeByte1.1 := _tmpByte.1;
   GetHalfeByte1.2 := _tmpByte.2;
   GetHalfeByte1.3 := _tmpByte.3;
-  
   
   IF (IncPayloadPtr)
   THEN  
@@ -224,11 +301,24 @@ END_VAR
 
 VAR
   /// temporary byte
- _tmpByte : BYTE;
+ _tmpByte    : BYTE;
+  /// internal pointer to byte
+ _tmpPointer : POINTER TO BYTE;
 END_VAR
 
+  // update internal pointer
+  UpdatePointer();
+  
+  // check pointer is valid ? 
+  IF (pPayload = RobotLibraryConstants.NULL_POINTER)
+  THEN
+    RETURN;
+  END_IF
+  
+  // set pointer
+  _tmpPointer := pPayload + DINT_TO_DWORD(PayloadPtr); 
   // copy data
-  _tmpByte := Payload[PayloadPtr];
+  _tmpByte := _tmpPointer^;
   
   GetHalfeByte2.0 := _tmpByte.4;
   GetHalfeByte2.1 := _tmpByte.5;
@@ -246,8 +336,17 @@ END_METHOD
 /// returns a IEC_Date from the payload buffer from the current payload pointer address and increase the payload pointer afterwards
 METHOD GetIecDate : IEC_Date
 
+  // update internal pointer
+  UpdatePointer();
+  
+  // check pointer is valid ? 
+  IF (pPayload = RobotLibraryConstants.NULL_POINTER)
+  THEN
+    RETURN;
+  END_IF
+  
   // copy data
-  SysDepMemCpy(pDest := ADR(GetIecDate), pSrc := ADR(Payload[PayloadPtr]), DataLen := SIZEOF(IEC_DATE));
+  SysDepMemCpy(pDest := ADR(GetIecDate), pSrc := pPayload + DINT_TO_DWORD(PayloadPtr), DataLen := SIZEOF(IEC_DATE));
   // swap byte order
   GetIecDate := SwapIecDate(GetIecDate);
   // inc payload pointer   
@@ -258,8 +357,17 @@ END_METHOD
 /// returns a IEC_TIME from the payload buffer from the current payload pointer address and increase the payload pointer afterwards
 METHOD GetIecTime : IEC_TIME
 
+  // update internal pointer
+  UpdatePointer();
+  
+  // check pointer is valid ? 
+  IF (pPayload = RobotLibraryConstants.NULL_POINTER)
+  THEN
+    RETURN;
+  END_IF
+  
   // copy data
-  SysDepMemCpy(pDest := ADR(GetIecTime), pSrc := ADR(Payload[PayloadPtr]), DataLen := SIZEOF(IEC_TIME));
+  SysDepMemCpy(pDest := ADR(GetIecTime), pSrc := pPayload + DINT_TO_DWORD(PayloadPtr), DataLen := SIZEOF(IEC_TIME));
   // swap byte order
   GetIecTime := SwapIecTime(GetIecTime);
   // inc payload pointer   
@@ -270,8 +378,17 @@ END_METHOD
 /// returns a INT from the payload buffer from the current payload pointer address and increase the payload pointer afterwards
 METHOD GetInt : INT
 
+  // update internal pointer
+  UpdatePointer();
+  
+  // check pointer is valid ? 
+  IF (pPayload = RobotLibraryConstants.NULL_POINTER)
+  THEN
+    RETURN;
+  END_IF
+  
   // copy data
-  SysDepMemCpy(pDest := ADR(GetInt), pSrc := ADR(Payload[PayloadPtr]), DataLen := SIZEOF(INT));
+  SysDepMemCpy(pDest := ADR(GetInt), pSrc := pPayload + DINT_TO_DWORD(PayloadPtr), DataLen := SIZEOF(INT));
   // swap byte order
   GetInt := SwapInt(GetInt);
   // inc payload pointer   
@@ -282,8 +399,17 @@ END_METHOD
 /// returns a REAL from the payload buffer from the current payload pointer address and increase the payload pointer afterwards
 METHOD GetReal : REAL
 
+  // update internal pointer
+  UpdatePointer();
+  
+  // check pointer is valid ? 
+  IF (pPayload = RobotLibraryConstants.NULL_POINTER)
+  THEN
+    RETURN;
+  END_IF
+  
   // copy data
-  SysDepMemCpy(pDest := ADR(GetReal), pSrc := ADR(Payload[PayloadPtr]), DataLen := SIZEOF(REAL));
+  SysDepMemCpy(pDest := ADR(GetReal), pSrc := pPayload + DINT_TO_DWORD(PayloadPtr), DataLen := SIZEOF(REAL));
   // swap byte order
   GetReal := SwapReal(GetReal);
   // inc payload pointer   
@@ -294,8 +420,17 @@ END_METHOD
 /// returns a SINT from the payload buffer from the current payload pointer address and increase the payload pointer afterwards
 METHOD GetSint : SINT
 
+  // update internal pointer
+  UpdatePointer();
+  
+  // check pointer is valid ? 
+  IF (pPayload = RobotLibraryConstants.NULL_POINTER)
+  THEN
+    RETURN;
+  END_IF
+  
   // copy data
-  SysDepMemCpy(pDest := ADR(GetSint), pSrc := ADR(Payload[PayloadPtr]), DataLen := SIZEOF(SINT));
+  SysDepMemCpy(pDest := ADR(GetSint), pSrc := pPayload + DINT_TO_DWORD(PayloadPtr), DataLen := SIZEOF(SINT));
   // inc payload pointer 
   PayloadPtr := PayloadPtr + SIZEOF(SINT);
 
@@ -307,8 +442,17 @@ VAR_INPUT
   Size : DINT;
 END_VAR
 
+  // update internal pointer
+  UpdatePointer();
+  
+  // check pointer is valid ? 
+  IF (pPayload = RobotLibraryConstants.NULL_POINTER)
+  THEN
+    RETURN;
+  END_IF
+  
   // copy data
-  SysDepMemCpy(pDest := ADR(GetString), pSrc := ADR(Payload[PayloadPtr]), DataLen := DINT_TO_UDINT(Size));
+  SysDepMemCpy(pDest := ADR(GetString), pSrc := pPayload + DINT_TO_DWORD(PayloadPtr), DataLen := DINT_TO_UDINT(Size));
   
   // inc payload pointer 
   PayloadPtr := PayloadPtr + Size;
@@ -322,6 +466,15 @@ VAR
   tmpByte : BYTE;
 END_VAR
 
+  // update internal pointer
+  UpdatePointer();
+  
+  // check pointer is valid ? 
+  IF (pPayload = RobotLibraryConstants.NULL_POINTER)
+  THEN
+    RETURN;
+  END_IF
+  
   // copy data
   tmpByte := GetByte();
   
@@ -339,6 +492,15 @@ END_METHOD
 /// returns a TurnNumber from the payload buffer from the current payload pointer address and increase the payload pointer afterwards
 METHOD GetTurnNumbers : TurnNumber
 
+  // update internal pointer
+  UpdatePointer();
+  
+  // check pointer is valid ? 
+  IF (pPayload = RobotLibraryConstants.NULL_POINTER)
+  THEN
+    RETURN;
+  END_IF
+  
   GetTurnNumbers.J1Turns := BYTE_TO_SINT(GetHalfeByte1(FALSE));
   GetTurnNumbers.J2Turns := BYTE_TO_SINT(GetHalfeByte2(TRUE));
   
@@ -355,8 +517,17 @@ END_METHOD
 /// returns a UDINT from the payload buffer from the current payload pointer address and increase the payload pointer afterwards
 METHOD GetUdint : UDINT
 
+  // update internal pointer
+  UpdatePointer();
+  
+  // check pointer is valid ? 
+  IF (pPayload = RobotLibraryConstants.NULL_POINTER)
+  THEN
+    RETURN;
+  END_IF
+  
   // copy data
-  SysDepMemCpy(pDest := ADR(GetUdint), pSrc := ADR(Payload[PayloadPtr]), DataLen := SIZEOF(UDINT));
+  SysDepMemCpy(pDest := ADR(GetUdint), pSrc := pPayload + DINT_TO_DWORD(PayloadPtr), DataLen := SIZEOF(UDINT));
   // swap byte order
   GetUdint := SwapUdint(GetUdint);
   // inc payload pointer   
@@ -367,8 +538,17 @@ END_METHOD
 /// returns a UINT from the payload buffer from the current payload pointer address and increase the payload pointer afterwards
 METHOD GetUint : UINT
 
+  // update internal pointer
+  UpdatePointer();
+  
+  // check pointer is valid ? 
+  IF (pPayload = RobotLibraryConstants.NULL_POINTER)
+  THEN
+    RETURN;
+  END_IF
+  
   // copy data
-  SysDepMemCpy(pDest := ADR(GetUint), pSrc := ADR(Payload[PayloadPtr]), DataLen := SIZEOF(UINT));
+  SysDepMemCpy(pDest := ADR(GetUint), pSrc := pPayload + DINT_TO_DWORD(PayloadPtr), DataLen := SIZEOF(UINT));
   // swap byte order
   GetUint := SwapUint(GetUint);
   // inc payload pointer   
@@ -379,8 +559,17 @@ END_METHOD
 /// returns a USINT from the payload buffer from the current payload pointer address and increase the payload pointer afterwards
 METHOD GetUsint : USINT
 
+  // update internal pointer
+  UpdatePointer();
+  
+  // check pointer is valid ? 
+  IF (pPayload = RobotLibraryConstants.NULL_POINTER)
+  THEN
+    RETURN;
+  END_IF
+  
   // copy data
-  SysDepMemCpy(pDest := ADR(GetUsint), pSrc := ADR(Payload[PayloadPtr]), DataLen := SIZEOF(USINT));
+  SysDepMemCpy(pDest := ADR(GetUsint), pSrc := pPayload + DINT_TO_DWORD(PayloadPtr), DataLen := SIZEOF(USINT));
   // inc payload pointer 
   PayloadPtr := PayloadPtr + SIZEOF(USINT);
 
@@ -389,8 +578,17 @@ END_METHOD
 /// returns a WORD from the payload buffer from the current payload pointer address and increase the payload pointer afterwards
 METHOD GetWord : WORD
 
+  // update internal pointer
+  UpdatePointer();
+  
+  // check pointer is valid ? 
+  IF (pPayload = RobotLibraryConstants.NULL_POINTER)
+  THEN
+    RETURN;
+  END_IF
+  
   // copy data
-  SysDepMemCpy(pDest := ADR(GetWord), pSrc := ADR(Payload[PayloadPtr]), DataLen := SIZEOF(WORD));
+  SysDepMemCpy(pDest := ADR(GetWord), pSrc := pPayload + DINT_TO_DWORD(PayloadPtr), DataLen := SIZEOF(WORD));
   // swap byte order
   GetWord := SwapWord(GetWord);
   // inc payload pointer   
@@ -403,9 +601,13 @@ METHOD Reset
 VAR_INPUT
 END_VAR
 
-  SysDepMemSet(pDest := ADR(Payload), Value := 0 , DataLen := SIZEOF(Payload));
-  PayloadLen := 0;
-  PayloadPtr := 0;
+
+END_METHOD
+
+METHOD UpdatePointer
+VAR_INPUT
+END_VAR
+
 
 END_METHOD
 

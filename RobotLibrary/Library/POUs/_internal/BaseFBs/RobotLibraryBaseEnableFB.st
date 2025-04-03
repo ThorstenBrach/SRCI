@@ -37,8 +37,6 @@ VAR_OUTPUT
 END_VAR
 
 VAR
-  /// step counter for finite state machine
- _fsmState          : FsmState;
   /// Rising edge for enable
  _enable_R          : R_TRIG;
   /// Falling edge for enable
@@ -48,115 +46,6 @@ END_VAR
   SUPER^(AxesGroup := AxesGroup);
 
 END_FUNCTION_BLOCK
-
-METHOD INTERNAL FSM : DINT
-VAR_IN_OUT
-  /// Robot assignment of function
-  AxesGroup : AxesGroup; 
-END_VAR
-VAR
-  /// internal return value
- _retVal : DINT;
-END_VAR
-
-  CASE _fsmState 
-  OF
-  
-    FsmState.READY :
-    
-      // Await start
-      IF (( NOT Busy       ) AND 
-          ( NOT Error      ) AND 
-          (    _enable_R.Q ))
-      THEN
-        // inc fsm step
-       _fsmState := FsmState.START;
-      END_IF
-        
-    FsmState.START :
-     
-     _retVal := OnExecStart(AxesGroup := AxesGroup);
-      
-      IF ( _retVal = RobotLibraryConstants.OK )
-      THEN
-       _fsmState := FsmState.RUNNING;
-      ELSE
-        // Cancel
-        IF ((      Busy       ) AND
-            (  NOT Error      ) AND
-            (     _enable_F.Q ))
-        THEN
-         _fsmState := FsmState.CANCEL;
-          RETURN;
-        END_IF
-      
-        // check error 
-        IF (_retVal < RobotLibraryConstants.OK)
-        THEN
-         _fsmState := FsmState.ERROR;
-          RETURN;
-        END_IF
-      END_IF
-  
-     FsmState.RUNNING :
-  
-        _retVal := OnExecRun(AxesGroup := AxesGroup);
-      
-         IF (_retVal = RobotLibraryConstants.OK )
-         THEN
-          _fsmState := FsmState.DONE;
-         ELSE
-           // Cancel
-           IF ((      Busy       ) AND
-               (  NOT Error      ) AND
-               (     _enable_F.Q ))
-           THEN
-            _fsmState := FsmState.CANCEL;
-             RETURN;
-           END_IF
-           
-           // error 
-           IF (_retVal < RobotLibraryConstants.OK)
-           THEN
-            _fsmState := 99;
-             RETURN;
-           END_IF         
-         END_IF
-  
-    FsmState.DONE :
-    
-     _fsmState := FsmState.READY;
-  
-    FsmState.CANCEL :
-  
-     _retVal := OnExecCancel(AxesGroup := AxesGroup);
-      
-      IF (_retVal = RobotLibraryConstants.OK )
-      THEN
-        _fsmState := FsmState.READY;
-      END_IF
-      
-    FsmState.ERROR :
-    
-      IF (NOT Enable)
-      THEN
-       _fsmState := FsmState.ERROR_CLEAR;
-      END_IF
-  
-    FsmState.ERROR_CLEAR :
-  
-     _retVal := OnExecErrorClear(AxesGroup := AxesGroup);
-      
-      IF (_retVal = RobotLibraryConstants.OK )
-      THEN
-        _fsmState := FsmState.READY;
-      END_IF
-         
-  ELSE
-    ;
-  END_CASE
-
-END_METHOD
 
 METHOD PROTECTED OnCall
 VAR_IN_OUT
@@ -170,8 +59,18 @@ END_VAR
   _enable_R( CLK := Enable);
   _enable_F( CLK := Enable);
   
-  // call state machine
-  FSM(AxesGroup := AxesGroup);
+  
+  // Check command execution is allowed ?
+  IF ((     Enable                                 ) AND
+      ( NOT AxesGroup.InternalData.Initialized     ) AND
+      (     MyType <> 'MC_ExchangeConfigurationFB' ) AND // is part of init sequence
+      (     MyType <> 'MC_ReadMessagesFB'          ) AND // is part of init sequence
+      (     MyType <> 'MC_ReadRobotDataFB'         ))    // is part of init sequence
+  THEN
+    ErrorID := RobotLibraryErrorIdEnum.ERR_COMMANDS_NOT_ENABLED;
+    Error   := TRUE;
+    Busy    := FALSE;
+  END_IF
   
   
   // Abort execution 
@@ -192,7 +91,6 @@ END_VAR
   OnExecCancel := Reset();
   
   
-  // Create log entry
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
