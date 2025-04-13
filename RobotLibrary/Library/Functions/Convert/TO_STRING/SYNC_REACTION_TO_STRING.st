@@ -27,10 +27,10 @@ END_VAR
 
   CASE Value 
   OF
-    SyncReaction.NO_REACTION     : SYNC_REACTION_TO_STRING := StrReplace('NO_REACTION ({0})'     ,'{0}' , USINT_TO_STRING(Value));
-    SyncReaction.REACTION_TYPE_1 : SYNC_REACTION_TO_STRING := StrReplace('REACTION_TYPE_1 ({0})' ,'{0}' , USINT_TO_STRING(Value));
-    SyncReaction.REACTION_TYPE_2 : SYNC_REACTION_TO_STRING := StrReplace('REACTION_TYPE_2 ({0})' ,'{0}' , USINT_TO_STRING(Value));
-    SyncReaction.REACTION_TYPE_3 : SYNC_REACTION_TO_STRING := StrReplace('REACTION_TYPE_3 ({0})' ,'{0}' , USINT_TO_STRING(Value));
+    SyncReaction.NO_REACTION                      : SYNC_REACTION_TO_STRING := StrReplace('NO_REACTION ({0})'                      ,'{0}' , USINT_TO_STRING(Value));
+    SyncReaction.NO_AUTOMATIC_DISABLE             : SYNC_REACTION_TO_STRING := StrReplace('NO_AUTOMATIC_DISABLE ({0})'             ,'{0}' , USINT_TO_STRING(Value));
+    SyncReaction.INTERRUPT_WHEN_SEQUENCE_IS_EMPTY : SYNC_REACTION_TO_STRING := StrReplace('INTERRUPT_WHEN_SEQUENCE_IS_EMPTY ({0})' ,'{0}' , USINT_TO_STRING(Value));
+    SyncReaction.IMMEDIATE_INTERRUPT              : SYNC_REACTION_TO_STRING := StrReplace('IMMEDIATE_INTERRUPT ({0})'              ,'{0}' , USINT_TO_STRING(Value));
   ELSE
     SYNC_REACTION_TO_STRING := CONCAT('SYNC_REACTION_TO_STRING Function: Error -> no parsing for value ', USINT_TO_STRING(Value));
   END_CASE

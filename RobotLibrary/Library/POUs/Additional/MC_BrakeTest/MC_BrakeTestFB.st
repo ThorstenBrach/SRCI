@@ -63,7 +63,7 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
-  CheckFunctionSupported := AxesGroup.InternalData.RobotData.RCSupportedFunctions.BrakeTest;
+  CheckFunctionSupported := AxesGroup.State.RobotData.RCSupportedFunctions.BrakeTest;
   
   IF ( NOT CheckFunctionSupported )
   THEN
@@ -126,7 +126,7 @@ END_VAR
     // Set error
     ErrorID := RobotLibraryErrorIdEnum.ERR_SEQFLAG_NOT_ALLOWED;
     // Create log entry
-    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.ERROR,
                             MessageCode := ErrorID,
@@ -145,7 +145,7 @@ END_VAR
     // Set error
     ErrorID := RobotLibraryErrorIdEnum.ERR_ABORTINGMODE_INVALID;
     // Create log entry
-    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.ERROR,
                             MessageCode := ErrorID,
@@ -156,19 +156,19 @@ END_VAR
   
   
   // Check RobotAxesActive valid ? 
-  IF ((( ParCmd.RobotAxesActive.AxisJ1 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.J1 )) OR
-      (( ParCmd.RobotAxesActive.AxisJ2 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.J2 )) OR
-      (( ParCmd.RobotAxesActive.AxisJ3 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.J3 )) OR
-      (( ParCmd.RobotAxesActive.AxisJ4 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.J4 )) OR
-      (( ParCmd.RobotAxesActive.AxisJ5 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.J5 )) OR
-      (( ParCmd.RobotAxesActive.AxisJ6 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.J6 )))  
+  IF ((( ParCmd.RobotAxesActive.AxisJ1 ) AND ( NOT AxesGroup.State.RobotData.AxisJointUsed.J1 )) OR
+      (( ParCmd.RobotAxesActive.AxisJ2 ) AND ( NOT AxesGroup.State.RobotData.AxisJointUsed.J2 )) OR
+      (( ParCmd.RobotAxesActive.AxisJ3 ) AND ( NOT AxesGroup.State.RobotData.AxisJointUsed.J3 )) OR
+      (( ParCmd.RobotAxesActive.AxisJ4 ) AND ( NOT AxesGroup.State.RobotData.AxisJointUsed.J4 )) OR
+      (( ParCmd.RobotAxesActive.AxisJ5 ) AND ( NOT AxesGroup.State.RobotData.AxisJointUsed.J5 )) OR
+      (( ParCmd.RobotAxesActive.AxisJ6 ) AND ( NOT AxesGroup.State.RobotData.AxisJointUsed.J6 )))  
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
     ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
     // Create log entry
-    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.ERROR,
                             MessageCode := ErrorID,
@@ -179,19 +179,19 @@ END_VAR
   
   
   // Check ExternalAxesActive valid ? 
-  IF ((( ParCmd.ExternalAxesActive.AxisE1 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.E1 )) OR
-      (( ParCmd.ExternalAxesActive.AxisE2 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.E2 )) OR
-      (( ParCmd.ExternalAxesActive.AxisE3 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.E3 )) OR
-      (( ParCmd.ExternalAxesActive.AxisE4 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.E4 )) OR
-      (( ParCmd.ExternalAxesActive.AxisE5 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.E5 )) OR
-      (( ParCmd.ExternalAxesActive.AxisE6 ) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.E6 )))  
+  IF ((( ParCmd.ExternalAxesActive.AxisE1 ) AND ( NOT AxesGroup.State.RobotData.AxisExternalUsed.E1 )) OR
+      (( ParCmd.ExternalAxesActive.AxisE2 ) AND ( NOT AxesGroup.State.RobotData.AxisExternalUsed.E2 )) OR
+      (( ParCmd.ExternalAxesActive.AxisE3 ) AND ( NOT AxesGroup.State.RobotData.AxisExternalUsed.E3 )) OR
+      (( ParCmd.ExternalAxesActive.AxisE4 ) AND ( NOT AxesGroup.State.RobotData.AxisExternalUsed.E4 )) OR
+      (( ParCmd.ExternalAxesActive.AxisE5 ) AND ( NOT AxesGroup.State.RobotData.AxisExternalUsed.E5 )) OR
+      (( ParCmd.ExternalAxesActive.AxisE6 ) AND ( NOT AxesGroup.State.RobotData.AxisExternalUsed.E6 )))  
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
     ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
     // Create log entry
-    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.ERROR,
                             MessageCode := ErrorID,
@@ -267,14 +267,14 @@ VAR_IN_OUT
 END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := AxesGroup.InternalData.SystemTime,
+  CreateLogMessage      ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
                           MessageText := 'Create command payload with the following parameter(s) :');
     
   // Create log entry for RobotAxesActive
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
@@ -282,7 +282,7 @@ END_VAR
                           Para1       :=  BYTE_TO_STRING_BIN(_command.RobotAxesActive));
   
   // Create log entry for ExternalAxesActive
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
@@ -303,14 +303,14 @@ END_VAR
 
 END_METHOD
 
-METHOD PROTECTED OnCall
+METHOD PROTECTED OnExecRun : DINT
 VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
 
   // call base implementation
-  SUPER^.OnCall(AxesGroup := AxesGroup);
+  SUPER^.OnExecRun(AxesGroup := AxesGroup);
   
   CASE _stepCmd OF
     

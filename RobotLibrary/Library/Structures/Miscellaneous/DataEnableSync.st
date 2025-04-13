@@ -23,19 +23,19 @@ TYPE DataEnableSync :
 // -------------------------------------------------------------------------  
 STRUCT
   /// Set TRUE (default), to activate the synchronizationrelated comparison mechanism for tool data
-  EnableSyncTool              : BOOL;
+  EnableSyncTool              : BOOL := TRUE;
   /// Set TRUE (default), to activate the synchronizationrelated comparison mechanism for frame data
-  EnableSyncFrame             : BOOL;
+  EnableSyncFrame             : BOOL := TRUE;
   ///  Set TRUE (default), to activate the synchronizationrelated comparison mechanism for load data
-  EnableSyncLoad              : BOOL;
+  EnableSyncLoad              : BOOL := TRUE;
   /// Set TRUE (default), to activate the synchronizationrelated comparison mechanism for work area data
-  EnableSyncWorkArea          : BOOL;
+  EnableSyncWorkArea          : BOOL := TRUE;
   /// Set TRUE (default), to activate the synchronizationrelated comparison mechanism for software limits
-  EnableSyncSWLimits          : BOOL;
+  EnableSyncSWLimits          : BOOL := TRUE;
   /// Set TRUE (default), to activate the synchronizationrelated comparison mechanism for default dynamics
-  EnableSyncDefaultDynamics   : BOOL;
+  EnableSyncDefaultDynamics   : BOOL := TRUE;
   /// Set TRUE (default), to activate the synchronizationrelated comparison mechanism for reference dynamics
-  EnableSyncReferenceDynamics : BOOL;
+  EnableSyncReferenceDynamics : BOOL := TRUE;
   /// - Allows blending when CallSubprogram is called in sequence and removed afterwards.
   /// For more information see chapter 6.5.21.
   /// • 0 (default): Dynamic blending is prevented 

@@ -41,7 +41,7 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
-  CheckFunctionSupported := AxesGroup.InternalData.RobotData.RCSupportedFunctions.WriteCallSubprogramCyclic;
+  CheckFunctionSupported := AxesGroup.State.RobotData.RCSupportedFunctions.WriteCallSubprogramCyclic;
   
   IF ( NOT CheckFunctionSupported )
   THEN
@@ -63,14 +63,14 @@ END_VAR
 
 END_METHOD
 
-METHOD PROTECTED OnCall
+METHOD PROTECTED OnExecRun : DINT
 VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
 
   // call base implementation
-  SUPER^.OnCall(AxesGroup := AxesGroup);
+  SUPER^.OnExecRun(AxesGroup := AxesGroup);
   
   AxesGroup.Parameter.Plc.OptionalCyclic.UseCallSubprogram := Enable;
   

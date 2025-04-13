@@ -23,26 +23,28 @@ FUNCTION_BLOCK MC_EnableRobotFB EXTENDS RobotLibraryBaseEnableFB
 // -------------------------------------------------------------------------
 VAR_INPUT
   /// Command parameter 
-  ParCmd            : EnableRobotParCmd;
+  ParCmd               : EnableRobotParCmd;
 END_VAR
 
 
 VAR_OUTPUT
   /// Command is transferred and confirmed by the RC
-  CommandBuffered   : BOOL;
+  CommandBuffered      : BOOL;
   /// Receiving of input parameter values has been acknowledged by RC
-  ParameterAccepted : BOOL;
+  ParameterAccepted    : BOOL;
   /// command results
-  OutCmd            : EnableRobotOutCmd;
+  OutCmd               : EnableRobotOutCmd;
 END_VAR
 
 VAR
   /// internal copy of command parameter 
- _parCmd            : EnableRobotParCmd;
+ _parCmd               : EnableRobotParCmd;
   /// command data to send
- _command           : EnableRobotSendData;
+ _command              : EnableRobotSendData;
   /// response data received
- _response          : EnableRobotRecvData;
+ _response             : EnableRobotRecvData;
+  /// internal flag for synchronisation valid 
+ _synchronizationValid : BOOL;
 END_VAR
 
   SUPER^(AxesGroup := AxesGroup);
@@ -55,7 +57,7 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
-  CheckFunctionSupported := AxesGroup.InternalData.RobotData.RCSupportedFunctions.EnableRobot;
+  CheckFunctionSupported := AxesGroup.State.RobotData.RCSupportedFunctions.EnableRobot;
   
   IF ( NOT CheckFunctionSupported )
   THEN
@@ -79,12 +81,15 @@ END_VAR
   
   // compare memory 
   _parameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
-  
   // check parameter valid ?
   _parameterValid   := CheckParameterValid( AxesGroup := AxesGroup );
+  // check synchronization valid ?
+  _synchronizationValid := CheckSynchronizationValid( AxesGroup := AxesGroup );
+  
   
   IF ((  _parameterChanged        )  AND 
-      (  _parameterValid          )) OR
+      (  _parameterValid          )  AND
+      (  _synchronizationValid    )) OR
       (  _parameterUpdateInternal )  
   THEN  
     // reset internal flag for send parameter update
@@ -129,7 +134,7 @@ END_VAR
     // Set error
     ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
     // Create log entry
-    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.ERROR,
                             MessageCode := ErrorID,
@@ -141,6 +146,36 @@ END_VAR
   
   // Check ParCmd.ManualStep
   // -> no plausibility check for boolean
+
+END_METHOD
+
+METHOD PROTECTED CheckSynchronizationValid : BOOL
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+  IF ( AxesGroup.State.Synchronized                                                                                                    ) OR 
+    (( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Tool             [SyncTime.AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION ) AND
+     ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Frame            [SyncTime.AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION ) AND
+     ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Load             [SyncTime.AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION ) AND
+     ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.WorkAreas        [SyncTime.AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION ) AND
+     ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.SWLimits         [SyncTime.AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION ) AND
+     ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.DefaultDynamics  [SyncTime.AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION ) AND
+     ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.ReferenceDynamics[SyncTime.AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION ))
+  THEN
+    CheckSynchronizationValid := TRUE;
+  ELSE
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_STATE_PROHIBITS_COMMAND;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Synchronisation state prohibits command execution. CheckSynchronizationValid = {1}',
+                            Para1       :=  BOOL_TO_STRING(CheckSynchronizationValid));     
+  END_IF
 
 END_METHOD
 
@@ -203,14 +238,14 @@ VAR_IN_OUT
 END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := AxesGroup.InternalData.SystemTime,
+  CreateLogMessage      ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
                           MessageText := 'Create command payload with the following parameter(s) :');
   
   // Create log entry for Enable
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
@@ -218,7 +253,7 @@ END_VAR
                           Para1       :=  BOOL_TO_STRING(_command.Enable));
   
   // Create log entry for HoldToRun
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
@@ -226,7 +261,7 @@ END_VAR
                           Para1       :=  BOOL_TO_STRING(_command.HoldToRun));
                           
   // Create log entry for StepMode
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
@@ -234,7 +269,7 @@ END_VAR
                           Para1       :=  USINT_TO_STRING(_command.StepMode));
                                                   
   // Create log entry for ManualStep
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
@@ -256,13 +291,13 @@ END_VAR
 
 END_METHOD
 
-METHOD PROTECTED OnCall
+METHOD PROTECTED OnExecRun : DINT
 VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
 
-  SUPER^.OnCall(AxesGroup := AxesGroup);
+  SUPER^.OnExecRun(AxesGroup := AxesGroup);
   
   CASE _stepCmd OF
     
@@ -272,9 +307,12 @@ END_VAR
           _enable_R();       
   
            // Check function is supported and parameter are valid ?
-           IF (( CheckFunctionSupported( AxesGroup := AxesGroup )) AND
-               ( CheckParameterValid   ( AxesGroup := AxesGroup )))      
+           IF (( CheckFunctionSupported   ( AxesGroup := AxesGroup )) AND
+               ( CheckParameterValid      ( AxesGroup := AxesGroup )) AND
+               ( CheckSynchronizationValid( AxesGroup := AxesGroup )))      
            THEN
+             // Reset all internal flags
+             Reset();
              // set busy flag
              Busy := TRUE;
              // Reset command outputs
@@ -339,7 +377,7 @@ END_VAR
            // Set Busy flag
            Busy := TRUE;
            // trigger parameter update to disable FB
-          _parameterUpdateInternal := TRUE;
+          _parameterUpdateInternal := TRUE;        
            // reset the falling edge
           _enable_F();
            // set timeout
@@ -351,7 +389,7 @@ END_VAR
         // Wait for response received or timeout or not Initialized
     02: IF ((   _responseReceived                                    ) OR 
             (     CheckTimeout(_timerCmd) = RobotLibraryConstants.OK ) OR 
-            ( NOT AxesGroup.InternalData.Initialized                 ))
+            ( NOT AxesGroup.State.Initialized                 ))
         THEN
           Reset();   
   	    END_IF

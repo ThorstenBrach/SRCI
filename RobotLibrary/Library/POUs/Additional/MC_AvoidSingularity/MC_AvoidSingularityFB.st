@@ -55,7 +55,7 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
-  CheckFunctionSupported := AxesGroup.InternalData.RobotData.RCSupportedFunctions.AvoidSingularity;
+  CheckFunctionSupported := AxesGroup.State.RobotData.RCSupportedFunctions.AvoidSingularity;
   
   IF ( NOT CheckFunctionSupported )
   THEN
@@ -121,7 +121,7 @@ END_VAR
     // Set error
     ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD; 
     // Create log entry
-    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.ERROR,
                             MessageCode := ErrorID,
@@ -183,14 +183,14 @@ VAR_IN_OUT
 END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := AxesGroup.InternalData.SystemTime,
+  CreateLogMessage      ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
                           MessageText := 'Create command payload with the following parameter(s) :');
     
   // Create log entry for Enable
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
@@ -198,7 +198,7 @@ END_VAR
                           Para1       :=  BOOL_TO_STRING(_command.Enable));
   
   // Create log entry for Mode
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
@@ -221,25 +221,28 @@ END_VAR
 
 END_METHOD
 
-METHOD PROTECTED OnCall
+METHOD PROTECTED OnExecRun : DINT
 VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
 
   // call base implementation
-  SUPER^.OnCall(AxesGroup := AxesGroup);
+  SUPER^.OnExecRun(AxesGroup := AxesGroup);
   
   CASE _stepCmd OF
     
     00:  IF ( _enable_R.Q ) AND ( NOT Error)
          THEN
+           // reset the rising edge
+          _enable_R();
+         
            // Check function is supported and parameter are valid ?
            IF (( CheckFunctionSupported( AxesGroup := AxesGroup )) AND
                ( CheckParameterValid   ( AxesGroup := AxesGroup )))      
            THEN
-             // reset the rising edge
-            _enable_R();       
+             // Reset all internal flags
+             Reset();
              // set busy flag
              Busy := TRUE;
              // Reset command outputs
@@ -315,7 +318,7 @@ END_VAR
         // Wait for response received or timeout or not Initialized
     02: IF ((   _responseReceived                                    ) OR 
             (     CheckTimeout(_timerCmd) = RobotLibraryConstants.OK ) OR 
-            ( NOT AxesGroup.InternalData.Initialized                 ))
+            ( NOT AxesGroup.State.Initialized                        ))
         THEN
           Reset();   
   	    END_IF

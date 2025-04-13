@@ -62,7 +62,7 @@ END_VAR
   
   // Check command execution is allowed ?
   IF ((     Enable                                 ) AND
-      ( NOT AxesGroup.InternalData.Initialized     ) AND
+      ( NOT AxesGroup.State.Initialized     ) AND
       (     MyType <> 'MC_ExchangeConfigurationFB' ) AND // is part of init sequence
       (     MyType <> 'MC_ReadMessagesFB'          ) AND // is part of init sequence
       (     MyType <> 'MC_ReadRobotDataFB'         ))    // is part of init sequence
@@ -73,11 +73,25 @@ END_VAR
   END_IF
   
   
-  // Abort execution 
+  // On execution started
+  IF ( _enable_R.Q )
+  THEN
+    OnExecStart(AxesGroup := AxesGroup);
+  END_IF
+  
+  
+  // On execution cancel  
   IF (Busy) AND ( _enable_F.Q) 
   THEN
-    // try to remove cmd
-    AxesGroup.Acyclic.ActiveCommandRegister.RemoveCmd(_uniqueID);
+    // call Cancel
+    OnExecCancel(AxesGroup := AxesGroup);
+  END_IF
+  
+  
+  // On execution error clear
+  IF ( Error ) AND ( _enable_F.Q )
+  THEN
+    OnExecErrorClear(AxesGroup := AxesGroup);
   END_IF
 
 END_METHOD
@@ -90,8 +104,11 @@ END_VAR
 
   OnExecCancel := Reset();
   
+  // try to remove cmd
+  AxesGroup.Acyclic.ActiveCommandRegister.RemoveCmd(_uniqueID);
   
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+  
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,

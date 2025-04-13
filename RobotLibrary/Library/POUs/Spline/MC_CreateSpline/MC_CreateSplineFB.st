@@ -51,7 +51,7 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
-  CheckFunctionSupported := AxesGroup.InternalData.RobotData.RCSupportedFunctions.CreateSpline;
+  CheckFunctionSupported := AxesGroup.State.RobotData.RCSupportedFunctions.CreateSpline;
   
   IF ( NOT CheckFunctionSupported )
   THEN
@@ -122,7 +122,7 @@ END_VAR
     // Set error
     ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
     // Create log entry
-    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.ERROR,
                             MessageCode := ErrorID,
@@ -142,7 +142,7 @@ END_VAR
       ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
       
       // Create log entry
-      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                               MessageType := MessageType.CMD,
                               Severity    := Severity.ERROR,
                               MessageCode := ErrorID,
@@ -163,7 +163,7 @@ END_VAR
       ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
       
       // Create log entry
-      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                               MessageType := MessageType.CMD,
                               Severity    := Severity.ERROR,
                               MessageCode := ErrorID,
@@ -184,7 +184,7 @@ END_VAR
       ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
       
       // Create log entry
-      CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+      CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                               MessageType := MessageType.CMD,
                               Severity    := Severity.ERROR,
                               MessageCode := ErrorID,
@@ -204,7 +204,7 @@ END_VAR
       ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
       
       // Create log entry
-      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                               MessageType := MessageType.CMD,
                               Severity    := Severity.ERROR,
                               MessageCode := ErrorID,
@@ -225,7 +225,7 @@ END_VAR
       ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
       
       // Create log entry
-      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                               MessageType := MessageType.CMD,
                               Severity    := Severity.ERROR,
                               MessageCode := ErrorID,
@@ -246,7 +246,7 @@ END_VAR
       ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
       
       // Create log entry
-      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                               MessageType := MessageType.CMD,
                               Severity    := Severity.ERROR,
                               MessageCode := ErrorID,
@@ -267,7 +267,7 @@ END_VAR
       ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
       
       // Create log entry
-      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                               MessageType := MessageType.CMD,
                               Severity    := Severity.ERROR,
                               MessageCode := ErrorID,
@@ -288,7 +288,7 @@ END_VAR
       ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
       
       // Create log entry
-      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                               MessageType := MessageType.CMD,
                               Severity    := Severity.ERROR,
                               MessageCode := ErrorID,
@@ -309,7 +309,7 @@ END_VAR
       ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
       
       // Create log entry
-      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                               MessageType := MessageType.CMD,
                               Severity    := Severity.ERROR,
                               MessageCode := ErrorID,
@@ -330,7 +330,7 @@ END_VAR
       ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
       
       // Create log entry
-      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                               MessageType := MessageType.CMD,
                               Severity    := Severity.ERROR,
                               MessageCode := ErrorID,
@@ -351,7 +351,7 @@ END_VAR
       ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
       
       // Create log entry
-      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                               MessageType := MessageType.CMD,
                               Severity    := Severity.ERROR,
                               MessageCode := ErrorID,
@@ -372,7 +372,7 @@ END_VAR
       ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
       
       // Create log entry
-      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                               MessageType := MessageType.CMD,
                               Severity    := Severity.ERROR,
                               MessageCode := ErrorID,
@@ -396,7 +396,7 @@ END_VAR
       // Set error
       ErrorID := RobotLibraryErrorIdEnum.ERR_CONFIGMODE_SHOULDER_INVALID;
       // Create log entry
-      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                               MessageType := MessageType.CMD,
                               Severity    := Severity.ERROR,
                               MessageCode := ErrorID,
@@ -420,7 +420,7 @@ END_VAR
       // Set error
       ErrorID := RobotLibraryErrorIdEnum.ERR_CONFIGMODE_ELBOW_INVALID;
       // Create log entry
-      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                               MessageType := MessageType.CMD,
                               Severity    := Severity.ERROR,
                               MessageCode := ErrorID,
@@ -444,7 +444,7 @@ END_VAR
       // Set error
       ErrorID := RobotLibraryErrorIdEnum.ERR_CONFIGMODE_WRIST_INVALID;
       // Create log entry
-      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                               MessageType := MessageType.CMD,
                               Severity    := Severity.ERROR,
                               MessageCode := ErrorID,
@@ -467,7 +467,7 @@ END_VAR
       // Set error
       ErrorID := RobotLibraryErrorIdEnum.ERR_VELOCITY_INVALID;
       // Create log entry
-      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                               MessageType := MessageType.CMD,
                               Severity    := Severity.ERROR,
                               MessageCode := ErrorID,
@@ -490,7 +490,7 @@ END_VAR
       // Set error
       ErrorID := RobotLibraryErrorIdEnum.ERR_ACCELERATION_INVALID;
       // Create log entry
-      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                               MessageType := MessageType.CMD,
                               Severity    := Severity.ERROR,
                               MessageCode := ErrorID,
@@ -513,7 +513,7 @@ END_VAR
       // Set error
       ErrorID := RobotLibraryErrorIdEnum.ERR_DECELERATION_INVALID;
       // Create log entry
-      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                               MessageType := MessageType.CMD,
                               Severity    := Severity.ERROR,
                               MessageCode := ErrorID,
@@ -536,7 +536,7 @@ END_VAR
       // Set error
       ErrorID := RobotLibraryErrorIdEnum.ERR_JERK_INVALID;
       // Create log entry
-      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                               MessageType := MessageType.CMD,
                               Severity    := Severity.ERROR,
                               MessageCode := ErrorID,
@@ -557,7 +557,7 @@ END_VAR
       // Set error
       ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
       // Create log entry
-      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                               MessageType := MessageType.CMD,
                               Severity    := Severity.ERROR,
                               MessageCode := ErrorID,
@@ -578,7 +578,7 @@ END_VAR
       // Set error
       ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
       // Create log entry
-      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                               MessageType := MessageType.CMD,
                               Severity    := Severity.ERROR,
                               MessageCode := ErrorID,
@@ -598,7 +598,7 @@ END_VAR
       // Set error
       ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
       // Create log entry
-      CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+      CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                               MessageType := MessageType.CMD,
                               Severity    := Severity.ERROR,
                               MessageCode := ErrorID,
@@ -793,14 +793,14 @@ VAR
 END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := AxesGroup.InternalData.SystemTime,
+  CreateLogMessage      ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
                           MessageText := 'Create command payload with the following parameter(s) :');
   
   // Create log entry for Mode
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
@@ -808,7 +808,7 @@ END_VAR
                           Para1       :=  SPLINE_MODE_TO_STRING(_command.Mode));
   
   // Create log entry for SplineID
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
@@ -819,7 +819,7 @@ END_VAR
   FOR _idx := 1 TO RobotLibraryParameter.SPLINE_DATA_MAX
   DO
     // Create log entry for VelocityRate
-    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.DEBUG,
                             MessageCode := 0,
@@ -828,7 +828,7 @@ END_VAR
                             Para2       :=  DINT_TO_STRING(_idx));
   
     // Create log entry for AccelerationRate
-    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.DEBUG,
                             MessageCode := 0,
@@ -837,7 +837,7 @@ END_VAR
                             Para2       :=  DINT_TO_STRING(_idx));
   
     // Create log entry for DecelerationRate
-    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.DEBUG,
                             MessageCode := 0,
@@ -846,7 +846,7 @@ END_VAR
                             Para2       :=  DINT_TO_STRING(_idx));
                             
     // Create log entry for JerkRate
-    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.DEBUG,
                             MessageCode := 0,
@@ -856,7 +856,7 @@ END_VAR
   
                             
     // Create log entry for ToolNo
-    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.DEBUG,
                             MessageCode := 0,
@@ -865,7 +865,7 @@ END_VAR
                             Para2       :=  DINT_TO_STRING(_idx));
     
     // Create log entry for FrameNo
-    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.DEBUG,
                             MessageCode := 0,
@@ -874,7 +874,7 @@ END_VAR
                             Para2       :=  DINT_TO_STRING(_idx));
                             
     // Create log entry for Position.X
-    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.DEBUG,
                             MessageCode := 0,
@@ -883,7 +883,7 @@ END_VAR
                             Para2       :=  DINT_TO_STRING(_idx));
   
     // Create log entry for Position.Y
-    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.DEBUG,
                             MessageCode := 0,
@@ -892,7 +892,7 @@ END_VAR
                             Para2       :=  DINT_TO_STRING(_idx));
                             
     // Create log entry for Position.Z
-    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.DEBUG,
                             MessageCode := 0,
@@ -901,7 +901,7 @@ END_VAR
                             Para2       :=  DINT_TO_STRING(_idx));
   
     // Create log entry for Position.Rx
-    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.DEBUG,
                             MessageCode := 0,
@@ -910,7 +910,7 @@ END_VAR
                             Para2       :=  DINT_TO_STRING(_idx));
                             
     // Create log entry for Position.Ry
-    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.DEBUG,
                             MessageCode := 0,
@@ -919,7 +919,7 @@ END_VAR
                             Para2       :=  DINT_TO_STRING(_idx));
                             
     // Create log entry for Position.Rz
-    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.DEBUG,
                             MessageCode := 0,
@@ -928,7 +928,7 @@ END_VAR
                             Para2       :=  DINT_TO_STRING(_idx));
   
     // Create log entry for Position.Config
-    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.DEBUG,
                             MessageCode := 0,
@@ -937,7 +937,7 @@ END_VAR
                             Para2       :=  DINT_TO_STRING(_idx));
   
     // Create log entry for Position.TurnNumber[0]
-    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.DEBUG,
                             MessageCode := 0,
@@ -947,7 +947,7 @@ END_VAR
                             Para2       :=  DINT_TO_STRING(_idx));
   
     // Create log entry for Position.TurnNumber[1]
-    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.DEBUG,
                             MessageCode := 0,
@@ -957,7 +957,7 @@ END_VAR
                             Para2       :=  DINT_TO_STRING(_idx));
                             
     // Create log entry for Position.TurnNumber[2]
-    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.DEBUG,
                             MessageCode := 0,
@@ -967,7 +967,7 @@ END_VAR
                             Para2       :=  DINT_TO_STRING(_idx));
   
     // Create log entry for Position.TurnNumber[3]
-    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.DEBUG,
                             MessageCode := 0,
@@ -976,7 +976,7 @@ END_VAR
                             Para2       :=  DINT_TO_STRING(_idx));
                             
     // Create log entry for Position.E1
-    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.DEBUG,
                             MessageCode := 0,
@@ -985,7 +985,7 @@ END_VAR
                             Para2       :=  DINT_TO_STRING(_idx));
   
     // Create log entry for MoveTime
-    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.DEBUG,
                             MessageCode := 0,
@@ -994,7 +994,7 @@ END_VAR
                             Para2       :=  DINT_TO_STRING(_idx));
   
     // Create log entry for Position.E2
-    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.DEBUG,
                             MessageCode := 0,
@@ -1003,7 +1003,7 @@ END_VAR
                             Para2       :=  DINT_TO_STRING(_idx));
   
     // Create log entry for Position.E3
-    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.DEBUG,
                             MessageCode := 0,
@@ -1012,7 +1012,7 @@ END_VAR
                             Para2       :=  DINT_TO_STRING(_idx));
   
     // Create log entry for Position.E4
-    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.DEBUG,
                             MessageCode := 0,
@@ -1021,7 +1021,7 @@ END_VAR
                             Para2       :=  DINT_TO_STRING(_idx));
                             
     // Create log entry for Position.E5
-    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.DEBUG,
                             MessageCode := 0,
@@ -1030,7 +1030,7 @@ END_VAR
                             Para2       :=  DINT_TO_STRING(_idx));
                             
     // Create log entry for Position.E6
-    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.DEBUG,
                             MessageCode := 0,
@@ -1056,14 +1056,14 @@ END_VAR
 
 END_METHOD
 
-METHOD PROTECTED OnCall
+METHOD PROTECTED OnExecRun : DINT
 VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
 
   // call base implementation
-  SUPER^.OnCall(AxesGroup := AxesGroup);
+  SUPER^.OnExecRun(AxesGroup := AxesGroup);
   
   CASE _stepCmd OF
     

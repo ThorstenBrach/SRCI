@@ -1,17 +1,17 @@
-{attribute 'pack_mode' := '1'} 
+{attribute 'qualified_only'}
 // ------------------------------------------------------------------------- 
 //  SRCI Robot Library                                                
 // ------------------------------------------------------------------------- 
 //                                                                           
-//  Object:      AxesGroupStateResetMsg                                       
+//  Object:      SyncTime                                       
 //  Author:      Thorsten Brach                                                
-//  Date:        2024-06-01
+//  Date:        2025-04-13
 //
 //  Description:                                              
 //   
 //                                                                           
 //  Copyright: 
-//    (C) 2024 Thorsten Brach. All rights reserved                                                                                                                                            
+//    (C) 2025 Thorsten Brach. All rights reserved                                                                                                                                            
 //             Licensed under the LGPL-3.0 license.
 //                                                                           
 //  Disclaimer:                                                                           
@@ -20,13 +20,13 @@
 //    own risk and responsibility.
 //
 // -------------------------------------------------------------------------
-TYPE AxesGroupStateResetMsg :
-STRUCT
-  ///
-  Reset     : BOOL;
-  ///
-  ResetTime : DT;
-END_STRUCT
+TYPE SyncTime :
+(
+  /// Synchronization during startup
+	DURING_START_UP := 0,
+  /// Synchronization after startup
+  AFTER_START_UP := 1
+)DINT;
 END_TYPE
 
 

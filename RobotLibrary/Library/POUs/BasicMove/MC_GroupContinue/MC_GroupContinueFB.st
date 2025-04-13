@@ -23,22 +23,24 @@ FUNCTION_BLOCK MC_GroupContinueFB EXTENDS RobotLibraryBaseExecuteFB
 // -------------------------------------------------------------------------
 VAR_INPUT
   /// Command parameter 
-  ParCmd          : GroupContinueParCmd;    
+  ParCmd               : GroupContinueParCmd;    
 END_VAR
 VAR_OUTPUT
   /// Command is transferred and confirmed by the RC
-  CommandBuffered : BOOL;
+  CommandBuffered      : BOOL;
   /// Command output 
-  OutCmd          : GroupContinueOutCmd;    
+  OutCmd               : GroupContinueOutCmd;    
 END_VAR
 
 VAR
   /// internal copy of command parameter 
- _parCmd          : GroupContinueParCmd;
+ _parCmd               : GroupContinueParCmd;
   /// command data to send
- _command         : GroupContinueSendData;
+ _command              : GroupContinueSendData;
   /// response data received
- _response        : GroupContinueRecvData;      
+ _response             : GroupContinueRecvData;      
+  /// internal flag for synchronisation valid 
+ _synchronizationValid : BOOL;
 END_VAR
 
   SUPER^(AxesGroup := AxesGroup);
@@ -51,7 +53,7 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
-  CheckFunctionSupported := AxesGroup.InternalData.RobotData.RCSupportedFunctions.GroupContinue;
+  CheckFunctionSupported := AxesGroup.State.RobotData.RCSupportedFunctions.GroupContinue;
   
   IF ( NOT CheckFunctionSupported )
   THEN
@@ -75,12 +77,15 @@ END_VAR
   
   // compare memory 
   _parameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCmd), pData2 := ADR(_parCmd), DataLen := SIZEOF(ParCmd)) <> RobotLibraryConstants.OK );
-  
   // check parameter valid ?
   _parameterValid   := CheckParameterValid( AxesGroup := AxesGroup );
+  // check synchronization valid ?
+  _synchronizationValid := CheckSynchronizationValid( AxesGroup := AxesGroup );
+  
   
   IF ((  _parameterChanged        )  AND 
-      (  _parameterValid          )) OR
+      (  _parameterValid          )  AND
+      (  _synchronizationValid    )) OR
       (  _parameterUpdateInternal )  
   THEN  
     // reset internal flag for send parameter update
@@ -93,6 +98,36 @@ END_VAR
     CommandData := CreateCommandPayload(AxesGroup := AxesGroup); // ( Access via reference to rCommandFB in ACR )
     // notify active command register 
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
+  END_IF
+
+END_METHOD
+
+METHOD PROTECTED CheckSynchronizationValid : BOOL
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+  IF ( AxesGroup.State.Synchronized                                                                                                    ) OR 
+    (( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Tool             [SyncTime.AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION ) AND
+     ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Frame            [SyncTime.AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION ) AND
+     ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Load             [SyncTime.AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION ) AND
+     ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.WorkAreas        [SyncTime.AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION ) AND
+     ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.SWLimits         [SyncTime.AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION ) AND
+     ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.DefaultDynamics  [SyncTime.AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION ) AND
+     ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.ReferenceDynamics[SyncTime.AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION ))
+  THEN
+    CheckSynchronizationValid := TRUE;
+  ELSE
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_STATE_PROHIBITS_COMMAND;
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Synchronisation state prohibits command execution. CheckSynchronizationValid = {1}',
+                            Para1       :=  BOOL_TO_STRING(CheckSynchronizationValid));     
   END_IF
 
 END_METHOD
@@ -137,7 +172,7 @@ VAR_IN_OUT
 END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := AxesGroup.InternalData.SystemTime,
+  CreateLogMessage      ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
@@ -159,22 +194,23 @@ END_VAR
 
 END_METHOD
 
-METHOD PROTECTED OnCall
+METHOD PROTECTED OnExecRun : DINT
 VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
 
   // call base implementation
-  SUPER^.OnCall(AxesGroup := AxesGroup);
+  SUPER^.OnExecRun(AxesGroup := AxesGroup);
   
   CASE _stepCmd OF
     
     00:  IF ( _execute_R.Q ) AND ( NOT Error)  
          THEN
            // Check function is supported and parameter are valid ?
-           IF (( CheckFunctionSupported( AxesGroup := AxesGroup )) AND
-               ( CheckParameterValid   ( AxesGroup := AxesGroup )))      
+           IF (( CheckFunctionSupported   ( AxesGroup := AxesGroup )) AND
+               ( CheckParameterValid      ( AxesGroup := AxesGroup )) AND     
+               ( CheckSynchronizationValid( AxesGroup := AxesGroup )))   
            THEN
              // set busy flag
              Busy := TRUE;

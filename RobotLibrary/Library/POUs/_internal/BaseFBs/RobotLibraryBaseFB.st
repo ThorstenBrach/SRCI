@@ -82,10 +82,11 @@ VAR
 END_VAR
 
   OnCall               (AxesGroup := AxesGroup);
+  OnExecRun            (AxesGroup := AxesGroup);
   CheckParameterChanged(AxesGroup := AxesGroup);
   
   
-  IF ( AxesGroup.InternalData.OnlineChange_R.Q )
+  IF ( AxesGroup.State.OnlineChange_R.Q )
   THEN
     OnOnlineChange(AxesGroup := AxesGroup);
   END_IF
@@ -127,7 +128,7 @@ END_VAR
   ErrorID := RobotLibraryEvents.ERR_FUNCTION_NOT_SUPPORTED;
   
   // Create log entry
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
@@ -207,7 +208,7 @@ END_VAR
   THEN
     // Add command message to message buffer       
     AxesGroup.MessageLog
-      .AddMessageLogByParameter(  Timestamp   :=   AxesGroup.InternalData.SystemTime,
+      .AddMessageLogByParameter(  Timestamp   :=   AxesGroup.State.SystemTime,
                                   MessageType :=   MessageType.CMD,
                                   MessageCode :=  _rspHeader.AlarmMessageCode,
                                   MessageText :=   CONCAT(MyType, CONCAT(' : ' , MESSAGE_CODE_TO_STRING(_rspHeader.AlarmMessageCode))),
@@ -218,7 +219,7 @@ END_VAR
   IF ( _error_R.Q)
   THEN
     // Create log entry
-    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.DEBUG,
                             MessageCode := 0,
@@ -230,7 +231,7 @@ END_VAR
   IF ( _warning_R.Q)
   THEN
     // Create log entry
-    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.DEBUG,
                             MessageCode := 0,
@@ -242,7 +243,7 @@ END_VAR
   IF ( _info_R.Q)
   THEN
     // Create log entry
-    CreateLogMessagePara2 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.DEBUG,
                             MessageCode := 0,
@@ -250,6 +251,15 @@ END_VAR
                             Para1       := WORD_TO_STRING_HEX(InfoID),
                             Para2       := MyType);                        
   END_IF
+
+END_METHOD
+
+METHOD PROTECTED OnExecRun : DINT
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
 
 END_METHOD
 

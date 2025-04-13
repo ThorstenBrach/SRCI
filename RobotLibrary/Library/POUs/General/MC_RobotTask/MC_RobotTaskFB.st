@@ -97,14 +97,46 @@ END_VAR
 
 VAR
   /// internal copy of configuration parameter
- _parCfg                : RobotTaskParCfg;
-
+ _parCfg                      : RobotTaskParCfg;
   /// FB for exchange configuration
-  ExchangeConfiguration : MC_ExchangeConfigurationFB;
+ _exchangeConfiguration       : MC_ExchangeConfigurationFB;
   /// FB for read robot data
-  ReadRobotData         : MC_ReadRobotDataFB;
+ _readRobotData               : MC_ReadRobotDataFB;
   /// FB for read messaged
-  ReadMessages          : MC_ReadMessagesFB;  
+ _readMessages                : MC_ReadMessagesFB;  
+  /// FB for read tool data
+ _readToolData                : MC_ReadToolDataFB;  
+  /// FB for read frame data
+ _readFrameData               : MC_ReadFrameDataFB;  
+  /// FB for read load data
+ _readLoadData                : MC_ReadLoadDataFB;  
+  /// FB for read work area
+ _readWorkArea                : MC_ReadWorkAreaFB;  
+  /// FB for read robot software limits
+ _readRobotSWLimits           : MC_ReadRobotSWLimitsFB;  
+  /// FB for read robot default dynamics
+ _readRobotDefaultDynamics    : MC_ReadRobotDefaultDynamicsFB;  
+  /// FB for read robot reference dynamics
+ _readRobotReferenceDynamics  : MC_ReadRobotReferenceDynamicsFB;  
+
+  
+  /// FB for write tool data
+ _writeToolData               : MC_WriteToolDataFB;  
+  /// FB for write frame data
+ _writeFrameData              : MC_WriteFrameDataFB;  
+  /// FB for write load data
+ _writeLoadData               : MC_WriteLoadDataFB;  
+  /// FB for write work area
+ _writeWorkArea               : MC_WriteWorkAreaFB;  
+  /// FB for write robot software limits
+ _writeRobotSWLimits          : MC_WriteRobotSWLimitsFB;  
+  /// FB for write robot default dynamics
+ _writeRobotDefaultDynamics   : MC_WriteRobotDefaultDynamicsFB;  
+  /// FB for write robot reference dynamics
+ _writeRobotReferenceDynamics : MC_WriteRobotReferenceDynamicsFB;  
+  
+  
+  
   /// Send Buffer
   SendData              : RobotLibrarySendDataFB;
   /// Recv Buffer
@@ -176,18 +208,16 @@ END_VAR
   HandleAxesGroupAcyclic       ( AxesGroup    := AxesGroup);
   HandleAxesGroupCyclic        ( AxesGroup    := AxesGroup);
   HandleAxesGroupCyclicOptional( AxesGroup    := AxesGroup);
-  HandleAxesGroupInternalData  ( AxesGroup    := AxesGroup);
   HandleAxesGroupMessageLog    ( AxesGroup    := AxesGroup);
   HandleAxesGroupParameter     ( AxesGroup    := AxesGroup);
   HandleAxesGroupState         ( AxesGroup    := AxesGroup);
-  
   HandleLifeSign               ( AxesGroup    := AxesGroup);
+  HandleLogMessagesAck         ( AxesGroup    := AxesGroup);
   HandleInvalidFrames          ( AxesGroup    := AxesGroup, RobotInData := RobotInData);
-  HandleTelegramStateCtrl();
-  HandleAliveBit               (RobotInData[1]);
+  HandleTelegramStateCtrl      (                          );
+  HandleAliveBit               ( RobotInData[1]           );
   HandleSeqAck                 ( AxesGroup    := AxesGroup);
   HandleUserData               ( AxesGroup    := AxesGroup, UserData := UserData );
-  
   OnCall                       ( AxesGroup    := AxesGroup);
   OnExecRun                    ( AxesGroup    := AxesGroup);
   
@@ -204,31 +234,26 @@ END_VAR
   
   
   // call internal functionblocks
-  ExchangeConfiguration 
-  (  
-    Name      := RobotName, 
-    ExecMode  := ExecutionMode.PARALLEL,
-    Priority  := PriorityLevel.NORMAL, 
-    AxesGroup := AxesGroup, 
-  );
-  
-  ReadRobotData
-  (
-    Name      := RobotName, 
-    ExecMode  := ExecutionMode.PARALLEL,
-    Priority  := PriorityLevel.NORMAL, 
-    AxesGroup := AxesGroup, 
-  );
-  
-  ReadMessages
-  (
-    Name      := RobotName, 
-    ExecMode  := ExecutionMode.PARALLEL,
-    Priority  := PriorityLevel.NORMAL, 
-    AxesGroup := AxesGroup, 
-  );
+  _exchangeConfiguration      ( Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );
+  _readRobotData              ( Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );
+  _readMessages               ( Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );
+  _readToolData               ( Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );
+  _readFrameData              ( Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );
+  _readLoadData               ( Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );
+  _readWorkArea               ( Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );  
+  _readRobotSWLimits          ( Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );  
+  _readRobotDefaultDynamics   ( Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );
+  _readRobotReferenceDynamics ( Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );
+  _writeToolData              ( Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );  
+  _writeFrameData             ( Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );  
+  _writeLoadData              ( Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );  
+  _writeWorkArea              ( Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );  
+  _writeRobotSWLimits         ( Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );  
+  _writeRobotDefaultDynamics  ( Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );  
+  _writeRobotReferenceDynamics( Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );  
   
   
+  // Update SystemLog and MessageLog
   SystemLog  := AxesGroup.MessageLog.SystemLogs;
   MessageLog := AxesGroup.MessageLog.Messages;
 
@@ -394,7 +419,7 @@ VAR
   SEQUENCE_MAX_PAYLOAD_SIZE : UDINT;
 END_VAR
 
-  IF ( AxesGroup.InternalData.NewSEQ[0]) {warning 'Handle 2nd sequence'}
+  IF ( AxesGroup.State.NewSEQ[0]) {warning 'Handle 2nd sequence'}
   THEN
     // delete old telegram data 
     SysDepMemSet(pDest := ADR(Telegram.PlcToRob), Value := 0 , DataLen := SIZEOF(Telegram.PlcToRob));
@@ -566,10 +591,10 @@ VAR
  _fragIdx                   : DINT;
 END_VAR
 
-  FOR _seqIdx := 0 TO AxesGroup.InternalData.SequenceCountSend
+  FOR _seqIdx := 0 TO AxesGroup.State.SequenceCountSend
   DO
     // check new data ? 
-    IF ( AxesGroup.InternalData.NewSEQ[_seqIdx] )
+    IF ( AxesGroup.State.NewSEQ[_seqIdx] )
     THEN
       IF ( Telegram.PlcToRob.Sequence[_seqIdx].Header.PayloadLength > 0 ) 
       THEN
@@ -584,7 +609,7 @@ END_VAR
                                 Para3       :=  UINT_TO_STRING(Telegram.PlcToRob.Sequence[_seqIdx].Header.PayloadLength));
       END_IF
       
-      FOR _fragIdx := 0 TO AxesGroup.InternalData.FragmentCountSend[_seqIdx]
+      FOR _fragIdx := 0 TO AxesGroup.State.FragmentCountSend[_seqIdx]
       DO
         IF ( Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadLength > 0 )
         THEN
@@ -668,14 +693,14 @@ END_VAR
   FOR _seqIdx := 0 TO _seqCount
   DO
     // set current SEQ / ACk index
-    Telegram.PlcToRob.Sequence[_seqIdx].Header.SEQ_ACK := AxesGroup.InternalData.CurrentSEQ[_seqIdx];
+    Telegram.PlcToRob.Sequence[_seqIdx].Header.SEQ_ACK := AxesGroup.State.CurrentSEQ[_seqIdx];
   
     // only update telegram content if a new sequence SEQ is set
-    IF ( AxesGroup.InternalData.NewSEQ[_seqIdx] ) 
+    IF ( AxesGroup.State.NewSEQ[_seqIdx] ) 
     THEN
       // only reset counters in case of new telegram to send  
-      AxesGroup.InternalData.SequenceCountSend := 0;
-      AxesGroup.InternalData.FragmentCountSend[_seqIdx] := 0;
+      AxesGroup.State.SequenceCountSend := 0;
+      AxesGroup.State.FragmentCountSend[_seqIdx] := 0;
       
       // calc current telegram payload length
      _telegramLengthCurrent := CalculateTelegramLengthPlcToRob(AxesGroup := AxesGroup);
@@ -687,7 +712,7 @@ END_VAR
         IF ( AxesGroup.Acyclic.ActiveCommandRegister.ExecutionOrderList[_listIdx] > EMPTY_EOL_ENTRY)
         THEN
           // set current SEQ / ACk index
-          Telegram.PlcToRob.Sequence[_seqIdx].Header.SEQ_ACK := AxesGroup.InternalData.CurrentSEQ[_seqIdx];
+          Telegram.PlcToRob.Sequence[_seqIdx].Header.SEQ_ACK := AxesGroup.State.CurrentSEQ[_seqIdx];
           
           // get active command register index
          _regIdx := AxesGroup.Acyclic.ActiveCommandRegister.ExecutionOrderList[_listIdx];
@@ -797,199 +822,11 @@ END_VAR
         END_IF         
       END_WHILE  
       
-      AxesGroup.InternalData.SequenceCountSend          := _seqIdx;
-      AxesGroup.InternalData.FragmentCountSend[_seqIdx] := _fragIdx;
+      AxesGroup.State.SequenceCountSend          := _seqIdx;
+      AxesGroup.State.FragmentCountSend[_seqIdx] := _fragIdx;
       
     END_IF  
   END_FOR
-
-END_METHOD
-
-METHOD PRIVATE AxesGroupToTelegramSequence_work : DINT
-VAR_IN_OUT
-  /// Robot assignment of function
-  AxesGroup : AxesGroup;
-END_VAR
-
-VAR 
-  /// internal index
- _idx                       : DINT;
-  /// internal sequence index
- _seqIdx                    : DINT;
-  /// internal fragment index
- _fragIdx                   : DINT;
-  /// internal register index
- _regIdx                    : DINT;
-  /// internal execution order list index
- _listIdx                   : DINT := 1;
-  /// internal payload pointer
- _payLoadPtr                : DWORD;
-  /// internal fragment action
- _fragmentAction            : FragmentAction;
-  /// internal fragment action as string
- _fragmentActionString      : STRING;
-  /// maximount amount of bytes per sequence
-  SEQUENCE_MAX_PAYLOAD_SIZE : UDINT;
-  
-  /// current length of telegram 
- _telegramLengthCurrent    : UINT;
-END_VAR
-
-  // Check 2nd sequence active ? 
-  IF ( RobotLibraryParameter.TWO_SEQUENCES )
-  THEN
-    SEQUENCE_MAX_PAYLOAD_SIZE := CalculateSequencePayloadMax(AxesGroup := AxesGroup, 
-                                                             Direction := ComDirection.PLC_TO_ROB, 
-                                                             Sequence  := SequenceFlag.SECONDARY_SEQUENCE ) - FOOTER_SIZE;
-  ELSE
-    SEQUENCE_MAX_PAYLOAD_SIZE := CalculateSequencePayloadMax(AxesGroup := AxesGroup, 
-                                                             Direction := ComDirection.PLC_TO_ROB, 
-                                                             Sequence  := SequenceFlag.PRIMARY_SEQUENCE   ) - FOOTER_SIZE;
-  END_IF   
-  
-  
-  
-  // set current SEQ / ACk index
-  Telegram.PlcToRob.Sequence[0].Header.SEQ_ACK := AxesGroup.InternalData.CurrentSEQ[0];
-  Telegram.PlcToRob.Sequence[1].Header.SEQ_ACK := AxesGroup.InternalData.CurrentSEQ[1];
-  
-  
-  // only update telegram content if a new sequence SEQ is set
-  IF ( AxesGroup.InternalData.NewSEQ[0] ) {warning 'Handle 2nd sequence'}
-  THEN
-    // only reset counters in case of new telegram to send  
-    AxesGroup.InternalData.SequenceCountSend := 0;
-    AxesGroup.InternalData.FragmentCountSend[_seqIdx] := 0;
-    
-    // calc current telegram payload length
-   _telegramLengthCurrent := CalculateTelegramLengthPlcToRob(AxesGroup := AxesGroup);
-    
-    // Bedingung anpassen und TWO_SEQUENCES berücksichtigen
-    WHILE (( _parCfg.Com.TelegramLengthPlcToRob - _telegramLengthCurrent ) >= FRAGMENT_HEADER_SIZE + MIN_PAYLOAD_SIZE ) 
-    DO
-      // Check command in Execution-Order-List available ?
-      IF ( AxesGroup.Acyclic.ActiveCommandRegister.ExecutionOrderList[_listIdx] > EMPTY_EOL_ENTRY)
-      THEN
-        // set current SEQ / ACk index
-        Telegram.PlcToRob.Sequence[_seqIdx].Header.SEQ_ACK := AxesGroup.InternalData.CurrentSEQ[_seqIdx];
-        
-        // get active command register index
-       _regIdx := AxesGroup.Acyclic.ActiveCommandRegister.ExecutionOrderList[_listIdx];
-    
-        // check State of the current ACR entry ?
-        IF (( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].State >= BufferStateCmd.CREATED  ) AND
-            ( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].State <= BufferStateCmd.SENDING  ))
-        THEN
-          // add size of fragement header      
-          Telegram.PlcToRob.Sequence[_seqIdx].Header.PayloadLength :=
-            Telegram.PlcToRob.Sequence[_seqIdx].Header.PayloadLength + SIZEOF(Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header); 
-            
-            
-          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.CmdID          := AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].UniqueID;
-          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.Reserve        := 
-          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.FragmentAction := 0; // will be set below
-          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadPointer := AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr; 
-          
-          // The 1st message resets the ARC entry on the server side  
-         _fragmentAction.Reset := (( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].State      = BufferStateCmd.CREATED ) AND
-                                   ( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr = 0                      ));
-                                   
-          // Update messages must clear the ARC entry on the server side  
-         _fragmentAction.Clear := (( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].State      = BufferStateCmd.UPDATE_AVAILABLE  ) AND
-                                   ( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr = 0                                )); 
-    
-          
-          // fill telegramm header - just for later debugging ( the header is part of the command payload itselfy ) {{{
-          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.CmdType       := CombineBytesToUint ( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[0],
-                                                                                                                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[1]);
-          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.ExecMode.0    :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[2].0;
-          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.ExecMode.1    :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[2].1;
-          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.ExecMode.2    :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[2].2;
-          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.ExecMode.3    :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[2].3;
-          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.Prio.0        :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[3].0;
-          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.Prio.1        :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[3].1;
-          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.Prio.2        :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[3].2;
-          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.Prio.3        :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[3].3;
-          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.ParSequence.0 :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[3].4;
-          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.ParSequence.1 :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[3].5;
-          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.ParSequence.2 :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[3].6;
-          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.ParSequence.3 :=                      AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[3].7;
-          // }}}
-          // loop through the payload
-          FOR _payLoadPtr := AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr TO AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayloadLen -1  
-          DO
-            // copy payload
-            Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Payload[_payLoadPtr] 
-              := AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].Payload[_payLoadPtr];
-        
-            // inc current sequence payload length
-            Telegram.PlcToRob.Sequence[_seqIdx].Header.PayloadLength
-              := Telegram.PlcToRob.Sequence[_seqIdx].Header.PayloadLength + 1;  
-        
-            // inc current fragment payload length
-            Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadLength 
-              := Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadLength + 1;
-        
-            // inc payload pointer in active command register
-            AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr 
-              := AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr + 1;
-          
-            // set command state
-            IF ( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr >= AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadLen) 
-            THEN
-              AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].State := BufferStateCmd.PROCESSED;
-            ELSE
-              AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].State := BufferStateCmd.SENDING;  
-            END_IF 
-    
-            // calc current telegram payload length
-           _telegramLengthCurrent := CalculateTelegramLengthPlcToRob(AxesGroup := AxesGroup);
-      
-            // check limit reached ?
-            IF ( _telegramLengthCurrent >= _parCfg.Com.TelegramLengthPlcToRob) 
-            THEN  
-              EXIT; // -> abort for loop 
-            END_IF  
-          END_FOR
-    
-          // check payload complete ?
-         _fragmentAction.Complete := AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr 
-                                  >= AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayloadLen;
-    
-          // just for brakepoint
-          IF (_fragmentAction.Complete)
-          THEN
-           _fragmentAction.Complete := _fragmentAction.Complete; 
-          END_IF
-    
-          // set fragment action
-          Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.FragmentAction := FragmentActionToByte(_fragmentAction);
-        END_IF
-      END_IF
-      
-      // inc execution order list index 
-     _listIdx := _listIdx + 1;
-      // inc fragment index 
-     _fragIdx := _fragIdx + 1;
-  
-      IF (_fragIdx > 1)
-      THEN
-      _fragIdx := _fragIdx;
-      END_IF    
-    
-      // check abort conditions
-      IF (( _telegramLengthCurrent                                                >= _parCfg.Com.TelegramLengthPlcToRob  ) OR  // Payload limit reached 
-          ( _fragIdx                                                              >=  RobotLibraryParameter.FRAGMENT_MAX ) OR  // Max fragment limit reached
-          (  AxesGroup.Acyclic.ActiveCommandRegister.ExecutionOrderList[_listIdx]  =  EMPTY_EOL_ENTRY                    ))    // No entry in ExecutionOrderList left
-      THEN
-        EXIT;// -> Abort while loop
-      END_IF         
-    END_WHILE  
-    
-    AxesGroup.InternalData.SequenceCountSend          := _seqIdx;
-    AxesGroup.InternalData.FragmentCountSend[_seqIdx] := _fragIdx;
-    
-  END_IF
 
 END_METHOD
 
@@ -1281,6 +1118,11 @@ VAR_IN_OUT
   AxesGroup    : AxesGroup; 
 END_VAR
 
+VAR
+  /// internal index for loops
+ _idx : DINT;
+END_VAR
+
   // Check initialization is already done ?
   IF ( NOT Initialized )
   THEN
@@ -1291,125 +1133,133 @@ END_VAR
   // compare memory 
   CheckParameterChanged := ( SysDepMemCmp(pData1 := ADR(ParCfg), pData2 := ADR(_parCfg), DataLen := SIZEOF(ParCfg)) <> RobotLibraryConstants.OK );
   
+  FOR _idx := SyncTime.DURING_START_UP TO SyncTime.AFTER_START_UP
+  DO
+    // Check Tool SyncMode changed ? 
+    IF ( _parCfg.Plc.Parameter.SynchronizationModes.Tool[_idx] <> ParCfg.Plc.Parameter.SynchronizationModes.Tool[_idx] )
+    THEN
+      // Set info
+      InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_TOOL_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED;
+       
+      // Create log entry
+      CreateLogMessagePara3( Timestamp   := SystemTime,
+                             MessageType := MessageType.CMD,
+                             Severity    := Severity.INFO,
+                             MessageCode := 0,
+                             MessageText := 'SyncMode.Tool[{1}] changed from {2} to {3}, but this is only allowed at PLC start',
+                             Para1       := SYNC_TIME_TO_STRING(_idx),
+                             Para2       := SYNC_MODE_TO_STRING( ParCfg.Plc.Parameter.SynchronizationModes.Tool[_idx]),
+                             Para3       := SYNC_MODE_TO_STRING(_parCfg.Plc.Parameter.SynchronizationModes.Tool[_idx]));   
+    END_IF
+    
+    
+    // Check Frame SyncMode changed ? 
+    IF ( _parCfg.Plc.Parameter.SynchronizationModes.Frame[_idx] <> ParCfg.Plc.Parameter.SynchronizationModes.Frame[_idx] )
+    THEN
+      // Set info
+      InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_FRAME_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED;
+       
+      // Create log entry
+      CreateLogMessagePara3( Timestamp   := SystemTime,
+                             MessageType := MessageType.CMD,
+                             Severity    := Severity.INFO,
+                             MessageCode := 0,
+                             MessageText := 'SyncMode.Frame[{1}] changed from {2} to {3}, but this is only allowed at PLC start',
+                             Para1       := SYNC_TIME_TO_STRING(_idx),
+                             Para2       := SYNC_MODE_TO_STRING( ParCfg.Plc.Parameter.SynchronizationModes.Frame[_idx]),
+                             Para3       := SYNC_MODE_TO_STRING(_parCfg.Plc.Parameter.SynchronizationModes.Frame[_idx]));   
+    END_IF
+    
+    
+    // Check Load SyncMode changed ? 
+    IF ( _parCfg.Plc.Parameter.SynchronizationModes.Load[_idx] <> ParCfg.Plc.Parameter.SynchronizationModes.Load[_idx] )
+    THEN
+      // Set info
+      InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_LOAD_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED;
+       
+      // Create log entry
+      CreateLogMessagePara3( Timestamp   := SystemTime,
+                             MessageType := MessageType.CMD,
+                             Severity    := Severity.INFO,
+                             MessageCode := 0,
+                             MessageText := 'SyncMode.Load[{1}] changed from {2} to {3}, but this is only allowed at PLC start',
+                             Para1       := SYNC_TIME_TO_STRING(_idx),
+                             Para2       := SYNC_MODE_TO_STRING( ParCfg.Plc.Parameter.SynchronizationModes.Load[_idx]),
+                             Para3       := SYNC_MODE_TO_STRING(_parCfg.Plc.Parameter.SynchronizationModes.Load[_idx]));   
+    END_IF
+    
+    
+    // Check WorkAreas SyncMode changed ? 
+    IF ( _parCfg.Plc.Parameter.SynchronizationModes.WorkAreas[_idx] <> ParCfg.Plc.Parameter.SynchronizationModes.WorkAreas[_idx] )
+    THEN
+      // Set info
+      InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_WORK_AREA_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED;
+       
+      // Create log entry
+      CreateLogMessagePara3( Timestamp   := SystemTime,
+                             MessageType := MessageType.CMD,
+                             Severity    := Severity.INFO,
+                             MessageCode := 0,
+                             MessageText := 'SyncMode.WorkAreas[{1}] changed from {2} to {3}, but this is only allowed at PLC start',
+                             Para1       := SYNC_TIME_TO_STRING(_idx),
+                             Para2       := SYNC_MODE_TO_STRING( ParCfg.Plc.Parameter.SynchronizationModes.WorkAreas[_idx]),
+                             Para3       := SYNC_MODE_TO_STRING(_parCfg.Plc.Parameter.SynchronizationModes.WorkAreas[_idx]));   
+    END_IF
   
-  // Check Tool SyncMode changed ? 
-  IF ( _parCfg.Plc.Parameter.SynchronizationModes.Tool <> ParCfg.Plc.Parameter.SynchronizationModes.Tool )
-  THEN
-    // Set info
-    InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_TOOL_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED;
-     
-    // Create log entry
-    CreateLogMessagePara1( Timestamp   := SystemTime,
-                           MessageType := MessageType.CMD,
-                           Severity    := Severity.INFO,
-                           MessageCode := 0,
-                           MessageText := 'Tool SyncMode changed from {1} to {2}, but this is only allowed at PLC start',
-                           Para1       := SYNC_MODE_TO_STRING(ParCfg.Plc.Parameter.SynchronizationModes.Tool));
-     
-  END_IF
+    // Check SWLimits SyncMode changed ? 
+    IF ( _parCfg.Plc.Parameter.SynchronizationModes.SWLimits[_idx] <> ParCfg.Plc.Parameter.SynchronizationModes.SWLimits[_idx] )
+    THEN
+      // Set info
+      InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_SWLIMITS_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED;
+       
+      // Create log entry
+      CreateLogMessagePara3( Timestamp   := SystemTime,
+                             MessageType := MessageType.CMD,
+                             Severity    := Severity.INFO,
+                             MessageCode := 0,
+                             MessageText := 'SyncMode.SWLimits[{1}] changed from {2} to {3}, but this is only allowed at PLC start',
+                             Para1       := SYNC_TIME_TO_STRING(_idx),
+                             Para2       := SYNC_MODE_TO_STRING( ParCfg.Plc.Parameter.SynchronizationModes.SWLimits[_idx]),
+                             Para3       := SYNC_MODE_TO_STRING(_parCfg.Plc.Parameter.SynchronizationModes.SWLimits[_idx]));   
+    END_IF
+    
+   
+    // Check DefaultDynamics SyncMode changed ? 
+    IF ( _parCfg.Plc.Parameter.SynchronizationModes.DefaultDynamics[_idx] <> ParCfg.Plc.Parameter.SynchronizationModes.DefaultDynamics[_idx] )
+    THEN
+      // Set info
+      InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_DEFAULT_DYNAMIVS_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED;
+       
+      // Create log entry
+      CreateLogMessagePara3( Timestamp   := SystemTime,
+                             MessageType := MessageType.CMD,
+                             Severity    := Severity.INFO,
+                             MessageCode := 0,
+                             MessageText := 'SyncMode.DefaultDynamics[{1}] changed from {2} to {3}, but this is only allowed at PLC start',
+                             Para1       := SYNC_TIME_TO_STRING(_idx),
+                             Para2       := SYNC_MODE_TO_STRING( ParCfg.Plc.Parameter.SynchronizationModes.DefaultDynamics[_idx]),
+                             Para3       := SYNC_MODE_TO_STRING(_parCfg.Plc.Parameter.SynchronizationModes.DefaultDynamics[_idx]));   
+    END_IF
+    
+    
+    // Check ReferenceDynamics SyncMode changed ?
+    IF ( _parCfg.Plc.Parameter.SynchronizationModes.ReferenceDynamics[_idx] <> ParCfg.Plc.Parameter.SynchronizationModes.ReferenceDynamics[_idx] )
+    THEN
+      // Set info
+      InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_REFERENCE_DYNAMIVS_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED;
+       
+      // Create log entry
+      CreateLogMessagePara3( Timestamp   := SystemTime,
+                             MessageType := MessageType.CMD,
+                             Severity    := Severity.INFO,
+                             MessageCode := 0,
+                             MessageText := 'SyncMode.ReferenceDynamics[{1}] changed from {2} to {3}, but this is only allowed at PLC start',
+                             Para1       := SYNC_TIME_TO_STRING(_idx),
+                             Para2       := SYNC_MODE_TO_STRING( ParCfg.Plc.Parameter.SynchronizationModes.ReferenceDynamics[_idx]),
+                             Para3       := SYNC_MODE_TO_STRING(_parCfg.Plc.Parameter.SynchronizationModes.ReferenceDynamics[_idx]));   
+    END_IF
   
-  
-  // Check Frame SyncMode changed ? 
-  IF ( _parCfg.Plc.Parameter.SynchronizationModes.Frame <> ParCfg.Plc.Parameter.SynchronizationModes.Frame )
-  THEN
-    // Set info
-    InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_FRAME_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED;
-     
-    // Create log entry
-    CreateLogMessagePara1( Timestamp   := SystemTime,
-                           MessageType := MessageType.CMD,
-                           Severity    := Severity.INFO,
-                           MessageCode := 0,
-                           MessageText := 'Frame SyncMode changed from {1} to {2}, but this is only allowed at PLC start',
-                           Para1       := SYNC_MODE_TO_STRING(ParCfg.Plc.Parameter.SynchronizationModes.Frame));
-     
-  END_IF
-  
-  
-  // Check Load SyncMode changed ? 
-  IF ( _parCfg.Plc.Parameter.SynchronizationModes.Load <> ParCfg.Plc.Parameter.SynchronizationModes.Load )
-  THEN
-    // Set info
-    InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_LOAD_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED;
-     
-    // Create log entry
-    CreateLogMessagePara2( Timestamp   := SystemTime,
-                           MessageType := MessageType.CMD,
-                           Severity    := Severity.INFO,
-                           MessageCode := 0,
-                           MessageText := 'Load SyncMode changed from {1} to {2}, but this is only allowed at PLC start',
-                           Para1       := SYNC_MODE_TO_STRING(_parCfg.Plc.Parameter.SynchronizationModes.Load),
-                           Para2       := SYNC_MODE_TO_STRING( ParCfg.Plc.Parameter.SynchronizationModes.Load));
-  END_IF
-  
-  
-  // Check WorkAreas SyncMode changed ? 
-  IF ( _parCfg.Plc.Parameter.SynchronizationModes.WorkAreas <> ParCfg.Plc.Parameter.SynchronizationModes.WorkAreas )
-  THEN
-    // Set info
-    InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_WORK_AREA_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED;
-     
-    // Create log entry
-    CreateLogMessagePara2( Timestamp   := SystemTime,
-                           MessageType := MessageType.CMD,
-                           Severity    := Severity.INFO,
-                           MessageCode := 0,
-                           MessageText := 'WorkAreas SyncMode changed from {1} to {2}, but this is only allowed at PLC start',
-                           Para1       := SYNC_MODE_TO_STRING(_parCfg.Plc.Parameter.SynchronizationModes.WorkAreas),
-                           Para2       := SYNC_MODE_TO_STRING( ParCfg.Plc.Parameter.SynchronizationModes.WorkAreas));
-  END_IF
-  
-  
-  // Check WorkAreas SyncMode changed ? 
-  IF ( _parCfg.Plc.Parameter.SynchronizationModes.WorkAreas <> ParCfg.Plc.Parameter.SynchronizationModes.WorkAreas )
-  THEN
-    // Set info
-    InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_WORK_AREA_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED;
-     
-    // Create log entry
-    CreateLogMessagePara2( Timestamp   := SystemTime,
-                           MessageType := MessageType.CMD,
-                           Severity    := Severity.INFO,
-                           MessageCode := 0,
-                           MessageText := 'WorkAreas SyncMode changed from {1} to {2}, but this is only allowed at PLC start',
-                           Para1       := SYNC_MODE_TO_STRING(_parCfg.Plc.Parameter.SynchronizationModes.WorkAreas),
-                           Para2       := SYNC_MODE_TO_STRING( ParCfg.Plc.Parameter.SynchronizationModes.WorkAreas));
-  END_IF
-  
-  
-  // Check DefaultDynamics SyncMode changed ? 
-  IF ( _parCfg.Plc.Parameter.SynchronizationModes.DefaultDynamics <> ParCfg.Plc.Parameter.SynchronizationModes.DefaultDynamics )
-  THEN
-    // Set info
-    InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_DEFAULT_DYNAMIVS_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED;
-     
-    // Create log entry
-    CreateLogMessagePara2( Timestamp   := SystemTime,
-                           MessageType := MessageType.CMD,
-                           Severity    := Severity.INFO,
-                           MessageCode := 0,
-                           MessageText := 'DefaultDynamics SyncMode changed from {1} to {2}, but this is only allowed at PLC start',
-                           Para1       := SYNC_MODE_TO_STRING(_parCfg.Plc.Parameter.SynchronizationModes.DefaultDynamics),
-                           Para2       := SYNC_MODE_TO_STRING( ParCfg.Plc.Parameter.SynchronizationModes.DefaultDynamics));   
-  END_IF
-  
-  
-  // Check ReferenceDynamics SyncMode changed ?
-  IF ( _parCfg.Plc.Parameter.SynchronizationModes.ReferenceDynamics <> ParCfg.Plc.Parameter.SynchronizationModes.ReferenceDynamics )
-  THEN
-    // Set info
-    InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_REFERENCE_DYNAMIVS_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED;
-     
-    // Create log entry
-    CreateLogMessagePara2( Timestamp   := SystemTime,
-                           MessageType := MessageType.CMD,
-                           Severity    := Severity.INFO,
-                           MessageCode := 0,
-                           MessageText := 'ReferenceDynamics SyncMode changed from {1} to {2}, but this is only allowed at PLC start',
-                           Para1       := SYNC_MODE_TO_STRING(_parCfg.Plc.Parameter.SynchronizationModes.ReferenceDynamics),
-                           Para2       := SYNC_MODE_TO_STRING( ParCfg.Plc.Parameter.SynchronizationModes.ReferenceDynamics));   
-  END_IF
-  
+  END_FOR
   
   
   // Check Plc.OptionalCyclic changed ? 
@@ -1599,7 +1449,7 @@ END_VAR
   
   
   // reset NewSEQ flag
-  AxesGroup.InternalData.NewSEQ[0] := FALSE; {warning 'Test'}
+  AxesGroup.State.NewSEQ[0] := FALSE; {warning 'Test'}
 
 END_METHOD
 
@@ -1767,8 +1617,8 @@ VAR_IN_OUT
   AxesGroup                 : AxesGroup;
 END_VAR
 
-  IF  ((( Telegram.PlcToRob.Sequence[0].Header.PayloadLength > 0 ) AND (AxesGroup.InternalData.NewSEQ[0] )) OR
-       (( Telegram.PlcToRob.Sequence[1].Header.PayloadLength > 0 ) AND (AxesGroup.InternalData.NewSEQ[1] )))
+  IF  ((( Telegram.PlcToRob.Sequence[0].Header.PayloadLength > 0 ) AND (AxesGroup.State.NewSEQ[0] )) OR
+       (( Telegram.PlcToRob.Sequence[1].Header.PayloadLength > 0 ) AND (AxesGroup.State.NewSEQ[1] )))
   THEN
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := SystemTime,
@@ -1796,7 +1646,7 @@ END_VAR
 
   //WHILE(SendData.PayloadPtr + FOOTER_SIZE < Telegram.PlcToRob.Header.TelegramLengthPlcToRob )
   //DO         
-    FOR _seqIdx := 0 TO AxesGroup.InternalData.SequenceCountSend
+    FOR _seqIdx := 0 TO AxesGroup.State.SequenceCountSend
     DO
       // Telegram.PlcToRob.Sequence[x].Header {{{
       SendData.AddUint(Telegram.PlcToRob.Sequence[_seqIdx].Header.SEQ_ACK);
@@ -1810,7 +1660,7 @@ END_VAR
       END_IF
       
       // PlcToRob.Sequence[x].Fragment[x] {{{
-      FOR _fragIdx := 0 TO AxesGroup.InternalData.FragmentCountSend[_seqIdx]  
+      FOR _fragIdx := 0 TO AxesGroup.State.FragmentCountSend[_seqIdx]  
       DO
    
         IF (Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadLength > 0)
@@ -1950,6 +1800,13 @@ END_VAR
   AxesGroup.Cyclic.PlcToRob.AxesGroupID := AxesGroupID;
   // Set Version
   AxesGroup.Cyclic.PlcToRob.SRCIVersion := RobotLibraryConstants.SRCIVersion;
+  
+  AxesGroup.Cyclic.PlcToRob.TelegramLengthPlcToRob := _parCfg.Com.TelegramLengthPlcToRob;
+  AxesGroup.Cyclic.PlcToRob.TelegramLengthRobToPlc := _parCfg.Com.TelegramLengthRobToPlc;
+  
+  AxesGroup.Cyclic.PlcToRob.TelegramNumberPlcToRob := PlcOptionalCyclicToUint(AxesGroup.Parameter.Plc.OptionalCyclic);
+  AxesGroup.Cyclic.PlcToRob.TelegramNumberRobToPlc := RobOptionalCyclicToUint(AxesGroup.Parameter.Rob.OptionalCyclic);
+  
   // Set Date + Time
   AxesGroup.Cyclic.PlcToRob.ClientDate  := DATE_TO_IEC_DATE(SystemTime.SystemDate);
   AxesGroup.Cyclic.PlcToRob.ClientTime  := TIME_TO_IEC_TIME(SystemTime.SystemTime);
@@ -1985,31 +1842,6 @@ END_VAR
 
 END_METHOD
 
-METHOD PRIVATE HandleAxesGroupInternalData
-VAR_IN_OUT
-  /// Robot assignment of function
-  AxesGroup : AxesGroup;
-END_VAR
-
-  // Update internal data
-  AxesGroup.InternalData.SystemTime   := SystemTime;
-  AxesGroup.InternalData.OnlineChange := OnlineChange;
-  AxesGroup.InternalData.Initialized  := Initialized;
-  
-  // Create rising and falling edges for Online Change
-  AxesGroup.InternalData.OnlineChange_R(CLK := OnlineChange);
-  AxesGroup.InternalData.OnlineChange_F(CLK := OnlineChange);
-  
-  // Create rising and falling edges for GroupReset
-  AxesGroup.InternalData.GroupReset_R(CLK := AxesGroup.InternalData.GroupReset);
-  AxesGroup.InternalData.GroupReset_F(CLK := AxesGroup.InternalData.GroupReset);
-  
-  // Copy function block results 
-  AxesGroup.InternalData.RobotData         := ReadRobotData.OutCmd;
-  AxesGroup.InternalData.ConfigurationData := ExchangeConfiguration.OutCmd;
-
-END_METHOD
-
 METHOD PRIVATE HandleAxesGroupMessageLog
 VAR_IN_OUT
   /// Robot assignment of function
@@ -2021,7 +1853,7 @@ END_VAR
   AxesGroup.MessageLog.LogLevel       := LogLevel;
   
   
-  IF (AxesGroup.InternalData.GroupReset_R.Q)
+  IF (AxesGroup.State.GroupReset_R.Q)
   THEN
     AxesGroup.MessageLog.DeleteMessages();
     AxesGroup.MessageLog.DeleteSystemLogs();
@@ -2039,29 +1871,29 @@ END_VAR
   AxesGroup.Parameter.Plc.OptionalCyclic                      := ParCfg.Plc.OptionalCyclic; {warning 'ToDo: '}
   AxesGroup.Parameter.Rob.OptionalCyclic                      := ParCfg.Rob.OptionalCyclic; {warning 'ToDo'}
   
-  IF (ExchangeConfiguration.Enabled)
+  IF (_exchangeConfiguration.Enabled)
   THEN  
-    AxesGroup.Parameter.Rob.Parameter.LengthACR                 := ExchangeConfiguration.OutCmd.LengthACR;
-    AxesGroup.Parameter.Rob.Parameter.HighestToolIndex          := ExchangeConfiguration.OutCmd.HighestToolIndex;
-    AxesGroup.Parameter.Rob.Parameter.HighestFrameIndex         := ExchangeConfiguration.OutCmd.HighestFrameIndex;
-    AxesGroup.Parameter.Rob.Parameter.HighestLoadIndex          := ExchangeConfiguration.OutCmd.HighestLoadIndex;
-    AxesGroup.Parameter.Rob.Parameter.HighestWorkAreaIndex      := ExchangeConfiguration.OutCmd.HighestWorkAreaIndex;
-    AxesGroup.Parameter.Rob.Parameter.DataInSync                := ExchangeConfiguration.OutCmd.DataInSync;
-    AxesGroup.Parameter.Rob.Parameter.ChangeIndexTool           := ExchangeConfiguration.OutCmd.ChangeIndexTool;
-    AxesGroup.Parameter.Rob.Parameter.ChangeIndexFrame          := ExchangeConfiguration.OutCmd.ChangeIndexFrame;
-    AxesGroup.Parameter.Rob.Parameter.ChangeIndexLoad           := ExchangeConfiguration.OutCmd.ChangeIndexLoad;
-    AxesGroup.Parameter.Rob.Parameter.ChangeIndexWorkArea       := ExchangeConfiguration.OutCmd.ChangeIndexWorkArea;
-    AxesGroup.Parameter.Rob.Parameter.RAWorkingHours            := ExchangeConfiguration.OutCmd.RAWorkingHours;
-    AxesGroup.Parameter.Rob.Parameter.BrakeTestRequired         := ExchangeConfiguration.OutCmd.BrakeTestRequired;
-    AxesGroup.Parameter.Rob.Parameter.StepModeExactStopActive   := ExchangeConfiguration.OutCmd.StepModeExactStopActive;
-    AxesGroup.Parameter.Rob.Parameter.StepModeBlendingActive    := ExchangeConfiguration.OutCmd.StepModeBlendingActive;
-    AxesGroup.Parameter.Rob.Parameter.PathAccuracyMode          := ExchangeConfiguration.OutCmd.PathAccuracyMode;
-    AxesGroup.Parameter.Rob.Parameter.AvoidSingularity          := ExchangeConfiguration.OutCmd.AvoidSingularity;
-    AxesGroup.Parameter.Rob.Parameter.CollisionDetectionEnabled := ExchangeConfiguration.OutCmd.CollisionDetectionEnabled;
-    AxesGroup.Parameter.Rob.Parameter.AcceleratingSupported     := ExchangeConfiguration.OutCmd.AcceleratingSupported;
-    AxesGroup.Parameter.Rob.Parameter.DecceleratingSupported    := ExchangeConfiguration.OutCmd.DecceleratingSupported;
-    AxesGroup.Parameter.Rob.Parameter.ConstantVelocitySupported := ExchangeConfiguration.OutCmd.ConstantVelocitySupported;
-    AxesGroup.Parameter.Rob.Parameter.RCWorkingHours            := ExchangeConfiguration.OutCmd.RCWorkingHours;
+    AxesGroup.Parameter.Rob.Parameter.LengthACR                 := _exchangeConfiguration.OutCmd.LengthACR;
+    AxesGroup.Parameter.Rob.Parameter.HighestToolIndex          := _exchangeConfiguration.OutCmd.HighestToolIndex;
+    AxesGroup.Parameter.Rob.Parameter.HighestFrameIndex         := _exchangeConfiguration.OutCmd.HighestFrameIndex;
+    AxesGroup.Parameter.Rob.Parameter.HighestLoadIndex          := _exchangeConfiguration.OutCmd.HighestLoadIndex;
+    AxesGroup.Parameter.Rob.Parameter.HighestWorkAreaIndex      := _exchangeConfiguration.OutCmd.HighestWorkAreaIndex;
+    AxesGroup.Parameter.Rob.Parameter.DataInSync                := _exchangeConfiguration.OutCmd.DataInSync;
+    AxesGroup.Parameter.Rob.Parameter.ChangeIndexTool           := _exchangeConfiguration.OutCmd.ChangeIndexTool;
+    AxesGroup.Parameter.Rob.Parameter.ChangeIndexFrame          := _exchangeConfiguration.OutCmd.ChangeIndexFrame;
+    AxesGroup.Parameter.Rob.Parameter.ChangeIndexLoad           := _exchangeConfiguration.OutCmd.ChangeIndexLoad;
+    AxesGroup.Parameter.Rob.Parameter.ChangeIndexWorkArea       := _exchangeConfiguration.OutCmd.ChangeIndexWorkArea;
+    AxesGroup.Parameter.Rob.Parameter.RAWorkingHours            := _exchangeConfiguration.OutCmd.RAWorkingHours;
+    AxesGroup.Parameter.Rob.Parameter.BrakeTestRequired         := _exchangeConfiguration.OutCmd.BrakeTestRequired;
+    AxesGroup.Parameter.Rob.Parameter.StepModeExactStopActive   := _exchangeConfiguration.OutCmd.StepModeExactStopActive;
+    AxesGroup.Parameter.Rob.Parameter.StepModeBlendingActive    := _exchangeConfiguration.OutCmd.StepModeBlendingActive;
+    AxesGroup.Parameter.Rob.Parameter.PathAccuracyMode          := _exchangeConfiguration.OutCmd.PathAccuracyMode;
+    AxesGroup.Parameter.Rob.Parameter.AvoidSingularity          := _exchangeConfiguration.OutCmd.AvoidSingularity;
+    AxesGroup.Parameter.Rob.Parameter.CollisionDetectionEnabled := _exchangeConfiguration.OutCmd.CollisionDetectionEnabled;
+    AxesGroup.Parameter.Rob.Parameter.AcceleratingSupported     := _exchangeConfiguration.OutCmd.AcceleratingSupported;
+    AxesGroup.Parameter.Rob.Parameter.DecceleratingSupported    := _exchangeConfiguration.OutCmd.DecceleratingSupported;
+    AxesGroup.Parameter.Rob.Parameter.ConstantVelocitySupported := _exchangeConfiguration.OutCmd.ConstantVelocitySupported;
+    AxesGroup.Parameter.Rob.Parameter.RCWorkingHours            := _exchangeConfiguration.OutCmd.RCWorkingHours;
   END_IF
 
 END_METHOD
@@ -2074,35 +1906,40 @@ END_VAR
 
   AxesGroup.State.AliveOk     := _aliveBit;
   AxesGroup.State.Initialized := Initialized AND AxesGroup.State.AliveOk;
+  AxesGroup.State.CMDsEnabled := AxesGroup.State.Initialized;
   
   
-  
-  AxesGroup.State.Synchronized := (( AxesGroup.State.AliveOk                                         ) AND
-                                   ( ExchangeConfiguration.OutCmd.DataInSync.DefaultDynamicsInSync   ) AND
-                                   ( ExchangeConfiguration.OutCmd.DataInSync.ToolsInSync             ) AND
-                                   ( ExchangeConfiguration.OutCmd.DataInSync.FramesInSync            ) AND
-                                   ( ExchangeConfiguration.OutCmd.DataInSync.LoadsInSync             ) AND
-                                   ( ExchangeConfiguration.OutCmd.DataInSync.WorkAreasInSync         ) AND
-                                   ( ExchangeConfiguration.OutCmd.DataInSync.SoftwareLimitsInSync    ) AND
-                                   ( ExchangeConfiguration.OutCmd.DataInSync.DefaultDynamicsInSync   ) AND
-                                   ( ExchangeConfiguration.OutCmd.DataInSync.ReferenceDynamicsInSync ));
+  AxesGroup.State.Synchronized := ((  AxesGroup.State.AliveOk                                         ) AND
+                                   ( _exchangeConfiguration.OutCmd.DataInSync.DefaultDynamicsInSync   ) AND
+                                   ( _exchangeConfiguration.OutCmd.DataInSync.ToolsInSync             ) AND
+                                   ( _exchangeConfiguration.OutCmd.DataInSync.FramesInSync            ) AND
+                                   ( _exchangeConfiguration.OutCmd.DataInSync.LoadsInSync             ) AND
+                                   ( _exchangeConfiguration.OutCmd.DataInSync.WorkAreasInSync         ) AND
+                                   ( _exchangeConfiguration.OutCmd.DataInSync.SoftwareLimitsInSync    ) AND
+                                   ( _exchangeConfiguration.OutCmd.DataInSync.DefaultDynamicsInSync   ) AND
+                                   ( _exchangeConfiguration.OutCmd.DataInSync.ReferenceDynamicsInSync ));
     
   
-  AxesGroup.State.ConfigExchanged                := ExchangeConfiguration.ParameterAccepted;
+  AxesGroup.State.ConfigExchanged := _exchangeConfiguration.Enabled;
   
-  AxesGroup.State.RobotData.RCManufacturer       := ReadRobotData.OutCmd.RCManufacturer;
-  AxesGroup.State.RobotData.RCOrderID            := ReadRobotData.OutCmd.RCOrderID;
-  AxesGroup.State.RobotData.RCSerialNumber       := ReadRobotData.OutCmd.RCSerialNumber;
-  AxesGroup.State.RobotData.RASerialNumber       := ReadRobotData.OutCmd.RASerialNumber;
-  AxesGroup.State.RobotData.RCFirmwareVersion    := ReadRobotData.OutCmd.RCFirmwareVersion;
-  AxesGroup.State.RobotData.RCInterpreterVersion := ReadRobotData.OutCmd.RCInterpreterVersion;
-  AxesGroup.State.RobotData.AxisJointUsed        := ReadRobotData.OutCmd.AxisJointUsed;
-  AxesGroup.State.RobotData.AxisExternalUsed     := ReadRobotData.OutCmd.AxisExternalUsed;
-  AxesGroup.State.RobotData.AxisJointUnit        := ReadRobotData.OutCmd.AxisJointUnit;
-  AxesGroup.State.RobotData.AxisExternalUnit     := ReadRobotData.OutCmd.AxisExternalUnit;
-  AxesGroup.State.RobotData.RCSupportedFunctions := ReadRobotData.OutCmd.RCSupportedFunctions;
-  AxesGroup.State.RobotData.RobotID              := ReadRobotData.OutCmd.RobotID;  
-  AxesGroup.State.RobotData.InterpreterCycleTime := ReadRobotData.OutCmd.InterpreterCycleTime;
+  
+  
+  // Update internal data
+  AxesGroup.State.SystemTime   := SystemTime;
+  AxesGroup.State.OnlineChange := OnlineChange;
+  AxesGroup.State.Initialized  := Initialized;
+  
+  // Create rising and falling edges for Online Change
+  AxesGroup.State.OnlineChange_R(CLK := OnlineChange);
+  AxesGroup.State.OnlineChange_F(CLK := OnlineChange);
+  
+  // Create rising and falling edges for GroupReset
+  AxesGroup.State.GroupReset_R(CLK := AxesGroup.State.GroupReset);
+  AxesGroup.State.GroupReset_F(CLK := AxesGroup.State.GroupReset);
+  
+  // Copy function block results 
+  AxesGroup.State.RobotData         := _readRobotData.OutCmd;
+  AxesGroup.State.ConfigurationData := _exchangeConfiguration.OutCmd;
 
 END_METHOD
 
@@ -2182,7 +2019,7 @@ END_VAR
   
   
   // Reset invalid frames counter with rising edge of group reset
-  IF ( AxesGroup.InternalData.GroupReset_R.Q)
+  IF ( AxesGroup.State.GroupReset_R.Q)
   THEN
         InvalidFrames := 0;
    _lastInvalidFrames := 0;
@@ -2217,11 +2054,53 @@ END_VAR
     RETURN;
   END_IF
   
+  
   AxesGroup.Cyclic.PlcToRob.LifeSign := AxesGroup.Cyclic.PlcToRob.LifeSign + 1;
     
   IF ( AxesGroup.Cyclic.PlcToRob.LifeSign > 15 )
   THEN
     AxesGroup.Cyclic.PlcToRob.LifeSign := 1; // 0 is only in the very 1st cycle to indicate the system start in logging
+  END_IF
+  
+  
+  
+  IF ( Enable ) AND ( _alive_F.Q ) 
+  THEN
+    // Reset initialized flag
+    Initialized := FALSE;
+    // Set error 
+    ErrorID := RobotLibraryErrorIdEnum.ERR_CONNECTION_LOST;  
+    // Create log entry
+    CreateLogMessage ( Timestamp   := SystemTime,
+                       MessageType := MessageType.CMD,
+                       Severity    := Severity.FATAL_ERROR,
+                       MessageCode := 0,
+                       MessageText := 'LifeSign timeout -> Reinitialization required !');
+  END_IF
+  
+  // Reset connection lost error
+  IF ( NOT Enable ) AND ( _aliveBit ) AND ( ErrorID = RobotLibraryErrorIdEnum.ERR_CONNECTION_LOST )
+  THEN
+    ErrorID := 0;
+  END_IF
+
+END_METHOD
+
+METHOD HandleLogMessagesAck
+VAR_IN_OUT
+   /// Robot assignment of function
+  AxesGroup : AxesGroup;
+END_VAR
+
+  IF (( _readMessages.Enabled           ) AND 
+      ( _readMessages.OutCmd.MsgId > 0  ))  
+  THEN
+    // Check if message has been entered into the message log ?   
+    IF ( AxesGroup.MessageLog.CheckMessageCodePresent(_readMessages.OutCmd.ErrorCode ))
+    THEN
+      // Set Message ID as Acknowlege ID  
+     _readMessages.ParCmd.MsgID := _readMessages.OutCmd.MsgId;  
+  	END_IF    
   END_IF
 
 END_METHOD
@@ -2236,19 +2115,102 @@ VAR
  _idx : DINT;
 END_VAR
 
-  FOR _idx := 0 TO  AxesGroup.InternalData.SequenceCountSend 
+  FOR _idx := 0 TO  AxesGroup.State.SequenceCountSend 
   DO
-    AxesGroup.InternalData.CurrentAck[_idx] := Telegram.RobToPlc.Sequence[_idx].Header.SEQ_ACK;
-  
+    AxesGroup.State.CurrentAck[_idx] := Telegram.RobToPlc.Sequence[_idx].Header.SEQ_ACK;
+    
+    IF (NOT Enable)
+    THEN
+      AxesGroup.State.CurrentSEQ[0] := 0;
+      AxesGroup.State.CurrentSEQ[1] := 0;
+    END_IF  
+    
     // Check Seq/Ack : 
     // ----------------------
-    IF ( AxesGroup.InternalData.CurrentAck[_idx] = AxesGroup.InternalData.CurrentSEQ[_idx] )
+    IF ( AxesGroup.State.CurrentAck[_idx] = AxesGroup.State.CurrentSEQ[_idx] ) 
     THEN
-      AxesGroup.InternalData.CurrentSEQ[_idx] := MAX(AxesGroup.InternalData.CurrentSEQ[0],AxesGroup.InternalData.CurrentSEQ[1]) +1;
+      AxesGroup.State.CurrentSEQ[_idx] := MAX(AxesGroup.State.CurrentSEQ[0],AxesGroup.State.CurrentSEQ[1]) +1;
+  
+      IF (AxesGroup.State.CurrentSEQ[_idx] >= 255) {warning 'ToDo: Test for Yaskawa'}
+      THEN
+        AxesGroup.State.CurrentSEQ[_idx] := 0;
+  		END_IF
       
-      AxesGroup.InternalData.NewSEQ[_idx] := TRUE;
+      AxesGroup.State.NewSEQ[_idx] := TRUE;
     END_IF  
   END_FOR
+
+END_METHOD
+
+METHOD PRIVATE HandleSync
+VAR_IN_OUT
+   /// Robot assignment of function
+  AxesGroup    : AxesGroup;
+END_VAR
+
+
+END_METHOD
+
+METHOD PRIVATE HandleSyncFrameData
+VAR_IN_OUT
+   /// Robot assignment of function
+  AxesGroup    : AxesGroup;
+END_VAR
+
+
+END_METHOD
+
+METHOD PRIVATE HandleSyncLoadData
+VAR_IN_OUT
+   /// Robot assignment of function
+  AxesGroup    : AxesGroup;
+END_VAR
+
+
+END_METHOD
+
+METHOD PRIVATE HandleSyncRobotDefaultDynamics
+VAR_IN_OUT
+   /// Robot assignment of function
+  AxesGroup    : AxesGroup;
+END_VAR
+
+
+END_METHOD
+
+METHOD PRIVATE HandleSyncRobotReferenceDynamics
+VAR_IN_OUT
+   /// Robot assignment of function
+  AxesGroup    : AxesGroup;
+END_VAR
+
+
+END_METHOD
+
+METHOD PRIVATE HandleSyncRobotSWLimits
+VAR_IN_OUT
+   /// Robot assignment of function
+  AxesGroup    : AxesGroup;
+END_VAR
+
+
+END_METHOD
+
+METHOD PRIVATE HandleSyncToolData
+VAR_IN_OUT
+   /// Robot assignment of function
+  AxesGroup    : AxesGroup;
+END_VAR
+
+
+END_METHOD
+
+METHOD PRIVATE HandleSyncWorkArea
+VAR_IN_OUT
+   /// Robot assignment of function
+  AxesGroup    : AxesGroup;
+END_VAR
+
 
 END_METHOD
 
@@ -2317,13 +2279,7 @@ END_VAR
   UserData.LifeSignTimeOut                   := _parCfg.Com.LifeSignTimeOut;
                                              
   // Plc Parameter                           
-  UserData.SyncModeTool                      := _parCfg.Plc.Parameter.SynchronizationModes.Tool;
-  UserData.SyncModeFrame                     := _parCfg.Plc.Parameter.SynchronizationModes.Frame;
-  UserData.SyncModeLoad                      := _parCfg.Plc.Parameter.SynchronizationModes.Load;
-  UserData.SyncModeWorkAreas                 := _parCfg.Plc.Parameter.SynchronizationModes.WorkAreas;
-  UserData.SyncModeSWLimits                  := _parCfg.Plc.Parameter.SynchronizationModes.SWLimits;
-  UserData.SyncModeDefaultDynamics           := _parCfg.Plc.Parameter.SynchronizationModes.DefaultDynamics;
-  UserData.SyncModeReferenceDynamics         := _parCfg.Plc.Parameter.SynchronizationModes.ReferenceDynamics;
+  UserData.SynchronizationModes              := _parCfg.Plc.Parameter.SynchronizationModes;
                                              
   // Robot Parameter                         
   UserData.EnableSyncTool                    := _parCfg.Rob.Parameter.DataEnableSync.EnableSyncTool;
@@ -2343,30 +2299,30 @@ END_VAR
   UserData.MessageLevel                      := _parcfg.Rob.Parameter.MessageLevel;
   
   // ReadRobotData
-  UserData.RCManufacturer                    := AxesGroup.InternalData.RobotData.RCManufacturer; 
-  UserData.RCOrderID                         := AxesGroup.InternalData.RobotData.RCOrderID; 
-  UserData.RCSerialNumber                    := AxesGroup.InternalData.RobotData.RCSerialNumber;
-  UserData.RASerialNumber                    := AxesGroup.InternalData.RobotData.RASerialNumber;
-  UserData.RCFirmwareVersion                 := AxesGroup.InternalData.RobotData.RCFirmwareVersion;
+  UserData.RCManufacturer                    := AxesGroup.State.RobotData.RCManufacturer; 
+  UserData.RCOrderID                         := AxesGroup.State.RobotData.RCOrderID; 
+  UserData.RCSerialNumber                    := AxesGroup.State.RobotData.RCSerialNumber;
+  UserData.RASerialNumber                    := AxesGroup.State.RobotData.RASerialNumber;
+  UserData.RCFirmwareVersion                 := AxesGroup.State.RobotData.RCFirmwareVersion;
   
-  UserData.RCInterpreterVersion.MajorVersion := STRING_TO_USINT(MID(AxesGroup.InternalData.RobotData.RCInterpreterVersion, LEN := 1, POS := 1));
-  UserData.RCInterpreterVersion.MinorVersion := STRING_TO_USINT(MID(AxesGroup.InternalData.RobotData.RCInterpreterVersion, LEN := 1, POS := 2));
-  UserData.RCInterpreterVersion.PatchVersion := STRING_TO_USINT(MID(AxesGroup.InternalData.RobotData.RCInterpreterVersion, LEN := 1, POS := 3));
+  UserData.RCInterpreterVersion.MajorVersion := STRING_TO_USINT(MID(AxesGroup.State.RobotData.RCInterpreterVersion, LEN := 1, POS := 1));
+  UserData.RCInterpreterVersion.MinorVersion := STRING_TO_USINT(MID(AxesGroup.State.RobotData.RCInterpreterVersion, LEN := 1, POS := 2));
+  UserData.RCInterpreterVersion.PatchVersion := STRING_TO_USINT(MID(AxesGroup.State.RobotData.RCInterpreterVersion, LEN := 1, POS := 3));
   
-  UserData.AxisJointUsed                     := AxesGroup.InternalData.RobotData.AxisJointUsed;
-  UserData.AxisExternalUsed                  := AxesGroup.InternalData.RobotData.AxisExternalUsed;
-  UserData.AxisJointUnit                     := AxesGroup.InternalData.RobotData.AxisJointUnit;
-  UserData.AxisExternalUnit                  := AxesGroup.InternalData.RobotData.AxisExternalUnit;
-  UserData.RCSupportedFunctions              := AxesGroup.InternalData.RobotData.RCSupportedFunctions;
+  UserData.AxisJointUsed                     := AxesGroup.State.RobotData.AxisJointUsed;
+  UserData.AxisExternalUsed                  := AxesGroup.State.RobotData.AxisExternalUsed;
+  UserData.AxisJointUnit                     := AxesGroup.State.RobotData.AxisJointUnit;
+  UserData.AxisExternalUnit                  := AxesGroup.State.RobotData.AxisExternalUnit;
+  UserData.RCSupportedFunctions              := AxesGroup.State.RobotData.RCSupportedFunctions;
                                              
-  UserData.BrakeTestRequired                 := AxesGroup.InternalData.ConfigurationData.BrakeTestRequired;
-  UserData.PathAccuracyMode                  := AxesGroup.InternalData.ConfigurationData.PathAccuracyMode;
-  UserData.AvoidSingularity                  := AxesGroup.InternalData.ConfigurationData.AvoidSingularity;
-  UserData.ConstantVelocitySupported         := AxesGroup.InternalData.ConfigurationData.ConstantVelocitySupported;
-  UserData.StepModeExactStopActive           := AxesGroup.InternalData.ConfigurationData.StepModeExactStopActive;
-  UserData.StepModeBlendingActive            := AxesGroup.InternalData.ConfigurationData.StepModeBlendingActive;
-  UserData.AcceleratingSupported             := AxesGroup.InternalData.ConfigurationData.AcceleratingSupported;
-  UserData.DeceleratingSupported             := AxesGroup.InternalData.ConfigurationData.DecceleratingSupported;
+  UserData.BrakeTestRequired                 := AxesGroup.State.ConfigurationData.BrakeTestRequired;
+  UserData.PathAccuracyMode                  := AxesGroup.State.ConfigurationData.PathAccuracyMode;
+  UserData.AvoidSingularity                  := AxesGroup.State.ConfigurationData.AvoidSingularity;
+  UserData.ConstantVelocitySupported         := AxesGroup.State.ConfigurationData.ConstantVelocitySupported;
+  UserData.StepModeExactStopActive           := AxesGroup.State.ConfigurationData.StepModeExactStopActive;
+  UserData.StepModeBlendingActive            := AxesGroup.State.ConfigurationData.StepModeBlendingActive;
+  UserData.AcceleratingSupported             := AxesGroup.State.ConfigurationData.AcceleratingSupported;
+  UserData.DeceleratingSupported             := AxesGroup.State.ConfigurationData.DecceleratingSupported;
                                              
   UserData.Initialized                       := Initialized;
   UserData.Synchronized                      := Synchronized;
@@ -2481,7 +2437,7 @@ END_VAR
   
   IF ( _enable_F.Q)
   THEN
-    Reset();
+    Reset(AxesGroup := AxesGroup);
   END_IF
   
   
@@ -2508,15 +2464,16 @@ END_VAR
            AxesGroup.Cyclic.PlcToRob.FastStop := 0;
            // Reset Active command register
            AxesGroup.Acyclic.ActiveCommandRegister.Reset();
-           // inc step counter
-          _stepCmd := _stepCmd + 1; 
-         END_IF
          
-         IF ( CheckParameterValid(AxesGroup := AxesGroup) )
-         THEN
-           // take configuration parameter if not yet enabled
-          _parCfg := ParCfg;
-  			 END_IF
+           // check parameter valid
+           IF ( CheckParameterValid(AxesGroup := AxesGroup) )
+           THEN
+             // take configuration parameter if not yet enabled
+            _parCfg := ParCfg;
+             // inc step counter
+            _stepCmd := _stepCmd + 1; 
+           END_IF
+         END_IF
        
     01:  CASE AxesGroup.Cyclic.RobToPlc.TelegramState  OF
   
@@ -2536,9 +2493,6 @@ END_VAR
            
              // Resume
              AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.RESUME;        
-  
-             {warning 'ToDo: Siemens use reset when READY_TO_RESUM - missing implementation of RESUME ? '} 
-             AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.RESET;        
            
            TelegramState.READY_FOR_INITIALIZATION: 
   
@@ -2568,34 +2522,40 @@ END_VAR
          END_IF
   
          
-    02: IF (( NOT ExchangeConfiguration.Busy  ) AND 
-            ( NOT ExchangeConfiguration.Error ))
+    02: IF (( NOT _exchangeConfiguration.Busy  ) AND 
+            ( NOT _exchangeConfiguration.Error ))
         THEN
-          ExchangeConfiguration.ParCmd.LogLevel                   := LogLevel; 
-          ExchangeConfiguration.ParCmd.WaitAtBlendingZone         := _parCfg.Rob.Parameter.WaitAtBlendingZone;
-          ExchangeConfiguration.ParCmd.AllowSecSeqWhileSubprogram := _parCfg.Rob.Parameter.AllowSecSeqWhileSubprogram;
-          ExchangeConfiguration.ParCmd.AllowDynamicBlending       := _parCfg.Rob.Parameter.AllowDynamicBlending;
-          ExchangeConfiguration.ParCmd.DelayTime                  := _parCfg.Rob.Parameter.DelayTime;
-          ExchangeConfiguration.ParCmd.WaitForNrOfCmd             := _parCfg.Rob.Parameter.WaitForNrOfCmd;
-          ExchangeConfiguration.ParCmd.LifeSignTimeOut            := TIME_TO_UINT(_parCfg.Com.LifeSignTimeOut);
-          ExchangeConfiguration.ParCmd.SyncDelay                  := _parCfg.Rob.Parameter.SyncDelay;
-          ExchangeConfiguration.ParCmd.SyncReaction               := _parCfg.Rob.Parameter.SyncReaction;
-          {warning 'ToDo: ExchangeConfiguration.ParCmd.DataInSync'}
-        //ExchangeConfiguration.ParCmd.DataInSync                 := _parCfg.Rob.Parameter.DataInSync;
-          ExchangeConfiguration.ParCmd.DataEnableSync             := _parCfg.Rob.Parameter.DataEnableSync;
+          // set command parameter
+         _exchangeConfiguration.ParCmd.LogLevel                           :=  LogLevel; 
+         _exchangeConfiguration.ParCmd.WaitAtBlendingZone                 := _parCfg.Rob.Parameter.WaitAtBlendingZone;
+         _exchangeConfiguration.ParCmd.AllowSecSeqWhileSubprogram         := _parCfg.Rob.Parameter.AllowSecSeqWhileSubprogram;
+         _exchangeConfiguration.ParCmd.AllowDynamicBlending               := _parCfg.Rob.Parameter.AllowDynamicBlending;
+         _exchangeConfiguration.ParCmd.DelayTime                          := _parCfg.Rob.Parameter.DelayTime;
+         _exchangeConfiguration.ParCmd.WaitForNrOfCmd                     := _parCfg.Rob.Parameter.WaitForNrOfCmd;
+         _exchangeConfiguration.ParCmd.LifeSignTimeOut                    :=  TIME_TO_UINT(_parCfg.Com.LifeSignTimeOut);
+         _exchangeConfiguration.ParCmd.SyncDelay                          := _parCfg.Rob.Parameter.SyncDelay;
+         _exchangeConfiguration.ParCmd.SyncReaction                       := _parCfg.Rob.Parameter.SyncReaction;
+         _exchangeConfiguration.ParCmd.DataEnableSync                     := _parCfg.Rob.Parameter.DataEnableSync;
+         _exchangeConfiguration.ParCmd.DataInSync.ToolsInSync             :=  FALSE;
+         _exchangeConfiguration.ParCmd.DataInSync.FramesInSync            :=  FALSE;
+         _exchangeConfiguration.ParCmd.DataInSync.LoadsInSync             :=  FALSE;
+         _exchangeConfiguration.ParCmd.DataInSync.WorkAreasInSync         :=  FALSE;
+         _exchangeConfiguration.ParCmd.DataInSync.SoftwareLimitsInSync    :=  FALSE;
+         _exchangeConfiguration.ParCmd.DataInSync.DefaultDynamicsInSync   :=  FALSE;
+         _exchangeConfiguration.ParCmd.DataInSync.ReferenceDynamicsInSync :=  FALSE;         
          
           // start function block
-          ExchangeConfiguration.Enable                            := TRUE;
+         _exchangeConfiguration.Enable := TRUE;
           // set timeout
           SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
           // inc step counter
          _stepCmd := _stepCmd + 1;       
         ELSE
           // check error ? 
-          IF (ExchangeConfiguration.Error)
+          IF (_exchangeConfiguration.Error)
           THEN
-            ErrorID     := ExchangeConfiguration.ErrorID;
-            ErrorAddTxt := ExchangeConfiguration.ErrorAddTxt;;
+            ErrorID     := _exchangeConfiguration.ErrorID;
+            ErrorAddTxt := _exchangeConfiguration.ErrorAddTxt;;
           END_IF  
          
           // timeout exceeded ? 
@@ -2607,21 +2567,23 @@ END_VAR
         END_IF
     
     
-    03: IF (( NOT ExchangeConfiguration.Busy              ) AND
-            (     ExchangeConfiguration.ParameterAccepted ))
-        THEN
-          // stop execution       
-          ExchangeConfiguration.Enable := FALSE;
+    03: IF (( NOT _exchangeConfiguration.Busy              ) AND
+            (     _exchangeConfiguration.ParameterAccepted ))
+        THEN     
+          // --------------------------------------------------------------------- 
+          // !!! ExchangeConfiguration must stay active for the Sync mechanism !!!
+          // --------------------------------------------------------------------- 
+          // ExchangeConfiguration.Enable := FALSE;  
           // set timeout
           SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
           // inc step counter
          _stepCmd := _stepCmd + 1;       
         ELSE
           // check error ? 
-          IF (ExchangeConfiguration.Error)
+          IF (_exchangeConfiguration.Error)
           THEN
-            ErrorID     := ExchangeConfiguration.ErrorID;
-            ErrorAddTxt := ExchangeConfiguration.ErrorAddTxt;;
+            ErrorID     := _exchangeConfiguration.ErrorID;
+            ErrorAddTxt := _exchangeConfiguration.ErrorAddTxt;;
           END_IF  
          
           // timeout exceeded ? 
@@ -2633,21 +2595,21 @@ END_VAR
         END_IF
   
          
-    04: IF (( NOT ReadRobotData.Busy  ) AND 
-            ( NOT ReadRobotData.Error )) 
+    04: IF (( NOT _readRobotData.Busy  ) AND 
+            ( NOT _readRobotData.Error )) 
         THEN
           // start function block
-          ReadRobotData.Execute := TRUE;
+         _readRobotData.Execute := TRUE;
           // set timeout
           SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
           // inc step counter
          _stepCmd := _stepCmd + 1;       
         ELSE
           // check error ? 
-          IF (ReadRobotData.Error)
+          IF (_readRobotData.Error)
           THEN
-            ErrorID     := ReadRobotData.ErrorID;
-            ErrorAddTxt := ReadRobotData.ErrorAddTxt;;
+            ErrorID     := _readRobotData.ErrorID;
+            ErrorAddTxt := _readRobotData.ErrorAddTxt;;
           END_IF  
           // timeout exceeded ? 
           IF (CheckTimeout(_timerCmd) = RobotLibraryConstants.OK)
@@ -2658,21 +2620,21 @@ END_VAR
         END_IF
       
     
-    05: IF (( NOT ReadRobotData.Busy  ) AND
-            (     ReadRobotData.Done  ))
+    05: IF (( NOT _readRobotData.Busy  ) AND
+            (     _readRobotData.Done  ))
         THEN       
           // start function block
-          ReadRobotData.Execute := FALSE;
+         _readRobotData.Execute := FALSE;
           // set timeout
           SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
           // inc step counter
          _stepCmd := _stepCmd + 1;
          ELSE
            // check error ? 
-           IF (ReadRobotData.Error)
+           IF (_readRobotData.Error)
            THEN
-             ErrorID     := ReadRobotData.ErrorID;
-             ErrorAddTxt := ReadRobotData.ErrorAddTxt;;
+             ErrorID     := _readRobotData.ErrorID;
+             ErrorAddTxt := _readRobotData.ErrorAddTxt;;
            END_IF  
          
            // timeout exceeded ? 
@@ -2684,13 +2646,13 @@ END_VAR
          END_IF
   
   
-    06: IF (( NOT ReadMessages.Busy  ) AND 
-            ( NOT ReadMessages.Error )) 
+    06: IF (( NOT _readMessages.Busy  ) AND 
+            ( NOT _readMessages.Error )) 
         THEN
           // start function block
-          ReadMessages.Enable := TRUE;
-          ReadMessages.ParCmd.MsgID;
-          ReadMessages.ParCmd.MessageLevel := _parcfg.Rob.Parameter.MessageLevel;
+         _readMessages.Enable := TRUE;
+         _readMessages.ParCmd.MsgID := 0;
+         _readMessages.ParCmd.MessageLevel := _parCfg.Rob.Parameter.MessageLevel;
           
           // set timeout
           SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
@@ -2698,10 +2660,10 @@ END_VAR
          _stepCmd := _stepCmd + 1;       
         ELSE
           // check error ? 
-          IF (ReadMessages.Error)
+          IF (_readMessages.Error)
           THEN
-            ErrorID     := ReadMessages.ErrorID;
-            ErrorAddTxt := ReadMessages.ErrorAddTxt;;
+            ErrorID     := _readMessages.ErrorID;
+            ErrorAddTxt := _readMessages.ErrorAddTxt;;
           END_IF  
           // timeout exceeded ? 
           IF (CheckTimeout(_timerCmd) = RobotLibraryConstants.OK)
@@ -2711,20 +2673,28 @@ END_VAR
           END_IF
         END_IF
     
-    07: IF ((     ReadMessages.Enabled ) AND
-            ( NOT ReadMessages.Busy ) AND
-            ( NOT ReadMessages.Error   ))
+    07: IF ((     _readMessages.Enabled ) AND
+            ( NOT _readMessages.Busy    ) AND
+            ( NOT _readMessages.Error   ))
         THEN       
+          // --------------------------------------------------------------- 
+          // !!! ReadMessages must stay active for the Message mechanism !!!
+          // --------------------------------------------------------------- 
+          // ReadMessages.Enable := FALSE;  
+          // Reset busy flag
+          Busy := FALSE;
+          // set initialized flag
+          Initialized := TRUE;       
           // set timeout
           SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
           // inc step counter
          _stepCmd := _stepCmd + 1;
         ELSE
            // check error ? 
-           IF (ReadRobotData.Error)
+           IF (_readMessages.Error)
            THEN
-             ErrorID     := ReadMessages.ErrorID;
-             ErrorAddTxt := ReadMessages.ErrorAddTxt;;
+             ErrorID     := _readMessages.ErrorID;
+             ErrorAddTxt := _readMessages.ErrorAddTxt;;
            END_IF  
          
            // timeout exceeded ? 
@@ -2735,18 +2705,13 @@ END_VAR
            END_IF
          END_IF
   
-    08:  // Reset busy flag
-         Busy := FALSE;
-         // set initialized flag
-         Initialized := TRUE;
-         
-         // Wait for task disable
+    08:  // Wait for task disable
          IF ( NOT Enable)
          THEN
-           // reset start of function blocks
-           ReadMessages.Enable := FALSE;
-           ReadRobotData.Execute := FALSE;
-           ExchangeConfiguration.Enable := FALSE;
+           // Reset active command register
+           AxesGroup.Acyclic.ActiveCommandRegister.Reset();
+           // reset internal variables
+           Reset(AxesGroup := AxesGroup);
            // Reset step counter
           _stepCmd := 0;         
            // finished okay
@@ -2759,19 +2724,6 @@ END_VAR
     ErrorID     := RobotLibraryEvents.ERR_INVALID_STEP;
     ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
   END_CASE
-  
-  
-  // Reset FB
-  IF ( OnExecRun <> RobotLibraryConstants.RUNNING)
-  THEN
-   _stepCmd     := 0;
-    Busy        := FALSE;
-    Error       := FALSE;
-    ErrorID     := 0;
-    ErrorAddTxt := '';
-    WarningID   := 0;
-    InfoID      := 0;  
-  END_IF
 
 END_METHOD
 
@@ -2804,7 +2756,7 @@ END_VAR
   SysDepMemCpy( pDest := ADR(RecvData.Payload) , pSrc  := ADR(RobotInData), DataLen := RobotLibraryParameter.ROBOT_IN_DATA_MAX +1);
   
   // check new data to receive ? 
-  IF ( Telegram.RobToPlc.Sequence[0].Header.SEQ_ACK <> AxesGroup.InternalData.LastACK[0]) {warning 'ToDo: handle 2nd sequence'} 
+  IF ( Telegram.RobToPlc.Sequence[0].Header.SEQ_ACK <> AxesGroup.State.LastACK[0]) {warning 'ToDo: handle 2nd sequence'} 
   THEN
     // delete old telegram data 
     SysDepMemSet(pDest := ADR(Telegram.RobToPlc), Value := 0 , DataLen := SIZEOF(Telegram.RobToPlc));
@@ -2819,8 +2771,8 @@ END_VAR
   ParseRecvPayloadLogging       ( AxesGroup := AxesGroup);
   
   
-  AxesGroup.InternalData.LastACK[0] := Telegram.RobToPlc.Sequence[0].Header.SEQ_ACK; 
-  AxesGroup.InternalData.LastACK[1] := Telegram.RobToPlc.Sequence[1].Header.SEQ_ACK;
+  AxesGroup.State.LastACK[0] := Telegram.RobToPlc.Sequence[0].Header.SEQ_ACK; 
+  AxesGroup.State.LastACK[1] := Telegram.RobToPlc.Sequence[1].Header.SEQ_ACK;
 
 END_METHOD
 
@@ -3021,10 +2973,10 @@ VAR
 END_VAR
 
   RETURN;
-  FOR _seqIdx := 0 TO AxesGroup.InternalData.SequenceCountRecv
+  FOR _seqIdx := 0 TO AxesGroup.State.SequenceCountRecv
   DO
     // check new data to receive ? 
-    IF ( Telegram.RobToPlc.Sequence[_seqIdx].Header.SEQ_ACK <> AxesGroup.InternalData.LastACK[_seqIdx]) 
+    IF ( Telegram.RobToPlc.Sequence[_seqIdx].Header.SEQ_ACK <> AxesGroup.State.LastACK[_seqIdx]) 
     THEN
       // Check sequence payload > 0 ?    
       IF (Telegram.RobToPlc.Sequence[_seqIdx].Header.PayloadLength > 0)
@@ -3040,7 +2992,7 @@ END_VAR
                                 Para3       :=  UINT_TO_STRING(Telegram.RobToPlc.Sequence[_seqIdx].Header.PayloadLength),
                                 Para4       :=  BYTE_TO_STRING(Telegram.RobToPlc.Header.LifeSign));
     
-        FOR _fragIdx := 0 TO AxesGroup.InternalData.FragmentCountRecv[_seqIdx] 
+        FOR _fragIdx := 0 TO AxesGroup.State.FragmentCountRecv[_seqIdx] 
         DO
           // Check fragment payload > 0 ?    
           IF (Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadLength > 0)
@@ -3104,7 +3056,7 @@ END_VAR
     Telegram.RobToPlc.Sequence[_seqIdx].Header.PayloadLength := RecvData.GetUint();
     
     // check new data available ? 
-    IF ( Telegram.RobToPlc.Sequence[_seqIdx].Header.SEQ_ACK <> AxesGroup.InternalData.LastACK[_seqIdx]) 
+    IF ( Telegram.RobToPlc.Sequence[_seqIdx].Header.SEQ_ACK <> AxesGroup.State.LastACK[_seqIdx]) 
     THEN
       // Check sequence payload available ? 
       IF (Telegram.RobToPlc.Sequence[_seqIdx].Header.PayloadLength > 0)
@@ -3220,7 +3172,9 @@ END_VAR
 END_METHOD
 
 METHOD Reset
-VAR_INPUT
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup;  
 END_VAR
 
   // reset flags
@@ -3233,14 +3187,30 @@ END_VAR
   InfoID            := 0;  
   
   // Reset internal functon blocks
-  ReadMessages.Enable          := FALSE;
-  ReadRobotData.Execute        := FALSE;
-  ExchangeConfiguration.Enable := FALSE;
+  _exchangeConfiguration      .Enable  := FALSE;
+  _readRobotData              .Execute := FALSE;
+  _readMessages               .Enable  := FALSE;  
+  _readToolData               .Execute := FALSE;  
+  _readFrameData              .Execute := FALSE;  
+  _readLoadData               .Execute := FALSE;  
+  _readWorkArea               .Execute := FALSE;  
+  _readRobotSWLimits          .Execute := FALSE;  
+  _readRobotDefaultDynamics   .Execute := FALSE;  
+  _readRobotReferenceDynamics .Execute := FALSE;  
+  _writeToolData              .Execute := FALSE;   
+  _writeFrameData             .Execute := FALSE;   
+  _writeLoadData              .Execute := FALSE;   
+  _writeWorkArea              .Execute := FALSE;   
+  _writeRobotSWLimits         .Execute := FALSE;   
+  _writeRobotDefaultDynamics  .Execute := FALSE;   
+  _writeRobotReferenceDynamics.Execute := FALSE;   
   
   // Set Client error to force server error
-  AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.CLIENT_ERROR;        
+  AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.CLIENT_ERROR;
   
-  
+  // Reset active command register
+  AxesGroup.Acyclic.ActiveCommandRegister.Reset();
+        
   // reset step counter
   _stepCmd := 0;
 

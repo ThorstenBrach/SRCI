@@ -23,19 +23,19 @@
 TYPE SynchronizationModes :
 STRUCT
  /// synchronization direction for tool
- Tool              : SyncMode;
+ Tool              : ARRAY[0..SyncTime.AFTER_START_UP] OF SyncMode;
  /// synchronization direction for frame
- Frame             : SyncMode;
+ Frame             : ARRAY[0..SyncTime.AFTER_START_UP] OF SyncMode;
  /// synchronization direction for load
- Load              : SyncMode;
+ Load              : ARRAY[0..SyncTime.AFTER_START_UP] OF SyncMode;
  /// synchronization direction for work areas
- WorkAreas         : SyncMode;
+ WorkAreas         : ARRAY[0..SyncTime.AFTER_START_UP] OF SyncMode;
  /// synchronization direction for SW limits
- SWLimits          : SyncMode;
+ SWLimits          : ARRAY[0..SyncTime.AFTER_START_UP] OF SyncMode;
  /// synchronization direction for defaul dynamics
- DefaultDynamics   : SyncMode;
+ DefaultDynamics   : ARRAY[0..SyncTime.AFTER_START_UP] OF SyncMode;
  /// synchronization direction for reference dynamics 
- ReferenceDynamics : SyncMode; 
+ ReferenceDynamics : ARRAY[0..SyncTime.AFTER_START_UP] OF SyncMode; 
 END_STRUCT
 END_TYPE
 

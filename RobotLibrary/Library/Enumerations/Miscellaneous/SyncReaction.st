@@ -27,17 +27,17 @@ TYPE SyncReaction :
   /// • No automatic disable
   /// • Reaction will only apply when RA is disabled
   /// • RA can only be enabled if client and server are synchronized
-  REACTION_TYPE_1 := 1,  
+  NO_AUTOMATIC_DISABLE := 1,  
   /// • No automatic disable
   /// • RA can only be enabled if client and server are synchronized
   /// • RA sequence state will change to interrupted when no command is buffered in the active sequence
   /// • Continuation is only possible if client and server are synchronized
-  REACTION_TYPE_2 := 2,  
+  INTERRUPT_WHEN_SEQUENCE_IS_EMPTY := 2,  
   /// • No automatic disable
   /// • RA can only be enabled if client and server are synchronized
   /// • RA sequence state will change to interrupted
   /// • Continuation is only possible if client and server are synchronized
-  REACTION_TYPE_3 := 3
+  IMMEDIATE_INTERRUPT := 3
 )USINT;
 END_TYPE
 

@@ -57,7 +57,7 @@ END_VAR
   CheckFunctionSupported := TRUE; // Function is mandatory 
   RETURN;
   
-  CheckFunctionSupported := AxesGroup.InternalData.RobotData.RCSupportedFunctions.ExchangeConfiguration;
+  CheckFunctionSupported := AxesGroup.State.RobotData.RCSupportedFunctions.ExchangeConfiguration;
   
   IF ( NOT CheckFunctionSupported )
   THEN
@@ -126,7 +126,7 @@ END_VAR
     // Set error
     ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
     // Create log entry
-    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.ERROR,
                             MessageCode := ErrorID,
@@ -152,7 +152,7 @@ END_VAR
     // Set error
     ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
     // Create log entry
-    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.ERROR,
                             MessageCode := ErrorID,
@@ -170,7 +170,7 @@ END_VAR
     // Set error
     ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
     // Create log entry
-    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.ERROR,
                             MessageCode := ErrorID,
@@ -188,7 +188,7 @@ END_VAR
     // Set error
     ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
     // Create log entry
-    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.ERROR,
                             MessageCode := ErrorID,
@@ -206,7 +206,7 @@ END_VAR
     // Set error
     ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD; 
     // Create log entry
-    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.ERROR,
                             MessageCode := ErrorID,
@@ -217,17 +217,17 @@ END_VAR
   
   
   // Check ParCmd.SyncReaction valid ? 
-  IF (( ParCmd.SyncReaction <> SyncReaction.NO_REACTION     ) AND  
-      ( ParCmd.SyncReaction <> SyncReaction.REACTION_TYPE_1 ) AND
-      ( ParCmd.SyncReaction <> SyncReaction.REACTION_TYPE_2 ) AND
-      ( ParCmd.SyncReaction <> SyncReaction.REACTION_TYPE_3 ))
+  IF (( ParCmd.SyncReaction <> SyncReaction.NO_REACTION                      ) AND  
+      ( ParCmd.SyncReaction <> SyncReaction.NO_AUTOMATIC_DISABLE             ) AND
+      ( ParCmd.SyncReaction <> SyncReaction.INTERRUPT_WHEN_SEQUENCE_IS_EMPTY ) AND
+      ( ParCmd.SyncReaction <> SyncReaction.IMMEDIATE_INTERRUPT              ))
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
     ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD; 
     // Create log entry
-    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.ERROR,
                             MessageCode := ErrorID,
@@ -392,14 +392,14 @@ VAR_IN_OUT
 END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := AxesGroup.InternalData.SystemTime,
+  CreateLogMessage      ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
                           MessageText := 'Create command payload with the following parameter(s) :');
     
   // Create log entry for LogLevel
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
@@ -407,7 +407,7 @@ END_VAR
                           Para1       :=  LOG_LEVEL_TO_STRING(_command.LogLevel));
   
   // Create log entry for CtrlByte
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
@@ -415,7 +415,7 @@ END_VAR
                           Para1       :=  BYTE_TO_STRING(_command.CtrlByte));
   
   // Create log entry for DelayTime
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
@@ -423,7 +423,7 @@ END_VAR
                           Para1       :=  UINT_TO_STRING(_command.DelayTime));
   
   // Create log entry for WaitForNrOfCmd
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
@@ -431,7 +431,7 @@ END_VAR
                           Para1       :=  UINT_TO_STRING(_command.WaitForNrOfCmd));
   
   // Create log entry for LifeSignTimeOut
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
@@ -439,7 +439,7 @@ END_VAR
                           Para1       :=  UINT_TO_STRING(_command.LifeSignTimeOut));
   
   // Create log entry for SyncDelay
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
@@ -447,7 +447,7 @@ END_VAR
                           Para1       :=  UINT_TO_STRING(_command.SyncDelay));
   
   // Create log entry for SyncReaction
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
@@ -455,7 +455,7 @@ END_VAR
                           Para1       :=  SYNC_REACTION_TO_STRING(_command.SyncReaction));
   
   // Create log entry for DataInSync
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
@@ -463,7 +463,7 @@ END_VAR
                           Para1       :=  DATA_IN_SYNC_TO_STRING(_command.DataInSync));
   
   // Create log entry for Reserve1
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
@@ -471,7 +471,7 @@ END_VAR
                           Para1       :=  BYTE_TO_STRING(_command.Reserve1));
   
   // Create log entry for DataEnableSync
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
@@ -479,7 +479,7 @@ END_VAR
                           Para1       :=  DATA_ENABLE_SYNC_TO_STRING(_command.DataEnableSync));
   
   // Create log entry for Reserve2
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
@@ -501,14 +501,14 @@ END_VAR
 
 END_METHOD
 
-METHOD PROTECTED OnCall
+METHOD PROTECTED OnExecRun : DINT
 VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
 
   // call base implementation
-  SUPER^.OnCall(AxesGroup := AxesGroup);
+  SUPER^.OnExecRun(AxesGroup := AxesGroup);
   
   
   CASE _stepCmd OF
@@ -522,6 +522,8 @@ END_VAR
            IF (( CheckFunctionSupported( AxesGroup := AxesGroup )) AND
                ( CheckParameterValid   ( AxesGroup := AxesGroup )))      
            THEN
+             // Reset all internal flags
+             Reset();
              // set busy flag
              Busy := TRUE;
              // Reset command outputs
@@ -587,8 +589,8 @@ END_VAR
              Busy := FALSE;
   				 END_IF
                   
-           // Active, Interrupted, Done, Aborted or Error ?
-           IF (_response.State >= CmdMessageState.ACTIVE )
+           // Interrupted, Done, Aborted or Error ?
+           IF (_response.State > CmdMessageState.ACTIVE )
            THEN
              // Reset Enabled Flag
              Enabled := FALSE;
@@ -604,6 +606,8 @@ END_VAR
          // do not abort directly, so that the ParSeq update can be send
          IF ( _enable_F.Q ) 
          THEN
+           // Reset Enabled Flag
+           Enabled := FALSE;
            // Set Busy flag
            Busy := TRUE;
            // trigger parameter update to disable FB
@@ -619,7 +623,7 @@ END_VAR
         // Wait for response received or timeout or not Initialized
     02: IF ((   _responseReceived                                    ) OR 
             (     CheckTimeout(_timerCmd) = RobotLibraryConstants.OK ) OR 
-            ( NOT AxesGroup.InternalData.Initialized                 ))
+            ( NOT AxesGroup.State.Initialized                        ))
         THEN
           Reset();   
   	    END_IF

@@ -54,7 +54,7 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
-  CheckFunctionSupported := AxesGroup.InternalData.RobotData.RCSupportedFunctions.OpenBrake;
+  CheckFunctionSupported := AxesGroup.State.RobotData.RCSupportedFunctions.OpenBrake;
   
   IF ( NOT CheckFunctionSupported )
   THEN
@@ -111,14 +111,14 @@ END_VAR
   CheckParameterValid := TRUE;
   
   // Check ParCmd.ParCmd.RobotAxesBrakeRelease.AxisJ1 valid ? 
-  IF (( ParCmd.RobotAxesBrakeRelease.AxisJ1) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.J1 ))   
+  IF (( ParCmd.RobotAxesBrakeRelease.AxisJ1) AND ( NOT AxesGroup.State.RobotData.AxisJointUsed.J1 ))   
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
     ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
     // Create log entry
-    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.ERROR,
                             MessageCode := ErrorID,
@@ -129,14 +129,14 @@ END_VAR
   
   
   // Check ParCmd.ParCmd.RobotAxesBrakeRelease.AxisJ2 valid ? 
-  IF (( ParCmd.RobotAxesBrakeRelease.AxisJ2) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.J2 ))   
+  IF (( ParCmd.RobotAxesBrakeRelease.AxisJ2) AND ( NOT AxesGroup.State.RobotData.AxisJointUsed.J2 ))   
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
     ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
     // Create log entry
-    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.ERROR,
                             MessageCode := ErrorID,
@@ -147,14 +147,14 @@ END_VAR
   
   
   // Check ParCmd.ParCmd.RobotAxesBrakeRelease.AxisJ3 valid ? 
-  IF (( ParCmd.RobotAxesBrakeRelease.AxisJ3) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.J3 ))   
+  IF (( ParCmd.RobotAxesBrakeRelease.AxisJ3) AND ( NOT AxesGroup.State.RobotData.AxisJointUsed.J3 ))   
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
     ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
     // Create log entry
-    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.ERROR,
                             MessageCode := ErrorID,
@@ -165,14 +165,14 @@ END_VAR
   
   
   // Check ParCmd.ParCmd.RobotAxesBrakeRelease.AxisJ4 valid ? 
-  IF (( ParCmd.RobotAxesBrakeRelease.AxisJ4) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.J4 ))   
+  IF (( ParCmd.RobotAxesBrakeRelease.AxisJ4) AND ( NOT AxesGroup.State.RobotData.AxisJointUsed.J4 ))   
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
     ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
     // Create log entry
-    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.ERROR,
                             MessageCode := ErrorID,
@@ -183,14 +183,14 @@ END_VAR
   
   
   // Check ParCmd.ParCmd.RobotAxesBrakeRelease.AxisJ5 valid ? 
-  IF (( ParCmd.RobotAxesBrakeRelease.AxisJ5) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.J5 ))   
+  IF (( ParCmd.RobotAxesBrakeRelease.AxisJ5) AND ( NOT AxesGroup.State.RobotData.AxisJointUsed.J5 ))   
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
     ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
     // Create log entry
-    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.ERROR,
                             MessageCode := ErrorID,
@@ -201,14 +201,14 @@ END_VAR
   
   
   // Check ParCmd.ParCmd.RobotAxesBrakeRelease.AxisJ6 valid ? 
-  IF (( ParCmd.RobotAxesBrakeRelease.AxisJ6) AND ( NOT AxesGroup.InternalData.RobotData.AxisJointUsed.J6 ))   
+  IF (( ParCmd.RobotAxesBrakeRelease.AxisJ6) AND ( NOT AxesGroup.State.RobotData.AxisJointUsed.J6 ))   
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
     ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
     // Create log entry
-    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.ERROR,
                             MessageCode := ErrorID,
@@ -219,14 +219,14 @@ END_VAR
   
   
   // Check ParCmd.ParCmd.ExternalAxesBrakeRelease.AxisE1 valid ? 
-  IF (( ParCmd.ExternalAxesBrakeRelease.AxisE1) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.E1 ))   
+  IF (( ParCmd.ExternalAxesBrakeRelease.AxisE1) AND ( NOT AxesGroup.State.RobotData.AxisExternalUsed.E1 ))   
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
     ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
     // Create log entry
-    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.ERROR,
                             MessageCode := ErrorID,
@@ -237,14 +237,14 @@ END_VAR
   
   
   // Check ParCmd.ParCmd.ExternalAxesBrakeRelease.AxisE2 valid ? 
-  IF (( ParCmd.ExternalAxesBrakeRelease.AxisE2) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.E2 ))   
+  IF (( ParCmd.ExternalAxesBrakeRelease.AxisE2) AND ( NOT AxesGroup.State.RobotData.AxisExternalUsed.E2 ))   
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
     ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
     // Create log entry
-    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.ERROR,
                             MessageCode := ErrorID,
@@ -255,14 +255,14 @@ END_VAR
   
   
   // Check ParCmd.ParCmd.ExternalAxesBrakeRelease.AxisE3 valid ? 
-  IF (( ParCmd.ExternalAxesBrakeRelease.AxisE3) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.E3 ))   
+  IF (( ParCmd.ExternalAxesBrakeRelease.AxisE3) AND ( NOT AxesGroup.State.RobotData.AxisExternalUsed.E3 ))   
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
     ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
     // Create log entry
-    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.ERROR,
                             MessageCode := ErrorID,
@@ -273,14 +273,14 @@ END_VAR
   
   
   // Check ParCmd.ParCmd.ExternalAxesBrakeRelease.AxisE4 valid ? 
-  IF (( ParCmd.ExternalAxesBrakeRelease.AxisE4) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.E4 ))   
+  IF (( ParCmd.ExternalAxesBrakeRelease.AxisE4) AND ( NOT AxesGroup.State.RobotData.AxisExternalUsed.E4 ))   
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
     ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
     // Create log entry
-    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.ERROR,
                             MessageCode := ErrorID,
@@ -291,14 +291,14 @@ END_VAR
   
   
   // Check ParCmd.ParCmd.ExternalAxesBrakeRelease.AxisE5 valid ? 
-  IF (( ParCmd.ExternalAxesBrakeRelease.AxisE5) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.E5 ))   
+  IF (( ParCmd.ExternalAxesBrakeRelease.AxisE5) AND ( NOT AxesGroup.State.RobotData.AxisExternalUsed.E5 ))   
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
     ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
     // Create log entry
-    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.ERROR,
                             MessageCode := ErrorID,
@@ -309,14 +309,14 @@ END_VAR
   
   
   // Check ParCmd.ParCmd.ExternalAxesBrakeRelease.AxisE6 valid ? 
-  IF (( ParCmd.ExternalAxesBrakeRelease.AxisE6) AND ( NOT AxesGroup.InternalData.RobotData.AxisExternalUsed.E6 ))   
+  IF (( ParCmd.ExternalAxesBrakeRelease.AxisE6) AND ( NOT AxesGroup.State.RobotData.AxisExternalUsed.E6 ))   
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
     ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
     // Create log entry
-    CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.ERROR,
                             MessageCode := ErrorID,
@@ -392,14 +392,14 @@ VAR_IN_OUT
 END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := AxesGroup.InternalData.SystemTime,
+  CreateLogMessage      ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
                           MessageText := 'Create command payload with the following parameter(s) :');
     
   // Create log entry for RobotAxesBrakeRelease
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
@@ -407,7 +407,7 @@ END_VAR
                           Para1       :=  BYTE_TO_STRING_BIN(_command.RobotAxesBrakeRelease));
                           
   // Create log entry for ExternalAxesBrakeRelease
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
@@ -430,14 +430,14 @@ END_VAR
 
 END_METHOD
 
-METHOD PROTECTED OnCall
+METHOD PROTECTED OnExecRun : DINT
 VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
 
   // call base implementation
-  SUPER^.OnCall(AxesGroup := AxesGroup);
+  SUPER^.OnExecRun(AxesGroup := AxesGroup);
   
   CASE _stepCmd OF
     

@@ -34,8 +34,6 @@ STRUCT
   CyclicOptional : AxesGroupCyclicOptionalData;
   /// Execution order list and ACR entries (see chapter 5.6.4.2) 
   Acyclic        : AxesGroupAcyclic;
-  /// Internal data
-  InternalData   : AxesGroupInternalData;
 END_STRUCT
 END_TYPE
 

@@ -38,20 +38,8 @@ STRUCT
   EnableSyncReferenceDynamics    : BOOL;
   /// Set TRUE to define two sequences in one Telegram.
   ActivateTwoSequences           : BOOL;
-  /// Define direction of synchronization for tool data according to Table 6-4
-  SyncModeTool                   : SyncMode;
-  /// Define direction of synchronization for frame data according to Table 6-4  
-  SyncModeFrame                  : SyncMode;
-  /// Define direction of synchronization for load data according to Table 6-4
-  SyncModeLoad                   : SyncMode;
-  /// Define direction of synchronization for work area data according to Table 6-4
-  SyncModeWorkAreas              : SyncMode;
-  /// Define direction of synchronization for software limits according to Table 6-4
-  SyncModeSWLimits               : SyncMode;
-  /// Define direction of synchronization for default dynamics according to Table 6-4
-  SyncModeDefaultDynamics        : SyncMode;
-  /// Define direction of synchronization for reference dynamics according to Table 6-4
-  SyncModeReferenceDynamics      : SyncMode;
+  /// Synchronisation modes  
+  SynchronizationModes           : SynchronizationModes;  
   /// Defines waiting time [ms] of RC between receiving a first move command when motion queue is empty and starting the first movement. See also chapter 5.6.8.
   DelayTime                      : UINT; 
   /// Define number of points required to calculate the blending. See also chapter 5.6.8

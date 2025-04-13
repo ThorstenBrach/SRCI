@@ -177,6 +177,28 @@ END_VAR
 
 END_METHOD
 
+METHOD CheckMessageCodePresent : BOOL
+VAR_INPUT
+  /// Code of messages
+  MessageCode : DWORD;
+END_VAR
+
+VAR
+  /// internal index for loops
+ _idx : DINT;
+END_VAR
+
+  FOR _idx := 0 TO RobotLibraryParameter.MESSAGE_LOG_MAX
+  DO
+    IF (Messages[_idx].MessageCode = MessageCode)
+    THEN
+      CheckMessageCodePresent := TRUE;
+      RETURN;
+  	END_IF
+  END_FOR
+
+END_METHOD
+
 METHOD PUBLIC DeleteMessages
 VAR_INPUT
 END_VAR

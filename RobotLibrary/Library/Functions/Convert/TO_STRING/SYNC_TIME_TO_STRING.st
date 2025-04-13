@@ -1,17 +1,17 @@
-{attribute 'pack_mode' := '1'} 
+FUNCTION SYNC_TIME_TO_STRING : STRING
 // ------------------------------------------------------------------------- 
 //  SRCI Robot Library                                                
 // ------------------------------------------------------------------------- 
 //                                                                           
-//  Object:      AxesGroupRobotData                                       
+//  Object:      SYNC_TIME_TO_STRING                                       
 //  Author:      Thorsten Brach                                                
-//  Date:        2024-11-29
+//  Date:        2025-04-13
 //
 //  Description:                                              
 //   
 //                                                                           
 //  Copyright: 
-//    (C) 2024 Thorsten Brach. All rights reserved                                                                                                                                            
+//    (C) 2025 Thorsten Brach. All rights reserved                                                                                                                                            
 //             Licensed under the LGPL-3.0 license.
 //                                                                           
 //  Disclaimer:                                                                           
@@ -20,9 +20,18 @@
 //    own risk and responsibility.
 //
 // -------------------------------------------------------------------------
-TYPE AxesGroupRobotData EXTENDS ReadRobotDataOutCmd :
-STRUCT
-END_STRUCT
-END_TYPE
+VAR_INPUT
+  /// SyncTime
+  Value : SyncTime;
+END_VAR
 
+  CASE Value 
+  OF
+    SyncTime.DURING_START_UP : SYNC_TIME_TO_STRING := StrReplace('DURING_START_UP ({0})','{0}' , DINT_TO_STRING(Value));
+    SyncTime.AFTER_START_UP  : SYNC_TIME_TO_STRING := StrReplace('AFTER_START_UP ({0})' ,'{0}' , DINT_TO_STRING(Value));
+  ELSE
+    SYNC_TIME_TO_STRING := CONCAT('SYNC_TIME_TO_STRING Function: Error -> no parsing for value ', DINT_TO_STRING(Value));
+  END_CASE
+
+END_FUNCTION
 

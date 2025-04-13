@@ -12,7 +12,7 @@ END_METHOD
 METHOD PUBLIC AddSystemLog
 VAR_INPUT
   /// System messafe to add to the log
-  SystemLog : STRING(255);
+  SystemLog : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN);
 END_VAR
 
 END_METHOD

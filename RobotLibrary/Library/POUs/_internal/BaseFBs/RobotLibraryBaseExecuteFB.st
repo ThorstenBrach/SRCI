@@ -45,20 +45,6 @@ END_VAR
 
 END_FUNCTION_BLOCK
 
-METHOD INTERNAL ApplyOutCmd
-VAR_INPUT
-END_VAR
-
-
-END_METHOD
-
-METHOD INTERNAL ApplyParCmd
-VAR_INPUT
-END_VAR
-
-
-END_METHOD
-
 // Base implementation must be called ! 
 METHOD PROTECTED OnCall
 VAR_IN_OUT
@@ -70,12 +56,12 @@ END_VAR
   
   // building rising and falling edges
   _execute_R( CLK := Execute);
-  _execute_F( CLK := EXecute);
+  _execute_F( CLK := Execute);
   
   
   // Check command execution is allowed ?
   IF ((     Execute                                ) AND
-      ( NOT AxesGroup.InternalData.Initialized     ) AND
+      ( NOT AxesGroup.State.CMDsEnabled            ) AND
       (     MyType <> 'MC_ExchangeConfigurationFB' ) AND // is part of init sequence
       (     MyType <> 'MC_ReadMessagesFB'          ) AND // is part of init sequence
       (     MyType <> 'MC_ReadRobotDataFB'         ))    // is part of init sequence
@@ -86,12 +72,25 @@ END_VAR
   END_IF
   
   
-  
-  // Abort execution 
-  IF (Busy) AND (_execute_F.Q) 
+  // On execution started
+  IF ( _execute_R.Q )
   THEN
-    // try to remove cmd
-    AxesGroup.Acyclic.ActiveCommandRegister.RemoveCmd(_uniqueID);
+    OnExecStart(AxesGroup := AxesGroup);
+  END_IF
+  
+  
+  // On execution cancel  
+  IF (Busy) AND ( _execute_F.Q) 
+  THEN
+    // call Cancel
+    OnExecCancel(AxesGroup := AxesGroup);
+  END_IF
+  
+  
+  // On execution error clear
+  IF ( Error ) AND ( _execute_F.Q )
+  THEN
+    OnExecErrorClear(AxesGroup := AxesGroup);
   END_IF
 
 END_METHOD
@@ -104,9 +103,11 @@ END_VAR
 
   OnExecCancel := Reset();
   
+  // try to remove cmd
+  AxesGroup.Acyclic.ActiveCommandRegister.RemoveCmd(_uniqueID);
   
   // Create log entry
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.InternalData.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,

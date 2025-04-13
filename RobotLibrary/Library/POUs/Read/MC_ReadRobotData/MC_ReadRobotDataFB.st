@@ -56,7 +56,7 @@ END_VAR
   CheckFunctionSupported := TRUE;  // Function is mandatory 
   RETURN;
   
-  CheckFunctionSupported := AxesGroup.InternalData.RobotData.RCSupportedFunctions.ReadRobotData;
+  CheckFunctionSupported := AxesGroup.State.RobotData.RCSupportedFunctions.ReadRobotData;
   
   IF ( NOT CheckFunctionSupported ) 
   THEN
@@ -140,7 +140,7 @@ VAR_IN_OUT
 END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := AxesGroup.InternalData.SystemTime,
+  CreateLogMessage      ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
@@ -161,14 +161,14 @@ END_VAR
 
 END_METHOD
 
-METHOD PROTECTED OnCall
+METHOD PROTECTED OnExecRun : DINT
 VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
 
   // call base implementation
-  SUPER^.OnCall(AxesGroup := AxesGroup);
+  SUPER^.OnExecRun(AxesGroup := AxesGroup);
   
   CASE _stepCmd OF
     
