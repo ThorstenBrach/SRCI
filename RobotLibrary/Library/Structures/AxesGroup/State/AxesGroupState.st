@@ -22,23 +22,33 @@
 // -------------------------------------------------------------------------
 TYPE AxesGroupState :
 STRUCT
-  ///
+  /// Client reports a fatal error 
   FatalErrorClient     : BOOL;
-  ///
+  /// PLC and RC are synchronized
   Synchronized         : BOOL;
-  ///
+  /// Synchronizing is running
   Synchronizing        : AxesGroupStateSynchronizing;
-  ///
+  /// Data exchange is running ( Liftebit toggles )
   AliveOk              : BOOL;
-  ///
+  /// Bit that indicated that is possible to execute commands
   CMDsEnabled          : BOOL;
-  ///
+  /// Configuration is exchanged
   ConfigExchanged      : BOOL;
-  ///
+  /// Highest available tool index of RC and PLC in combination
+  UnifiedToolIndex     : USINT;
+  /// Highest available frame index of RC and PLC in combination
+  UnifiedFrameIndex    : USINT;
+  /// Highest available load index of RC and PLC in combination
+  UnifiedLoadIndex     : USINT;
+  /// Highest available workarea index of RC and PLC in combination
+  UnifiedWorkAreaIndex : USINT;  
+  /// Enable datas to synchronize
+  DataEnableSync       : DataEnableSync;
+  /// Flags that indicates which element has changed
   DataChanged          : AxesGroupStateDataChanged;
-  ///
+  /// Synchronization state of the PLC 
   SyncStatePlc         : AxesGroupStateSyncStatePlc;
-  /// 
+  /// Synchronization state of the RC 
   SyncStateRc          : AxesGroupStateSyncStateRob;
   /// Current System Time
   SystemTime           : SystemTime;

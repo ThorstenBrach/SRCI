@@ -23,19 +23,19 @@
 TYPE AxesGroupStateSynchronizing :
 STRUCT
   /// indicates that the tooldata are synchronized
-  Tool           : BOOL;
+  Tool              : BOOL;
   /// indicates that the framedata are synchronized
-  Frame          : BOOL;
+  Frame             : BOOL;
   /// indicates that the loaddata are synchronized
-  Load           : BOOL;
+  Load              : BOOL;
   /// indicates that the work areas are synchronized
-  WorkAreas      : BOOL;
+  WorkAreas         : BOOL;
   /// indicates that the reference-dynamics are synchronized
-  RefDynamic     : BOOL;
+  ReferenceDynamics : BOOL;
   /// indicates that the default-dynamics are synchronized
-  DefaultDynamic : BOOL;
+  DefaultDynamics   : BOOL;
   /// indicates that the software limits are synchronized
-  SwLimits       : BOOL;
+  SwLimits          : BOOL;
 END_STRUCT
 END_TYPE
 

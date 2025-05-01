@@ -136,13 +136,22 @@ END_VAR
   
   
   // Check ParCmd.FrameNo valid ? 
-  IF (( ParCmd.FrameNo <   0 ) OR   
-      ( ParCmd.FrameNo > 254 ))
+  IF (( ParCmd.FrameNo <   0                                                 ) OR   
+      ( ParCmd.FrameNo > 254                                                 ) OR
+      ( ParCmd.FrameNo > AxesGroup.State.ConfigurationData.HighestFrameIndex ) OR
+      ( ParCmd.FrameNo > RobotLibraryParameter.FRAME_MAX -1                  ))         
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
-    // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Check FrameNo available on RC ? 
+    IF ( ParCmd.FrameNo > AxesGroup.State.ConfigurationData.HighestFrameIndex )
+    THEN
+      ErrorID := RobotLibraryErrorIdEnum.ERR_FRAMENO_UNAVAILABLE;
+    ELSE
+      ErrorID := RobotLibraryErrorIdEnum.ERR_FRAMENO_RANGE;
+  	END_IF  
+    
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -1840,7 +1849,7 @@ END_VAR
         
   ELSE
     // invalid step
-    ErrorID := RobotLibraryEvents.ERR_INVALID_STEP;
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
   END_CASE
   
   

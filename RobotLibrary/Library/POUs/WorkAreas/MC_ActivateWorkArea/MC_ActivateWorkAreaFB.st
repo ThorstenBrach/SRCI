@@ -110,14 +110,22 @@ END_VAR
   
   
   // Check ParCmd.WorkAreaNo valid ? 
-  IF (( ParCmd.WorkAreaNo < 0   ) OR
-      ( ParCmd.WorkAreaNo > 254 ))
-        
+  IF (( ParCmd.WorkAreaNo < 0                                                      ) OR
+      ( ParCmd.WorkAreaNo > 254                                                    ) OR
+      ( ParCmd.WorkAreaNo > AxesGroup.State.ConfigurationData.HighestWorkAreaIndex ) OR
+      ( ParCmd.WorkAreaNo > RobotLibraryParameter.WORK_AREAS_MAX -1                ))     
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
-    // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Check LoadNo available on RC ? 
+    IF ( ParCmd.WorkAreaNo > AxesGroup.State.ConfigurationData.HighestWorkAreaIndex )
+    THEN
+      ErrorID := RobotLibraryErrorIdEnum.ERR_WORKAREANO_UNAVAILABLE;
+    ELSE
+      ErrorID := RobotLibraryErrorIdEnum.ERR_WORKAREANO_RANGE;
+  	END_IF  
+    
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -312,7 +320,7 @@ END_VAR
   
   ELSE
     // invalid step
-    ErrorID := RobotLibraryEvents.ERR_INVALID_STEP;
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
   END_CASE
   
   

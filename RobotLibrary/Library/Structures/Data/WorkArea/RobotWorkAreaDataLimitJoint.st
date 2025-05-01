@@ -3,7 +3,7 @@
 //  SRCI Robot Library                                                
 // ------------------------------------------------------------------------- 
 //                                                                           
-//  Object:      RobotWorkAreaLimitJoint                                       
+//  Object:      RobotWorkAreaDataLimitJoint                                       
 //  Author:      Thorsten Brach                                                
 //  Date:        2024-06-01
 //
@@ -20,7 +20,7 @@
 //    own risk and responsibility.
 //
 // -------------------------------------------------------------------------
-TYPE RobotWorkAreaLimitJoint :
+TYPE RobotWorkAreaDataLimitJoint :
 STRUCT
   /// Relates to AreaType Axes. 
   /// Negative work area limit for Joint

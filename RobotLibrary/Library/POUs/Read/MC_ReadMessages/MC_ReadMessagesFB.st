@@ -387,7 +387,7 @@ END_VAR
   
   ELSE
     // invalid step
-    ErrorID := RobotLibraryEvents.ERR_INVALID_STEP;
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
   END_CASE
   
   
@@ -418,8 +418,10 @@ END_VAR
 // --------------------------
 // Datablock
 // --------------------------
-// Byte 04 : BOOL        Enabled;
+{warning 'ToDo: value are swapped in comparation to Specification V1.3'}
 // Byte 05 : USINT       MsgID;
+// Byte 06 : BOOL        Enabled;
+
 // Byte 06 : USINT       NumberOfActiveErrors;
 // Byte 07 : USINT       NumberOfActiveWarnings;
 // Byte 08 : DATE        Date HW HB;
@@ -595,10 +597,13 @@ END_VAR
   _response.AlarmMessageSeverity := _rspHeader.AlarmMessageSeverity;
   _response.AlarmMessageCode     := _rspHeader.AlarmMessageCode;
   
+  {warning 'ToDo: value are swapped in comparation to Specification V1.3'}
   // Get Response.MsgID
   _response.MsgID := ResponseData.GetUsint();
   // Get Response.Enabled
   _response.Enabled := ResponseData.GetBool();
+  
+  
   // Get Response.NumberOfActiveErrors
   _response.NumberOfActiveErrors := ResponseData.GetUsint();
   // Get Response.NumberOfActiveWarnings

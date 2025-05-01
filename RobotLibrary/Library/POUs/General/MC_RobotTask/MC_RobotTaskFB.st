@@ -49,15 +49,15 @@ VAR_IN_OUT
   ///  User data stored on the PLC according to Table 6-10
   UserData          : UserData;
   /// ToolData stored on PLC. For more information refer to 5.5.6.3
-  ToolData          : ARRAY[1..RobotLibraryParameter.TOOL_MAX      ] OF ToolData;
+  ToolData          : ARRAY[0..RobotLibraryParameter.TOOL_MAX -1      ] OF Tool;
   /// LoadData stored on PLC.For more information refer to 5.5.6.4
-  FrameData         : ARRAY[1..RobotLibraryParameter.FRAME_MAX     ] OF FrameData;
-  /// LoadData stored on PLC.For more information refer to 5.5.6.4
-  LoadData          : ARRAY[1..RobotLibraryParameter.LOAD_MAX      ] OF LoadData;
+  FrameData         : ARRAY[0..RobotLibraryParameter.FRAME_MAX -1     ] OF Frame;
+  /// LoadData stored on PLC.For more information refer to 5.5.6.4 
+  LoadData          : ARRAY[0..RobotLibraryParameter.LOAD_MAX -1      ] OF Load;
   /// Work areas stored on PLC. For more information refer to 5.5.8
-  WorkAreas         : ARRAY[1..RobotLibraryParameter.WORK_AREAS_MAX] OF RobotWorkArea;
+  WorkAreas         : ARRAY[0..RobotLibraryParameter.WORK_AREAS_MAX -1] OF RobotWorkArea;
   /// Software limits stored on PLC
-  SoftwareLimits    : SWLimits;
+  SWLimits          : SWLimits;
   /// Default dynamics stored on PLC. For more information refer to 5.5.7
   DefaultDynamics   : DefaultDynamics;
   /// Reference dynamics stored on PLC. For more information refer to 5.5.7
@@ -97,86 +97,160 @@ END_VAR
 
 VAR
   /// internal copy of configuration parameter
- _parCfg                      : RobotTaskParCfg;
+ _parCfg                       : RobotTaskParCfg;
+
+  /// internal ToolData for comparation to user ToolData
+ _toolData                     : ARRAY[0..RobotLibraryParameter.TOOL_MAX -1      ] OF Tool;
+  /// internal FrameData for comparation to user FrameData
+ _frameData                    : ARRAY[0..RobotLibraryParameter.FRAME_MAX -1     ] OF Frame;
+  /// internal LoadData for comparation to user LoadData
+ _loadData                     : ARRAY[0..RobotLibraryParameter.LOAD_MAX -1      ] OF Load;
+  /// internal WorkAreas for comparation to user WorkAreas
+ _workAreas                    : ARRAY[0..RobotLibraryParameter.WORK_AREAS_MAX -1] OF RobotWorkArea;
+  /// internal Software limits for comparation to user Software limit
+ _swLimits                     : SWLimits;
+  /// internal default dynamics for comparation to user default dynamics
+ _defaultDynamics              : DefaultDynamics;
+  /// internal reference dynamics for comparation to user reference dynamics
+ _referenceDynamics            : ReferenceDynamics;
+
   /// FB for exchange configuration
- _exchangeConfiguration       : MC_ExchangeConfigurationFB;
+ _exchangeConfiguration        : MC_ExchangeConfigurationFB;
   /// FB for read robot data
- _readRobotData               : MC_ReadRobotDataFB;
+ _readRobotData                : MC_ReadRobotDataFB;
   /// FB for read messaged
- _readMessages                : MC_ReadMessagesFB;  
+ _readMessages                 : MC_ReadMessagesFB;  
   /// FB for read tool data
- _readToolData                : MC_ReadToolDataFB;  
+ _readToolData                 : MC_ReadToolDataFB;  
   /// FB for read frame data
- _readFrameData               : MC_ReadFrameDataFB;  
+ _readFrameData                : MC_ReadFrameDataFB;  
   /// FB for read load data
- _readLoadData                : MC_ReadLoadDataFB;  
+ _readLoadData                 : MC_ReadLoadDataFB;  
   /// FB for read work area
- _readWorkArea                : MC_ReadWorkAreaFB;  
+ _readWorkArea                 : MC_ReadWorkAreaFB;  
   /// FB for read robot software limits
- _readRobotSWLimits           : MC_ReadRobotSWLimitsFB;  
+ _readRobotSWLimits            : MC_ReadRobotSWLimitsFB;  
   /// FB for read robot default dynamics
- _readRobotDefaultDynamics    : MC_ReadRobotDefaultDynamicsFB;  
+ _readRobotDefaultDynamics     : MC_ReadRobotDefaultDynamicsFB;  
   /// FB for read robot reference dynamics
- _readRobotReferenceDynamics  : MC_ReadRobotReferenceDynamicsFB;  
+ _readRobotReferenceDynamics   : MC_ReadRobotReferenceDynamicsFB;  
 
   
   /// FB for write tool data
- _writeToolData               : MC_WriteToolDataFB;  
+ _writeToolData                : MC_WriteToolDataFB;  
   /// FB for write frame data
- _writeFrameData              : MC_WriteFrameDataFB;  
+ _writeFrameData               : MC_WriteFrameDataFB;  
   /// FB for write load data
- _writeLoadData               : MC_WriteLoadDataFB;  
+ _writeLoadData                : MC_WriteLoadDataFB;  
   /// FB for write work area
- _writeWorkArea               : MC_WriteWorkAreaFB;  
+ _writeWorkArea                : MC_WriteWorkAreaFB;  
   /// FB for write robot software limits
- _writeRobotSWLimits          : MC_WriteRobotSWLimitsFB;  
+ _writeRobotSWLimits           : MC_WriteRobotSWLimitsFB;  
   /// FB for write robot default dynamics
- _writeRobotDefaultDynamics   : MC_WriteRobotDefaultDynamicsFB;  
+ _writeRobotDefaultDynamics    : MC_WriteRobotDefaultDynamicsFB;  
   /// FB for write robot reference dynamics
- _writeRobotReferenceDynamics : MC_WriteRobotReferenceDynamicsFB;  
-  
-  
-  
+ _writeRobotReferenceDynamics  : MC_WriteRobotReferenceDynamicsFB;  
   /// Send Buffer
-  SendData              : RobotLibrarySendDataFB;
+  SendData                     : RobotLibrarySendDataFB;
   /// Recv Buffer
-  RecvData              : RobotLibraryRecvDataFB;
+  RecvData                     : RobotLibraryRecvDataFB;
   /// Telegram 
-  Telegram              : Telegram; 
-  
-  /// internal step counter for clear error
- _stepErrorClear        : DINT;
-  /// internal timer 
- _timerErrorClear       : TON;
-  /// internal timeout 
- _timeoutErrorClear     : TIME := T#1S; 
-  /// Rising edge for clear error
- _errorClear_R          : R_TRIG;
+  Telegram                     : Telegram; 
+
   /// internal step counter for command
- _stepCmd               : DINT;
-  /// internal timer 
- _timerCmd              : TON;
-  /// internal timeout 
- _timeoutCmd            : TIME := T#5S; 
+ _stepCmd                      : DINT;
+  /// internal timer for command 
+ _timerCmd                     : TON;
+  /// internal timeout for command
+ _timeoutCmd                   : TIME := T#5S; 
+
+  /// internal step counter for synchronisation of frame data
+ _stepSyncFrameData            : DINT;
+  /// internal timer for synchronisation of frame data
+ _timerSyncFrameData           : TON;
+  /// internal timeout for synchronisation of frame data
+ _timeoutSyncFrameData         : TIME := T#5S;
+   /// internal index for frame data synchronisation
+ _syncIdxFrameData              : USINT;
+  /// internal index for maximal amount of frames data( MIN(PLC,RC) ) 
+ _syncIdxMaxFrameData           : DINT;
+ 
+  /// internal step counter for synchronisation of load data
+ _stepSyncLoadData              : DINT;
+  /// internal timer for synchronisation of load data
+ _timerSyncLoadData             : TON;
+  /// internal timeout for synchronisation of load data
+ _timeoutSyncLoadData           : TIME := T#5S; 
+  /// internal index for load data synchronisation
+ _syncIdxLoadData               : USINT;
+  /// internal index for maximal amount of load data ( MIN(PLC,RC) ) 
+ _syncIdxMaxLoadData            : DINT;
+
+  /// internal step counter for synchronisation of tool data
+ _stepSyncToolData              : DINT;
+  /// internal timer for synchronisation of tool data
+ _timerSyncToolData             : TON;
+  /// internal timeout for synchronisation of tool data
+ _timeoutSyncToolData           : TIME := T#5S; 
+  /// internal index for tool data synchronisation
+ _syncIdxToolData               : USINT;
+  /// internal index for maximal amount of tool data ( MIN(PLC,RC) ) 
+ _syncIdxMaxToolData            : DINT;
+
+  /// internal step counter for synchronisation of work areas
+ _stepSyncWorkArea            : DINT;
+ /// internal timer for synchronisation of work areas
+ _timerSyncWorkArea           : TON;
+  /// internal timeout for synchronisation of work areas
+ _timeoutSyncWorkArea         : TIME := T#5S; 
+  /// internal index for WorkArea synchronisation
+ _syncIdxWorkArea             : USINT;
+  /// internal index for maximal amount of Work Area( MIN(PLC,RC) ) 
+ _syncIdxMaxWorkArea          : DINT;
+ 
+  /// internal step counter for synchronisation of software limits
+ _stepSyncSWLimits            : DINT;
+  /// internal timer for synchronisation of software limits
+ _timerSyncSWLimits           : TON;
+  /// internal timeout for synchronisation of software limits
+ _timeoutSyncSWLimits         : TIME := T#5S; 
+
+  /// internal step counter for synchronisation of default dynamics
+ _stepSyncDefaultDynamics      : DINT;
+  /// internal timer for synchronisation of default dynamics
+ _timerSyncDefaultDynamics     : TON;
+  /// internal timeout for synchronisation of default dynamics
+ _timeoutSyncDefaultDynamics   : TIME := T#5S; 
+ 
+  /// internal step counter for synchronisation of reference dynamics
+ _stepSyncReferenceDynamics    : DINT;
+  /// internal timer for synchronisation of reference dynamics
+ _timerSyncReferenceDynamics   : TON;
+  /// internal timeout for synchronisation of reference dynamics
+ _timeoutSyncReferenceDynamics : TIME := T#5S; 
+
+
+ 
+ 
   /// Rising edge for enable
- _enable_R              : R_TRIG;
+ _enable_R                    : R_TRIG;
   /// Falling edge for enable
- _enable_F              : F_TRIG;
+ _enable_F                    : F_TRIG;
 
   /// Flag that indicated the the connection is alive (data exchange)
- _aliveBit              : BOOL;
+ _aliveBit                    : BOOL;
   /// last lifesign counter value
- _aliveValue            : BYTE;
+ _aliveValue                  : BYTE;
   /// timer for detecting alive state
- _aliveCheck            : TON;
+ _aliveCheck                  : TON;
   /// rising edge for connection is alive
- _alive_R               : R_TRIG;
+ _alive_R                     : R_TRIG;
   /// falling edge for connection is alive
- _alive_F               : F_TRIG;
+ _alive_F                     : F_TRIG;
    /// last telegram state
- _lastTelegramState     : TelegramState   := TelegramState.UNDEFINED;
+ _lastTelegramState           : TelegramState   := TelegramState.UNDEFINED;
    /// last telegram control
- _lastTelegramControl   : ControlHalfByte := ControlHalfByte.NONE;
+ _lastTelegramControl         : ControlHalfByte := ControlHalfByte.NONE;
 END_VAR
 
 
@@ -205,32 +279,33 @@ VAR CONSTANT
   EMPTY_EOL_ENTRY      : DINT := 0;
 END_VAR
 
-  HandleAxesGroupAcyclic       ( AxesGroup    := AxesGroup);
-  HandleAxesGroupCyclic        ( AxesGroup    := AxesGroup);
-  HandleAxesGroupCyclicOptional( AxesGroup    := AxesGroup);
-  HandleAxesGroupMessageLog    ( AxesGroup    := AxesGroup);
-  HandleAxesGroupParameter     ( AxesGroup    := AxesGroup);
-  HandleAxesGroupState         ( AxesGroup    := AxesGroup);
-  HandleLifeSign               ( AxesGroup    := AxesGroup);
-  HandleLogMessagesAck         ( AxesGroup    := AxesGroup);
-  HandleInvalidFrames          ( AxesGroup    := AxesGroup, RobotInData := RobotInData);
-  HandleTelegramStateCtrl      (                          );
-  HandleAliveBit               ( RobotInData[1]           );
-  HandleSeqAck                 ( AxesGroup    := AxesGroup);
-  HandleUserData               ( AxesGroup    := AxesGroup, UserData := UserData );
-  OnCall                       ( AxesGroup    := AxesGroup);
-  OnExecRun                    ( AxesGroup    := AxesGroup);
+  HandleAxesGroup              ( AxesGroup         := AxesGroup);
+  HandleLifeSign               ( AxesGroup         := AxesGroup);
+  HandleLogMessagesAck         ( AxesGroup         := AxesGroup);
+  HandleInvalidFrames          ( AxesGroup         := AxesGroup, RobotInData := RobotInData);
+  HandleTelegramStateCtrl      (                               );
+  HandleAliveBit               ( RobotInData[1]                );
+  HandleSeqAck                 ( AxesGroup         := AxesGroup);
+  HandleUserData               ( AxesGroup         := AxesGroup, UserData := UserData );
   
+  HandleSync                   ( AxesGroup         := AxesGroup,
+                                 ToolData          := ToolData,
+                                 FrameData         := FrameData,
+                                 LoadData          := LoadData,
+                                 WorkAreas         := WorkAreas,
+                                 SWLimits          := SWLimits,
+                                 DefaultDynamics   := DefaultDynamics,
+                                 ReferenceDynamics := ReferenceDynamics);
   
-  AxesGroupToTelegram  ( AxesGroup    := AxesGroup );
+  OnCall                       ( AxesGroup         := AxesGroup);
+  OnExecRun                    ( AxesGroup         := AxesGroup);
   
-  CreateSendPayload    ( AxesGroup    := AxesGroup,
-                         RobotOutData := RobotOutData );
+  AxesGroupToTelegram          ( AxesGroup         := AxesGroup );
   
-  ParseRecvPayload     ( AxesGroup    := AxesGroup,
-                         RobotInData  := RobotInData); 
+  CreateSendPayload            ( AxesGroup         := AxesGroup, RobotOutData := RobotOutData );
+  ParseRecvPayload             ( AxesGroup         := AxesGroup, RobotInData  := RobotInData); 
   
-  AxesGroupFromTelegram( AxesGroup    := AxesGroup);
+  AxesGroupFromTelegram        ( AxesGroup         := AxesGroup);
   
   
   // call internal functionblocks
@@ -1306,7 +1381,24 @@ END_VAR
   // init return value
   CheckParameterValid := TRUE;
   
-  // Regrion ParCfg.Com {{{
+  
+  // Check ParCfg.Com.TelegramLengthPlcToRob
+  IF ( ParCfg.Com.TelegramLengthPlcToRob < 128 )
+  THEN
+    // Set Warning
+    WarningID := RobotLibraryWarningIdEnum.WARN_ACYCLIC_RANGE_PLC_TO_ROB_VERY_SMALL;
+  END_IF
+  
+  // Check ParCfg.Com.TelegramLengthRobToPlc
+  IF ( ParCfg.Com.TelegramLengthRobToPlc < 128 )
+  THEN
+    // Set Warning
+    WarningID := RobotLibraryWarningIdEnum.WARN_ACYCLIC_RANGE_ROB_TO_PLC_VERY_SMALL;
+  END_IF
+  
+  
+  
+  // Region ParCfg.Com {{{
   
   // Check LifeSignTimeout
   IF ( ParCfg.Com.LifeSignTimeOut < T#10MS )
@@ -1342,7 +1434,7 @@ END_VAR
                             MessageType := MessageType.CMD,
                             Severity    := Severity.INFO,
                             MessageCode := 0,
-                            MessageText := 'ParCfg.Com.TelegramLengthPlcToRob {1} invalid',
+                            MessageText :=               'ParCfg.Com.TelegramLengthPlcToRob {1} invalid',
                             Para1       := UINT_TO_STRING(ParCfg.Com.TelegramLengthPlcToRob));
     // no further validation                          
     RETURN;                          
@@ -1363,7 +1455,7 @@ END_VAR
                             MessageType := MessageType.CMD,
                             Severity    := Severity.INFO,
                             MessageCode := 0,
-                            MessageText := 'ParCfg.Com.TelegramLengthRobToPlc {1} invalid',
+                            MessageText :=               'ParCfg.Com.TelegramLengthRobToPlc {1} invalid',
                             Para1       := UINT_TO_STRING(ParCfg.Com.TelegramLengthRobToPlc));
     // no further validation                          
     RETURN;                          
@@ -1407,6 +1499,315 @@ END_VAR
                       Severity    := Severity.INFO,
                       MessageCode := 0,
                       MessageText := 'UseJointPosition and UseJointPositionExt cannot be configured together -> UseJointPosition is automatically activated');
+  END_IF
+  // EndRegion }}}
+  
+  // Region ParCfg.Parameter.SynchronizationModes {{{
+  
+  // Check ToolData synchronisation mode during startup
+  IF (( ParCfg.Plc.Parameter.SynchronizationModes.Tool[SyncTime.DURING_START_UP] <  SyncMode.NO_SYNCHRONIZATION ) OR
+      ( ParCfg.Plc.Parameter.SynchronizationModes.Tool[SyncTime.DURING_START_UP] >= SyncMode.AUTOMATIC          )) // Automatic is not allowed during startup
+  THEN
+    // parameter(s) not valid
+    CheckParameterValid := FALSE;
+   
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+     
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.INFO,
+                            MessageCode := 0,
+                            MessageText :=                    'ParCfg.Plc.Parameter.SynchronizationModes.Tool[SyncTime.DURING_START_UP] invalid SyncMode {1}',
+                            Para1       := SYNC_MODE_TO_STRING(ParCfg.Plc.Parameter.SynchronizationModes.Tool[SyncTime.DURING_START_UP]));
+    // no further validation                          
+    RETURN;                                                    
+  END_IF
+  
+  // Check ToolData synchronisation mode after startup
+  IF (( ParCfg.Plc.Parameter.SynchronizationModes.Tool[SyncTime.AFTER_START_UP] < SyncMode.NO_SYNCHRONIZATION ) OR
+      ( ParCfg.Plc.Parameter.SynchronizationModes.Tool[SyncTime.AFTER_START_UP] > SyncMode.AUTOMATIC          ))
+  THEN
+    // parameter(s) not valid
+    CheckParameterValid := FALSE;
+   
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+     
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.INFO,
+                            MessageCode := 0,
+                            MessageText :=                    'ParCfg.Plc.Parameter.SynchronizationModes.Tool[SyncTime.AFTER_START_UP] invalid SyncMode {1}',
+                            Para1       := SYNC_MODE_TO_STRING(ParCfg.Plc.Parameter.SynchronizationModes.Tool[SyncTime.AFTER_START_UP]));
+    // no further validation                          
+    RETURN;                                                    
+  END_IF
+  
+  
+  // Check FrameData synchronisation mode during startup
+  IF (( ParCfg.Plc.Parameter.SynchronizationModes.Frame[SyncTime.DURING_START_UP] <  SyncMode.NO_SYNCHRONIZATION ) OR
+      ( ParCfg.Plc.Parameter.SynchronizationModes.Frame[SyncTime.DURING_START_UP] >= SyncMode.AUTOMATIC          )) // Automatic is not allowed during startup
+  THEN
+    // parameter(s) not valid
+    CheckParameterValid := FALSE;
+   
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+     
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.INFO,
+                            MessageCode := 0,
+                            MessageText :=                    'ParCfg.Plc.Parameter.SynchronizationModes.Frame[SyncTime.DURING_START_UP] invalid SyncMode {1}',
+                            Para1       := SYNC_MODE_TO_STRING(ParCfg.Plc.Parameter.SynchronizationModes.Frame[SyncTime.DURING_START_UP]));
+    // no further validation                          
+    RETURN;                                                   
+  END_IF
+  
+  
+  // Check FrameData synchronisation mode after startup
+  IF (( ParCfg.Plc.Parameter.SynchronizationModes.Frame[SyncTime.AFTER_START_UP] < SyncMode.NO_SYNCHRONIZATION ) OR
+      ( ParCfg.Plc.Parameter.SynchronizationModes.Frame[SyncTime.AFTER_START_UP] > SyncMode.AUTOMATIC          ))
+  THEN
+    // parameter(s) not valid
+    CheckParameterValid := FALSE;
+   
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+     
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.INFO,
+                            MessageCode := 0,
+                            MessageText :=                    'ParCfg.Plc.Parameter.SynchronizationModes.Frame[SyncTime.AFTER_START_UP] invalid SyncMode {1}',
+                            Para1       := SYNC_MODE_TO_STRING(ParCfg.Plc.Parameter.SynchronizationModes.Frame[SyncTime.AFTER_START_UP]));
+    // no further validation                          
+    RETURN;                                                    
+  END_IF
+  
+  
+  // Check LoadData synchronisation mode during startup
+  IF (( ParCfg.Plc.Parameter.SynchronizationModes.Load[SyncTime.DURING_START_UP] <  SyncMode.NO_SYNCHRONIZATION ) OR
+      ( ParCfg.Plc.Parameter.SynchronizationModes.Load[SyncTime.DURING_START_UP] >= SyncMode.AUTOMATIC          )) // Automatic is not allowed during startup
+  THEN
+    // parameter(s) not valid
+    CheckParameterValid := FALSE;
+   
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+     
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.INFO,
+                            MessageCode := 0,
+                            MessageText :=                    'ParCfg.Plc.Parameter.SynchronizationModes.Load[SyncTime.DURING_START_UP] invalid SyncMode {1}',
+                            Para1       := SYNC_MODE_TO_STRING(ParCfg.Plc.Parameter.SynchronizationModes.Load[SyncTime.DURING_START_UP]));
+    // no further validation                          
+    RETURN;                          
+  END_IF
+  
+  
+  // Check LoadData synchronisation mode after startup
+  IF (( ParCfg.Plc.Parameter.SynchronizationModes.Load[SyncTime.AFTER_START_UP] < SyncMode.NO_SYNCHRONIZATION ) OR
+      ( ParCfg.Plc.Parameter.SynchronizationModes.Load[SyncTime.AFTER_START_UP] > SyncMode.AUTOMATIC          ))
+  THEN
+    // parameter(s) not valid
+    CheckParameterValid := FALSE;
+   
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+     
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.INFO,
+                            MessageCode := 0,
+                            MessageText :=                    'ParCfg.Plc.Parameter.SynchronizationModes.Load[SyncTime.AFTER_START_UP] invalid SyncMode {1}',
+                            Para1       := SYNC_MODE_TO_STRING(ParCfg.Plc.Parameter.SynchronizationModes.Load[SyncTime.AFTER_START_UP]));
+    // no further validation                          
+    RETURN;                          
+  END_IF
+  
+  
+  // Check WorkAreas synchronisation mode during startup
+  IF (( ParCfg.Plc.Parameter.SynchronizationModes.WorkAreas[SyncTime.DURING_START_UP] <  SyncMode.NO_SYNCHRONIZATION ) OR
+      ( ParCfg.Plc.Parameter.SynchronizationModes.WorkAreas[SyncTime.DURING_START_UP] >= SyncMode.AUTOMATIC          )) // Automatic is not allowed during startup
+  THEN
+    // parameter(s) not valid
+    CheckParameterValid := FALSE;
+   
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+     
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.INFO,
+                            MessageCode := 0,
+                            MessageText :=                    'ParCfg.Plc.Parameter.SynchronizationModes.WorkAreas[SyncTime.DURING_START_UP] invalid SyncMode {1}',
+                            Para1       := SYNC_MODE_TO_STRING(ParCfg.Plc.Parameter.SynchronizationModes.WorkAreas[SyncTime.DURING_START_UP]));
+    // no further validation                          
+    RETURN;                          
+  END_IF
+  
+  
+  // Check WorkAreas synchronisation mode after startup
+  IF (( ParCfg.Plc.Parameter.SynchronizationModes.WorkAreas[SyncTime.AFTER_START_UP] < SyncMode.NO_SYNCHRONIZATION ) OR
+      ( ParCfg.Plc.Parameter.SynchronizationModes.WorkAreas[SyncTime.AFTER_START_UP] > SyncMode.AUTOMATIC          ))
+  THEN
+    // parameter(s) not valid
+    CheckParameterValid := FALSE;
+   
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+     
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.INFO,
+                            MessageCode := 0,
+                            MessageText :=                    'ParCfg.Plc.Parameter.SynchronizationModes.WorkAreas[SyncTime.AFTER_START_UP] invalid SyncMode {1}',
+                            Para1       := SYNC_MODE_TO_STRING(ParCfg.Plc.Parameter.SynchronizationModes.WorkAreas[SyncTime.AFTER_START_UP]));
+    // no further validation                          
+    RETURN;                          
+  END_IF
+  
+  
+  // Check SWLimits synchronisation mode during startup
+  IF (( ParCfg.Plc.Parameter.SynchronizationModes.SWLimits[SyncTime.DURING_START_UP] <  SyncMode.NO_SYNCHRONIZATION ) OR
+      ( ParCfg.Plc.Parameter.SynchronizationModes.SWLimits[SyncTime.DURING_START_UP] >= SyncMode.AUTOMATIC          )) // Automatic is not allowed during startup
+  THEN
+    // parameter(s) not valid
+    CheckParameterValid := FALSE;
+   
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+     
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.INFO,
+                            MessageCode := 0,
+                            MessageText :=                    'ParCfg.Plc.Parameter.SynchronizationModes.SWLimits[SyncTime.DURING_START_UP] invalid SyncMode {1}',
+                            Para1       := SYNC_MODE_TO_STRING(ParCfg.Plc.Parameter.SynchronizationModes.SWLimits[SyncTime.DURING_START_UP]));
+    // no further validation                          
+    RETURN;                          
+  END_IF
+  
+  
+  // Check SWLimits synchronisation mode after startup
+  IF (( ParCfg.Plc.Parameter.SynchronizationModes.SWLimits[SyncTime.AFTER_START_UP] < SyncMode.NO_SYNCHRONIZATION ) OR
+      ( ParCfg.Plc.Parameter.SynchronizationModes.SWLimits[SyncTime.AFTER_START_UP] > SyncMode.AUTOMATIC          ))
+  THEN
+    // parameter(s) not valid
+    CheckParameterValid := FALSE;
+   
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+     
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.INFO,
+                            MessageCode := 0,
+                            MessageText :=                    'ParCfg.Plc.Parameter.SynchronizationModes.SWLimits[SyncTime.AFTER_START_UP] invalid SyncMode {1}',
+                            Para1       := SYNC_MODE_TO_STRING(ParCfg.Plc.Parameter.SynchronizationModes.SWLimits[SyncTime.AFTER_START_UP]));
+    // no further validation                          
+    RETURN;                          
+  END_IF
+  
+  
+  // Check DefaultDynamics synchronisation mode during startup
+  IF (( ParCfg.Plc.Parameter.SynchronizationModes.DefaultDynamics[SyncTime.DURING_START_UP] <  SyncMode.NO_SYNCHRONIZATION ) OR
+      ( ParCfg.Plc.Parameter.SynchronizationModes.DefaultDynamics[SyncTime.DURING_START_UP] >= SyncMode.AUTOMATIC          )) // Automatic is not allowed during startup
+  THEN
+    // parameter(s) not valid
+    CheckParameterValid := FALSE;
+   
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+     
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.INFO,
+                            MessageCode := 0,
+                            MessageText :=                    'ParCfg.Plc.Parameter.SynchronizationModes.DefaultDynamics[SyncTime.DURING_START_UP] invalid SyncMode {1}',
+                            Para1       := SYNC_MODE_TO_STRING(ParCfg.Plc.Parameter.SynchronizationModes.DefaultDynamics[SyncTime.DURING_START_UP]));
+    // no further validation                          
+    RETURN;                          
+  END_IF
+  
+  
+  // Check DefaultDynamics synchronisation mode after startup
+  IF (( ParCfg.Plc.Parameter.SynchronizationModes.DefaultDynamics[SyncTime.AFTER_START_UP] < SyncMode.NO_SYNCHRONIZATION ) OR
+      ( ParCfg.Plc.Parameter.SynchronizationModes.DefaultDynamics[SyncTime.AFTER_START_UP] > SyncMode.AUTOMATIC          ))
+  THEN
+    // parameter(s) not valid
+    CheckParameterValid := FALSE;
+   
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+     
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.INFO,
+                            MessageCode := 0,
+                            MessageText :=                    'ParCfg.Plc.Parameter.SynchronizationModes.DefaultDynamics[SyncTime.AFTER_START_UP] invalid SyncMode {1}',
+                            Para1       := SYNC_MODE_TO_STRING(ParCfg.Plc.Parameter.SynchronizationModes.DefaultDynamics[SyncTime.AFTER_START_UP]));
+    // no further validation                          
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ReferenceDynamics synchronisation mode during startup
+  IF (( ParCfg.Plc.Parameter.SynchronizationModes.ReferenceDynamics[SyncTime.DURING_START_UP] <  SyncMode.NO_SYNCHRONIZATION ) OR
+      ( ParCfg.Plc.Parameter.SynchronizationModes.ReferenceDynamics[SyncTime.DURING_START_UP] >= SyncMode.AUTOMATIC          )) // Automatic is not allowed during startup
+  THEN
+    // parameter(s) not valid
+    CheckParameterValid := FALSE;
+   
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+     
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.INFO,
+                            MessageCode := 0,
+                            MessageText :=                    'ParCfg.Plc.Parameter.SynchronizationModes.ReferenceDynamics[SyncTime.DURING_START_UP] invalid SyncMode {1}',
+                            Para1       := SYNC_MODE_TO_STRING(ParCfg.Plc.Parameter.SynchronizationModes.ReferenceDynamics[SyncTime.DURING_START_UP]));
+    // no further validation                          
+    RETURN;                          
+  END_IF
+  
+  
+  // Check ReferenceDynamics synchronisation mode after startup
+  IF (( ParCfg.Plc.Parameter.SynchronizationModes.ReferenceDynamics[SyncTime.AFTER_START_UP] < SyncMode.NO_SYNCHRONIZATION ) OR
+      ( ParCfg.Plc.Parameter.SynchronizationModes.ReferenceDynamics[SyncTime.AFTER_START_UP] > SyncMode.AUTOMATIC          ))
+  THEN
+    // parameter(s) not valid
+    CheckParameterValid := FALSE;
+   
+    // Set error
+    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+     
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.INFO,
+                            MessageCode := 0,
+                            MessageText :=                    'ParCfg.Plc.Parameter.SynchronizationModes.ReferenceDynamics[SyncTime.AFTER_START_UP] invalid SyncMode {1}',
+                            Para1       := SYNC_MODE_TO_STRING(ParCfg.Plc.Parameter.SynchronizationModes.ReferenceDynamics[SyncTime.AFTER_START_UP]));
+    // no further validation                          
+    RETURN;                          
   END_IF
   // EndRegion }}}
 
@@ -1776,6 +2177,21 @@ END_VAR
 
 END_METHOD
 
+METHOD PRIVATE HandleAxesGroup
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup;
+END_VAR
+
+  HandleAxesGroupAcyclic       ( AxesGroup    := AxesGroup);
+  HandleAxesGroupCyclic        ( AxesGroup    := AxesGroup);
+  HandleAxesGroupCyclicOptional( AxesGroup    := AxesGroup);
+  HandleAxesGroupMessageLog    ( AxesGroup    := AxesGroup);
+  HandleAxesGroupParameter     ( AxesGroup    := AxesGroup);
+  HandleAxesGroupState         ( AxesGroup    := AxesGroup);
+
+END_METHOD
+
 METHOD PRIVATE HandleAxesGroupAcyclic
 VAR_IN_OUT
   /// Robot assignment of function
@@ -1867,12 +2283,12 @@ VAR_IN_OUT
   AxesGroup : AxesGroup;
 END_VAR
 
-  AxesGroup.Parameter.Plc.Parameter                           := ParCfg.Plc.Parameter;      
-  AxesGroup.Parameter.Plc.OptionalCyclic                      := ParCfg.Plc.OptionalCyclic; {warning 'ToDo: '}
-  AxesGroup.Parameter.Rob.OptionalCyclic                      := ParCfg.Rob.OptionalCyclic; {warning 'ToDo'}
-  
   IF (_exchangeConfiguration.Enabled)
-  THEN  
+  THEN
+    AxesGroup.Parameter.Plc.Parameter                           := _parCfg.Plc.Parameter;      
+    AxesGroup.Parameter.Plc.OptionalCyclic                      := _parCfg.Plc.OptionalCyclic;
+    AxesGroup.Parameter.Rob.OptionalCyclic                      := _parCfg.Rob.OptionalCyclic;
+    
     AxesGroup.Parameter.Rob.Parameter.LengthACR                 := _exchangeConfiguration.OutCmd.LengthACR;
     AxesGroup.Parameter.Rob.Parameter.HighestToolIndex          := _exchangeConfiguration.OutCmd.HighestToolIndex;
     AxesGroup.Parameter.Rob.Parameter.HighestFrameIndex         := _exchangeConfiguration.OutCmd.HighestFrameIndex;
@@ -1894,6 +2310,10 @@ END_VAR
     AxesGroup.Parameter.Rob.Parameter.DecceleratingSupported    := _exchangeConfiguration.OutCmd.DecceleratingSupported;
     AxesGroup.Parameter.Rob.Parameter.ConstantVelocitySupported := _exchangeConfiguration.OutCmd.ConstantVelocitySupported;
     AxesGroup.Parameter.Rob.Parameter.RCWorkingHours            := _exchangeConfiguration.OutCmd.RCWorkingHours;
+  ELSE
+    AxesGroup.Parameter.Plc.Parameter                           := ParCfg.Plc.Parameter;      
+    AxesGroup.Parameter.Plc.OptionalCyclic                      := ParCfg.Plc.OptionalCyclic;
+    AxesGroup.Parameter.Rob.OptionalCyclic                      := ParCfg.Rob.OptionalCyclic;
   END_IF
 
 END_METHOD
@@ -1903,26 +2323,37 @@ VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup;
 END_VAR
+VAR
+  /// internal index for loops
+ _idx       : DINT; 
+END_VAR
 
-  AxesGroup.State.AliveOk     := _aliveBit;
-  AxesGroup.State.Initialized := Initialized AND AxesGroup.State.AliveOk;
-  AxesGroup.State.CMDsEnabled := AxesGroup.State.Initialized;
-  
-  
-  AxesGroup.State.Synchronized := ((  AxesGroup.State.AliveOk                                         ) AND
-                                   ( _exchangeConfiguration.OutCmd.DataInSync.DefaultDynamicsInSync   ) AND
-                                   ( _exchangeConfiguration.OutCmd.DataInSync.ToolsInSync             ) AND
-                                   ( _exchangeConfiguration.OutCmd.DataInSync.FramesInSync            ) AND
-                                   ( _exchangeConfiguration.OutCmd.DataInSync.LoadsInSync             ) AND
-                                   ( _exchangeConfiguration.OutCmd.DataInSync.WorkAreasInSync         ) AND
-                                   ( _exchangeConfiguration.OutCmd.DataInSync.SoftwareLimitsInSync    ) AND
-                                   ( _exchangeConfiguration.OutCmd.DataInSync.DefaultDynamicsInSync   ) AND
-                                   ( _exchangeConfiguration.OutCmd.DataInSync.ReferenceDynamicsInSync ));
-    
+  AxesGroup.State.AliveOk      := _aliveBit;
+  AxesGroup.State.Initialized  := Initialized  AND AxesGroup.State.AliveOk;
+  AxesGroup.State.Synchronized := Synchronized AND AxesGroup.State.AliveOk;
+  AxesGroup.State.CMDsEnabled  := AxesGroup.State.Initialized OR 
+                                  AxesGroup.State.Synchronized;
   
   AxesGroup.State.ConfigExchanged := _exchangeConfiguration.Enabled;
   
+  AxesGroup.State.UnifiedFrameIndex                    := DINT_TO_USINT( MIN( RobotLibraryParameter.FRAME_MAX -1    , _exchangeConfiguration.OutCmd.HighestFrameIndex   ));
+  AxesGroup.State.UnifiedToolIndex                     := DINT_TO_USINT( MIN( RobotLibraryParameter.TOOL_MAX -1     , _exchangeConfiguration.OutCmd.HighestToolIndex    ));
+  AxesGroup.State.UnifiedLoadIndex                     := DINT_TO_USINT( MIN( RobotLibraryParameter.LOAD_MAX-1      , _exchangeConfiguration.OutCmd.HighestLoadIndex    ));
+  AxesGroup.State.UnifiedWorkAreaIndex                 := DINT_TO_USINT( MIN( RobotLibraryParameter.WORK_AREAS_MAX-1, _exchangeConfiguration.OutCmd.HighestWorkAreaIndex));
   
+  AxesGroup.State.DataEnableSync                       := _exchangeConfiguration.ParCmd.DataEnableSync;
+  AxesGroup.State.SyncStateRc.InSync.Frame             := _exchangeConfiguration.OutCmd.DataInSync.FramesInSync;
+  AxesGroup.State.SyncStateRc.InSync.Tool              := _exchangeConfiguration.OutCmd.DataInSync.ToolsInSync;
+  AxesGroup.State.SyncStateRc.InSync.Load              := _exchangeConfiguration.OutCmd.DataInSync.LoadsInSync;
+  AxesGroup.State.SyncStateRc.InSync.WorkArea          := _exchangeConfiguration.OutCmd.DataInSync.WorkAreasInSync;
+  AxesGroup.State.SyncStateRc.InSync.SwLimits          := _exchangeConfiguration.OutCmd.DataInSync.SoftwareLimitsInSync;
+  AxesGroup.State.SyncStateRc.InSync.DefaultDynamics   := _exchangeConfiguration.OutCmd.DataInSync.DefaultDynamicsInSync;
+  AxesGroup.State.SyncStateRc.InSync.ReferenceDynamics := _exchangeConfiguration.OutCmd.DataInSync.ReferenceDynamicsInSync;
+  
+  AxesGroup.State.SyncStateRc.UnSyncNo.Frame           := _exchangeConfiguration.OutCmd.ChangeIndexFrame;
+  AxesGroup.State.SyncStateRc.UnSyncNo.Tool            := _exchangeConfiguration.OutCmd.ChangeIndexTool;
+  AxesGroup.State.SyncStateRc.UnSyncNo.Load            := _exchangeConfiguration.OutCmd.ChangeIndexLoad;
+  AxesGroup.State.SyncStateRc.UnSyncNo.WorkArea        := _exchangeConfiguration.OutCmd.ChangeIndexWorkArea;
   
   // Update internal data
   AxesGroup.State.SystemTime   := SystemTime;
@@ -2145,72 +2576,4959 @@ END_METHOD
 METHOD PRIVATE HandleSync
 VAR_IN_OUT
    /// Robot assignment of function
-  AxesGroup    : AxesGroup;
+  AxesGroup : AxesGroup;
+  /// ToolData stored on PLC.For more information refer to 5.5.6.4
+  ToolData          : ARRAY[0..RobotLibraryParameter.TOOL_MAX -1      ] OF Tool;
+  /// LoadData stored on PLC.For more information refer to 5.5.6.4
+  FrameData         : ARRAY[0..RobotLibraryParameter.FRAME_MAX -1     ] OF Frame;
+  /// LoadData stored on PLC.For more information refer to 5.5.6.4
+  LoadData          : ARRAY[0..RobotLibraryParameter.LOAD_MAX -1      ] OF Load;
+  /// Work areas stored on PLC. For more information refer to 5.5.8
+  WorkAreas         : ARRAY[0..RobotLibraryParameter.WORK_AREAS_MAX -1] OF RobotWorkArea;
+  /// Software limits stored on PLC
+  SWLimits          : SWLimits;
+  /// Default dynamics stored on PLC. For more information refer to 5.5.7
+  DefaultDynamics   : DefaultDynamics;
+  /// Reference dynamics stored on PLC. For more information refer to 5.5.7
+  ReferenceDynamics : ReferenceDynamics;
+END_VAR 
+
+VAR
+  /// flag that indicates at least any iten has enabled synchronisation
+ _dataEnableSyncAny        : BOOL; 
+  /// flag that indicates that the frame datas are synchronized or deactivated 
+ _inSyncFrameOk            : BOOL;      
+  /// flag that indicates that the tool datas are synchronized or deactivated 
+ _inSyncToolOk             : BOOL;     
+  /// flag that indicates that the load datas are synchronized or deactivated 
+ _inSyncLoadOk             : BOOL;     
+  /// flag that indicates that the work areas are synchronized or deactivated 
+ _inSyncWorkAreaOk         : BOOL;
+  /// flag that indicates that the SW limits are synchronized or deactivated 
+ _inSyncSwLimitsOk         : BOOL;
+  /// flag that indicates that the default dynamice are synchronized or deactivated 
+ _inSyncDefaultDynamicOk   : BOOL;
+  /// flag that indicates that the reference dynamice are synchronized or deactivated 
+ _InSyncReferenceDynamicOk : BOOL;
 END_VAR
 
+  HandleSyncFrameData             ( AxesGroup := AxesGroup, FrameData         := FrameData);
+  HandleSyncLoadData              ( AxesGroup := AxesGroup, LoadData          := LoadData);
+  HandleSyncRobotDefaultDynamics  ( AxesGroup := AxesGroup, DefaultDynamics   := DefaultDynamics);
+  HandleSyncRobotReferenceDynamics( AxesGroup := AxesGroup, ReferenceDynamics := ReferenceDynamics);
+  HandleSyncRobotSWLimits         ( AxesGroup := AxesGroup, SwLimits          := SwLimits);
+  HandleSyncToolData              ( AxesGroup := AxesGroup, ToolData          := ToolData);
+  HandleSyncWorkArea              ( AxesGroup := AxesGroup, WorkAreas         := WorkAreas);
+  
+  
+  // check any synchronisation activated ?
+  _dataEnableSyncAny :=        ((     AxesGroup.State.DataEnableSync.EnableSyncFrame             )  OR
+                                (     AxesGroup.State.DataEnableSync.EnableSyncTool              )  OR
+                                (     AxesGroup.State.DataEnableSync.EnableSyncLoad              )  OR
+                                (     AxesGroup.State.DataEnableSync.EnableSyncWorkArea          )  OR
+                                (     AxesGroup.State.DataEnableSync.EnableSyncSWLimits          )  OR
+                                (     AxesGroup.State.DataEnableSync.EnableSyncDefaultDynamics   )  OR
+                                (     AxesGroup.State.DataEnableSync.EnableSyncReferenceDynamics ));
+                         
+  _inSyncFrameOk :=            ((     AxesGroup.State.SyncStatePlc     .InSync.Frame             )  AND 
+                                (     AxesGroup.State.SyncStateRc      .InSync.Frame             )) OR
+                                ( NOT AxesGroup.State.DataEnableSync.EnableSyncFrame             );
+                                                                                         
+  _inSyncToolOk :=             ((     AxesGroup.State.SyncStatePlc     .InSync.Tool              )  AND 
+                                (     AxesGroup.State.SyncStateRc      .InSync.Tool              )) OR
+                                ( NOT AxesGroup.State.DataEnableSync.EnableSyncTool              ); 
+                                                                                             
+  _inSyncLoadOk :=             ((     AxesGroup.State.SyncStatePlc     .InSync.Load              )  AND 
+                                (     AxesGroup.State.SyncStateRc      .InSync.Load              )) OR
+                                ( NOT AxesGroup.State.DataEnableSync.EnableSyncLoad              ); 
+                                                                                             
+  _inSyncWorkAreaOk :=         ((     AxesGroup.State.SyncStatePlc     .InSync.WorkArea          )  AND 
+                                (     AxesGroup.State.SyncStateRc      .InSync.WorkArea          )) OR
+                                ( NOT AxesGroup.State.DataEnableSync.EnableSyncWorkArea          ); 
+                                                                                             
+  _inSyncSwLimitsOk :=         ((     AxesGroup.State.SyncStatePlc    .InSync.SwLimits           )  AND 
+                                (     AxesGroup.State.SyncStateRc      .InSync.SwLimits          )) OR
+                                ( NOT AxesGroup.State.DataEnableSync.EnableSyncSwLimits          ); 
+                         
+  _inSyncDefaultDynamicOk :=   ((     AxesGroup.State.SyncStatePlc     .InSync.DefaultDynamics   )  AND 
+                                (     AxesGroup.State.SyncStateRc      .InSync.DefaultDynamics   )) OR
+                                ( NOT AxesGroup.State.DataEnableSync.EnableSyncDefaultDynamics   ); 
+  
+  _inSyncReferenceDynamicOk := ((     AxesGroup.State.SyncStatePlc     .InSync.ReferenceDynamics )  AND 
+                                (     AxesGroup.State.SyncStateRc      .InSync.ReferenceDynamics )) OR
+                                ( NOT AxesGroup.State.DataEnableSync.EnableSyncReferenceDynamics ); 
+                         
+                         
+  Synchronized := (( _inSyncFrameOk            ) AND      
+                   ( _inSyncToolOk             ) AND    
+                   ( _inSyncLoadOk             ) AND     
+                   ( _inSyncWorkAreaOk         ) AND     
+                   ( _inSyncSwLimitsOk         ) AND     
+                   ( _inSyncDefaultDynamicOk   ) AND     
+                   ( _InSyncReferenceDynamicOk ) AND            
+                   ( _dataEnableSyncAny        ));                                                                                                                                                      
+  
+  
+  // Update exchange configuration parameter
+  _exchangeConfiguration.ParCmd.DataInSync.FramesInSync            := AxesGroup.State.SyncStatePlc.InSync.Frame;
+  _exchangeConfiguration.ParCmd.DataInSync.ToolsInSync             := AxesGroup.State.SyncStatePlc.InSync.Tool;
+  _exchangeConfiguration.ParCmd.DataInSync.LoadsInSync             := AxesGroup.State.SyncStatePlc.InSync.Load;
+  _exchangeConfiguration.ParCmd.DataInSync.WorkAreasInSync         := AxesGroup.State.SyncStatePlc.InSync.WorkArea;
+  _exchangeConfiguration.ParCmd.DataInSync.SoftwareLimitsInSync    := AxesGroup.State.SyncStatePlc.InSync.SwLimits;
+  _exchangeConfiguration.ParCmd.DataInSync.DefaultDynamicsInSync   := AxesGroup.State.SyncStatePlc.InSync.DefaultDynamics;
+  _exchangeConfiguration.ParCmd.DataInSync.ReferenceDynamicsInSync := AxesGroup.State.SyncStatePlc.InSync.ReferenceDynamics;
 
 END_METHOD
 
 METHOD PRIVATE HandleSyncFrameData
 VAR_IN_OUT
    /// Robot assignment of function
-  AxesGroup    : AxesGroup;
+  AxesGroup : AxesGroup;
+  /// FrameData stored on PLC.For more information refer to 5.5.6.4
+  FrameData : ARRAY[0..RobotLibraryParameter.FRAME_MAX -1] OF Frame;
+END_VAR 
+
+VAR
+  /// Internal step counter name
+ _stepName        : STRING;    
+  /// Internal reference to step counter
+ _rStep           : REFERENCE TO DINT;
+  /// Internal reference to timer
+ _rTimer          : REFERENCE TO TON;
+  /// Internal reference to timeout
+ _rTimeout        : REFERENCE TO TIME; 
+  /// Internal reference to synchroniztion index
+ _rSyncIdx        : REFERENCE TO USINT;
+  /// internal bit for condition found
+ _found           : BOOL;
+  /// empty data set to reset all DataChanged bits
+ _dataChangedNone : AxesGroupStateDataChanged;
 END_VAR
 
+  // Set internal references 
+  _stepName      :=   '_stepSyncFrameData = ';
+  _rStep       REF=    _stepSyncFrameData;
+  _rTimer      REF=   _timerSyncFrameData;
+  _rTimeout    REF= _timeoutSyncFrameData;
+  _rSyncIdx    REF=     _syncIdxFrameData;
+  
+  CASE _rStep
+  OF    
+    0: // wait for initialisation done
+       IF  ((     AxesGroup.State.RobotData.RCSupportedFunctions. ReadFrameData ) AND
+            (     AxesGroup.State.RobotData.RCSupportedFunctions.WriteFrameData ) AND
+            (     AxesGroup.State.Initialized                                   ) AND 
+            ( NOT Error                                                         ))  
+       THEN
+         // Check PLC frames < RC frames and SyncFrame enabled ?    
+         IF (( AxesGroup.State.DataEnableSync.EnableSyncFrame      = TRUE                              )  AND
+             ( AxesGroup.Parameter.Rob.Parameter.HighestFrameIndex > RobotLibraryParameter.FRAME_MAX -1 ))        
+         THEN
+           WarningID := RobotLibraryWarningIdEnum.WARN_FRAME_DATA_ARRAY_TOO_SHORT;
+         END_IF
+  
+         // Create log entry
+         CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                                 MessageType := MessageType.CMD,
+                                 Severity    := Severity.DEBUG,
+                                 MessageCode := 0,
+                                 MessageText := 'SyncFrameData: Start initial reading of FrameData from RC',
+                                 Para1       :=  '');
+         
+         // init frame number
+        _rSyncIdx := 0;
+         // init count of unsynchronized elements
+         AxesGroup.State.SyncStatePlc.UnSyncNo.Frame := 0;
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // inc step counter
+        _rStep := _rStep + 1;
+       END_IF     
+  
+       
+       // Start read FrameData
+    1: IF (( NOT _readFrameData.Busy  ) AND 
+           ( NOT _readFrameData.Error ))
+       THEN
+         // set command parameter
+        _readFrameData.ParCmd.FrameNo := _rSyncIdx;      
+         // execute command
+        _readFrameData.Execute := TRUE;
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // inc step counter
+        _rStep := _rStep + 1;
+       ELSE
+         // check error ? 
+         IF ( _readFrameData.Error ) AND ( WarningID = RobotLibraryWarningIdEnum.NO_WARNING )
+         THEN
+           WarningID := RobotLibraryWarningIdEnum.WARN_FRAME_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;           
+         END_IF  
+         
+         // timeout exceeded ? 
+         IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+         THEN
+           ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+           ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+         END_IF
+       END_IF
+   
+       
+       // Wait Framedata read
+    2: IF (( NOT _readFrameData.Busy  ) AND
+           ( NOT _readFrameData.Error ) AND
+           (     _readFrameData.Done  ))
+       THEN
+         // reset execution
+        _readFrameData.Execute := FALSE;
+         // set available bit
+        _frameData[_rSyncIdx].Available := TRUE; 
+         FrameData[_rSyncIdx].Available := TRUE;      
+         // Copy data
+        _frameData[_rSyncIdx].Data := _readFrameData.OutCmd.FrameData;
+  
+         // Check frame data is equal ? 
+         IF ( NOT IsFrameDataEqual( Data1 := _frameData[_rSyncIdx].Data, Data2 := FrameData[_rSyncIdx].Data, IgnoreTimestamp := TRUE))
+         THEN
+           // Reset plc in sync flag
+           AxesGroup.State.SyncStatePlc.InSync.Frame := FALSE;
+           // Set data changed flag
+           AxesGroup.State.DataChanged.Frame[_rSyncIdx] := TRUE;
+           // inc count of unsynchronised plc frames
+           AxesGroup.State.SyncStatePlc.UnSyncNo.Frame := AxesGroup.State.SyncStatePlc.UnSyncNo.Frame + 1;
+          
+           // Create log entry
+           CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncFrameData: Detected a difference in Frame[{1}] between PLC and RC',
+                                   Para1       :=  DINT_TO_STRING(_rSyncIdx));
+          
+          
+           // Check synchronisation is enabled ? 
+           IF ( NOT AxesGroup.State.DataEnableSync.EnableSyncFrame ) AND (InfoID = RobotLibraryInfoIdEnum.NO_INFO )
+           THEN
+             InfoID := RobotLibraryInfoIdEnum.INFO_SYNC_FRAME_DATA_DISABLED;
+  				 END_IF
+           
+           // Check user interaction needed ?  
+           IF ( AxesGroup.Parameter.PLC.Parameter.SyncUserInteraction.Frame ) AND ( WarningID = RobotLibraryWarningIdEnum.NO_WARNING )
+           THEN
+             WarningID := RobotLibraryWarningIdEnum.WARN_FRAME_NUMBER_SYNC_ERROR;                    
+  				 END_IF
+  			 END_IF
+               
+         // Check all frames read ? 
+         IF ( _rSyncIdx < AxesGroup.State.UnifiedFrameIndex )
+         THEN
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc frame index
+          _rSyncIdx := _rSyncIdx + 1;
+           // dec step counter
+          _rStep := _rStep - 1;
+         ELSE
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := _rStep + 1;           
+         END_IF
+       ELSE
+         // check error ? 
+         IF (_readFrameData.Error)
+         THEN
+           // Set warning
+           WarningID := RobotLibraryWarningIdEnum.WARN_FRAME_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;                    
+           // reset available bit
+           FrameData[_rSyncIdx].Available := FALSE;
+          _frameData[_rSyncIdx].Available := FALSE;
+         END_IF  
+         
+         // timeout exceeded ? 
+         IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+         THEN
+           ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+           ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+         END_IF
+       END_IF
+       
+       
+       // Check synchronisation state ? 
+    3: IF (( AxesGroup.State.SyncStatePlc.UnSyncNo.Frame                                            = 0                           ) OR 
+           ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Frame[SyncTime.DURING_START_UP] = SyncMode.NO_SYNCHRONIZATION ))
+       THEN
+         // Update bit for data in sync
+         AxesGroup.State.SyncStatePlc.InSync.Frame := (AxesGroup.State.SyncStatePlc.UnSyncNo.Frame = 0);
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // inc step counter
+        _rStep := 10; // -> jump to after startup
+              
+         // Create log entry
+         CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                                 MessageType := MessageType.CMD,
+                                 Severity    := Severity.DEBUG,
+                                 MessageCode := 0,
+                                 MessageText := 'SyncFrameData: Synchronization Startup Phase done',
+                                 Para1       :=  '' );      
+       ELSE 
+         // Check user interaction needed ? 
+         IF ( NOT AxesGroup.Parameter.PLC.Parameter.SyncUserInteraction.Frame )
+         THEN
+           CASE AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Frame[SyncTime.DURING_START_UP] OF
+  
+             SyncMode.SERVER_TO_CLIENT : 
+  
+               // Overwrite PLC data with RC data
+               FrameData := _frameData;            
+               // Reset data changed flags
+               AxesGroup.State.DataChanged.Frame := _dataChangedNone.Frame;
+               // Reset Synchronizing flag
+               AxesGroup.State.Synchronizing.Frame := FALSE;
+               // Set plc in sync flag
+               AxesGroup.State.SyncStatePlc.InSync.Frame := TRUE;
+               // Reset count of unsynchronised plc frames
+               AxesGroup.State.SyncStatePlc.UnSyncNo.Frame := 0;            
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 10; // -> jump to after startup         
+  
+              // Create log entry
+              CreateLogMessagePara3 ( Timestamp   := SystemTime,
+                                      MessageType := MessageType.CMD,
+                                      Severity    := Severity.DEBUG,
+                                      MessageCode := 0,
+                                      MessageText := 'SyncFrameData: Synchronization of Frames triggered by StartUp-Compare, SyncMode = {2}, SyncTime = {3}, SyncDirection = RC -> PLC',
+                                      Para1       :=  DINT_TO_STRING(_rSyncIdx),
+                                      Para2       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Frame[SyncTime.DURING_START_UP]),
+                                      Para3       :=  SYNC_TIME_TO_STRING(SyncTime.DURING_START_UP));
+              // Create log entry
+              CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                                      MessageType := MessageType.CMD,
+                                      Severity    := Severity.DEBUG,
+                                      MessageCode := 0,
+                                      MessageText := 'SyncFrameData: Applied the initial read frame data from RC',
+                                      Para1       :=  '' );
+  
+  				   SyncMode.CLIENT_TO_SERVER : ;
+  
+               // Check conflicts to solve ? 
+               FOR _rSyncIdx := 0 TO AxesGroup.State.UnifiedFrameIndex
+               DO
+                 IF ( AxesGroup.State.DataChanged.Frame[_rSyncIdx] )
+                 THEN
+                  _found := TRUE;
+                   EXIT;
+  		  			   END_IF
+               END_FOR
+             
+               IF ( _found ) 
+               THEN
+                 // Reset plc in sync flag
+                 AxesGroup.State.SyncStatePlc.InSync.Frame := FALSE;
+                 // Set Synchronizing flag
+                 AxesGroup.State.Synchronizing.Frame := TRUE;
+                 // set timeout
+                 SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+                 // inc step counter
+                _rStep := _rStep +1; // -> write PLC data to RC                  
+                 // Create log entry
+                 CreateLogMessagePara3 ( Timestamp   := SystemTime,
+                                         MessageType := MessageType.CMD,
+                                         Severity    := Severity.DEBUG,
+                                         MessageCode := 0,
+                                         MessageText := 'SyncFrameData: Synchronization of Frame[{1}] triggered by StartUp-Compare, SyncMode = {2}, SyncTime = {3}, SyncDirection = PLC -> RC',
+                                         Para1       :=  DINT_TO_STRING(_rSyncIdx),
+                                         Para2       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Frame[SyncTime.DURING_START_UP]),
+                                         Para3       :=  SYNC_TIME_TO_STRING(SyncTime.DURING_START_UP));
+               ELSE
+                 // Reset data changed flags
+                 AxesGroup.State.DataChanged.Frame := _dataChangedNone.Frame;
+                 // Reset Synchronizing flag
+                 AxesGroup.State.Synchronizing.Frame := FALSE;
+                 // Set plc in sync flag
+                 AxesGroup.State.SyncStatePlc.InSync.Frame := TRUE;
+                 // Reset count of unsynchronised frames
+                 AxesGroup.State.SyncStatePlc.UnSyncNo.Frame := 0;
+                 // set timeout
+                 SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+                 // inc step counter
+                _rStep := 10; // -> jump to after startup                  
+  				     END_IF
+           ELSE
+             // invalid sync mode for startup
+             ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+   	       END_CASE
+         END_IF
+       END_IF  
+  
+       
+       // Start write frame data  
+    4: IF (( NOT _writeFrameData.Busy  ) AND 
+           ( NOT _writeFrameData.Error ))
+       THEN
+         // set command parameter
+        _writeFrameData.ParCmd.FrameNo   := _rSyncIdx;      
+        _writeFrameData.ParCmd.FrameData :=  FrameData[_rSyncIdx].Data;
+         // execute command
+        _writeFrameData.Execute := TRUE;
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // inc step counter
+        _rStep := _rStep + 1;
+       ELSE
+         // check error ? 
+         IF (_writeFrameData.Error)
+         THEN
+           ErrorID     := _writeFrameData.ErrorID;
+           ErrorAddTxt := _writeFrameData.ErrorAddTxt;;
+         END_IF  
+         
+         // timeout exceeded ? 
+         IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+         THEN
+           ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+           ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+         END_IF
+       END_IF
+   
+       
+       // Wait frame data written ?   
+    5: IF (( NOT _writeFrameData.Busy  ) AND
+           ( NOT _writeFrameData.Error ) AND
+           (     _writeFrameData.Done  ))
+       THEN
+         // execute command
+        _writeFrameData.Execute := FALSE;
+         // apply frame data to internal frame data
+        _frameData[_rSyncIdx] := FrameData[_rSyncIdx];
+         // reset data changed bit 
+         AxesGroup.State.DataChanged.Frame[_rSyncIdx] := FALSE;
+         // dec count of unsynchronised frames
+         AxesGroup.State.SyncStatePlc.UnSyncNo.Frame := AxesGroup.State.SyncStatePlc.UnSyncNo.Frame - 1;
+         // set timeout        
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // dec step counter
+        _rStep := _rStep - 2; 
+       ELSE
+         // check error ? 
+         IF (_writeFrameData.Error)
+         THEN
+           WarningID := RobotLibraryWarningIdEnum.WARN_FRAME_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;           
+         END_IF  
+         
+         // timeout exceeded ? 
+         IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+         THEN
+           ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+           ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+         END_IF
+       END_IF
+  
+       
+    // --------------------------------------------
+    // SyncMode after startup : 
+    // --------------------------------------------
+           
+    10 : // check synchronisation active ? 
+         IF ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Frame[SyncTime.AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION)
+         THEN
+           RETURN;
+         END_IF
+  
+         // reset count of unsynchronised frames
+         AxesGroup.State.SyncStatePlc.UnSyncNo.Frame := 0;
+  
+         // Check all frame datas
+         FOR _rSyncIdx := 0 TO AxesGroup.State.UnifiedFrameIndex
+         DO
+           // compare frame data
+           AxesGroup.State.DataChanged.Frame[_rSyncIdx] := NOT IsFrameDataEqual( Data1 := FrameData[_rSyncIdx].Data, Data2 := _frameData[_rSyncIdx].Data, IgnoreTimestamp := FALSE);
+  
+           // Check Frame data changed ? 
+           IF (AxesGroup.State.DataChanged.Frame[_rSyncIdx])
+           THEN
+             // inc count of unsynchronised plc frames
+             AxesGroup.State.SyncStatePlc.UnSyncNo.Frame := AxesGroup.State.SyncStatePlc.UnSyncNo.Frame + 1;
+             // Create log entry
+             CreateLogMessagePara2 ( Timestamp   := SystemTime,
+                                     MessageType := MessageType.CMD,
+                                     Severity    := Severity.DEBUG,
+                                     MessageCode := 0,
+                                     MessageText := 'SyncFrameData: Detected a local change of Frame[{1}] on PLC, SyncTime = {2}',
+                                     Para1       :=  DINT_TO_STRING(_rSyncIdx),    
+                                     Para2       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));       
+  				 END_IF
+  
+           // Update plc in sync flag
+           AxesGroup.State.SyncStatePlc.InSync.Frame := (AxesGroup.State.SyncStatePlc.UnSyncNo.Frame = 0); 
+  	     END_FOR
+  
+         // Check synchronization is needed ? 
+         IF ( NOT AxesGroup.State.SyncStatePlc.InSync.Frame ) XOR  
+            ( NOT AxesGroup.State.SyncStateRc .InSync.Frame )
+         THEN
+           CASE AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Frame[SyncTime.AFTER_START_UP] 
+           OF         
+             // NO_SYNCHRONIZATION
+             SyncMode.NO_SYNCHRONIZATION : ; // no further action 
+             
+             // CLIENT_TO_SERVER
+             SyncMode.CLIENT_TO_SERVER :
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 11;
+    
+             // SERVER_TO_CLIENT
+             SyncMode.SERVER_TO_CLIENT :
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 12;
+    
+             // AUTOMATIC
+             SyncMode.AUTOMATIC : 
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 13;
+           END_CASE
+         ELSE
+           // datas changeḍ on both sides ? -> Warning 
+           IF (( NOT AxesGroup.State.SyncStatePlc.InSync.Frame ) AND  
+               ( NOT AxesGroup.State.SyncStateRc .InSync.Frame ))
+           THEN
+             WarningID := RobotLibraryWarningIdEnum.WARN_FRAME_SYNC_BOTH_SIDES_CHANGED;
+           END_IF
+         END_IF
+  
+  
+    // ------------------------------------------
+    // SyncMode : CLIENT_TO_SERVER 
+    // ------------------------------------------  
+    11 : // Conflict triggerd by PLC ?  
+         IF ( NOT AxesGroup.State.SyncStatePlc.InSync.Frame )
+         THEN
+           // search for changed index  
+           FOR _rSyncIdx := 0 TO AxesGroup.State.UnifiedFrameIndex
+           DO
+             IF ( AxesGroup.State.DataChanged.Frame[_rSyncIdx] )
+             THEN
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 30; // -> write PLC data to RC                  
+               EXIT;             
+  					 END_IF
+           END_FOR
+           
+           // Create log entry
+           CreateLogMessagePara3 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncFrameData: Synchronization of Frame[{1}] triggered by PLC, SyncMode = {2}, SyncTime = {3}, SyncDirection = PLC -> RC',
+                                   Para1       :=  DINT_TO_STRING(_rSyncIdx),
+                                   Para2       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Frame[SyncTime.AFTER_START_UP]),
+                                   Para3       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+         END_IF
+     
+         // Conflict triggered by RC ?
+         IF ( NOT AxesGroup.State.SyncStateRc.InSync.Frame )
+         THEN
+           // get changed index 
+          _rSyncIdx := LIMIT(0, AxesGroup.State.SyncStateRc.UnSyncNo.Frame, AxesGroup.State.UnifiedFrameIndex);
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 30; // -> write PLC data to RC
+  
+           // Create log entry
+           CreateLogMessagePara3 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncFrameData: Synchronization of Frame[{1}] triggered by RC, SyncMode = {2}, SyncTime = {3}, SyncDirection = PLC -> RC',
+                                   Para1       :=  DINT_TO_STRING(_rSyncIdx),
+                                   Para2       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Frame[SyncTime.AFTER_START_UP]),
+                                   Para3       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+  			 END_IF
+         
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // jump back
+        _rStep := 10;
+  
+         
+    // ------------------------------------------
+    // SyncMode : SERVER_TO_CLIENT 
+    // ------------------------------------------
+    12 : // Conflict triggerd by PLC ?  
+         IF ( NOT AxesGroup.State.SyncStatePlc.InSync.Frame )
+         THEN
+           // search for changed index  
+           FOR _rSyncIdx := 0 TO AxesGroup.State.UnifiedFrameIndex
+           DO
+             IF ( AxesGroup.State.DataChanged.Frame[_rSyncIdx] )
+             THEN
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 20; // -> read RC data and write it to PLC                  
+               EXIT;
+  					 END_IF
+           END_FOR
+  
+           // Create log entry
+           CreateLogMessagePara3 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncFrameData: Synchronization of Frame[{1}] triggered by PLC, SyncMode = {2}, SyncTime = {3}, SyncDirection = RC -> PLC',
+                                   Para1       :=  DINT_TO_STRING(_rSyncIdx),
+                                   Para2       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Frame[SyncTime.AFTER_START_UP]),
+                                   Para3       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+         END_IF
+     
+         // Conflict triggered by RC ?
+         IF ( NOT AxesGroup.State.SyncStateRc.InSync.Frame )
+         THEN
+           // get changed index 
+          _rSyncIdx := LIMIT(0, AxesGroup.State.SyncStateRc.UnSyncNo.Frame, AxesGroup.State.UnifiedFrameIndex);
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 20; // -> read RC data and write it to PLC
+  
+           // Create log entry
+           CreateLogMessagePara3 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncFrameData: Synchronization of Frame[{1}] triggered by RC, SyncMode = {2}, SyncTime = {3}, SyncDirection = RC -> PLC',
+                                   Para1       :=  DINT_TO_STRING(_rSyncIdx),
+                                   Para2       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Frame[SyncTime.AFTER_START_UP]),
+                                   Para3       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+  			 END_IF
+         
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // jump back
+        _rStep := 10;
+    
+  
+    // ------------------------------------------
+    // SyncMode : AUTOMATIC 
+    // ------------------------------------------
+    13 : // Conflict triggerd by PLC ?  
+         IF ( NOT AxesGroup.State.SyncStatePlc.InSync.Frame )
+         THEN
+           // search for changed index  
+           FOR _rSyncIdx := 0 TO AxesGroup.State.UnifiedFrameIndex
+           DO
+             IF ( AxesGroup.State.DataChanged.Frame[_rSyncIdx] )
+             THEN
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 30; // -> write PLC data to RC                  
+               EXIT;
+  					 END_IF
+           END_FOR
+           
+           // Create log entry
+           CreateLogMessagePara3 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncFrameData: Synchronization of Frame[{1}] triggered by PLC, SyncMode = {2}, SyncTime = {3}, SyncDirection = PLC -> RC',
+                                   Para1       :=  DINT_TO_STRING(_rSyncIdx),
+                                   Para2       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Frame[SyncTime.AFTER_START_UP]),
+                                   Para3       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+         END_IF
+     
+         // Conflict triggered by RC ?
+         IF ( NOT AxesGroup.State.SyncStateRc.InSync.Frame )
+         THEN
+           // get changed index 
+          _rSyncIdx := LIMIT(0, AxesGroup.State.SyncStateRc.UnSyncNo.Frame, AxesGroup.State.UnifiedFrameIndex);
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 20; // -> read RC data an write it to PLC
+  
+           // Create log entry
+           CreateLogMessagePara3 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncFrameData: Synchronization of Frame[{1}] triggered by RC, SyncMode = {2}, SyncTime = {3}, SyncDirection = RC -> PLC',
+                                   Para1       :=  DINT_TO_STRING(_rSyncIdx),
+                                   Para2       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Frame[SyncTime.AFTER_START_UP]),
+                                   Para3       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+  			 END_IF
+         
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // jump back
+        //_rStep := 10;
+  
+  
+    // ------------------------------------------
+    // Read Data from RC and write it to PLC
+    // ------------------------------------------
+    20 : IF (( NOT _readFrameData.Busy  ) AND 
+             ( NOT _readFrameData.Error ))
+         THEN
+           // set command parameter
+          _readFrameData.ParCmd.FrameNo := _rSyncIdx;      
+           // execute command
+          _readFrameData.Execute := TRUE;
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := _rStep + 1;
+         ELSE
+           // check error ? 
+           IF (_readFrameData.Error)
+           THEN
+             ErrorID     := _readFrameData.ErrorID;
+             ErrorAddTxt := _readFrameData.ErrorAddTxt;
+           END_IF  
+         
+           // timeout exceeded ? 
+           IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+           THEN
+             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+             ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+           END_IF
+         END_IF
+   
+    21 : IF (( NOT _readFrameData.Busy  ) AND
+             ( NOT _readFrameData.Error ) AND
+             (     _readFrameData.Done  ))
+         THEN
+           // reset execution
+          _readFrameData.Execute := FALSE;
+           // update internal frame data
+           FrameData[_rSyncIdx].Data := _readFrameData.OutCmd.FrameData;         
+          _frameData[_rSyncIdx].Data := _readFrameData.OutCmd.FrameData;
+           // set available bit
+           FrameData[_rSyncIdx].Available := TRUE;
+          _frameData[_rSyncIdx].Available := TRUE;
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 10; // -> jump to after startup           
+         ELSE
+           // check error ? 
+           IF (_readFrameData.Error)
+           THEN
+             ErrorID     := _readFrameData.ErrorID;
+             ErrorAddTxt := _readFrameData.ErrorAddTxt;           
+             // reset available bit
+             FrameData[_rSyncIdx].Available := FALSE;
+            _frameData[_rSyncIdx].Available := FALSE;
+           END_IF  
+         
+           // timeout exceeded ? 
+           IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+           THEN
+             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+             ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+           END_IF
+         END_IF
+  
+  
+    // ------------------------------------------
+    // Write data from PLC to RC
+    // ------------------------------------------
+    30 : IF (( NOT _writeFrameData.Busy  ) AND 
+             ( NOT _writeFrameData.Error ))
+         THEN
+           // set command parameter
+          _writeFrameData.ParCmd.FrameNo   := _rSyncIdx;      
+          _writeFrameData.ParCmd.FrameData :=  FrameData[_rSyncIdx].Data;
+           // execute command
+          _writeFrameData.Execute := TRUE;
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := _rStep + 1;
+         ELSE
+           // check error ? 
+           IF (_writeFrameData.Error)
+           THEN
+             ErrorID     := _writeFrameData.ErrorID;
+             ErrorAddTxt := _writeFrameData.ErrorAddTxt;;
+           END_IF  
+         
+           // timeout exceeded ? 
+           IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+           THEN
+             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+             ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+           END_IF
+         END_IF
+   
+    31 : IF (( NOT _writeFrameData.Busy  ) AND
+             ( NOT _writeFrameData.Error ) AND
+             (     _writeFrameData.Done  ))
+         THEN
+           // execute command
+          _writeFrameData.Execute := FALSE;      
+           // update internal frame data
+          _frameData[_rSyncIdx] := FrameData[_rSyncIdx]; 
+           // set available bit
+           FrameData[_rSyncIdx].Available := TRUE; 
+          _frameData[_rSyncIdx].Available := TRUE;         
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 10; // -> jump to after startup;           
+         ELSE
+           // check error ? 
+           IF (_writeFrameData.Error)
+           THEN
+             WarningID := RobotLibraryWarningIdEnum.WARN_FRAME_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;    
+             // reset available bit
+             FrameData[_rSyncIdx].Available := FALSE;
+            _frameData[_rSyncIdx].Available := FALSE;
+           END_IF  
+         
+           // timeout exceeded ? 
+           IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+           THEN
+             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+             ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+           END_IF
+         END_IF
+         
+  ELSE
+    // invalid step
+    ErrorID     := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
+    ErrorAddTxt := CONCAT(_stepName , DINT_TO_STRING(_stepCmd));
+  END_CASE
 
 END_METHOD
 
 METHOD PRIVATE HandleSyncLoadData
 VAR_IN_OUT
    /// Robot assignment of function
-  AxesGroup    : AxesGroup;
+  AxesGroup : AxesGroup;
+  /// LoadData stored on PLC.For more information refer to 5.5.6.4
+  LoadData  : ARRAY[0..RobotLibraryParameter.LOAD_MAX -1] OF Load;
+END_VAR 
+
+VAR
+  /// Internal step counter name
+ _stepName        : STRING;    
+  /// Internal reference to step counter
+ _rStep           : REFERENCE TO DINT;
+  /// Internal reference to timer
+ _rTimer          : REFERENCE TO TON;
+  /// Internal reference to timeout
+ _rTimeout        : REFERENCE TO TIME; 
+  /// Internal reference to synchroniztion index
+ _rSyncIdx        : REFERENCE TO USINT;
+  /// internal bit for condition found
+ _found           : BOOL;
+  /// empty data set to reset all DataChanged bits
+ _dataChangedNone : AxesGroupStateDataChanged;
 END_VAR
 
+  // Set internal references 
+  _stepName      :=   '_stepSyncLoadData = ';
+  _rStep       REF=    _stepSyncLoadData;
+  _rTimer      REF=   _timerSyncLoadData;
+  _rTimeout    REF= _timeoutSyncLoadData;
+  _rSyncIdx    REF=     _syncIdxLoadData;
+  
+  CASE _rStep
+  OF    
+    0: // wait for initialisation done
+       IF  ((     AxesGroup.State.RobotData.RCSupportedFunctions. ReadLoadData ) AND
+            (     AxesGroup.State.RobotData.RCSupportedFunctions.WriteLoadData ) AND
+            (     AxesGroup.State.Initialized                                  ) AND 
+            ( NOT Error                                                        ))  
+       THEN
+         // Check PLC loads < RC Loads and SyncLoad enabled ?    
+         IF (( AxesGroup.State.DataEnableSync.EnableSyncLoad      = TRUE                              )  AND
+             ( AxesGroup.Parameter.Rob.Parameter.HighestLoadIndex > RobotLibraryParameter.Load_MAX -1 ))        
+         THEN
+           WarningID := RobotLibraryWarningIdEnum.WARN_LOAD_DATA_ARRAY_TOO_SHORT;
+         END_IF
+  
+         // Create log entry
+         CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                                 MessageType := MessageType.CMD,
+                                 Severity    := Severity.DEBUG,
+                                 MessageCode := 0,
+                                 MessageText := 'SyncLoadData: Start initial reading of LoadData from RC',
+                                 Para1       :=  '');
+         
+         // init load number
+        _rSyncIdx := 1; //  !!! Attention : 0 is not allowed - LoadData starts with 1 !!!  
+         // init count of unsynchronized elements
+         AxesGroup.State.SyncStatePlc.UnSyncNo.Load := 0;
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // inc step counter
+        _rStep := _rStep + 1;
+       END_IF     
+  
+       
+       // Start read LoadData
+    1: IF (( NOT _readLoadData.Busy  ) AND 
+           ( NOT _readLoadData.Error ))
+       THEN
+         // set command parameter
+        _readLoadData.ParCmd.LoadNo := _rSyncIdx;      
+         // execute command
+        _readLoadData.Execute := TRUE;
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // inc step counter
+        _rStep := _rStep + 1;
+       ELSE
+         // check error ? 
+         IF ( _readLoadData.Error ) AND ( WarningID = RobotLibraryWarningIdEnum.NO_WARNING )
+         THEN
+           WarningID := RobotLibraryWarningIdEnum.WARN_LOAD_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;           
+         END_IF  
+         
+         // timeout exceeded ? 
+         IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+         THEN
+           ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+           ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+         END_IF
+       END_IF
+   
+       
+       // Wait Loaddata read
+    2: IF (( NOT _readLoadData.Busy  ) AND
+           ( NOT _readLoadData.Error ) AND
+           (     _readLoadData.Done  ))
+       THEN
+         // reset execution
+        _readLoadData.Execute := FALSE;
+         // set available bit
+        _loadData[_rSyncIdx].Available := TRUE; 
+         LoadData[_rSyncIdx].Available := TRUE;      
+         // Copy data
+        _loadData[_rSyncIdx].Data := _readLoadData.OutCmd.LoadData;
+  
+         // Check Load data is equal ? 
+         IF ( NOT IsLoadDataEqual( Data1 := _loadData[_rSyncIdx].Data, Data2 := LoadData[_rSyncIdx].Data, IgnoreTimestamp := TRUE))
+         THEN
+           // Reset plc in sync flag
+           AxesGroup.State.SyncStatePlc.InSync.Load := FALSE;
+           // Set data changed flag
+           AxesGroup.State.DataChanged.Load[_rSyncIdx] := TRUE;
+           // inc count of unsynchronised plc Loads
+           AxesGroup.State.SyncStatePlc.UnSyncNo.Load := AxesGroup.State.SyncStatePlc.UnSyncNo.Load + 1;
+          
+           // Create log entry
+           CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncLoadData: Detected a difference in Load[{1}] between PLC and RC',
+                                   Para1       :=  DINT_TO_STRING(_rSyncIdx));
+          
+          
+           // Check synchronisation is enabled ? 
+           IF ( NOT AxesGroup.State.DataEnableSync.EnableSyncLoad ) AND (InfoID = RobotLibraryInfoIdEnum.NO_INFO )
+           THEN
+             InfoID := RobotLibraryInfoIdEnum.INFO_SYNC_LOAD_DATA_DISABLED;
+  				 END_IF
+           
+           // Check user interaction needed ?  
+           IF ( AxesGroup.Parameter.PLC.Parameter.SyncUserInteraction.Load ) AND ( WarningID = RobotLibraryWarningIdEnum.NO_WARNING )
+           THEN
+             WarningID := RobotLibraryWarningIdEnum.WARN_LOAD_NUMBER_SYNC_ERROR;                    
+  				 END_IF
+  			 END_IF
+               
+         // Check all Loads read ? 
+         IF ( _rSyncIdx < AxesGroup.State.UnifiedLoadIndex )
+         THEN
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc Load index
+          _rSyncIdx := _rSyncIdx + 1;
+           // dec step counter
+          _rStep := _rStep - 1;
+         ELSE
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := _rStep + 1;           
+         END_IF
+       ELSE
+         // check error ? 
+         IF (_readLoadData.Error)
+         THEN
+           // Set warning
+           WarningID := RobotLibraryWarningIdEnum.WARN_LOAD_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;                    
+           // reset available bit
+           LoadData[_rSyncIdx].Available := FALSE;
+          _loadData[_rSyncIdx].Available := FALSE;
+         END_IF  
+         
+         // timeout exceeded ? 
+         IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+         THEN
+           ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+           ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+         END_IF
+       END_IF
+       
+       
+       // Check synchronisation state ? 
+    3: IF (( AxesGroup.State.SyncStatePlc.UnSyncNo.Load                                            = 0                           ) OR 
+           ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Load[SyncTime.DURING_START_UP] = SyncMode.NO_SYNCHRONIZATION ))
+       THEN
+         // Update bit for data in sync
+         AxesGroup.State.SyncStatePlc.InSync.Load := (AxesGroup.State.SyncStatePlc.UnSyncNo.Load = 0);
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // inc step counter
+        _rStep := 10; // -> jump to after startup
+              
+         // Create log entry
+         CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                                 MessageType := MessageType.CMD,
+                                 Severity    := Severity.DEBUG,
+                                 MessageCode := 0,
+                                 MessageText := 'SyncLoadData: Synchronization Startup Phase done',
+                                 Para1       :=  '' );      
+       ELSE 
+         // Check user interaction needed ? 
+         IF ( NOT AxesGroup.Parameter.PLC.Parameter.SyncUserInteraction.Load )
+         THEN
+           CASE AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Load[SyncTime.DURING_START_UP] OF
+  
+             SyncMode.SERVER_TO_CLIENT : 
+  
+               // Overwrite PLC data with RC data
+               LoadData := _loadData;            
+               // Reset data changed flags
+               AxesGroup.State.DataChanged.Load := _dataChangedNone.Load;
+               // Reset Synchronizing flag
+               AxesGroup.State.Synchronizing.Load := FALSE;
+               // Set plc in sync flag
+               AxesGroup.State.SyncStatePlc.InSync.Load := TRUE;
+               // Reset count of unsynchronised plc Loads
+               AxesGroup.State.SyncStatePlc.UnSyncNo.Load := 0;            
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 10; // -> jump to after startup         
+  
+              // Create log entry
+              CreateLogMessagePara3 ( Timestamp   := SystemTime,
+                                      MessageType := MessageType.CMD,
+                                      Severity    := Severity.DEBUG,
+                                      MessageCode := 0,
+                                      MessageText := 'SyncLoadData: Synchronization of Loads triggered by StartUp-Compare, SyncMode = {2}, SyncTime = {3}, SyncDirection = RC -> PLC',
+                                      Para1       :=  DINT_TO_STRING(_rSyncIdx),
+                                      Para2       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Load[SyncTime.DURING_START_UP]),
+                                      Para3       :=  SYNC_TIME_TO_STRING(SyncTime.DURING_START_UP));
+              // Create log entry
+              CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                                      MessageType := MessageType.CMD,
+                                      Severity    := Severity.DEBUG,
+                                      MessageCode := 0,
+                                      MessageText := 'SyncLoadData: Applied the initial read Load data from RC',
+                                      Para1       :=  '' );
+  
+  				   SyncMode.CLIENT_TO_SERVER : ;
+  
+               // Check conflicts to solve ? 
+               FOR _rSyncIdx := 1 TO AxesGroup.State.UnifiedLoadIndex //  !!! Attention : 0 is not allowed - LoadData starts with 1 !!!  
+               DO
+                 IF ( AxesGroup.State.DataChanged.Load[_rSyncIdx] )
+                 THEN
+                  _found := TRUE;
+                   EXIT;
+  		  			   END_IF
+               END_FOR
+             
+               IF ( _found ) 
+               THEN
+                 // Reset plc in sync flag
+                 AxesGroup.State.SyncStatePlc.InSync.Load := FALSE;
+                 // Set Synchronizing flag
+                 AxesGroup.State.Synchronizing.Load := TRUE;
+                 // set timeout
+                 SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+                 // inc step counter
+                _rStep := _rStep +1; // -> write PLC data to RC                  
+                 // Create log entry
+                 CreateLogMessagePara3 ( Timestamp   := SystemTime,
+                                         MessageType := MessageType.CMD,
+                                         Severity    := Severity.DEBUG,
+                                         MessageCode := 0,
+                                         MessageText := 'SyncLoadData: Synchronization of Load[{1}] triggered by StartUp-Compare, SyncMode = {2}, SyncTime = {3}, SyncDirection = PLC -> RC',
+                                         Para1       :=  DINT_TO_STRING(_rSyncIdx),
+                                         Para2       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Load[SyncTime.DURING_START_UP]),
+                                         Para3       :=  SYNC_TIME_TO_STRING(SyncTime.DURING_START_UP));
+               ELSE
+                 // Reset data changed flags
+                 AxesGroup.State.DataChanged.Load := _dataChangedNone.Load;
+                 // Reset Synchronizing flag
+                 AxesGroup.State.Synchronizing.Load := FALSE;
+                 // Set plc in sync flag
+                 AxesGroup.State.SyncStatePlc.InSync.Load := TRUE;
+                 // Reset count of unsynchronised Loads
+                 AxesGroup.State.SyncStatePlc.UnSyncNo.Load := 0;
+                 // set timeout
+                 SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+                 // inc step counter
+                _rStep := 10; // -> jump to after startup                  
+  				     END_IF
+           ELSE
+             // invalid sync mode for startup
+             ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+   	       END_CASE
+         END_IF
+       END_IF  
+  
+       
+       // Start write Load data  
+    4: IF (( NOT _writeLoadData.Busy  ) AND 
+           ( NOT _writeLoadData.Error ))
+       THEN
+         // set command parameter
+        _writeLoadData.ParCmd.LoadNo   := _rSyncIdx;      
+        _writeLoadData.ParCmd.LoadData :=  LoadData[_rSyncIdx].Data;
+         // execute command
+        _writeLoadData.Execute := TRUE;
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // inc step counter
+        _rStep := _rStep + 1;
+       ELSE
+         // check error ? 
+         IF (_writeLoadData.Error)
+         THEN
+           ErrorID     := _writeLoadData.ErrorID;
+           ErrorAddTxt := _writeLoadData.ErrorAddTxt;;
+         END_IF  
+         
+         // timeout exceeded ? 
+         IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+         THEN
+           ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+           ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+         END_IF
+       END_IF
+   
+       
+       // Wait Load data written ?   
+    5: IF (( NOT _writeLoadData.Busy  ) AND
+           ( NOT _writeLoadData.Error ) AND
+           (     _writeLoadData.Done  ))
+       THEN
+         // execute command
+        _writeLoadData.Execute := FALSE;
+         // apply Load data to internal Load data
+        _loadData[_rSyncIdx] := LoadData[_rSyncIdx];
+         // reset data changed bit 
+         AxesGroup.State.DataChanged.Load[_rSyncIdx] := FALSE;
+         // dec count of unsynchronised Loads
+         AxesGroup.State.SyncStatePlc.UnSyncNo.Load := AxesGroup.State.SyncStatePlc.UnSyncNo.Load - 1;
+         // set timeout        
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // dec step counter
+        _rStep := _rStep - 2; 
+       ELSE
+         // check error ? 
+         IF (_writeLoadData.Error)
+         THEN
+           WarningID := RobotLibraryWarningIdEnum.WARN_LOAD_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;           
+         END_IF  
+         
+         // timeout exceeded ? 
+         IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+         THEN
+           ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+           ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+         END_IF
+       END_IF
+  
+       
+    // --------------------------------------------
+    // SyncMode after startup : 
+    // --------------------------------------------
+           
+    10 : // check synchronisation active ? 
+         IF ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Load[SyncTime.AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION)
+         THEN
+           RETURN;
+         END_IF
+         
+         // reset count of unsynchronised Loads
+         AxesGroup.State.SyncStatePlc.UnSyncNo.Load := 0;
+  
+         // Check all Load datas
+         FOR _rSyncIdx := 1 TO AxesGroup.State.UnifiedLoadIndex //  !!! Attention : 0 is not allowed - LoadData starts with 1 !!!  
+         DO
+           // compare Load data
+           AxesGroup.State.DataChanged.Load[_rSyncIdx] := NOT IsLoadDataEqual( Data1 := LoadData[_rSyncIdx].Data, Data2 := _loadData[_rSyncIdx].Data, IgnoreTimestamp := FALSE);
+  
+           // Check Load data changed ? 
+           IF (AxesGroup.State.DataChanged.Load[_rSyncIdx])
+           THEN
+             // inc count of unsynchronised plc Loads
+             AxesGroup.State.SyncStatePlc.UnSyncNo.Load := AxesGroup.State.SyncStatePlc.UnSyncNo.Load + 1;
+             // Create log entry
+             CreateLogMessagePara2 ( Timestamp   := SystemTime,
+                                     MessageType := MessageType.CMD,
+                                     Severity    := Severity.DEBUG,
+                                     MessageCode := 0,
+                                     MessageText := 'SyncLoadData: Detected a local change of Load[{1}] on PLC, SyncTime = {2}',
+                                     Para1       :=  DINT_TO_STRING(_rSyncIdx),    
+                                     Para2       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));       
+  				 END_IF
+  
+           // Update plc in sync flag
+           AxesGroup.State.SyncStatePlc.InSync.Load := (AxesGroup.State.SyncStatePlc.UnSyncNo.Load = 0); 
+  	     END_FOR
+  
+         // Check synchronization is needed ? 
+         IF ( NOT AxesGroup.State.SyncStatePlc.InSync.Load ) XOR  
+            ( NOT AxesGroup.State.SyncStateRc .InSync.Load )
+         THEN
+           CASE AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Load[SyncTime.AFTER_START_UP] 
+           OF         
+             // NO_SYNCHRONIZATION
+             SyncMode.NO_SYNCHRONIZATION : ; // no further action 
+             
+             // CLIENT_TO_SERVER
+             SyncMode.CLIENT_TO_SERVER :
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 11;
+    
+             // SERVER_TO_CLIENT
+             SyncMode.SERVER_TO_CLIENT :
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 12;
+    
+             // AUTOMATIC
+             SyncMode.AUTOMATIC : 
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 13;
+           END_CASE
+         ELSE
+           // datas changeḍ on both sides ? -> Warning 
+           IF (( NOT AxesGroup.State.SyncStatePlc.InSync.Load ) AND  
+               ( NOT AxesGroup.State.SyncStateRc .InSync.Load ))
+           THEN
+             WarningID := RobotLibraryWarningIdEnum.WARN_LOAD_SYNC_BOTH_SIDES_CHANGED;
+           END_IF
+         END_IF
+  
+  
+    // ------------------------------------------
+    // SyncMode : CLIENT_TO_SERVER 
+    // ------------------------------------------  
+    11 : // Conflict triggerd by PLC ?  
+         IF ( NOT AxesGroup.State.SyncStatePlc.InSync.Load )
+         THEN
+           // search for changed index  
+           FOR _rSyncIdx := 1 TO AxesGroup.State.UnifiedLoadIndex //  !!! Attention : 0 is not allowed - LoadData starts with 1 !!!  
+           DO
+             IF ( AxesGroup.State.DataChanged.Load[_rSyncIdx] )
+             THEN
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 30; // -> write PLC data to RC                  
+               EXIT;             
+  					 END_IF
+           END_FOR
+           
+           // Create log entry
+           CreateLogMessagePara3 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncLoadData: Synchronization of Load[{1}] triggered by PLC, SyncMode = {2}, SyncTime = {3}, SyncDirection = PLC -> RC',
+                                   Para1       :=  DINT_TO_STRING(_rSyncIdx),
+                                   Para2       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Load[SyncTime.AFTER_START_UP]),
+                                   Para3       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+         END_IF
+     
+         // Conflict triggered by RC ?
+         IF ( NOT AxesGroup.State.SyncStateRc.InSync.Load )
+         THEN
+           // get changed index 
+          _rSyncIdx :=  LIMIT(1, AxesGroup.State.SyncStateRc.UnSyncNo.Load, AxesGroup.State.UnifiedLoadIndex); //  !!! Attention : 0 is not allowed - LoadData starts with 1 !!!  
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 30; // -> write PLC data to RC
+  
+           // Create log entry
+           CreateLogMessagePara3 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncLoadData: Synchronization of Load[{1}] triggered by RC, SyncMode = {2}, SyncTime = {3}, SyncDirection = PLC -> RC',
+                                   Para1       :=  DINT_TO_STRING(_rSyncIdx),
+                                   Para2       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Load[SyncTime.AFTER_START_UP]),
+                                   Para3       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+  			 END_IF
+         
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // jump back
+        _rStep := 10;
+  
+         
+    // ------------------------------------------
+    // SyncMode : SERVER_TO_CLIENT 
+    // ------------------------------------------
+    12 : // Conflict triggerd by PLC ?  
+         IF ( NOT AxesGroup.State.SyncStatePlc.InSync.Load )
+         THEN
+           // search for changed index  
+           FOR _rSyncIdx := 1 TO AxesGroup.State.UnifiedLoadIndex //  !!! Attention : 0 is not allowed - LoadData starts with 1 !!!  
+           DO
+             IF ( AxesGroup.State.DataChanged.Load[_rSyncIdx] )
+             THEN
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 20; // -> read RC data and write it to PLC                  
+               EXIT;
+  					 END_IF
+           END_FOR
+  
+           // Create log entry
+           CreateLogMessagePara3 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncLoadData: Synchronization of Load[{1}] triggered by PLC, SyncMode = {2}, SyncTime = {3}, SyncDirection = RC -> PLC',
+                                   Para1       :=  DINT_TO_STRING(_rSyncIdx),
+                                   Para2       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Load[SyncTime.AFTER_START_UP]),
+                                   Para3       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+         END_IF
+     
+         // Conflict triggered by RC ?
+         IF ( NOT AxesGroup.State.SyncStateRc.InSync.Load )
+         THEN
+           // get changed index 
+          _rSyncIdx := LIMIT(1, AxesGroup.State.SyncStateRc.UnSyncNo.Load, AxesGroup.State.UnifiedLoadIndex); //  !!! Attention : 0 is not allowed - LoadData starts with 1 !!!  
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 20; // -> read RC data and write it to PLC
+  
+           // Create log entry
+           CreateLogMessagePara3 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncLoadData: Synchronization of Load[{1}] triggered by RC, SyncMode = {2}, SyncTime = {3}, SyncDirection = RC -> PLC',
+                                   Para1       :=  DINT_TO_STRING(_rSyncIdx),
+                                   Para2       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Load[SyncTime.AFTER_START_UP]),
+                                   Para3       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+  			 END_IF
+         
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // jump back
+        _rStep := 10;
+    
+  
+    // ------------------------------------------
+    // SyncMode : AUTOMATIC 
+    // ------------------------------------------
+    13 : // Conflict triggerd by PLC ?  
+         IF ( NOT AxesGroup.State.SyncStatePlc.InSync.Load )
+         THEN
+           // search for changed index  
+           FOR _rSyncIdx := 1 TO AxesGroup.State.UnifiedLoadIndex //  !!! Attention : 0 is not allowed - LoadData starts with 1 !!!  
+           DO
+             IF ( AxesGroup.State.DataChanged.Load[_rSyncIdx] )
+             THEN
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 30; // -> write PLC data to RC                  
+               EXIT;
+  					 END_IF
+           END_FOR
+           
+           // Create log entry
+           CreateLogMessagePara3 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncLoadData: Synchronization of Load[{1}] triggered by PLC, SyncMode = {2}, SyncTime = {3}, SyncDirection = PLC -> RC',
+                                   Para1       :=  DINT_TO_STRING(_rSyncIdx),
+                                   Para2       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Load[SyncTime.AFTER_START_UP]),
+                                   Para3       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+         END_IF
+     
+         // Conflict triggered by RC ?
+         IF ( NOT AxesGroup.State.SyncStateRc.InSync.Load )
+         THEN
+           // get changed index 
+          _rSyncIdx := LIMIT(1, AxesGroup.State.SyncStateRc.UnSyncNo.Load, AxesGroup.State.UnifiedLoadIndex); //  !!! Attention : 0 is not allowed - LoadData starts with 1 !!!  
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 20; // -> read RC data an write it to PLC
+  
+           // Create log entry
+           CreateLogMessagePara3 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncLoadData: Synchronization of Load[{1}] triggered by RC, SyncMode = {2}, SyncTime = {3}, SyncDirection = RC -> PLC',
+                                   Para1       :=  DINT_TO_STRING(_rSyncIdx),
+                                   Para2       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Load[SyncTime.AFTER_START_UP]),
+                                   Para3       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+  			 END_IF
+         
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // jump back
+        //_rStep := 10;
+  
+  
+    // ------------------------------------------
+    // Read Data from RC and write it to PLC
+    // ------------------------------------------
+    20 : IF (( NOT _readLoadData.Busy  ) AND 
+             ( NOT _readLoadData.Error ))
+         THEN
+           // set command parameter
+          _readLoadData.ParCmd.LoadNo := _rSyncIdx;      
+           // execute command
+          _readLoadData.Execute := TRUE;
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := _rStep + 1;
+         ELSE
+           // check error ? 
+           IF (_readLoadData.Error)
+           THEN
+             ErrorID     := _readLoadData.ErrorID;
+             ErrorAddTxt := _readLoadData.ErrorAddTxt;
+           END_IF  
+         
+           // timeout exceeded ? 
+           IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+           THEN
+             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+             ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+           END_IF
+         END_IF
+   
+    21 : IF (( NOT _readLoadData.Busy  ) AND
+             ( NOT _readLoadData.Error ) AND
+             (     _readLoadData.Done  ))
+         THEN
+           // reset execution
+          _readLoadData.Execute := FALSE;
+           // update internal Load data
+           LoadData[_rSyncIdx].Data := _readLoadData.OutCmd.LoadData;         
+          _loadData[_rSyncIdx].Data := _readLoadData.OutCmd.LoadData;
+           // set available bit
+           LoadData[_rSyncIdx].Available := TRUE;
+          _loadData[_rSyncIdx].Available := TRUE;
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 10; // -> jump to after startup           
+         ELSE
+           // check error ? 
+           IF (_readLoadData.Error)
+           THEN
+             ErrorID     := _readLoadData.ErrorID;
+             ErrorAddTxt := _readLoadData.ErrorAddTxt;           
+             // reset available bit
+             LoadData[_rSyncIdx].Available := FALSE;
+            _loadData[_rSyncIdx].Available := FALSE;
+           END_IF  
+         
+           // timeout exceeded ? 
+           IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+           THEN
+             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+             ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+           END_IF
+         END_IF
+  
+  
+    // ------------------------------------------
+    // Write data from PLC to RC
+    // ------------------------------------------
+    30 : IF (( NOT _writeLoadData.Busy  ) AND 
+             ( NOT _writeLoadData.Error ))
+         THEN
+           // set command parameter
+          _writeLoadData.ParCmd.LoadNo   := _rSyncIdx;      
+          _writeLoadData.ParCmd.LoadData :=  LoadData[_rSyncIdx].Data;
+           // execute command
+          _writeLoadData.Execute := TRUE;
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := _rStep + 1;
+         ELSE
+           // check error ? 
+           IF (_writeLoadData.Error)
+           THEN
+             ErrorID     := _writeLoadData.ErrorID;
+             ErrorAddTxt := _writeLoadData.ErrorAddTxt;;
+           END_IF  
+         
+           // timeout exceeded ? 
+           IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+           THEN
+             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+             ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+           END_IF
+         END_IF
+   
+    31 : IF (( NOT _writeLoadData.Busy  ) AND
+             ( NOT _writeLoadData.Error ) AND
+             (     _writeLoadData.Done  ))
+         THEN
+           // execute command
+          _writeLoadData.Execute := FALSE;      
+           // update internal Load data
+          _loadData[_rSyncIdx] := LoadData[_rSyncIdx]; 
+           // set available bit
+           LoadData[_rSyncIdx].Available := TRUE; 
+          _loadData[_rSyncIdx].Available := TRUE;         
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 10; // -> jump to after startup;           
+         ELSE
+           // check error ? 
+           IF (_writeLoadData.Error)
+           THEN
+             WarningID := RobotLibraryWarningIdEnum.WARN_LOAD_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;    
+             // reset available bit
+             LoadData[_rSyncIdx].Available := FALSE;
+            _loadData[_rSyncIdx].Available := FALSE;
+           END_IF  
+         
+           // timeout exceeded ? 
+           IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+           THEN
+             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+             ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+           END_IF
+         END_IF
+         
+  ELSE
+    // invalid step
+    ErrorID     := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
+    ErrorAddTxt := CONCAT(_stepName , DINT_TO_STRING(_stepCmd));
+  END_CASE
 
 END_METHOD
 
 METHOD PRIVATE HandleSyncRobotDefaultDynamics
 VAR_IN_OUT
    /// Robot assignment of function
-  AxesGroup    : AxesGroup;
+  AxesGroup       : AxesGroup;
+  /// Default dynamics stored on PLC. For more information refer to 5.5.7
+  DefaultDynamics : DefaultDynamics;
+END_VAR 
+
+VAR
+  /// Internal step counter name
+ _stepName        : STRING;    
+  /// Internal reference to step counter
+ _rStep           : REFERENCE TO DINT;
+  /// Internal reference to timer
+ _rTimer          : REFERENCE TO TON;
+  /// Internal reference to timeout
+ _rTimeout        : REFERENCE TO TIME; 
+  /// Internal reference to synchroniztion index
+ _rSyncIdx        : REFERENCE TO USINT;
+  /// internal bit for condition found
+ _found           : BOOL;
+  /// empty data set to reset all DataChanged bits
+ _dataChangedNone : AxesGroupStateDataChanged;
 END_VAR
 
+  // Set internal references 
+  _stepName      :=   '_stepSyncDefaultDynamics = ';
+  _rStep       REF=    _stepSyncDefaultDynamics;
+  _rTimer      REF=   _timerSyncDefaultDynamics;
+  _rTimeout    REF= _timeoutSyncDefaultDynamics;
+  
+  CASE _rStep
+  OF    
+    0: // wait for initialisation done
+       IF  ((     AxesGroup.State.RobotData.RCSupportedFunctions .ReadRobotDefaultDynamics ) AND
+            (     AxesGroup.State.RobotData.RCSupportedFunctions.WriteRobotDefaultDynamics ) AND
+            (     AxesGroup.State.Initialized                                              ) AND 
+            ( NOT Error                                                                    ))  
+       THEN
+         // Create log entry
+         CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                                 MessageType := MessageType.CMD,
+                                 Severity    := Severity.DEBUG,
+                                 MessageCode := 0,
+                                 MessageText := 'SyncDefaultDynamics: Start initial reading of DefaultDynamics from RC',
+                                 Para1       :=  '');
+         
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // inc step counter
+        _rStep := _rStep + 1;
+       END_IF     
+  
+       
+       // Start read DefaultDynamics
+    1: IF (( NOT _readRobotDefaultDynamics .Busy  ) AND 
+           ( NOT _readRobotDefaultDynamics.Error ))
+       THEN
+         // execute command
+        _readRobotDefaultDynamics.Execute := TRUE;
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // inc step counter
+        _rStep := _rStep + 1;
+       ELSE
+         // check error ? 
+         IF ( _readRobotDefaultDynamics.Error ) AND ( WarningID = RobotLibraryWarningIdEnum.NO_WARNING )
+         THEN
+           WarningID := RobotLibraryWarningIdEnum.WARN_DEFAULT_DYNAMICS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;           
+         END_IF  
+         
+         // timeout exceeded ? 
+         IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+         THEN
+           ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+           ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+         END_IF
+       END_IF
+   
+       
+       // Wait DefaultDynamics read
+    2: IF (( NOT _readRobotDefaultDynamics.Busy  ) AND
+           ( NOT _readRobotDefaultDynamics.Error ) AND
+           (     _readRobotDefaultDynamics.Done  ))
+       THEN
+         // reset execution
+        _readRobotDefaultDynamics.Execute := FALSE;
+         // Copy data
+        _defaultDynamics := _readRobotDefaultDynamics.OutCmd.DynamicValues;
+         // Set plc in sync flag
+         AxesGroup.State.SyncStatePlc.InSync.DefaultDynamics := TRUE;
+  
+         // Check DefaultDynamics data is equal ? 
+         IF ( NOT IsDefaultDynamicsEqual( Data1 := _defaultDynamics, Data2 := DefaultDynamics, IgnoreTimestamp := TRUE))
+         THEN
+           // Reset plc in sync flag
+           AxesGroup.State.SyncStatePlc.InSync.DefaultDynamics := FALSE;
+           // Set data changed flag
+           AxesGroup.State.DataChanged.DefaultDynamics := TRUE;
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := _rStep + 1;           
+          
+           // Create log entry
+           CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncDefaultDynamics: Detected a difference in DefaultDynamics between PLC and RC',
+                                   Para1       :=  '');
+          
+          
+           // Check synchronisation is enabled ? 
+           IF ( NOT  AxesGroup.State.DataEnableSync.EnableSyncDefaultDynamics ) AND (InfoID = RobotLibraryInfoIdEnum.NO_INFO )
+           THEN
+             InfoID := RobotLibraryInfoIdEnum.INFO_SYNC_DEFAULT_DYNAMICS_DISABLED;
+  				 END_IF
+           
+           // Check user interaction needed ?  
+           IF ( AxesGroup.Parameter.Plc.Parameter.SyncUserInteraction.DefaultDynamics ) AND ( WarningID = RobotLibraryWarningIdEnum.NO_WARNING )
+           THEN
+             WarningID := RobotLibraryWarningIdEnum.WARN_DEFAULT_DYNAMICS_SYNC_ERROR;                    
+  				 END_IF
+  			 END_IF             
+       ELSE
+         // check error ? 
+         IF (_readRobotDefaultDynamics.Error)
+         THEN
+           // Set warning
+           WarningID := RobotLibraryWarningIdEnum.WARN_DEFAULT_DYNAMICS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;                    
+         END_IF  
+         
+         // timeout exceeded ? 
+         IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+         THEN
+           ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+           ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+         END_IF
+       END_IF
+       
+       
+       // Check synchronisation state ? 
+    3: IF ((  NOT AxesGroup.State.DataChanged.DefaultDynamics                                                                                    ) OR 
+           (      AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.DefaultDynamics[SyncTime.DURING_START_UP] = SyncMode.NO_SYNCHRONIZATION ))
+       THEN
+         // Update bit for data in sync
+         AxesGroup.State.SyncStatePlc.InSync.DefaultDynamics := NOT AxesGroup.State.DataChanged.DefaultDynamics ;
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // inc step counter
+        _rStep := 10; // -> jump to after startup
+              
+         // Create log entry
+         CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                                 MessageType := MessageType.CMD,
+                                 Severity    := Severity.DEBUG,
+                                 MessageCode := 0,
+                                 MessageText := 'SyncDefaultDynamics: Synchronization Startup Phase done',
+                                 Para1       :=  '' );      
+       ELSE 
+         // Check user interaction needed ? 
+         IF ( NOT AxesGroup.Parameter.Plc.Parameter.SyncUserInteraction.DefaultDynamics )
+         THEN 
+           CASE AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.DefaultDynamics[SyncTime.DURING_START_UP] OF
+  
+             SyncMode.SERVER_TO_CLIENT : 
+  
+               // Overwrite PLC data with RC data
+               DefaultDynamics := _defaultDynamics;            
+               // Reset data changed flags
+               AxesGroup.State.DataChanged.DefaultDynamics := _dataChangedNone.DefaultDynamics;
+               // Reset Synchronizing flag
+               AxesGroup.State.Synchronizing.DefaultDynamics := FALSE;
+               // Set plc in sync flag
+               AxesGroup.State.SyncStatePlc.InSync.DefaultDynamics := TRUE;
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 10; // -> jump to after startup         
+  
+              // Create log entry
+              CreateLogMessagePara2 ( Timestamp   := SystemTime,
+                                      MessageType := MessageType.CMD,
+                                      Severity    := Severity.DEBUG,
+                                      MessageCode := 0,
+                                      MessageText := 'SyncDefaultDynamics: Synchronization of DefaultDynamics triggered by StartUp-Compare, SyncMode = {1}, SyncTime = {2}, SyncDirection = RC -> PLC',
+                                      Para1       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.DefaultDynamics[SyncTime.DURING_START_UP]),
+                                      Para2       :=  SYNC_TIME_TO_STRING(SyncTime.DURING_START_UP));
+              // Create log entry
+              CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                                      MessageType := MessageType.CMD,
+                                      Severity    := Severity.DEBUG,
+                                      MessageCode := 0,
+                                      MessageText := 'SyncDefaultDynamics: Applied the initial read DefaultDynamics from RC',
+                                      Para1       :=  '' );
+  
+  				   SyncMode.CLIENT_TO_SERVER : ;
+  
+               IF ( AxesGroup.State.DataChanged.DefaultDynamics ) 
+               THEN
+                 // Reset plc in sync flag
+                 AxesGroup.State.SyncStatePlc.InSync.DefaultDynamics := FALSE;
+                 // Set Synchronizing flag
+                 AxesGroup.State.Synchronizing.DefaultDynamics := TRUE;
+                 // set timeout
+                 SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+                 // inc step counter
+                _rStep := _rStep +1; // -> write PLC data to RC                  
+                 // Create log entry
+                 CreateLogMessagePara2 ( Timestamp   := SystemTime,
+                                         MessageType := MessageType.CMD,
+                                         Severity    := Severity.DEBUG,
+                                         MessageCode := 0,
+                                         MessageText := 'SyncDefaultDynamics: Synchronization of DefaultDynamics triggered by StartUp-Compare, SyncMode = {1}, SyncTime = {2}, SyncDirection = PLC -> RC',
+                                         Para1       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.DefaultDynamics[SyncTime.DURING_START_UP]),
+                                         Para2       :=  SYNC_TIME_TO_STRING(SyncTime.DURING_START_UP));
+               ELSE
+                 // Reset data changed flags
+                 AxesGroup.State.DataChanged.DefaultDynamics := _dataChangedNone.DefaultDynamics;
+                 // Reset Synchronizing flag
+                 AxesGroup.State.Synchronizing.DefaultDynamics := FALSE;
+                 // Set plc in sync flag
+                 AxesGroup.State.SyncStatePlc.InSync.DefaultDynamics := TRUE;
+                 // set timeout
+                 SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+                 // inc step counter
+                _rStep := 10; // -> jump to after startup                  
+  				     END_IF
+           ELSE
+             // invalid sync mode for startup
+             ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+   	       END_CASE
+         END_IF
+       END_IF  
+  
+       
+       // Start write DefaultDynamics data  
+    4: IF (( NOT _writeRobotDefaultDynamics.Busy  ) AND 
+           ( NOT _writeRobotDefaultDynamics.Error ))
+       THEN
+         // set command parameter
+        _writeRobotDefaultDynamics.ParCmd.DynamicValues :=  DefaultDynamics;
+         // execute command
+        _writeRobotDefaultDynamics.Execute := TRUE;
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // inc step counter
+        _rStep := _rStep + 1;
+       ELSE
+         // check error ? 
+         IF (_writeRobotDefaultDynamics.Error)
+         THEN
+           ErrorID     := _writeRobotDefaultDynamics.ErrorID;
+           ErrorAddTxt := _writeRobotDefaultDynamics.ErrorAddTxt;;
+         END_IF  
+         
+         // timeout exceeded ? 
+         IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+         THEN
+           ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+           ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+         END_IF
+       END_IF
+   
+       
+       // Wait DefaultDynamics data written ?   
+    5: IF (( NOT _writeRobotDefaultDynamics.Busy  ) AND
+           ( NOT _writeRobotDefaultDynamics.Error ) AND
+           (     _writeRobotDefaultDynamics.Done  ))
+       THEN
+         // execute command
+        _writeRobotDefaultDynamics.Execute := FALSE;
+         // apply DefaultDynamics data to internal DefaultDynamics data
+        _defaultDynamics := DefaultDynamics;
+         // reset data changed bit 
+         AxesGroup.State.DataChanged.DefaultDynamics := FALSE;
+         // set timeout        
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // dec step counter
+        _rStep := _rStep - 2; 
+       ELSE
+         // check error ? 
+         IF (_writeRobotDefaultDynamics.Error)
+         THEN
+           WarningID := RobotLibraryWarningIdEnum.WARN_DEFAULT_DYNAMICS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;           
+         END_IF  
+         
+         // timeout exceeded ? 
+         IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+         THEN
+           ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+           ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+         END_IF
+       END_IF
+  
+       
+    // --------------------------------------------
+    // SyncMode after startup : 
+    // --------------------------------------------
+           
+    10 :// check synchronisation active ? 
+         IF ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.DefaultDynamics[SyncTime.AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION)
+         THEN
+           RETURN;
+         END_IF
+         
+         // compare DefaultDynamics data
+         AxesGroup.State.DataChanged.DefaultDynamics := NOT IsDefaultDynamicsEqual( Data1 := DefaultDynamics, Data2 := _defaultDynamics, IgnoreTimestamp := FALSE);
+  
+         // Check DefaultDynamics data changed ? 
+         IF (AxesGroup.State.DataChanged.DefaultDynamics)
+         THEN
+           // Create log entry
+           CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncDefaultDynamics: Detected a local change of DefaultDynamics on PLC, SyncTime = {1}',
+                                   Para1       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));       
+         END_IF
+  
+         // Update plc in sync flag
+         AxesGroup.State.SyncStatePlc.InSync.DefaultDynamics := NOT AxesGroup.State.DataChanged.DefaultDynamics; 
+  
+  
+         // Check synchronization is needed ? 
+         IF ( NOT AxesGroup.State.SyncStatePlc.InSync.DefaultDynamics ) XOR  
+            ( NOT AxesGroup.State.SyncStateRc .InSync.DefaultDynamics )
+         THEN
+           CASE AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.DefaultDynamics[SyncTime.AFTER_START_UP] 
+           OF         
+             // NO_SYNCHRONIZATION
+             SyncMode.NO_SYNCHRONIZATION : ; // no further action 
+             
+             // CLIENT_TO_SERVER
+             SyncMode.CLIENT_TO_SERVER :
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 11;
+    
+             // SERVER_TO_CLIENT
+             SyncMode.SERVER_TO_CLIENT :
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 12;
+    
+             // AUTOMATIC
+             SyncMode.AUTOMATIC : 
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 13;
+           END_CASE
+         ELSE
+           // datas changeḍ on both sides ? -> Warning 
+           IF (( NOT AxesGroup.State.SyncStatePlc.InSync.DefaultDynamics ) AND  
+               ( NOT AxesGroup.State.SyncStateRc .InSync.DefaultDynamics ))
+           THEN
+             WarningID := RobotLibraryWarningIdEnum.WARN_DEFAULT_DYNAMICS_SYNC_BOTH_SIDES_CHANGED;
+           END_IF
+         END_IF
+  
+  
+    // ------------------------------------------
+    // SyncMode : CLIENT_TO_SERVER 
+    // ------------------------------------------  
+    11 : // Conflict triggerd by PLC ?  
+         IF ( NOT AxesGroup.State.SyncStatePlc.InSync.DefaultDynamics ) 
+         THEN
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 30; // -> write PLC data to RC                  
+           
+           // Create log entry
+           CreateLogMessagePara2 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncDefaultDynamics: Synchronization of DefaultDynamics triggered by PLC, SyncMode = {1}, SyncTime = {2}, SyncDirection = PLC -> RC',
+                                   Para1       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.DefaultDynamics[SyncTime.AFTER_START_UP]),
+                                   Para2       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+         END_IF
+     
+         // Conflict triggered by RC ?
+         IF ( NOT AxesGroup.State.SyncStateRc.InSync.DefaultDynamics )
+         THEN
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 30; // -> write PLC data to RC
+  
+           // Create log entry
+           CreateLogMessagePara2 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncDefaultDynamics: Synchronization of DefaultDynamics triggered by RC, SyncMode = {1}, SyncTime = {2}, SyncDirection = PLC -> RC',
+                                   Para1       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.DefaultDynamics[SyncTime.AFTER_START_UP]),
+                                   Para2       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+  			 END_IF
+         
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // jump back
+        _rStep := 10;
+  
+         
+    // ------------------------------------------
+    // SyncMode : SERVER_TO_CLIENT 
+    // ------------------------------------------
+    12 : // Conflict triggerd by PLC ?  
+         IF ( NOT AxesGroup.State.SyncStatePlc.InSync.DefaultDynamics )
+         THEN
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 20; // -> read RC data and write it to PLC                  
+  
+           // Create log entry
+           CreateLogMessagePara2 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncDefaultDynamics: Synchronization of DefaultDynamics triggered by PLC, SyncMode = {1}, SyncTime = {2}, SyncDirection = RC -> PLC',
+                                   Para1       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.DefaultDynamics[SyncTime.AFTER_START_UP]),
+                                   Para2       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+         END_IF
+     
+         // Conflict triggered by RC ?
+         IF ( NOT AxesGroup.State.SyncStateRc.InSync.DefaultDynamics )
+         THEN
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 20; // -> read RC data and write it to PLC
+  
+           // Create log entry
+           CreateLogMessagePara2 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncDefaultDynamics: Synchronization of DefaultDynamics triggered by RC, SyncMode = {1}, SyncTime = {2}, SyncDirection = RC -> PLC',
+                                   Para1       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.DefaultDynamics[SyncTime.AFTER_START_UP]),
+                                   Para2       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+  			 END_IF
+         
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // jump back
+        _rStep := 10;
+    
+  
+    // ------------------------------------------
+    // SyncMode : AUTOMATIC 
+    // ------------------------------------------
+    13 : // Conflict triggerd by PLC ?  
+         IF ( NOT AxesGroup.State.SyncStatePlc.InSync.DefaultDynamics )
+         THEN
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 30; // -> write PLC data to RC                  
+           
+           // Create log entry
+           CreateLogMessagePara2 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncDefaultDynamics: Synchronization of DefaultDynamics triggered by PLC, SyncMode = {1}, SyncTime = {2}, SyncDirection = PLC -> RC',
+                                   Para1       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.DefaultDynamics[SyncTime.AFTER_START_UP]),
+                                   Para2       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+         END_IF
+     
+         // Conflict triggered by RC ?
+         IF ( NOT AxesGroup.State.SyncStateRc.InSync.DefaultDynamics )
+         THEN
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 20; // -> read RC data an write it to PLC
+  
+           // Create log entry
+           CreateLogMessagePara2 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncDefaultDynamics: Synchronization of DefaultDynamics triggered by RC, SyncMode = {1}, SyncTime = {2}, SyncDirection = RC -> PLC',
+                                   Para1       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.DefaultDynamics[SyncTime.AFTER_START_UP]),
+                                   Para2       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+  			 END_IF
+         
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // jump back
+        //_rStep := 10;
+  
+  
+    // ------------------------------------------
+    // Read Data from RC and write it to PLC
+    // ------------------------------------------
+    20 : IF (( NOT _readRobotDefaultDynamics.Busy  ) AND 
+             ( NOT _readRobotDefaultDynamics.Error ))
+         THEN
+           // execute command
+          _readRobotDefaultDynamics.Execute := TRUE;
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := _rStep + 1;
+         ELSE
+           // check error ? 
+           IF (_readRobotDefaultDynamics.Error)
+           THEN
+             ErrorID     := _readRobotDefaultDynamics.ErrorID;
+             ErrorAddTxt := _readRobotDefaultDynamics.ErrorAddTxt;
+           END_IF  
+         
+           // timeout exceeded ? 
+           IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+           THEN
+             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+             ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+           END_IF
+         END_IF
+   
+    21 : IF (( NOT _readRobotDefaultDynamics.Busy  ) AND
+             ( NOT _readRobotDefaultDynamics.Error ) AND
+             (     _readRobotDefaultDynamics.Done  ))
+         THEN
+           // reset execution
+          _readRobotDefaultDynamics.Execute := FALSE;
+           // update internal DefaultDynamics data
+           DefaultDynamics := _readRobotDefaultDynamics.OutCmd.DynamicValues;         
+          _defaultDynamics := _readRobotDefaultDynamics.OutCmd.DynamicValues;
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 10; // -> jump to after startup           
+         ELSE
+           // check error ? 
+           IF (_readRobotDefaultDynamics.Error)
+           THEN
+             ErrorID     := _readRobotDefaultDynamics.ErrorID;
+             ErrorAddTxt := _readRobotDefaultDynamics.ErrorAddTxt;           
+           END_IF  
+         
+           // timeout exceeded ? 
+           IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+           THEN
+             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+             ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+           END_IF
+         END_IF
+  
+  
+    // ------------------------------------------
+    // Write data from PLC to RC
+    // ------------------------------------------
+    30 : IF (( NOT _writeRobotDefaultDynamics.Busy  ) AND 
+             ( NOT _writeRobotDefaultDynamics.Error ))
+         THEN
+           // set command parameter
+          _writeRobotDefaultDynamics.ParCmd.DynamicValues :=  DefaultDynamics;
+           // execute command
+          _writeRobotDefaultDynamics.Execute := TRUE;
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := _rStep + 1;
+         ELSE
+           // check error ? 
+           IF (_writeRobotDefaultDynamics.Error)
+           THEN
+             ErrorID     := _writeRobotDefaultDynamics.ErrorID;
+             ErrorAddTxt := _writeRobotDefaultDynamics.ErrorAddTxt;;
+           END_IF  
+         
+           // timeout exceeded ? 
+           IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+           THEN
+             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+             ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+           END_IF
+         END_IF
+   
+    31 : IF (( NOT _writeRobotDefaultDynamics.Busy  ) AND
+             ( NOT _writeRobotDefaultDynamics.Error ) AND
+             (     _writeRobotDefaultDynamics.Done  ))
+         THEN
+           // execute command
+          _writeRobotDefaultDynamics.Execute := FALSE;      
+           // update internal DefaultDynamics data
+          _defaultDynamics := DefaultDynamics; 
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 10; // -> jump to after startup;           
+         ELSE
+           // check error ? 
+           IF (_writeRobotDefaultDynamics.Error)
+           THEN
+             WarningID := RobotLibraryWarningIdEnum.WARN_DEFAULT_DYNAMICS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;    
+           END_IF  
+         
+           // timeout exceeded ? 
+           IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+           THEN
+             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+             ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+           END_IF
+         END_IF
+         
+  ELSE
+    // invalid step
+    ErrorID     := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
+    ErrorAddTxt := CONCAT(_stepName , DINT_TO_STRING(_stepCmd));
+  END_CASE
 
 END_METHOD
 
 METHOD PRIVATE HandleSyncRobotReferenceDynamics
 VAR_IN_OUT
    /// Robot assignment of function
-  AxesGroup    : AxesGroup;
+  AxesGroup         : AxesGroup;
+  /// Reference dynamics stored on PLC. For more information refer to 5.5.7
+  ReferenceDynamics : ReferenceDynamics;
+END_VAR 
+
+VAR
+  /// Internal step counter name
+ _stepName        : STRING;    
+  /// Internal reference to step counter
+ _rStep           : REFERENCE TO DINT;
+  /// Internal reference to timer
+ _rTimer          : REFERENCE TO TON;
+  /// Internal reference to timeout
+ _rTimeout        : REFERENCE TO TIME; 
+  /// Internal reference to synchroniztion index
+ _rSyncIdx        : REFERENCE TO USINT;
+  /// internal bit for condition found
+ _found           : BOOL;
+  /// empty data set to reset all DataChanged bits
+ _dataChangedNone : AxesGroupStateDataChanged;
 END_VAR
 
+  // Set internal references 
+  _stepName      :=   '_stepSyncReferenceDynamics = ';
+  _rStep       REF=    _stepSyncReferenceDynamics;
+  _rTimer      REF=   _timerSyncReferenceDynamics;
+  _rTimeout    REF= _timeoutSyncReferenceDynamics;
+  
+  CASE _rStep
+  OF    
+    0: // wait for initialisation done
+       IF  ((     AxesGroup.State.RobotData.RCSupportedFunctions .ReadRobotReferenceDynamics ) AND
+            (     AxesGroup.State.RobotData.RCSupportedFunctions.WriteRobotReferenceDynamics ) AND
+            (     AxesGroup.State.Initialized                                              ) AND 
+            ( NOT Error                                                                    ))  
+       THEN
+         // Create log entry
+         CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                                 MessageType := MessageType.CMD,
+                                 Severity    := Severity.DEBUG,
+                                 MessageCode := 0,
+                                 MessageText := 'SyncReferenceDynamics: Start initial reading of ReferenceDynamics from RC',
+                                 Para1       :=  '');
+         
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // inc step counter
+        _rStep := _rStep + 1;
+       END_IF     
+  
+       
+       // Start read ReferenceDynamics
+    1: IF (( NOT _readRobotReferenceDynamics .Busy  ) AND 
+           ( NOT _readRobotReferenceDynamics.Error ))
+       THEN
+         // execute command
+        _readRobotReferenceDynamics.Execute := TRUE;
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // inc step counter
+        _rStep := _rStep + 1;
+       ELSE
+         // check error ? 
+         IF ( _readRobotReferenceDynamics.Error ) AND ( WarningID = RobotLibraryWarningIdEnum.NO_WARNING )
+         THEN
+           WarningID := RobotLibraryWarningIdEnum.WARN_REFERENCE_DYNAMICS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;           
+         END_IF  
+         
+         // timeout exceeded ? 
+         IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+         THEN
+           ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+           ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+         END_IF
+       END_IF
+   
+       
+       // Wait ReferenceDynamics read
+    2: IF (( NOT _readRobotReferenceDynamics.Busy  ) AND
+           ( NOT _readRobotReferenceDynamics.Error ) AND
+           (     _readRobotReferenceDynamics.Done  ))
+       THEN
+         // reset execution
+        _readRobotReferenceDynamics.Execute := FALSE;
+         // Copy data
+        _referenceDynamics := _readRobotReferenceDynamics.OutCmd.DynamicValues;
+         // Set plc in sync flag
+         AxesGroup.State.SyncStatePlc.InSync.ReferenceDynamics := TRUE;
+  
+         // Check ReferenceDynamics data is equal ? 
+         IF ( NOT IsReferenceDynamicsEqual( Data1 := _referenceDynamics, Data2 := ReferenceDynamics, IgnoreTimestamp := TRUE))
+         THEN
+           // Reset plc in sync flag
+           AxesGroup.State.SyncStatePlc.InSync.ReferenceDynamics := FALSE;
+           // Set data changed flag
+           AxesGroup.State.DataChanged.ReferenceDynamics := TRUE;
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := _rStep + 1;           
+          
+           // Create log entry
+           CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncReferenceDynamics: Detected a difference in ReferenceDynamics between PLC and RC',
+                                   Para1       :=  '');
+          
+          
+           // Check synchronisation is enabled ? 
+           IF ( NOT  AxesGroup.State.DataEnableSync.EnableSyncReferenceDynamics ) AND (InfoID = RobotLibraryInfoIdEnum.NO_INFO )
+           THEN
+             InfoID := RobotLibraryInfoIdEnum.INFO_SYNC_REFERENCE_DYNAMICS_DISABLED;
+  				 END_IF
+           
+           // Check user interaction needed ?  
+           IF ( AxesGroup.Parameter.Plc.Parameter.SyncUserInteraction.ReferenceDynamics ) AND ( WarningID = RobotLibraryWarningIdEnum.NO_WARNING )
+           THEN
+             WarningID := RobotLibraryWarningIdEnum.WARN_REFERENCE_DYNAMICS_SYNC_ERROR;                    
+  				 END_IF
+  			 END_IF             
+       ELSE
+         // check error ? 
+         IF (_readRobotReferenceDynamics.Error)
+         THEN
+           // Set warning
+           WarningID := RobotLibraryWarningIdEnum.WARN_REFERENCE_DYNAMICS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;                    
+         END_IF  
+         
+         // timeout exceeded ? 
+         IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+         THEN
+           ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+           ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+         END_IF
+       END_IF
+       
+       
+       // Check synchronisation state ? 
+    3: IF ((  NOT AxesGroup.State.DataChanged.ReferenceDynamics                                                                                    ) OR 
+           (      AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.ReferenceDynamics[SyncTime.DURING_START_UP] = SyncMode.NO_SYNCHRONIZATION ))
+       THEN
+         // Update bit for data in sync
+         AxesGroup.State.SyncStatePlc.InSync.ReferenceDynamics := NOT AxesGroup.State.DataChanged.ReferenceDynamics ;
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // inc step counter
+        _rStep := 10; // -> jump to after startup
+              
+         // Create log entry
+         CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                                 MessageType := MessageType.CMD,
+                                 Severity    := Severity.DEBUG,
+                                 MessageCode := 0,
+                                 MessageText := 'SyncReferenceDynamics: Synchronization Startup Phase done',
+                                 Para1       :=  '' );      
+       ELSE 
+         // Check user interaction needed ? 
+         IF ( NOT AxesGroup.Parameter.Plc.Parameter.SyncUserInteraction.ReferenceDynamics )
+         THEN 
+           CASE AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.ReferenceDynamics[SyncTime.DURING_START_UP] OF
+  
+             SyncMode.SERVER_TO_CLIENT : 
+  
+               // Overwrite PLC data with RC data
+               ReferenceDynamics := _referenceDynamics;            
+               // Reset data changed flags
+               AxesGroup.State.DataChanged.ReferenceDynamics := _dataChangedNone.ReferenceDynamics;
+               // Reset Synchronizing flag
+               AxesGroup.State.Synchronizing.ReferenceDynamics := FALSE;
+               // Set plc in sync flag
+               AxesGroup.State.SyncStatePlc.InSync.ReferenceDynamics := TRUE;
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 10; // -> jump to after startup         
+  
+              // Create log entry
+              CreateLogMessagePara2 ( Timestamp   := SystemTime,
+                                      MessageType := MessageType.CMD,
+                                      Severity    := Severity.DEBUG,
+                                      MessageCode := 0,
+                                      MessageText := 'SyncReferenceDynamics: Synchronization of ReferenceDynamics triggered by StartUp-Compare, SyncMode = {1}, SyncTime = {2}, SyncDirection = RC -> PLC',
+                                      Para1       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.ReferenceDynamics[SyncTime.DURING_START_UP]),
+                                      Para2       :=  SYNC_TIME_TO_STRING(SyncTime.DURING_START_UP));
+              // Create log entry
+              CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                                      MessageType := MessageType.CMD,
+                                      Severity    := Severity.DEBUG,
+                                      MessageCode := 0,
+                                      MessageText := 'SyncReferenceDynamics: Applied the initial read ReferenceDynamics from RC',
+                                      Para1       :=  '' );
+  
+  				   SyncMode.CLIENT_TO_SERVER : ;
+  
+               IF ( AxesGroup.State.DataChanged.ReferenceDynamics ) 
+               THEN
+                 // Reset plc in sync flag
+                 AxesGroup.State.SyncStatePlc.InSync.ReferenceDynamics := FALSE;
+                 // Set Synchronizing flag
+                 AxesGroup.State.Synchronizing.ReferenceDynamics := TRUE;
+                 // set timeout
+                 SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+                 // inc step counter
+                _rStep := _rStep +1; // -> write PLC data to RC                  
+                 // Create log entry
+                 CreateLogMessagePara2 ( Timestamp   := SystemTime,
+                                         MessageType := MessageType.CMD,
+                                         Severity    := Severity.DEBUG,
+                                         MessageCode := 0,
+                                         MessageText := 'SyncReferenceDynamics: Synchronization of ReferenceDynamics triggered by StartUp-Compare, SyncMode = {1}, SyncTime = {2}, SyncDirection = PLC -> RC',
+                                         Para1       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.ReferenceDynamics[SyncTime.DURING_START_UP]),
+                                         Para2       :=  SYNC_TIME_TO_STRING(SyncTime.DURING_START_UP));
+               ELSE
+                 // Reset data changed flags
+                 AxesGroup.State.DataChanged.ReferenceDynamics := _dataChangedNone.ReferenceDynamics;
+                 // Reset Synchronizing flag
+                 AxesGroup.State.Synchronizing.ReferenceDynamics := FALSE;
+                 // Set plc in sync flag
+                 AxesGroup.State.SyncStatePlc.InSync.ReferenceDynamics := TRUE;
+                 // set timeout
+                 SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+                 // inc step counter
+                _rStep := 10; // -> jump to after startup                  
+  				     END_IF
+           ELSE
+             // invalid sync mode for startup
+             ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+   	       END_CASE
+         END_IF
+       END_IF  
+  
+       
+       // Start write ReferenceDynamics data  
+    4: IF (( NOT _writeRobotReferenceDynamics.Busy  ) AND 
+           ( NOT _writeRobotReferenceDynamics.Error ))
+       THEN
+         // set command parameter
+        _writeRobotReferenceDynamics.ParCmd.DynamicValues :=  ReferenceDynamics;
+         // execute command
+        _writeRobotReferenceDynamics.Execute := TRUE;
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // inc step counter
+        _rStep := _rStep + 1;
+       ELSE
+         // check error ? 
+         IF (_writeRobotReferenceDynamics.Error)
+         THEN
+           ErrorID     := _writeRobotReferenceDynamics.ErrorID;
+           ErrorAddTxt := _writeRobotReferenceDynamics.ErrorAddTxt;;
+         END_IF  
+         
+         // timeout exceeded ? 
+         IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+         THEN
+           ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+           ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+         END_IF
+       END_IF
+   
+       
+       // Wait ReferenceDynamics data written ?   
+    5: IF (( NOT _writeRobotReferenceDynamics.Busy  ) AND
+           ( NOT _writeRobotReferenceDynamics.Error ) AND
+           (     _writeRobotReferenceDynamics.Done  ))
+       THEN
+         // execute command
+        _writeRobotReferenceDynamics.Execute := FALSE;
+         // apply ReferenceDynamics data to internal ReferenceDynamics data
+        _referenceDynamics := ReferenceDynamics;
+         // reset data changed bit 
+         AxesGroup.State.DataChanged.ReferenceDynamics := FALSE;
+         // set timeout        
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // dec step counter
+        _rStep := _rStep - 2; 
+       ELSE
+         // check error ? 
+         IF (_writeRobotReferenceDynamics.Error)
+         THEN
+           WarningID := RobotLibraryWarningIdEnum.WARN_REFERENCE_DYNAMICS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;           
+         END_IF  
+         
+         // timeout exceeded ? 
+         IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+         THEN
+           ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+           ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+         END_IF
+       END_IF
+  
+       
+    // --------------------------------------------
+    // SyncMode after startup : 
+    // --------------------------------------------
+           
+    10 : // check synchronisation active ? 
+         IF ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.ReferenceDynamics[SyncTime.AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION)
+         THEN
+           RETURN;
+         END_IF
+  
+         // compare ReferenceDynamics data
+         AxesGroup.State.DataChanged.ReferenceDynamics := NOT IsReferenceDynamicsEqual( Data1 := ReferenceDynamics, Data2 := _referenceDynamics, IgnoreTimestamp := FALSE);
+  
+         // Check ReferenceDynamics data changed ? 
+         IF (AxesGroup.State.DataChanged.ReferenceDynamics)
+         THEN
+           // Create log entry
+           CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncReferenceDynamics: Detected a local change of ReferenceDynamics on PLC, SyncTime = {1}',
+                                   Para1       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));       
+         END_IF
+  
+         // Update plc in sync flag
+         AxesGroup.State.SyncStatePlc.InSync.ReferenceDynamics := NOT AxesGroup.State.DataChanged.ReferenceDynamics; 
+  
+  
+         // Check synchronization is needed ? 
+         IF ( NOT AxesGroup.State.SyncStatePlc.InSync.ReferenceDynamics ) XOR  
+            ( NOT AxesGroup.State.SyncStateRc .InSync.ReferenceDynamics )
+         THEN
+           CASE AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.ReferenceDynamics[SyncTime.AFTER_START_UP] 
+           OF         
+             // NO_SYNCHRONIZATION
+             SyncMode.NO_SYNCHRONIZATION : ; // no further action 
+             
+             // CLIENT_TO_SERVER
+             SyncMode.CLIENT_TO_SERVER :
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 11;
+    
+             // SERVER_TO_CLIENT
+             SyncMode.SERVER_TO_CLIENT :
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 12;
+    
+             // AUTOMATIC
+             SyncMode.AUTOMATIC : 
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 13;
+           END_CASE
+         ELSE
+           // datas changeḍ on both sides ? -> Warning 
+           IF (( NOT AxesGroup.State.SyncStatePlc.InSync.ReferenceDynamics ) AND  
+               ( NOT AxesGroup.State.SyncStateRc .InSync.ReferenceDynamics ))
+           THEN
+             WarningID := RobotLibraryWarningIdEnum.WARN_REFERENCE_DYNAMICS_SYNC_BOTH_SIDES_CHANGED;
+           END_IF
+         END_IF
+  
+  
+    // ------------------------------------------
+    // SyncMode : CLIENT_TO_SERVER 
+    // ------------------------------------------  
+    11 : // Conflict triggerd by PLC ?  
+         IF ( NOT AxesGroup.State.SyncStatePlc.InSync.ReferenceDynamics ) 
+         THEN
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 30; // -> write PLC data to RC                  
+           
+           // Create log entry
+           CreateLogMessagePara2 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncReferenceDynamics: Synchronization of ReferenceDynamics triggered by PLC, SyncMode = {1}, SyncTime = {2}, SyncDirection = PLC -> RC',
+                                   Para1       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.ReferenceDynamics[SyncTime.AFTER_START_UP]),
+                                   Para2       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+         END_IF
+     
+         // Conflict triggered by RC ?
+         IF ( NOT AxesGroup.State.SyncStateRc.InSync.ReferenceDynamics )
+         THEN
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 30; // -> write PLC data to RC
+  
+           // Create log entry
+           CreateLogMessagePara2 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncReferenceDynamics: Synchronization of ReferenceDynamics triggered by RC, SyncMode = {1}, SyncTime = {2}, SyncDirection = PLC -> RC',
+                                   Para1       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.ReferenceDynamics[SyncTime.AFTER_START_UP]),
+                                   Para2       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+  			 END_IF
+         
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // jump back
+        _rStep := 10;
+  
+         
+    // ------------------------------------------
+    // SyncMode : SERVER_TO_CLIENT 
+    // ------------------------------------------
+    12 : // Conflict triggerd by PLC ?  
+         IF ( NOT AxesGroup.State.SyncStatePlc.InSync.ReferenceDynamics )
+         THEN
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 20; // -> read RC data and write it to PLC                  
+  
+           // Create log entry
+           CreateLogMessagePara2 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncReferenceDynamics: Synchronization of ReferenceDynamics triggered by PLC, SyncMode = {1}, SyncTime = {2}, SyncDirection = RC -> PLC',
+                                   Para1       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.ReferenceDynamics[SyncTime.AFTER_START_UP]),
+                                   Para2       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+         END_IF
+     
+         // Conflict triggered by RC ?
+         IF ( NOT AxesGroup.State.SyncStateRc.InSync.ReferenceDynamics )
+         THEN
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 20; // -> read RC data and write it to PLC
+  
+           // Create log entry
+           CreateLogMessagePara2 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncReferenceDynamics: Synchronization of ReferenceDynamics triggered by RC, SyncMode = {1}, SyncTime = {2}, SyncDirection = RC -> PLC',
+                                   Para1       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.ReferenceDynamics[SyncTime.AFTER_START_UP]),
+                                   Para2       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+  			 END_IF
+         
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // jump back
+        _rStep := 10;
+    
+  
+    // ------------------------------------------
+    // SyncMode : AUTOMATIC 
+    // ------------------------------------------
+    13 : // Conflict triggerd by PLC ?  
+         IF ( NOT AxesGroup.State.SyncStatePlc.InSync.ReferenceDynamics )
+         THEN
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 30; // -> write PLC data to RC                  
+           
+           // Create log entry
+           CreateLogMessagePara2 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncReferenceDynamics: Synchronization of ReferenceDynamics triggered by PLC, SyncMode = {1}, SyncTime = {2}, SyncDirection = PLC -> RC',
+                                   Para1       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.ReferenceDynamics[SyncTime.AFTER_START_UP]),
+                                   Para2       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+         END_IF
+     
+         // Conflict triggered by RC ?
+         IF ( NOT AxesGroup.State.SyncStateRc.InSync.ReferenceDynamics )
+         THEN
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 20; // -> read RC data an write it to PLC
+  
+           // Create log entry
+           CreateLogMessagePara2 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncReferenceDynamics: Synchronization of ReferenceDynamics triggered by RC, SyncMode = {1}, SyncTime = {2}, SyncDirection = RC -> PLC',
+                                   Para1       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.ReferenceDynamics[SyncTime.AFTER_START_UP]),
+                                   Para2       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+  			 END_IF
+         
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // jump back
+        //_rStep := 10;
+  
+  
+    // ------------------------------------------
+    // Read Data from RC and write it to PLC
+    // ------------------------------------------
+    20 : IF (( NOT _readRobotReferenceDynamics.Busy  ) AND 
+             ( NOT _readRobotReferenceDynamics.Error ))
+         THEN
+           // execute command
+          _readRobotReferenceDynamics.Execute := TRUE;
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := _rStep + 1;
+         ELSE
+           // check error ? 
+           IF (_readRobotReferenceDynamics.Error)
+           THEN
+             ErrorID     := _readRobotReferenceDynamics.ErrorID;
+             ErrorAddTxt := _readRobotReferenceDynamics.ErrorAddTxt;
+           END_IF  
+         
+           // timeout exceeded ? 
+           IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+           THEN
+             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+             ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+           END_IF
+         END_IF
+   
+    21 : IF (( NOT _readRobotReferenceDynamics.Busy  ) AND
+             ( NOT _readRobotReferenceDynamics.Error ) AND
+             (     _readRobotReferenceDynamics.Done  ))
+         THEN
+           // reset execution
+          _readRobotReferenceDynamics.Execute := FALSE;
+           // update internal ReferenceDynamics data
+           ReferenceDynamics := _readRobotReferenceDynamics.OutCmd.DynamicValues;         
+          _referenceDynamics := _readRobotReferenceDynamics.OutCmd.DynamicValues;
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 10; // -> jump to after startup           
+         ELSE
+           // check error ? 
+           IF (_readRobotReferenceDynamics.Error)
+           THEN
+             ErrorID     := _readRobotReferenceDynamics.ErrorID;
+             ErrorAddTxt := _readRobotReferenceDynamics.ErrorAddTxt;           
+           END_IF  
+         
+           // timeout exceeded ? 
+           IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+           THEN
+             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+             ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+           END_IF
+         END_IF
+  
+  
+    // ------------------------------------------
+    // Write data from PLC to RC
+    // ------------------------------------------
+    30 : IF (( NOT _writeRobotReferenceDynamics.Busy  ) AND 
+             ( NOT _writeRobotReferenceDynamics.Error ))
+         THEN
+           // set command parameter
+          _writeRobotReferenceDynamics.ParCmd.DynamicValues :=  ReferenceDynamics;
+           // execute command
+          _writeRobotReferenceDynamics.Execute := TRUE;
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := _rStep + 1;
+         ELSE
+           // check error ? 
+           IF (_writeRobotReferenceDynamics.Error)
+           THEN
+             ErrorID     := _writeRobotReferenceDynamics.ErrorID;
+             ErrorAddTxt := _writeRobotReferenceDynamics.ErrorAddTxt;;
+           END_IF  
+         
+           // timeout exceeded ? 
+           IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+           THEN
+             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+             ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+           END_IF
+         END_IF
+   
+    31 : IF (( NOT _writeRobotReferenceDynamics.Busy  ) AND
+             ( NOT _writeRobotReferenceDynamics.Error ) AND
+             (     _writeRobotReferenceDynamics.Done  ))
+         THEN
+           // execute command
+          _writeRobotReferenceDynamics.Execute := FALSE;      
+           // update internal ReferenceDynamics data
+          _ReferenceDynamics := ReferenceDynamics; 
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 10; // -> jump to after startup;           
+         ELSE
+           // check error ? 
+           IF (_writeRobotReferenceDynamics.Error)
+           THEN
+             WarningID := RobotLibraryWarningIdEnum.WARN_REFERENCE_DYNAMICS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;    
+           END_IF  
+         
+           // timeout exceeded ? 
+           IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+           THEN
+             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+             ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+           END_IF
+         END_IF
+         
+  ELSE
+    // invalid step
+    ErrorID     := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
+    ErrorAddTxt := CONCAT(_stepName , DINT_TO_STRING(_stepCmd));
+  END_CASE
 
 END_METHOD
 
 METHOD PRIVATE HandleSyncRobotSWLimits
 VAR_IN_OUT
    /// Robot assignment of function
-  AxesGroup    : AxesGroup;
+  AxesGroup : AxesGroup;
+  /// Software limits stored on PLC
+  SWLimits  : SWLimits;
+END_VAR 
+
+VAR
+  /// Internal step counter name
+ _stepName        : STRING;    
+  /// Internal reference to step counter
+ _rStep           : REFERENCE TO DINT;
+  /// Internal reference to timer
+ _rTimer          : REFERENCE TO TON;
+  /// Internal reference to timeout
+ _rTimeout        : REFERENCE TO TIME; 
+  /// empty data set to reset all DataChanged bits
+ _dataChangedNone : AxesGroupStateDataChanged;
 END_VAR
 
+  // Set internal references 
+  _stepName      :=   '_stepSyncSWLimits = ';
+  _rStep       REF=    _stepSyncSWLimits;
+  _rTimer      REF=   _timerSyncSWLimits;
+  _rTimeout    REF= _timeoutSyncSWLimits;
+  
+  CASE _rStep
+  OF    
+    0: // wait for initialisation done
+       IF  ((     AxesGroup.State.RobotData.RCSupportedFunctions .ReadRobotSWLimits ) AND
+            (     AxesGroup.State.RobotData.RCSupportedFunctions.WriteRobotSWLimits ) AND
+            (     AxesGroup.State.Initialized                                       ) AND 
+            ( NOT Error                                                             ))  
+       THEN
+         // Create log entry
+         CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                                 MessageType := MessageType.CMD,
+                                 Severity    := Severity.DEBUG,
+                                 MessageCode := 0,
+                                 MessageText := 'SyncSwLimits: Start initial reading of SwLimits from RC',
+                                 Para1       :=  '');
+         
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // inc step counter
+        _rStep := _rStep + 1;
+       END_IF     
+  
+       
+       // Start read SwLimits
+    1: IF (( NOT _readRobotSWLimits .Busy  ) AND 
+           ( NOT _readRobotSWLimits.Error ))
+       THEN
+         // execute command
+        _readRobotSWLimits.Execute := TRUE;
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // inc step counter
+        _rStep := _rStep + 1;
+       ELSE
+         // check error ? 
+         IF ( _readRobotSWLimits.Error ) AND ( WarningID = RobotLibraryWarningIdEnum.NO_WARNING )
+         THEN
+           WarningID := RobotLibraryWarningIdEnum.WARN_SW_LIMITS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;           
+         END_IF  
+         
+         // timeout exceeded ? 
+         IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+         THEN
+           ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+           ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+         END_IF
+       END_IF
+   
+       
+       // Wait SwLimits read
+    2: IF (( NOT _readRobotSWLimits.Busy  ) AND
+           ( NOT _readRobotSWLimits.Error ) AND
+           (     _readRobotSWLimits.Done  ))
+       THEN
+         // reset execution
+        _readRobotSWLimits.Execute := FALSE;
+         // Copy data
+        _swLimits := _readRobotSWLimits.OutCmd.LimitValues;
+         // Set plc in sync flag
+         AxesGroup.State.SyncStatePlc.InSync.SwLimits := TRUE;
+  
+         // Check SwLimits data is equal ? 
+         IF ( NOT IsSwLimitsEqual( Data1 := _swLimits, Data2 := SwLimits, IgnoreTimestamp := TRUE))
+         THEN
+           // Reset plc in sync flag
+           AxesGroup.State.SyncStatePlc.InSync.SwLimits := FALSE;
+           // Set data changed flag
+           AxesGroup.State.DataChanged.SwLimits := TRUE;
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := _rStep + 1;           
+          
+           // Create log entry
+           CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncSwLimits: Detected a difference in SwLimits between PLC and RC',
+                                   Para1       :=  '');
+          
+          
+           // Check synchronisation is enabled ? 
+           IF ( NOT  AxesGroup.State.DataEnableSync.EnableSyncSWLimits ) AND (InfoID = RobotLibraryInfoIdEnum.NO_INFO )
+           THEN
+             InfoID := RobotLibraryInfoIdEnum.INFO_SYNC_SWLIMIT_DISABLED;
+  				 END_IF
+           
+           // Check user interaction needed ?  
+           IF ( AxesGroup.Parameter.Plc.Parameter.SyncUserInteraction.SWLimits ) AND ( WarningID = RobotLibraryWarningIdEnum.NO_WARNING )
+           THEN
+             WarningID := RobotLibraryWarningIdEnum.WARN_SW_LIMITS_SYNC_ERROR;                    
+  				 END_IF
+  			 END_IF             
+       ELSE
+         // check error ? 
+         IF (_readRobotSWLimits.Error)
+         THEN
+           // Set warning
+           WarningID := RobotLibraryWarningIdEnum.WARN_SW_LIMITS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;                    
+         END_IF  
+         
+         // timeout exceeded ? 
+         IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+         THEN
+           ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+           ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+         END_IF
+       END_IF
+       
+       
+       // Check synchronisation state ? 
+    3: IF ((  NOT AxesGroup.State.DataChanged.SwLimits                                                                                    ) OR 
+           (      AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.SWLimits[SyncTime.DURING_START_UP] = SyncMode.NO_SYNCHRONIZATION ))
+       THEN
+         // Update bit for data in sync
+         AxesGroup.State.SyncStatePlc.InSync.SwLimits := NOT AxesGroup.State.DataChanged.SwLimits ;
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // inc step counter
+        _rStep := 10; // -> jump to after startup
+              
+         // Create log entry
+         CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                                 MessageType := MessageType.CMD,
+                                 Severity    := Severity.DEBUG,
+                                 MessageCode := 0,
+                                 MessageText := 'SyncSwLimits: Synchronization Startup Phase done',
+                                 Para1       :=  '' );      
+       ELSE 
+         // Check user interaction needed ? 
+         IF ( NOT AxesGroup.Parameter.Plc.Parameter.SyncUserInteraction.SWLimits )
+         THEN 
+           CASE AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.SWLimits[SyncTime.DURING_START_UP] OF
+  
+             SyncMode.SERVER_TO_CLIENT : 
+  
+               // Overwrite PLC data with RC data
+               SwLimits := _swLimits;            
+               // Reset data changed flags
+               AxesGroup.State.DataChanged.SwLimits := _dataChangedNone.SwLimits;
+               // Reset Synchronizing flag
+               AxesGroup.State.Synchronizing.SwLimits := FALSE;
+               // Set plc in sync flag
+               AxesGroup.State.SyncStatePlc.InSync.SwLimits := TRUE;
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 10; // -> jump to after startup         
+  
+              // Create log entry
+              CreateLogMessagePara2 ( Timestamp   := SystemTime,
+                                      MessageType := MessageType.CMD,
+                                      Severity    := Severity.DEBUG,
+                                      MessageCode := 0,
+                                      MessageText := 'SyncSwLimits: Synchronization of SwLimits triggered by StartUp-Compare, SyncMode = {1}, SyncTime = {2}, SyncDirection = RC -> PLC',
+                                      Para1       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.SWLimits[SyncTime.DURING_START_UP]),
+                                      Para2       :=  SYNC_TIME_TO_STRING(SyncTime.DURING_START_UP));
+              // Create log entry
+              CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                                      MessageType := MessageType.CMD,
+                                      Severity    := Severity.DEBUG,
+                                      MessageCode := 0,
+                                      MessageText := 'SyncSwLimits: Applied the initial read SwLimits from RC',
+                                      Para1       :=  '' );
+  
+  				   SyncMode.CLIENT_TO_SERVER : ;
+  
+               IF ( AxesGroup.State.DataChanged.SwLimits ) 
+               THEN
+                 // Reset plc in sync flag
+                 AxesGroup.State.SyncStatePlc.InSync.SwLimits := FALSE;
+                 // Set Synchronizing flag
+                 AxesGroup.State.Synchronizing.SwLimits := TRUE;
+                 // set timeout
+                 SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+                 // inc step counter
+                _rStep := _rStep +1; // -> write PLC data to RC                  
+                 // Create log entry
+                 CreateLogMessagePara2 ( Timestamp   := SystemTime,
+                                         MessageType := MessageType.CMD,
+                                         Severity    := Severity.DEBUG,
+                                         MessageCode := 0,
+                                         MessageText := 'SyncSwLimits: Synchronization of SwLimits triggered by StartUp-Compare, SyncMode = {1}, SyncTime = {2}, SyncDirection = PLC -> RC',
+                                         Para1       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.SWLimits[SyncTime.DURING_START_UP]),
+                                         Para2       :=  SYNC_TIME_TO_STRING(SyncTime.DURING_START_UP));
+               ELSE
+                 // Reset data changed flags
+                 AxesGroup.State.DataChanged.SwLimits := _dataChangedNone.SwLimits;
+                 // Reset Synchronizing flag
+                 AxesGroup.State.Synchronizing.SwLimits := FALSE;
+                 // Set plc in sync flag
+                 AxesGroup.State.SyncStatePlc.InSync.SwLimits := TRUE;
+                 // set timeout
+                 SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+                 // inc step counter
+                _rStep := 10; // -> jump to after startup                  
+  				     END_IF
+           ELSE
+             // invalid sync mode for startup
+             ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+   	       END_CASE
+         END_IF
+       END_IF  
+  
+       
+       // Start write SwLimits data  
+    4: IF (( NOT _writeRobotSWLimits.Busy  ) AND 
+           ( NOT _writeRobotSWLimits.Error ))
+       THEN
+         // set command parameter
+        _writeRobotSWLimits.ParCmd.LimitValues :=  SwLimits;
+        _writeRobotSWLimits.ParCmd.ResetToFactoryDefaults := FALSE;
+         // execute command
+        _writeRobotSWLimits.Execute := TRUE;
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // inc step counter
+        _rStep := _rStep + 1;
+       ELSE
+         // check error ? 
+         IF (_writeRobotSWLimits.Error)
+         THEN
+           ErrorID     := _writeRobotSWLimits.ErrorID;
+           ErrorAddTxt := _writeRobotSWLimits.ErrorAddTxt;;
+         END_IF  
+         
+         // timeout exceeded ? 
+         IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+         THEN
+           ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+           ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+         END_IF
+       END_IF
+   
+       
+       // Wait SwLimits data written ?   
+    5: IF (( NOT _writeRobotSWLimits.Busy  ) AND
+           ( NOT _writeRobotSWLimits.Error ) AND
+           (     _writeRobotSWLimits.Done  ))
+       THEN
+         // execute command
+        _writeRobotSWLimits.Execute := FALSE;
+         // apply SwLimits data to internal SwLimits data
+        _swLimits := SwLimits;
+         // reset data changed bit 
+         AxesGroup.State.DataChanged.SwLimits := FALSE;
+         // set timeout        
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // dec step counter
+        _rStep := _rStep - 2; 
+       ELSE
+         // check error ? 
+         IF (_writeRobotSWLimits.Error)
+         THEN
+           WarningID := RobotLibraryWarningIdEnum.WARN_SW_LIMITS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;           
+         END_IF  
+         
+         // timeout exceeded ? 
+         IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+         THEN
+           ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+           ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+         END_IF
+       END_IF
+  
+       
+    // --------------------------------------------
+    // SyncMode after startup : 
+    // --------------------------------------------
+           
+    10 : // check synchronisation active ? 
+         IF ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.SWLimits[SyncTime.AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION)
+         THEN
+           RETURN;
+         END_IF
+  
+         // compare SwLimits data
+         AxesGroup.State.DataChanged.SwLimits := NOT IsSwLimitsEqual( Data1 := SwLimits, Data2 := _swLimits, IgnoreTimestamp := FALSE);
+  
+         // Check SwLimits data changed ? 
+         IF (AxesGroup.State.DataChanged.SwLimits)
+         THEN
+           // Create log entry
+           CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncSwLimits: Detected a local change of SwLimits on PLC, SyncTime = {1}',
+                                   Para1       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));       
+         END_IF
+  
+         // Update plc in sync flag
+         AxesGroup.State.SyncStatePlc.InSync.SwLimits := NOT AxesGroup.State.DataChanged.SwLimits; 
+  
+  
+         // Check synchronization is needed ? 
+         IF ( NOT AxesGroup.State.SyncStatePlc.InSync.SwLimits ) XOR  
+            ( NOT AxesGroup.State.SyncStateRc .InSync.SwLimits )
+         THEN
+           CASE AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.SWLimits[SyncTime.AFTER_START_UP] 
+           OF         
+             // NO_SYNCHRONIZATION
+             SyncMode.NO_SYNCHRONIZATION : ; // no further action 
+             
+             // CLIENT_TO_SERVER
+             SyncMode.CLIENT_TO_SERVER :
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 11;
+    
+             // SERVER_TO_CLIENT
+             SyncMode.SERVER_TO_CLIENT :
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 12;
+    
+             // AUTOMATIC
+             SyncMode.AUTOMATIC : 
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 13;
+           END_CASE
+         ELSE
+           // datas changeḍ on both sides ? -> Warning 
+           IF (( NOT AxesGroup.State.SyncStatePlc.InSync.SwLimits ) AND  
+               ( NOT AxesGroup.State.SyncStateRc .InSync.SwLimits ))
+           THEN
+             WarningID := RobotLibraryWarningIdEnum.WARN_SW_LIMITS_SYNC_BOTH_SIDES_CHANGED;
+           END_IF
+         END_IF
+  
+  
+    // ------------------------------------------
+    // SyncMode : CLIENT_TO_SERVER 
+    // ------------------------------------------  
+    11 : // Conflict triggerd by PLC ?  
+         IF ( NOT AxesGroup.State.SyncStatePlc.InSync.SwLimits ) 
+         THEN
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 30; // -> write PLC data to RC                  
+           
+           // Create log entry
+           CreateLogMessagePara2 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncSwLimits: Synchronization of SwLimits triggered by PLC, SyncMode = {1}, SyncTime = {2}, SyncDirection = PLC -> RC',
+                                   Para1       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.SWLimits[SyncTime.AFTER_START_UP]),
+                                   Para2       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+         END_IF
+     
+         // Conflict triggered by RC ?
+         IF ( NOT AxesGroup.State.SyncStateRc.InSync.SwLimits )
+         THEN
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 30; // -> write PLC data to RC
+  
+           // Create log entry
+           CreateLogMessagePara2 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncSwLimits: Synchronization of SwLimits triggered by RC, SyncMode = {1}, SyncTime = {2}, SyncDirection = PLC -> RC',
+                                   Para1       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.SWLimits[SyncTime.AFTER_START_UP]),
+                                   Para2       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+  			 END_IF
+         
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // jump back
+        _rStep := 10;
+  
+         
+    // ------------------------------------------
+    // SyncMode : SERVER_TO_CLIENT 
+    // ------------------------------------------
+    12 : // Conflict triggerd by PLC ?  
+         IF ( NOT AxesGroup.State.SyncStatePlc.InSync.SwLimits )
+         THEN
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 20; // -> read RC data and write it to PLC                  
+  
+           // Create log entry
+           CreateLogMessagePara2 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncSwLimits: Synchronization of SwLimits triggered by PLC, SyncMode = {1}, SyncTime = {2}, SyncDirection = RC -> PLC',
+                                   Para1       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.SWLimits[SyncTime.AFTER_START_UP]),
+                                   Para2       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+         END_IF
+     
+         // Conflict triggered by RC ?
+         IF ( NOT AxesGroup.State.SyncStateRc.InSync.SwLimits )
+         THEN
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 20; // -> read RC data and write it to PLC
+  
+           // Create log entry
+           CreateLogMessagePara2 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncSwLimits: Synchronization of SwLimits triggered by RC, SyncMode = {1}, SyncTime = {2}, SyncDirection = RC -> PLC',
+                                   Para1       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.SWLimits[SyncTime.AFTER_START_UP]),
+                                   Para2       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+  			 END_IF
+         
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // jump back
+        _rStep := 10;
+    
+  
+    // ------------------------------------------
+    // SyncMode : AUTOMATIC 
+    // ------------------------------------------
+    13 : // Conflict triggerd by PLC ?  
+         IF ( NOT AxesGroup.State.SyncStatePlc.InSync.SwLimits )
+         THEN
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 30; // -> write PLC data to RC                  
+           
+           // Create log entry
+           CreateLogMessagePara2 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncSwLimits: Synchronization of SwLimits triggered by PLC, SyncMode = {1}, SyncTime = {2}, SyncDirection = PLC -> RC',
+                                   Para1       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.SWLimits[SyncTime.AFTER_START_UP]),
+                                   Para2       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+         END_IF
+     
+         // Conflict triggered by RC ?
+         IF ( NOT AxesGroup.State.SyncStateRc.InSync.SwLimits )
+         THEN
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 20; // -> read RC data an write it to PLC
+  
+           // Create log entry
+           CreateLogMessagePara2 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncSwLimits: Synchronization of SwLimits triggered by RC, SyncMode = {1}, SyncTime = {2}, SyncDirection = RC -> PLC',
+                                   Para1       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.SWLimits[SyncTime.AFTER_START_UP]),
+                                   Para2       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+  			 END_IF
+         
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // jump back
+        //_rStep := 10;
+  
+  
+    // ------------------------------------------
+    // Read Data from RC and write it to PLC
+    // ------------------------------------------
+    20 : IF (( NOT _readRobotSWLimits.Busy  ) AND 
+             ( NOT _readRobotSWLimits.Error ))
+         THEN
+           // execute command
+          _readRobotSWLimits.Execute := TRUE;
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := _rStep + 1;
+         ELSE
+           // check error ? 
+           IF (_readRobotSWLimits.Error)
+           THEN
+             ErrorID     := _readRobotSWLimits.ErrorID;
+             ErrorAddTxt := _readRobotSWLimits.ErrorAddTxt;
+           END_IF  
+         
+           // timeout exceeded ? 
+           IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+           THEN
+             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+             ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+           END_IF
+         END_IF
+   
+    21 : IF (( NOT _readRobotSWLimits.Busy  ) AND
+             ( NOT _readRobotSWLimits.Error ) AND
+             (     _readRobotSWLimits.Done  ))
+         THEN
+           // reset execution
+          _readRobotSWLimits.Execute := FALSE;
+           // update internal SwLimits data
+           SwLimits := _readRobotSWLimits.OutCmd.LimitValues;         
+          _swLimits := _readRobotSWLimits.OutCmd.LimitValues;
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 10; // -> jump to after startup           
+         ELSE
+           // check error ? 
+           IF (_readRobotSWLimits.Error)
+           THEN
+             ErrorID     := _readRobotSWLimits.ErrorID;
+             ErrorAddTxt := _readRobotSWLimits.ErrorAddTxt;           
+           END_IF  
+         
+           // timeout exceeded ? 
+           IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+           THEN
+             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+             ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+           END_IF
+         END_IF
+  
+  
+    // ------------------------------------------
+    // Write data from PLC to RC
+    // ------------------------------------------
+    30 : IF (( NOT _writeRobotSWLimits.Busy  ) AND 
+             ( NOT _writeRobotSWLimits.Error ))
+         THEN
+           // set command parameter
+          _writeRobotSWLimits.ParCmd.ResetToFactoryDefaults := FALSE;      
+          _writeRobotSWLimits.ParCmd.LimitValues :=  SwLimits;
+           // execute command
+          _writeRobotSWLimits.Execute := TRUE;
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := _rStep + 1;
+         ELSE
+           // check error ? 
+           IF (_writeRobotSWLimits.Error)
+           THEN
+             ErrorID     := _writeRobotSWLimits.ErrorID;
+             ErrorAddTxt := _writeRobotSWLimits.ErrorAddTxt;;
+           END_IF  
+         
+           // timeout exceeded ? 
+           IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+           THEN
+             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+             ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+           END_IF
+         END_IF
+   
+    31 : IF (( NOT _writeRobotSWLimits.Busy  ) AND
+             ( NOT _writeRobotSWLimits.Error ) AND
+             (     _writeRobotSWLimits.Done  ))
+         THEN
+           // execute command
+          _writeRobotSWLimits.Execute := FALSE;      
+           // update internal SwLimits data
+          _swLimits := SwLimits; 
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 10; // -> jump to after startup;           
+         ELSE
+           // check error ? 
+           IF (_writeRobotSWLimits.Error)
+           THEN
+             WarningID := RobotLibraryWarningIdEnum.WARN_SW_LIMITS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;    
+           END_IF  
+         
+           // timeout exceeded ? 
+           IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+           THEN
+             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+             ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+           END_IF
+         END_IF
+         
+  ELSE
+    // invalid step
+    ErrorID     := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
+    ErrorAddTxt := CONCAT(_stepName , DINT_TO_STRING(_stepCmd));
+  END_CASE
 
 END_METHOD
 
 METHOD PRIVATE HandleSyncToolData
 VAR_IN_OUT
    /// Robot assignment of function
-  AxesGroup    : AxesGroup;
+  AxesGroup : AxesGroup;
+  /// ToolData stored on PLC.For more information refer to 5.5.6.4
+  ToolData  : ARRAY[0..RobotLibraryParameter.TOOL_MAX -1] OF Tool;
+END_VAR 
+
+VAR
+  /// Internal step counter name
+ _stepName        : STRING;    
+  /// Internal reference to step counter
+ _rStep           : REFERENCE TO DINT;
+  /// Internal reference to timer
+ _rTimer          : REFERENCE TO TON;
+  /// Internal reference to timeout
+ _rTimeout        : REFERENCE TO TIME; 
+  /// Internal reference to synchroniztion index
+ _rSyncIdx        : REFERENCE TO USINT;
+  /// internal bit for condition found
+ _found           : BOOL;
+  /// empty data set to reset all DataChanged bits
+ _dataChangedNone : AxesGroupStateDataChanged; 
 END_VAR
 
+  // Set internal references 
+  _stepName      :=   '_stepSyncToolData = ';
+  _rStep       REF=    _stepSyncToolData;
+  _rTimer      REF=   _timerSyncToolData;
+  _rTimeout    REF= _timeoutSyncToolData;
+  _rSyncIdx    REF=     _syncIdxToolData;
+  
+  CASE _rStep
+  OF    
+    0: // wait for initialisation done
+       IF  ((     AxesGroup.State.RobotData.RCSupportedFunctions. ReadToolData ) AND
+            (     AxesGroup.State.RobotData.RCSupportedFunctions.WriteToolData ) AND
+            (     AxesGroup.State.Initialized                                  ) AND 
+            ( NOT Error                                                        ))  
+       THEN
+         // Check PLC tools < RC tools and SyncTool enabled ?    
+         IF (( AxesGroup.State.DataEnableSync.EnableSyncTool      = TRUE                              )  AND
+             ( AxesGroup.Parameter.Rob.Parameter.HighestToolIndex > RobotLibraryParameter.Tool_MAX -1 ))        
+         THEN
+           WarningID := RobotLibraryWarningIdEnum.WARN_TOOL_DATA_ARRAY_TOO_SHORT;
+         END_IF
+  
+         // Create log entry
+         CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                                 MessageType := MessageType.CMD,
+                                 Severity    := Severity.DEBUG,
+                                 MessageCode := 0,
+                                 MessageText := 'SyncToolData: Start initial reading of ToolData from RC',
+                                 Para1       :=  '');
+         
+         // init tool number
+        _rSyncIdx := 0;
+         // init count of unsynchronized elements
+         AxesGroup.State.SyncStatePlc.UnSyncNo.Tool := 0;
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // inc step counter
+        _rStep := _rStep + 1;
+       END_IF     
+  
+       
+       // Start read ToolData
+    1: IF (( NOT _readToolData.Busy  ) AND 
+           ( NOT _readToolData.Error ))
+       THEN
+         // set command parameter
+        _readToolData.ParCmd.ToolNo := _rSyncIdx;      
+         // execute command
+        _readToolData.Execute := TRUE;
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // inc step counter
+        _rStep := _rStep + 1;
+       ELSE
+         // check error ? 
+         IF ( _readToolData.Error ) AND ( WarningID = RobotLibraryWarningIdEnum.NO_WARNING )
+         THEN
+           WarningID := RobotLibraryWarningIdEnum.WARN_TOOL_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;           
+         END_IF  
+         
+         // timeout exceeded ? 
+         IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+         THEN
+           ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+           ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+         END_IF
+       END_IF
+   
+       
+       // Wait Tooldata read
+    2: IF (( NOT _readToolData.Busy  ) AND
+           ( NOT _readToolData.Error ) AND
+           (     _readToolData.Done  ))
+       THEN
+         // reset execution
+        _readToolData.Execute := FALSE;
+         // set available bit
+        _toolData[_rSyncIdx].Available := TRUE; 
+         ToolData[_rSyncIdx].Available := TRUE;      
+         // Copy data
+        _toolData[_rSyncIdx].Data := _readToolData.OutCmd.ToolData;
+  
+         // Check tool data is equal ? 
+         IF ( NOT IsToolDataEqual( Data1 := _toolData[_rSyncIdx].Data, Data2 := ToolData[_rSyncIdx].Data, IgnoreTimestamp := TRUE))
+         THEN
+           // Reset plc in sync flag
+           AxesGroup.State.SyncStatePlc.InSync.Tool := FALSE;
+           // Set data changed flag
+           AxesGroup.State.DataChanged.Tool[_rSyncIdx] := TRUE;
+           // inc count of unsynchronised plc tools
+           AxesGroup.State.SyncStatePlc.UnSyncNo.Tool := AxesGroup.State.SyncStatePlc.UnSyncNo.Tool + 1;
+          
+           // Create log entry
+           CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncToolData: Detected a difference in Tool[{1}] between PLC and RC',
+                                   Para1       :=  DINT_TO_STRING(_rSyncIdx));
+          
+          
+           // Check synchronisation is enabled ? 
+           IF ( NOT AxesGroup.State.DataEnableSync.EnableSyncTool ) AND (InfoID = RobotLibraryInfoIdEnum.NO_INFO )
+           THEN
+             InfoID := RobotLibraryInfoIdEnum.INFO_SYNC_TOOL_DATA_DISABLED;
+  				 END_IF
+           
+           // Check user interaction needed ?  
+           IF ( AxesGroup.Parameter.PLC.Parameter.SyncUserInteraction.Tool ) AND ( WarningID = RobotLibraryWarningIdEnum.NO_WARNING )
+           THEN
+             WarningID := RobotLibraryWarningIdEnum.WARN_TOOL_NUMBER_SYNC_ERROR;                    
+  				 END_IF
+  			 END_IF
+               
+         // Check all tools read ? 
+         IF ( _rSyncIdx < AxesGroup.State.UnifiedToolIndex )
+         THEN
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc tool index
+          _rSyncIdx := _rSyncIdx + 1;
+           // dec step counter
+          _rStep := _rStep - 1;
+         ELSE
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := _rStep + 1;           
+         END_IF
+       ELSE
+         // check error ? 
+         IF (_readToolData.Error)
+         THEN
+           // Set warning
+           WarningID := RobotLibraryWarningIdEnum.WARN_TOOL_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;                    
+           // reset available bit
+           ToolData[_rSyncIdx].Available := FALSE;
+          _toolData[_rSyncIdx].Available := FALSE;
+         END_IF  
+         
+         // timeout exceeded ? 
+         IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+         THEN
+           ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+           ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+         END_IF
+       END_IF
+       
+       
+       // Check synchronisation state ? 
+    3: IF (( AxesGroup.State.SyncStatePlc.UnSyncNo.Tool                                            = 0                           ) OR 
+           ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Tool[SyncTime.DURING_START_UP] = SyncMode.NO_SYNCHRONIZATION ))
+       THEN
+         // Update bit for data in sync
+         AxesGroup.State.SyncStatePlc.InSync.Tool := (AxesGroup.State.SyncStatePlc.UnSyncNo.Tool = 0);
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // inc step counter
+        _rStep := 10; // -> jump to after startup
+              
+         // Create log entry
+         CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                                 MessageType := MessageType.CMD,
+                                 Severity    := Severity.DEBUG,
+                                 MessageCode := 0,
+                                 MessageText := 'SyncToolData: Synchronization Startup Phase done',
+                                 Para1       :=  '' );      
+       ELSE 
+         // Check user interaction needed ? 
+         IF ( NOT AxesGroup.Parameter.PLC.Parameter.SyncUserInteraction.Tool )
+         THEN
+           CASE AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Tool[SyncTime.DURING_START_UP] OF
+  
+             SyncMode.SERVER_TO_CLIENT : 
+  
+               // Overwrite PLC data with RC data
+               ToolData := _toolData;            
+               // Reset data changed flags
+               AxesGroup.State.DataChanged.Tool := _dataChangedNone.Tool;
+               // Reset Synchronizing flag
+               AxesGroup.State.Synchronizing.Tool := FALSE;
+               // Set plc in sync flag
+               AxesGroup.State.SyncStatePlc.InSync.Tool := TRUE;
+               // Reset count of unsynchronised plc tools
+               AxesGroup.State.SyncStatePlc.UnSyncNo.Tool := 0;            
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 10; // -> jump to after startup         
+  
+              // Create log entry
+              CreateLogMessagePara3 ( Timestamp   := SystemTime,
+                                      MessageType := MessageType.CMD,
+                                      Severity    := Severity.DEBUG,
+                                      MessageCode := 0,
+                                      MessageText := 'SyncToolData: Synchronization of Tools triggered by StartUp-Compare, SyncMode = {2}, SyncTime = {3}, SyncDirection = RC -> PLC',
+                                      Para1       :=  DINT_TO_STRING(_rSyncIdx),
+                                      Para2       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Tool[SyncTime.DURING_START_UP]),
+                                      Para3       :=  SYNC_TIME_TO_STRING(SyncTime.DURING_START_UP));
+              // Create log entry
+              CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                                      MessageType := MessageType.CMD,
+                                      Severity    := Severity.DEBUG,
+                                      MessageCode := 0,
+                                      MessageText := 'SyncToolData: Applied the initial read tool data from RC',
+                                      Para1       :=  '' );
+  
+  				   SyncMode.CLIENT_TO_SERVER : ;
+  
+               // Check conflicts to solve ? 
+               FOR _rSyncIdx := 0 TO AxesGroup.State.UnifiedToolIndex
+               DO
+                 IF ( AxesGroup.State.DataChanged.Tool[_rSyncIdx] )
+                 THEN
+                  _found := TRUE;
+                   EXIT;
+  		  			   END_IF
+               END_FOR
+             
+               IF ( _found ) 
+               THEN
+                 // Reset plc in sync flag
+                 AxesGroup.State.SyncStatePlc.InSync.Tool := FALSE;
+                 // Set Synchronizing flag
+                 AxesGroup.State.Synchronizing.Tool := TRUE;
+                 // set timeout
+                 SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+                 // inc step counter
+                _rStep := _rStep +1; // -> write PLC data to RC                  
+                 // Create log entry
+                 CreateLogMessagePara3 ( Timestamp   := SystemTime,
+                                         MessageType := MessageType.CMD,
+                                         Severity    := Severity.DEBUG,
+                                         MessageCode := 0,
+                                         MessageText := 'SyncToolData: Synchronization of Tool[{1}] triggered by StartUp-Compare, SyncMode = {2}, SyncTime = {3}, SyncDirection = PLC -> RC',
+                                         Para1       :=  DINT_TO_STRING(_rSyncIdx),
+                                         Para2       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Tool[SyncTime.DURING_START_UP]),
+                                         Para3       :=  SYNC_TIME_TO_STRING(SyncTime.DURING_START_UP));
+               ELSE
+                 // Reset data changed flags
+                 AxesGroup.State.DataChanged.Tool := _dataChangedNone.Tool;
+                 // Reset Synchronizing flag
+                 AxesGroup.State.Synchronizing.Tool := FALSE;
+                 // Set plc in sync flag
+                 AxesGroup.State.SyncStatePlc.InSync.Tool := TRUE;
+                 // Reset count of unsynchronised tools
+                 AxesGroup.State.SyncStatePlc.UnSyncNo.Tool := 0;
+                 // set timeout
+                 SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+                 // inc step counter
+                _rStep := 10; // -> jump to after startup                  
+  				     END_IF
+           ELSE
+             // invalid sync mode for startup
+             ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+   	       END_CASE
+         END_IF
+       END_IF  
+  
+       
+       // Start write tool data  
+    4: IF (( NOT _writeToolData.Busy  ) AND 
+           ( NOT _writeToolData.Error ))
+       THEN
+         // set command parameter
+        _writeToolData.ParCmd.ToolNo   := _rSyncIdx;      
+        _writeToolData.ParCmd.ToolData :=  ToolData[_rSyncIdx].Data;
+         // execute command
+        _writeToolData.Execute := TRUE;
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // inc step counter
+        _rStep := _rStep + 1;
+       ELSE
+         // check error ? 
+         IF (_writeToolData.Error)
+         THEN
+           ErrorID     := _writeToolData.ErrorID;
+           ErrorAddTxt := _writeToolData.ErrorAddTxt;;
+         END_IF  
+         
+         // timeout exceeded ? 
+         IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+         THEN
+           ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+           ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+         END_IF
+       END_IF
+   
+       
+       // Wait tool data written ?   
+    5: IF (( NOT _writeToolData.Busy  ) AND
+           ( NOT _writeToolData.Error ) AND
+           (     _writeToolData.Done  ))
+       THEN
+         // execute command
+        _writeToolData.Execute := FALSE;
+         // apply tool data to internal tool data
+        _toolData[_rSyncIdx] := ToolData[_rSyncIdx];
+         // reset data changed bit 
+         AxesGroup.State.DataChanged.Tool[_rSyncIdx] := FALSE;
+         // dec count of unsynchronised tools
+         AxesGroup.State.SyncStatePlc.UnSyncNo.Tool := AxesGroup.State.SyncStatePlc.UnSyncNo.Tool - 1;
+         // set timeout        
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // dec step counter
+        _rStep := _rStep - 2; 
+       ELSE
+         // check error ? 
+         IF (_writeToolData.Error)
+         THEN
+           WarningID := RobotLibraryWarningIdEnum.WARN_TOOL_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;           
+         END_IF  
+         
+         // timeout exceeded ? 
+         IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+         THEN
+           ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+           ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+         END_IF
+       END_IF
+  
+       
+    // --------------------------------------------
+    // SyncMode after startup : 
+    // --------------------------------------------
+           
+    10 :// check synchronisation active ? 
+         IF ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Tool[SyncTime.AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION)
+         THEN
+           RETURN;
+         END_IF
+  
+         // reset count of unsynchronised tools
+         AxesGroup.State.SyncStatePlc.UnSyncNo.Tool := 0;
+  
+         // Check all tool datas
+         FOR _rSyncIdx := 0 TO AxesGroup.State.UnifiedToolIndex
+         DO
+           // compare tool data
+           AxesGroup.State.DataChanged.Tool[_rSyncIdx] := NOT IsToolDataEqual( Data1 := ToolData[_rSyncIdx].Data, Data2 := _toolData[_rSyncIdx].Data, IgnoreTimestamp := FALSE);
+  
+           // Check Tool data changed ? 
+           IF (AxesGroup.State.DataChanged.Tool[_rSyncIdx])
+           THEN
+             // inc count of unsynchronised plc tools
+             AxesGroup.State.SyncStatePlc.UnSyncNo.Tool := AxesGroup.State.SyncStatePlc.UnSyncNo.Tool + 1;
+             // Create log entry
+             CreateLogMessagePara2 ( Timestamp   := SystemTime,
+                                     MessageType := MessageType.CMD,
+                                     Severity    := Severity.DEBUG,
+                                     MessageCode := 0,
+                                     MessageText := 'SyncToolData: Detected a local change of Tool[{1}] on PLC, SyncTime = {2}',
+                                     Para1       :=  DINT_TO_STRING(_rSyncIdx),    
+                                     Para2       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));       
+  				 END_IF
+  
+           // Update plc in sync flag
+           AxesGroup.State.SyncStatePlc.InSync.Tool := (AxesGroup.State.SyncStatePlc.UnSyncNo.Tool = 0); 
+  	     END_FOR
+  
+         // Check synchronization is needed ? 
+         IF ( NOT AxesGroup.State.SyncStatePlc.InSync.Tool ) XOR  
+            ( NOT AxesGroup.State.SyncStateRc .InSync.Tool )
+         THEN
+           CASE AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Tool[SyncTime.AFTER_START_UP] 
+           OF         
+             // NO_SYNCHRONIZATION
+             SyncMode.NO_SYNCHRONIZATION : ; // no further action 
+             
+             // CLIENT_TO_SERVER
+             SyncMode.CLIENT_TO_SERVER :
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 11;
+    
+             // SERVER_TO_CLIENT
+             SyncMode.SERVER_TO_CLIENT :
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 12;
+    
+             // AUTOMATIC
+             SyncMode.AUTOMATIC : 
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 13;
+           END_CASE
+         ELSE
+           // datas changeḍ on both sides ? -> Warning 
+           IF (( NOT AxesGroup.State.SyncStatePlc.InSync.Tool ) AND  
+               ( NOT AxesGroup.State.SyncStateRc .InSync.Tool ))
+           THEN
+             WarningID := RobotLibraryWarningIdEnum.WARN_TOOL_SYNC_BOTH_SIDES_CHANGED;
+           END_IF
+         END_IF
+  
+  
+    // ------------------------------------------
+    // SyncMode : CLIENT_TO_SERVER 
+    // ------------------------------------------  
+    11 : // Conflict triggerd by PLC ?  
+         IF ( NOT AxesGroup.State.SyncStatePlc.InSync.Tool )
+         THEN
+           // search for changed index  
+           FOR _rSyncIdx := 0 TO AxesGroup.State.UnifiedToolIndex
+           DO
+             IF ( AxesGroup.State.DataChanged.Tool[_rSyncIdx] )
+             THEN
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 30; // -> write PLC data to RC                  
+               EXIT;             
+  					 END_IF
+           END_FOR
+           
+           // Create log entry
+           CreateLogMessagePara3 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncToolData: Synchronization of Tool[{1}] triggered by PLC, SyncMode = {2}, SyncTime = {3}, SyncDirection = PLC -> RC',
+                                   Para1       :=  DINT_TO_STRING(_rSyncIdx),
+                                   Para2       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Tool[SyncTime.AFTER_START_UP]),
+                                   Para3       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+         END_IF
+     
+         // Conflict triggered by RC ?
+         IF ( NOT AxesGroup.State.SyncStateRc.InSync.Tool )
+         THEN
+           // get changed index 
+          _rSyncIdx :=  LIMIT(0, AxesGroup.State.SyncStateRc.UnSyncNo.Tool, AxesGroup.State.UnifiedToolIndex);
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 30; // -> write PLC data to RC
+  
+           // Create log entry
+           CreateLogMessagePara3 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncToolData: Synchronization of Tool[{1}] triggered by RC, SyncMode = {2}, SyncTime = {3}, SyncDirection = PLC -> RC',
+                                   Para1       :=  DINT_TO_STRING(_rSyncIdx),
+                                   Para2       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Tool[SyncTime.AFTER_START_UP]),
+                                   Para3       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+  			 END_IF
+         
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // jump back
+        _rStep := 10;
+  
+         
+    // ------------------------------------------
+    // SyncMode : SERVER_TO_CLIENT 
+    // ------------------------------------------
+    12 : // Conflict triggerd by PLC ?  
+         IF ( NOT AxesGroup.State.SyncStatePlc.InSync.Tool )
+         THEN
+           // search for changed index  
+           FOR _rSyncIdx := 0 TO AxesGroup.State.UnifiedToolIndex
+           DO
+             IF ( AxesGroup.State.DataChanged.Tool[_rSyncIdx] )
+             THEN
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 20; // -> read RC data and write it to PLC                  
+               EXIT;
+  					 END_IF
+           END_FOR
+  
+           // Create log entry
+           CreateLogMessagePara3 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncToolData: Synchronization of Tool[{1}] triggered by PLC, SyncMode = {2}, SyncTime = {3}, SyncDirection = RC -> PLC',
+                                   Para1       :=  DINT_TO_STRING(_rSyncIdx),
+                                   Para2       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Tool[SyncTime.AFTER_START_UP]),
+                                   Para3       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+         END_IF
+     
+         // Conflict triggered by RC ?
+         IF ( NOT AxesGroup.State.SyncStateRc.InSync.Tool )
+         THEN
+           // get changed index 
+          _rSyncIdx := LIMIT(0, AxesGroup.State.SyncStateRc.UnSyncNo.Tool, AxesGroup.State.UnifiedToolIndex);
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 20; // -> read RC data and write it to PLC
+  
+           // Create log entry
+           CreateLogMessagePara3 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncToolData: Synchronization of Tool[{1}] triggered by RC, SyncMode = {2}, SyncTime = {3}, SyncDirection = RC -> PLC',
+                                   Para1       :=  DINT_TO_STRING(_rSyncIdx),
+                                   Para2       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Tool[SyncTime.AFTER_START_UP]),
+                                   Para3       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+  			 END_IF
+         
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // jump back
+        _rStep := 10;
+    
+  
+    // ------------------------------------------
+    // SyncMode : AUTOMATIC 
+    // ------------------------------------------
+    13 : // Conflict triggerd by PLC ?  
+         IF ( NOT AxesGroup.State.SyncStatePlc.InSync.Tool )
+         THEN
+           // search for changed index  
+           FOR _rSyncIdx := 0 TO AxesGroup.State.UnifiedToolIndex
+           DO
+             IF ( AxesGroup.State.DataChanged.Tool[_rSyncIdx] )
+             THEN
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 30; // -> write PLC data to RC                  
+               EXIT;
+  					 END_IF
+           END_FOR
+           
+           // Create log entry
+           CreateLogMessagePara3 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncToolData: Synchronization of Tool[{1}] triggered by PLC, SyncMode = {2}, SyncTime = {3}, SyncDirection = PLC -> RC',
+                                   Para1       :=  DINT_TO_STRING(_rSyncIdx),
+                                   Para2       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Tool[SyncTime.AFTER_START_UP]),
+                                   Para3       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+         END_IF
+     
+         // Conflict triggered by RC ?
+         IF ( NOT AxesGroup.State.SyncStateRc.InSync.Tool )
+         THEN
+           // get changed index 
+          _rSyncIdx := LIMIT(0, AxesGroup.State.SyncStateRc.UnSyncNo.Tool, AxesGroup.State.UnifiedToolIndex);
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 20; // -> read RC data an write it to PLC
+  
+           // Create log entry
+           CreateLogMessagePara3 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncToolData: Synchronization of Tool[{1}] triggered by RC, SyncMode = {2}, SyncTime = {3}, SyncDirection = RC -> PLC',
+                                   Para1       :=  DINT_TO_STRING(_rSyncIdx),
+                                   Para2       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Tool[SyncTime.AFTER_START_UP]),
+                                   Para3       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+  			 END_IF
+         
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // jump back
+        //_rStep := 10;
+  
+  
+    // ------------------------------------------
+    // Read Data from RC and write it to PLC
+    // ------------------------------------------
+    20 : IF (( NOT _readToolData.Busy  ) AND 
+             ( NOT _readToolData.Error ))
+         THEN
+           // set command parameter
+          _readToolData.ParCmd.ToolNo := _rSyncIdx;      
+           // execute command
+          _readToolData.Execute := TRUE;
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := _rStep + 1;
+         ELSE
+           // check error ? 
+           IF (_readToolData.Error)
+           THEN
+             ErrorID     := _readToolData.ErrorID;
+             ErrorAddTxt := _readToolData.ErrorAddTxt;
+           END_IF  
+         
+           // timeout exceeded ? 
+           IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+           THEN
+             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+             ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+           END_IF
+         END_IF
+   
+    21 : IF (( NOT _readToolData.Busy  ) AND
+             ( NOT _readToolData.Error ) AND
+             (     _readToolData.Done  ))
+         THEN
+           // reset execution
+          _readToolData.Execute := FALSE;
+           // update internal tool data
+           ToolData[_rSyncIdx].Data := _readToolData.OutCmd.ToolData;         
+          _toolData[_rSyncIdx].Data := _readToolData.OutCmd.ToolData;
+           // set available bit
+           ToolData[_rSyncIdx].Available := TRUE;
+          _toolData[_rSyncIdx].Available := TRUE;
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 10; // -> jump to after startup           
+         ELSE
+           // check error ? 
+           IF (_readToolData.Error)
+           THEN
+             ErrorID     := _readToolData.ErrorID;
+             ErrorAddTxt := _readToolData.ErrorAddTxt;           
+             // reset available bit
+             ToolData[_rSyncIdx].Available := FALSE;
+            _toolData[_rSyncIdx].Available := FALSE;
+           END_IF  
+         
+           // timeout exceeded ? 
+           IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+           THEN
+             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+             ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+           END_IF
+         END_IF
+  
+  
+    // ------------------------------------------
+    // Write data from PLC to RC
+    // ------------------------------------------
+    30 : IF (( NOT _writeToolData.Busy  ) AND 
+             ( NOT _writeToolData.Error ))
+         THEN
+           // set command parameter
+          _writeToolData.ParCmd.ToolNo   := _rSyncIdx;      
+          _writeToolData.ParCmd.ToolData :=  ToolData[_rSyncIdx].Data;
+           // execute command
+          _writeToolData.Execute := TRUE;
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := _rStep + 1;
+         ELSE
+           // check error ? 
+           IF (_writeToolData.Error)
+           THEN
+             ErrorID     := _writeToolData.ErrorID;
+             ErrorAddTxt := _writeToolData.ErrorAddTxt;;
+           END_IF  
+         
+           // timeout exceeded ? 
+           IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+           THEN
+             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+             ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+           END_IF
+         END_IF
+   
+    31 : IF (( NOT _writeToolData.Busy  ) AND
+             ( NOT _writeToolData.Error ) AND
+             (     _writeToolData.Done  ))
+         THEN
+           // execute command
+          _writeToolData.Execute := FALSE;      
+           // update internal tool data
+          _toolData[_rSyncIdx] := ToolData[_rSyncIdx]; 
+           // set available bit
+           ToolData[_rSyncIdx].Available := TRUE; 
+          _toolData[_rSyncIdx].Available := TRUE;         
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 10; // -> jump to after startup;           
+         ELSE
+           // check error ? 
+           IF (_writeToolData.Error)
+           THEN
+             WarningID := RobotLibraryWarningIdEnum.WARN_TOOL_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;    
+             // reset available bit
+             ToolData[_rSyncIdx].Available := FALSE;
+            _toolData[_rSyncIdx].Available := FALSE;
+           END_IF  
+         
+           // timeout exceeded ? 
+           IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+           THEN
+             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+             ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+           END_IF
+         END_IF
+         
+  ELSE
+    // invalid step
+    ErrorID     := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
+    ErrorAddTxt := CONCAT(_stepName , DINT_TO_STRING(_stepCmd));
+  END_CASE
 
 END_METHOD
 
 METHOD PRIVATE HandleSyncWorkArea
 VAR_IN_OUT
    /// Robot assignment of function
-  AxesGroup    : AxesGroup;
+  AxesGroup : AxesGroup;
+  /// Work areas stored on PLC. For more information refer to 5.5.8
+  WorkAreas : ARRAY[0..RobotLibraryParameter.WORK_AREAS_MAX -1] OF RobotWorkArea;
+END_VAR 
+
+VAR
+  /// Internal step counter name
+ _stepName        : STRING;    
+  /// Internal reference to step counter
+ _rStep           : REFERENCE TO DINT;
+  /// Internal reference to timer
+ _rTimer          : REFERENCE TO TON;
+  /// Internal reference to timeout
+ _rTimeout        : REFERENCE TO TIME; 
+  /// Internal reference to synchroniztion index
+ _rSyncIdx        : REFERENCE TO USINT;
+  /// internal bit for condition found
+ _found           : BOOL;
+  /// empty data set to reset all DataChanged bits
+ _dataChangedNone : AxesGroupStateDataChanged;
 END_VAR
 
+  // Set internal references 
+  _stepName      :=   '_stepSyncWorkArea = ';
+  _rStep       REF=    _stepSyncWorkArea;
+  _rTimer      REF=   _timerSyncWorkArea;
+  _rTimeout    REF= _timeoutSyncWorkArea;
+  _rSyncIdx    REF=     _syncIdxWorkArea;
+  
+  CASE _rStep
+  OF    
+    0: // wait for initialisation done
+       IF  ((     AxesGroup.State.RobotData.RCSupportedFunctions. ReadWorkArea ) AND
+            (     AxesGroup.State.RobotData.RCSupportedFunctions.WriteWorkArea ) AND
+            (     AxesGroup.State.Initialized                                  ) AND 
+            ( NOT Error                                                        ))  
+       THEN
+         // Check PLC WorkAreas < RC WorkAreas and SyncWorkArea enabled ?    
+         IF (( AxesGroup.State.DataEnableSync.EnableSyncWorkArea      = TRUE                                    )  AND
+             ( AxesGroup.Parameter.Rob.Parameter.HighestWorkAreaIndex > RobotLibraryParameter.WORK_AREAS_MAX -1 ))        
+         THEN
+           WarningID := RobotLibraryWarningIdEnum.WARN_WORK_AREA_ARRAY_TOO_SHORT;
+         END_IF
+  
+         // Create log entry
+         CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                                 MessageType := MessageType.CMD,
+                                 Severity    := Severity.DEBUG,
+                                 MessageCode := 0,
+                                 MessageText := 'SyncWorkArea: Start initial reading of WorkArea from RC',
+                                 Para1       :=  '');
+         
+         // init WorkArea number
+        _rSyncIdx := 0;
+         // init count of unsynchronized elements
+         AxesGroup.State.SyncStatePlc.UnSyncNo.WorkArea := 0;
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // inc step counter
+        _rStep := _rStep + 1;
+       END_IF     
+  
+       
+       // Start read WorkArea
+    1: IF (( NOT _readWorkArea.Busy  ) AND 
+           ( NOT _readWorkArea.Error ))
+       THEN
+         // set command parameter
+        _readWorkArea.ParCmd.WorkAreaNo := _rSyncIdx;      
+         // execute command
+        _readWorkArea.Execute := TRUE;
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // inc step counter
+        _rStep := _rStep + 1;
+       ELSE
+         // check error ? 
+         IF ( _readWorkArea.Error ) AND ( WarningID = RobotLibraryWarningIdEnum.NO_WARNING )
+         THEN
+           WarningID := RobotLibraryWarningIdEnum.WARN_WORK_AREA_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;           
+         END_IF  
+         
+         // timeout exceeded ? 
+         IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+         THEN
+           ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+           ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+         END_IF
+       END_IF
+   
+       
+       // Wait WorkArea read
+    2: IF (( NOT _readWorkArea.Busy  ) AND
+           ( NOT _readWorkArea.Error ) AND
+           (     _readWorkArea.Done  ))
+       THEN
+         // reset execution
+        _readWorkArea.Execute := FALSE;
+         // set available bit
+        _workAreas[_rSyncIdx].Available := TRUE; 
+         WorkAreas[_rSyncIdx].Available := TRUE;      
+         // Copy data
+        _workAreas[_rSyncIdx].Data := _readWorkArea.OutCmd.WorkAreaData;
+  
+         // Check WorkArea data is equal ? 
+         IF ( NOT IsWorkAreaEqual( Data1 := _workAreas[_rSyncIdx].Data, Data2 := WorkAreas[_rSyncIdx].Data, IgnoreTimestamp := TRUE))
+         THEN
+           // Reset plc in sync flag
+           AxesGroup.State.SyncStatePlc.InSync.WorkArea := FALSE;
+           // Set data changed flag
+           AxesGroup.State.DataChanged.WorkArea[_rSyncIdx] := TRUE;
+           // inc count of unsynchronised plc WorkAreas
+           AxesGroup.State.SyncStatePlc.UnSyncNo.WorkArea := AxesGroup.State.SyncStatePlc.UnSyncNo.WorkArea + 1;
+          
+           // Create log entry
+           CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncWorkArea: Detected a difference in WorkArea[{1}] between PLC and RC',
+                                   Para1       :=  DINT_TO_STRING(_rSyncIdx));
+          
+          
+           // Check synchronisation is enabled ? 
+           IF ( NOT AxesGroup.State.DataEnableSync.EnableSyncWorkArea ) AND (InfoID = RobotLibraryInfoIdEnum.NO_INFO )
+           THEN
+             InfoID := RobotLibraryInfoIdEnum.INFO_SYNC_WORK_AREA_DISABLED;
+  				 END_IF
+           
+           // Check user interaction needed ?  
+           IF ( AxesGroup.Parameter.PLC.Parameter.SyncUserInteraction.WorkAreas ) AND ( WarningID = RobotLibraryWarningIdEnum.NO_WARNING )
+           THEN
+             WarningID := RobotLibraryWarningIdEnum.WARN_WORK_AREA_NUMBER_SYNC_ERROR;                    
+  				 END_IF
+  			 END_IF
+               
+         // Check all WorkAreas read ? 
+         IF ( _rSyncIdx < AxesGroup.State.UnifiedWorkAreaIndex )
+         THEN
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc WorkArea index
+          _rSyncIdx := _rSyncIdx + 1;
+           // dec step counter
+          _rStep := _rStep - 1;
+         ELSE
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := _rStep + 1;           
+         END_IF
+       ELSE
+         // check error ? 
+         IF (_readWorkArea.Error)
+         THEN
+           // Set warning
+           WarningID := RobotLibraryWarningIdEnum.WARN_WORK_AREA_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;                    
+           // reset available bit
+           WorkAreas[_rSyncIdx].Available := FALSE;
+          _workAreas[_rSyncIdx].Available := FALSE;
+         END_IF  
+         
+         // timeout exceeded ? 
+         IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+         THEN
+           ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+           ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+         END_IF
+       END_IF
+       
+       
+       // Check synchronisation state ? 
+    3: IF (( AxesGroup.State.SyncStatePlc.UnSyncNo.WorkArea                                             = 0                           ) OR 
+           ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.WorkAreas[SyncTime.DURING_START_UP] = SyncMode.NO_SYNCHRONIZATION ))
+       THEN
+         // Update bit for data in sync
+         AxesGroup.State.SyncStatePlc.InSync.WorkArea := (AxesGroup.State.SyncStatePlc.UnSyncNo.WorkArea = 0);
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // inc step counter
+        _rStep := 10; // -> jump to after startup
+              
+         // Create log entry
+         CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                                 MessageType := MessageType.CMD,
+                                 Severity    := Severity.DEBUG,
+                                 MessageCode := 0,
+                                 MessageText := 'SyncWorkArea: Synchronization Startup Phase done',
+                                 Para1       :=  '' );      
+       ELSE 
+         // Check user interaction needed ? 
+         IF ( NOT AxesGroup.Parameter.PLC.Parameter.SyncUserInteraction.WorkAreas )
+         THEN
+           CASE AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.WorkAreas[SyncTime.DURING_START_UP] OF
+  
+             SyncMode.SERVER_TO_CLIENT : 
+  
+               // Overwrite PLC data with RC data
+               WorkAreas := _workAreas;            
+               // Reset data changed flags
+               AxesGroup.State.DataChanged.WorkArea := _dataChangedNone.WorkArea;
+               // Reset Synchronizing flag
+               AxesGroup.State.Synchronizing.WorkAreas := FALSE;
+               // Set plc in sync flag
+               AxesGroup.State.SyncStatePlc.InSync.WorkArea := TRUE;
+               // Reset count of unsynchronised plc WorkAreas
+               AxesGroup.State.SyncStatePlc.UnSyncNo.WorkArea := 0;            
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 10; // -> jump to after startup         
+  
+              // Create log entry
+              CreateLogMessagePara3 ( Timestamp   := SystemTime,
+                                      MessageType := MessageType.CMD,
+                                      Severity    := Severity.DEBUG,
+                                      MessageCode := 0,
+                                      MessageText := 'SyncWorkArea: Synchronization of WorkAreas triggered by StartUp-Compare, SyncMode = {2}, SyncTime = {3}, SyncDirection = RC -> PLC',
+                                      Para1       :=  DINT_TO_STRING(_rSyncIdx),
+                                      Para2       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.WorkAreas[SyncTime.DURING_START_UP]),
+                                      Para3       :=  SYNC_TIME_TO_STRING(SyncTime.DURING_START_UP));
+              // Create log entry
+              CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                                      MessageType := MessageType.CMD,
+                                      Severity    := Severity.DEBUG,
+                                      MessageCode := 0,
+                                      MessageText := 'SyncWorkArea: Applied the initial read WorkArea data from RC',
+                                      Para1       :=  '' );
+  
+  				   SyncMode.CLIENT_TO_SERVER : ;
+  
+               // Check conflicts to solve ? 
+               FOR _rSyncIdx := 0 TO AxesGroup.State.UnifiedWorkAreaIndex
+               DO
+                 IF ( AxesGroup.State.DataChanged.WorkArea[_rSyncIdx] )
+                 THEN
+                  _found := TRUE;
+                   EXIT;
+  		  			   END_IF
+               END_FOR
+             
+               IF ( _found ) 
+               THEN
+                 // Reset plc in sync flag
+                 AxesGroup.State.SyncStatePlc.InSync.WorkArea := FALSE;
+                 // Set Synchronizing flag
+                 AxesGroup.State.Synchronizing.WorkAreas := TRUE;
+                 // set timeout
+                 SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+                 // inc step counter
+                _rStep := _rStep +1; // -> write PLC data to RC                  
+                 // Create log entry
+                 CreateLogMessagePara3 ( Timestamp   := SystemTime,
+                                         MessageType := MessageType.CMD,
+                                         Severity    := Severity.DEBUG,
+                                         MessageCode := 0,
+                                         MessageText := 'SyncWorkArea: Synchronization of WorkArea[{1}] triggered by StartUp-Compare, SyncMode = {2}, SyncTime = {3}, SyncDirection = PLC -> RC',
+                                         Para1       :=  DINT_TO_STRING(_rSyncIdx),
+                                         Para2       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.WorkAreas[SyncTime.DURING_START_UP]),
+                                         Para3       :=  SYNC_TIME_TO_STRING(SyncTime.DURING_START_UP));
+               ELSE
+                 // Reset data changed flags
+                 AxesGroup.State.DataChanged.WorkArea := _dataChangedNone.WorkArea;
+                 // Reset Synchronizing flag
+                 AxesGroup.State.Synchronizing.WorkAreas := FALSE;
+                 // Set plc in sync flag
+                 AxesGroup.State.SyncStatePlc.InSync.WorkArea := TRUE;
+                 // Reset count of unsynchronised WorkAreas
+                 AxesGroup.State.SyncStatePlc.UnSyncNo.WorkArea := 0;
+                 // set timeout
+                 SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+                 // inc step counter
+                _rStep := 10; // -> jump to after startup                  
+  				     END_IF
+           ELSE
+             // invalid sync mode for startup
+             ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+   	       END_CASE
+         END_IF
+       END_IF  
+  
+       
+       // Start write WorkArea data  
+    4: IF (( NOT _writeWorkArea.Busy  ) AND 
+           ( NOT _writeWorkArea.Error ))
+       THEN
+         // set command parameter
+        _writeWorkArea.ParCmd.WorkAreaNo   := _rSyncIdx;      
+        _writeWorkArea.ParCmd.WorkAreaData :=  WorkAreas[_rSyncIdx].Data;
+         // execute command
+        _writeWorkArea.Execute := TRUE;
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // inc step counter
+        _rStep := _rStep + 1;
+       ELSE
+         // check error ? 
+         IF (_writeWorkArea.Error)
+         THEN
+           ErrorID     := _writeWorkArea.ErrorID;
+           ErrorAddTxt := _writeWorkArea.ErrorAddTxt;;
+         END_IF  
+         
+         // timeout exceeded ? 
+         IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+         THEN
+           ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+           ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+         END_IF
+       END_IF
+   
+       
+       // Wait WorkArea data written ?   
+    5: IF (( NOT _writeWorkArea.Busy  ) AND
+           ( NOT _writeWorkArea.Error ) AND
+           (     _writeWorkArea.Done  ))
+       THEN
+         // execute command
+        _writeWorkArea.Execute := FALSE;
+         // apply WorkArea data to internal WorkArea data
+        _workAreas[_rSyncIdx] := WorkAreas[_rSyncIdx];
+         // reset data changed bit 
+         AxesGroup.State.DataChanged.WorkArea[_rSyncIdx] := FALSE;
+         // dec count of unsynchronised WorkAreas
+         AxesGroup.State.SyncStatePlc.UnSyncNo.WorkArea := AxesGroup.State.SyncStatePlc.UnSyncNo.WorkArea - 1;
+         // set timeout        
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // dec step counter
+        _rStep := _rStep - 2; 
+       ELSE
+         // check error ? 
+         IF (_writeWorkArea.Error)
+         THEN
+           WarningID := RobotLibraryWarningIdEnum.WARN_WORK_AREA_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;           
+         END_IF  
+         
+         // timeout exceeded ? 
+         IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+         THEN
+           ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+           ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+         END_IF
+       END_IF
+  
+       
+    // --------------------------------------------
+    // SyncMode after startup : 
+    // --------------------------------------------
+           
+    10 : // check synchronisation active ? 
+         IF ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.WorkAreas[SyncTime.AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION)
+         THEN
+           RETURN;
+         END_IF
+         
+         // reset count of unsynchronised WorkAreas
+         AxesGroup.State.SyncStatePlc.UnSyncNo.WorkArea := 0;
+  
+         // Check all WorkArea datas
+         FOR _rSyncIdx := 0 TO AxesGroup.State.UnifiedWorkAreaIndex
+         DO
+           // compare WorkArea data
+           AxesGroup.State.DataChanged.WorkArea[_rSyncIdx] := NOT IsWorkAreaEqual( Data1 := WorkAreas[_rSyncIdx].Data, Data2 := _workAreas[_rSyncIdx].Data, IgnoreTimestamp := FALSE);
+  
+           // Check WorkArea data changed ? 
+           IF (AxesGroup.State.DataChanged.WorkArea[_rSyncIdx])
+           THEN
+             // inc count of unsynchronised plc WorkAreas
+             AxesGroup.State.SyncStatePlc.UnSyncNo.WorkArea := AxesGroup.State.SyncStatePlc.UnSyncNo.WorkArea + 1;
+             // Create log entry
+             CreateLogMessagePara2 ( Timestamp   := SystemTime,
+                                     MessageType := MessageType.CMD,
+                                     Severity    := Severity.DEBUG,
+                                     MessageCode := 0,
+                                     MessageText := 'SyncWorkArea: Detected a local change of WorkArea[{1}] on PLC, SyncTime = {2}',
+                                     Para1       :=  DINT_TO_STRING(_rSyncIdx),    
+                                     Para2       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));       
+  				 END_IF
+  
+           // Update plc in sync flag
+           AxesGroup.State.SyncStatePlc.InSync.WorkArea := (AxesGroup.State.SyncStatePlc.UnSyncNo.WorkArea = 0); 
+  	     END_FOR
+  
+         // Check synchronization is needed ? 
+         IF ( NOT AxesGroup.State.SyncStatePlc.InSync.WorkArea ) XOR  
+            ( NOT AxesGroup.State.SyncStateRc .InSync.WorkArea )
+         THEN
+           CASE AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.WorkAreas[SyncTime.AFTER_START_UP] 
+           OF         
+             // NO_SYNCHRONIZATION
+             SyncMode.NO_SYNCHRONIZATION : ; // no further action 
+             
+             // CLIENT_TO_SERVER
+             SyncMode.CLIENT_TO_SERVER :
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 11;
+    
+             // SERVER_TO_CLIENT
+             SyncMode.SERVER_TO_CLIENT :
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 12;
+    
+             // AUTOMATIC
+             SyncMode.AUTOMATIC : 
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 13;
+           END_CASE
+         ELSE
+           // datas changeḍ on both sides ? -> Warning 
+           IF (( NOT AxesGroup.State.SyncStatePlc.InSync.WorkArea ) AND  
+               ( NOT AxesGroup.State.SyncStateRc .InSync.WorkArea ))
+           THEN
+             WarningID := RobotLibraryWarningIdEnum.WARN_WORK_AREA_SYNC_BOTH_SIDES_CHANGED;
+           END_IF
+         END_IF
+  
+  
+    // ------------------------------------------
+    // SyncMode : CLIENT_TO_SERVER 
+    // ------------------------------------------  
+    11 : // Conflict triggerd by PLC ?  
+         IF ( NOT AxesGroup.State.SyncStatePlc.InSync.WorkArea )
+         THEN
+           // search for changed index  
+           FOR _rSyncIdx := 0 TO AxesGroup.State.UnifiedWorkAreaIndex
+           DO
+             IF ( AxesGroup.State.DataChanged.WorkArea[_rSyncIdx] )
+             THEN
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 30; // -> write PLC data to RC                  
+               EXIT;             
+  					 END_IF
+           END_FOR
+           
+           // Create log entry
+           CreateLogMessagePara3 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncWorkArea: Synchronization of WorkArea[{1}] triggered by PLC, SyncMode = {2}, SyncTime = {3}, SyncDirection = PLC -> RC',
+                                   Para1       :=  DINT_TO_STRING(_rSyncIdx),
+                                   Para2       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.WorkAreas[SyncTime.AFTER_START_UP]),
+                                   Para3       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+         END_IF
+     
+         // Conflict triggered by RC ?
+         IF ( NOT AxesGroup.State.SyncStateRc.InSync.WorkArea )
+         THEN
+           // get changed index 
+          _rSyncIdx :=  LIMIT(0, AxesGroup.State.SyncStateRc.UnSyncNo.WorkArea, AxesGroup.State.UnifiedWorkAreaIndex);
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 30; // -> write PLC data to RC
+  
+           // Create log entry
+           CreateLogMessagePara3 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncWorkArea: Synchronization of WorkArea[{1}] triggered by RC, SyncMode = {2}, SyncTime = {3}, SyncDirection = PLC -> RC',
+                                   Para1       :=  DINT_TO_STRING(_rSyncIdx),
+                                   Para2       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.WorkAreas[SyncTime.AFTER_START_UP]),
+                                   Para3       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+  			 END_IF
+         
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // jump back
+        _rStep := 10;
+  
+         
+    // ------------------------------------------
+    // SyncMode : SERVER_TO_CLIENT 
+    // ------------------------------------------
+    12 : // Conflict triggerd by PLC ?  
+         IF ( NOT AxesGroup.State.SyncStatePlc.InSync.WorkArea )
+         THEN
+           // search for changed index  
+           FOR _rSyncIdx := 0 TO AxesGroup.State.UnifiedWorkAreaIndex
+           DO
+             IF ( AxesGroup.State.DataChanged.WorkArea[_rSyncIdx] )
+             THEN
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 20; // -> read RC data and write it to PLC                  
+               EXIT;
+  					 END_IF
+           END_FOR
+  
+           // Create log entry
+           CreateLogMessagePara3 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncWorkArea: Synchronization of WorkArea[{1}] triggered by PLC, SyncMode = {2}, SyncTime = {3}, SyncDirection = RC -> PLC',
+                                   Para1       :=  DINT_TO_STRING(_rSyncIdx),
+                                   Para2       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.WorkAreas[SyncTime.AFTER_START_UP]),
+                                   Para3       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+         END_IF
+     
+         // Conflict triggered by RC ?
+         IF ( NOT AxesGroup.State.SyncStateRc.InSync.WorkArea )
+         THEN
+           // get changed index 
+          _rSyncIdx := LIMIT(0, AxesGroup.State.SyncStateRc.UnSyncNo.WorkArea, AxesGroup.State.UnifiedWorkAreaIndex);
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 20; // -> read RC data and write it to PLC
+  
+           // Create log entry
+           CreateLogMessagePara3 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncWorkArea: Synchronization of WorkArea[{1}] triggered by RC, SyncMode = {2}, SyncTime = {3}, SyncDirection = RC -> PLC',
+                                   Para1       :=  DINT_TO_STRING(_rSyncIdx),
+                                   Para2       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.WorkAreas[SyncTime.AFTER_START_UP]),
+                                   Para3       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+  			 END_IF
+         
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // jump back
+        _rStep := 10;
+    
+  
+    // ------------------------------------------
+    // SyncMode : AUTOMATIC 
+    // ------------------------------------------
+    13 : // Conflict triggerd by PLC ?  
+         IF ( NOT AxesGroup.State.SyncStatePlc.InSync.WorkArea )
+         THEN
+           // search for changed index  
+           FOR _rSyncIdx := 0 TO AxesGroup.State.UnifiedWorkAreaIndex
+           DO
+             IF ( AxesGroup.State.DataChanged.WorkArea[_rSyncIdx] )
+             THEN
+               // set timeout
+               SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+               // inc step counter
+              _rStep := 30; // -> write PLC data to RC                  
+               EXIT;
+  					 END_IF
+           END_FOR
+           
+           // Create log entry
+           CreateLogMessagePara3 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncWorkArea: Synchronization of WorkArea[{1}] triggered by PLC, SyncMode = {2}, SyncTime = {3}, SyncDirection = PLC -> RC',
+                                   Para1       :=  DINT_TO_STRING(_rSyncIdx),
+                                   Para2       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.WorkAreas[SyncTime.AFTER_START_UP]),
+                                   Para3       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+         END_IF
+     
+         // Conflict triggered by RC ?
+         IF ( NOT AxesGroup.State.SyncStateRc.InSync.WorkArea )
+         THEN
+           // get changed index 
+          _rSyncIdx := LIMIT(0, AxesGroup.State.SyncStateRc.UnSyncNo.WorkArea, AxesGroup.State.UnifiedWorkAreaIndex);
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 20; // -> read RC data an write it to PLC
+  
+           // Create log entry
+           CreateLogMessagePara3 ( Timestamp   := SystemTime,
+                                   MessageType := MessageType.CMD,
+                                   Severity    := Severity.DEBUG,
+                                   MessageCode := 0,
+                                   MessageText := 'SyncWorkArea: Synchronization of WorkArea[{1}] triggered by RC, SyncMode = {2}, SyncTime = {3}, SyncDirection = RC -> PLC',
+                                   Para1       :=  DINT_TO_STRING(_rSyncIdx),
+                                   Para2       :=  SYNC_MODE_TO_STRING(AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.WorkAreas[SyncTime.AFTER_START_UP]),
+                                   Para3       :=  SYNC_TIME_TO_STRING(SyncTime.AFTER_START_UP));
+                                   RETURN;
+  			 END_IF
+         
+         // set timeout
+         SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+         // jump back
+        //_rStep := 10;
+  
+  
+    // ------------------------------------------
+    // Read Data from RC and write it to PLC
+    // ------------------------------------------
+    20 : IF (( NOT _readWorkArea.Busy  ) AND 
+             ( NOT _readWorkArea.Error ))
+         THEN
+           // set command parameter
+          _readWorkArea.ParCmd.WorkAreaNo := _rSyncIdx;      
+           // execute command
+          _readWorkArea.Execute := TRUE;
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := _rStep + 1;
+         ELSE
+           // check error ? 
+           IF (_readWorkArea.Error)
+           THEN
+             ErrorID     := _readWorkArea.ErrorID;
+             ErrorAddTxt := _readWorkArea.ErrorAddTxt;
+           END_IF  
+         
+           // timeout exceeded ? 
+           IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+           THEN
+             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+             ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+           END_IF
+         END_IF
+   
+    21 : IF (( NOT _readWorkArea.Busy  ) AND
+             ( NOT _readWorkArea.Error ) AND
+             (     _readWorkArea.Done  ))
+         THEN
+           // reset execution
+          _readWorkArea.Execute := FALSE;
+           // update internal WorkArea data
+           WorkAreas[_rSyncIdx].Data := _readWorkArea.OutCmd.WorkAreaData;         
+          _workAreas[_rSyncIdx].Data := _readWorkArea.OutCmd.WorkAreaData;
+           // set available bit
+           WorkAreas[_rSyncIdx].Available := TRUE;
+          _workAreas[_rSyncIdx].Available := TRUE;
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 10; // -> jump to after startup           
+         ELSE
+           // check error ? 
+           IF (_readWorkArea.Error)
+           THEN
+             ErrorID     := _readWorkArea.ErrorID;
+             ErrorAddTxt := _readWorkArea.ErrorAddTxt;           
+             // reset available bit
+             WorkAreas[_rSyncIdx].Available := FALSE;
+            _workAreas[_rSyncIdx].Available := FALSE;
+           END_IF  
+         
+           // timeout exceeded ? 
+           IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+           THEN
+             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+             ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+           END_IF
+         END_IF
+  
+  
+    // ------------------------------------------
+    // Write data from PLC to RC
+    // ------------------------------------------
+    30 : IF (( NOT _writeWorkArea.Busy  ) AND 
+             ( NOT _writeWorkArea.Error ))
+         THEN
+           // set command parameter
+          _writeWorkArea.ParCmd.WorkAreaNo   := _rSyncIdx;      
+          _writeWorkArea.ParCmd.WorkAreaData :=  WorkAreas[_rSyncIdx].Data;
+           // execute command
+          _writeWorkArea.Execute := TRUE;
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := _rStep + 1;
+         ELSE
+           // check error ? 
+           IF (_writeWorkArea.Error)
+           THEN
+             ErrorID     := _writeWorkArea.ErrorID;
+             ErrorAddTxt := _writeWorkArea.ErrorAddTxt;;
+           END_IF  
+         
+           // timeout exceeded ? 
+           IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+           THEN
+             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+             ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+           END_IF
+         END_IF
+   
+    31 : IF (( NOT _writeWorkArea.Busy  ) AND
+             ( NOT _writeWorkArea.Error ) AND
+             (     _writeWorkArea.Done  ))
+         THEN
+           // execute command
+          _writeWorkArea.Execute := FALSE;      
+           // update internal WorkArea data
+          _workAreas[_rSyncIdx] := WorkAreas[_rSyncIdx]; 
+           // set available bit
+           WorkAreas[_rSyncIdx].Available := TRUE; 
+          _workAreas[_rSyncIdx].Available := TRUE;         
+           // set timeout
+           SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+           // inc step counter
+          _rStep := 10; // -> jump to after startup;           
+         ELSE
+           // check error ? 
+           IF (_writeWorkArea.Error)
+           THEN
+             WarningID := RobotLibraryWarningIdEnum.WARN_WORK_AREA_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;    
+             // reset available bit
+             WorkAreas[_rSyncIdx].Available := FALSE;
+            _workAreas[_rSyncIdx].Available := FALSE;
+           END_IF  
+         
+           // timeout exceeded ? 
+           IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
+           THEN
+             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+             ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+           END_IF
+         END_IF
+         
+  ELSE
+    // invalid step
+    ErrorID     := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
+    ErrorAddTxt := CONCAT(_stepName , DINT_TO_STRING(_stepCmd));
+  END_CASE
 
 END_METHOD
 
@@ -2218,16 +7536,6 @@ METHOD PRIVATE HandleTelegramStateCtrl
 VAR_INPUT
 END_VAR
 
-  IF ( _errorClear_R.Q )
-  THEN
-    // Create log entry
-    CreateLogMessage ( Timestamp   := SystemTime,
-                       MessageType := MessageType.CMD,
-                       Severity    := Severity.INFO,
-                       MessageCode := 0,
-                       MessageText := 'RobotTask: rising edge of ErrorClear flag');
-  END_IF
-  
   // Telegram Control
   // ----------------
   IF ( _lastTelegramControl <> GetHalfeByteLo(Telegram.PlcToRob.Header.AxesGroupID_Control))
@@ -2280,15 +7588,9 @@ END_VAR
                                              
   // Plc Parameter                           
   UserData.SynchronizationModes              := _parCfg.Plc.Parameter.SynchronizationModes;
+  UserData.EnableSync                        :=  SyncModesToDataEnableSync(Value := _parCfg.Plc.Parameter.SynchronizationModes);
                                              
   // Robot Parameter                         
-  UserData.EnableSyncTool                    := _parCfg.Rob.Parameter.DataEnableSync.EnableSyncTool;
-  UserData.EnableSyncFrame                   := _parCfg.Rob.Parameter.DataEnableSync.EnableSyncFrame;
-  UserData.EnableSyncLoad                    := _parCfg.Rob.Parameter.DataEnableSync.EnableSyncLoad;
-  UserData.EnableSyncWorkArea                := _parCfg.Rob.Parameter.DataEnableSync.EnableSyncWorkArea;
-  UserData.EnableSyncSWLimits                := _parCfg.Rob.Parameter.DataEnableSync.EnableSyncSWLimits;
-  UserData.EnableSyncDefaultDynamics         := _parCfg.Rob.Parameter.DataEnableSync.EnableSyncDefaultDynamics;
-  UserData.EnableSyncReferenceDynamics       := _parCfg.Rob.Parameter.DataEnableSync.EnableSyncReferenceDynamics;
   UserData.DelayTime                         := _parCfg.Rob.Parameter.DelayTime;
   UserData.WaitForNrOfCmd                    := _parCfg.Rob.Parameter.WaitForNrOfCmd;
   UserData.WaitAtBlendingZone                := _parCfg.Rob.Parameter.WaitAtBlendingZone;
@@ -2355,6 +7657,14 @@ END_VAR
   UserData.JointPosition                     := AxesGroup.CyclicOptional.RobToPlc.JointPosition;
   UserData.ExtJointPosition                  := AxesGroup.CyclicOptional.RobToPlc.JointPositionExt;
   
+  // Synchronizing
+  UserData.ToolDataSynchronizing             := AxesGroup.State.Synchronizing.Tool;
+  UserData.FrameDataSynchronizing            := AxesGroup.State.Synchronizing.Frame;
+  UserData.LoadDataSynchronizing             := AxesGroup.State.Synchronizing.Load;
+  UserData.WorkAreaDataSynchronizing         := AxesGroup.State.Synchronizing.WorkAreas;
+  UserData.SWLimitsSynchronizing             := AxesGroup.State.Synchronizing.SwLimits;
+  UserData.DefaultDynamicsSynchronizing      := AxesGroup.State.Synchronizing.DefaultDynamics;
+  UserData.ReferenceDynamicsSynchronizing    := AxesGroup.State.Synchronizing.ReferenceDynamics;
   
   {warning 'ToDo: Check where to get the missing informations'}
   
@@ -2363,13 +7673,6 @@ END_VAR
   UserData.ReadingExtCartesianPosition    := FALSE;
   UserData.ReadingJointPosition           := FALSE;
   UserData.ReadingExtJointPosition        := FALSE;
-  UserData.ToolDataSynchronizing          := FALSE;
-  UserData.FrameDataSynchronizing         := FALSE;
-  UserData.LoadDataSynchronizing          := FALSE;
-  UserData.WorkAreaDataSynchronizing      := FALSE;
-  UserData.SWLimitsSynchronizing          := FALSE;
-  UserData.DefaultDynamicsSynchronizing   := FALSE;
-  UserData.ReferenceDynamicsSynchronizing := FALSE;
 
 END_METHOD
 
@@ -2390,7 +7693,7 @@ END_VAR
   IF (( RobotLibraryParameter.ROBOT_IN_DATA_MAX     < 64 ) OR
       ( RobotLibraryParameter.ROBOT_OUT_DATA_MAX    < 64 ))
   THEN
-    ErrorID := RobotLibraryEvents.ERR_INVALID_LIBRARY_PARA;
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_LIBRARY_PARA;
     RETURN;
   END_IF
   
@@ -2398,14 +7701,14 @@ END_VAR
   IF (( AxesGroupID < RobotLibraryConstants.AXES_GROUP_ID_MIN ) OR
       ( AxesGroupID > RobotLibraryConstants.AXES_GROUP_ID_MAX ))
   THEN
-    ErrorID := RobotLibraryEvents.ERR_INVALID_AXES_GROUP_ID;
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_AXES_GROUP_ID;
     RETURN;
   END_IF
   
   // Check AxesGroupID instances
   IF ( RobotLibraryDefines.AxesGroupInstances > RobotLibraryConstants.AXES_GROUP_ID_MAX)
   THEN
-    ErrorID := RobotLibraryEvents.ERR_INVALID_AXES_GROUP_COUNT;
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_AXES_GROUP_COUNT;
     RETURN;
   END_IF
   
@@ -2418,6 +7721,13 @@ END_VAR
     // Set error 
     ErrorID := RobotLibraryErrorIdEnum.ERR_INIT_LOST_UNKNOWN_0x80A2;
   END_IF
+  
+  // Warning for ARC Registers running low
+  IF ( AxesGroup.Acyclic.ActiveCommandRegister.CurrenArcUsagePercent > RobotLibraryConstants.ARC_USAGE_WARNING_LIMIT )
+  THEN
+    WarningID := RobotLibraryWarningIdEnum.WARN_ACR_FREE_ENTRIES_LOW;
+  END_IF
+  
   
   
   // Check configuration parameter changed ? 
@@ -2510,6 +7820,312 @@ END_VAR
   
          ELSE
            // TelegrammState in error          
+           ErrorID := RobotLibraryErrorIdEnum.ERR_INIT_LOST_UNKNOWN_0xA2;
+           ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
+         END_CASE
+  
+         // timeout exceeded ? 
+         IF (CheckTimeout(_timerCmd) = RobotLibraryConstants.OK)
+         THEN
+           ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+           ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
+         END_IF
+  
+         
+    02: IF (( NOT _exchangeConfiguration.Busy  ) AND 
+            ( NOT _exchangeConfiguration.Error ))
+        THEN
+          // set command parameter
+         _exchangeConfiguration.ParCmd.LogLevel                           :=  LogLevel; 
+         _exchangeConfiguration.ParCmd.WaitAtBlendingZone                 := _parCfg.Rob.Parameter.WaitAtBlendingZone;
+         _exchangeConfiguration.ParCmd.AllowSecSeqWhileSubprogram         := _parCfg.Rob.Parameter.AllowSecSeqWhileSubprogram;
+         _exchangeConfiguration.ParCmd.AllowDynamicBlending               := _parCfg.Rob.Parameter.AllowDynamicBlending;
+         _exchangeConfiguration.ParCmd.DelayTime                          := _parCfg.Rob.Parameter.DelayTime;
+         _exchangeConfiguration.ParCmd.WaitForNrOfCmd                     := _parCfg.Rob.Parameter.WaitForNrOfCmd;
+         _exchangeConfiguration.ParCmd.LifeSignTimeOut                    :=  TIME_TO_UINT(_parCfg.Com.LifeSignTimeOut);
+         _exchangeConfiguration.ParCmd.SyncDelay                          := _parCfg.Rob.Parameter.SyncDelay;
+         _exchangeConfiguration.ParCmd.SyncReaction                       := _parCfg.Rob.Parameter.SyncReaction;
+         _exchangeConfiguration.ParCmd.DataEnableSync                     :=  SyncModesToDataEnableSync(Value := _parCfg.Plc.Parameter.SynchronizationModes);
+         _exchangeConfiguration.ParCmd.DataInSync.ToolsInSync             :=  FALSE;
+         _exchangeConfiguration.ParCmd.DataInSync.FramesInSync            :=  FALSE;
+         _exchangeConfiguration.ParCmd.DataInSync.LoadsInSync             :=  FALSE;
+         _exchangeConfiguration.ParCmd.DataInSync.WorkAreasInSync         :=  FALSE;
+         _exchangeConfiguration.ParCmd.DataInSync.SoftwareLimitsInSync    :=  FALSE;
+         _exchangeConfiguration.ParCmd.DataInSync.DefaultDynamicsInSync   :=  FALSE;
+         _exchangeConfiguration.ParCmd.DataInSync.ReferenceDynamicsInSync :=  FALSE;         
+         
+          // start function block
+         _exchangeConfiguration.Enable := TRUE;
+          // set timeout
+          SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
+          // inc step counter
+         _stepCmd := _stepCmd + 1;       
+        ELSE
+          // check error ? 
+          IF (_exchangeConfiguration.Error)
+          THEN
+            ErrorID     := _exchangeConfiguration.ErrorID;
+            ErrorAddTxt := _exchangeConfiguration.ErrorAddTxt;;
+          END_IF  
+         
+          // timeout exceeded ? 
+          IF (CheckTimeout(_timerCmd) = RobotLibraryConstants.OK)
+          THEN
+            ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+            ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
+          END_IF
+        END_IF
+    
+    
+    03: IF (( NOT _exchangeConfiguration.Busy              ) AND
+            (     _exchangeConfiguration.ParameterAccepted ))
+        THEN     
+          // --------------------------------------------------------------------- 
+          // !!! ExchangeConfiguration must stay active for the Sync mechanism !!!
+          // --------------------------------------------------------------------- 
+          // ExchangeConfiguration.Enable := FALSE;  
+          // set timeout
+          SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
+          // inc step counter
+         _stepCmd := _stepCmd + 1;       
+        ELSE
+          // check error ? 
+          IF (_exchangeConfiguration.Error)
+          THEN
+            ErrorID     := _exchangeConfiguration.ErrorID;
+            ErrorAddTxt := _exchangeConfiguration.ErrorAddTxt;;
+          END_IF  
+         
+          // timeout exceeded ? 
+          IF (CheckTimeout(_timerCmd) = RobotLibraryConstants.OK)
+          THEN
+            ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+            ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
+          END_IF
+        END_IF
+  
+         
+    04: IF (( NOT _readRobotData.Busy  ) AND 
+            ( NOT _readRobotData.Error )) 
+        THEN
+          // start function block
+         _readRobotData.Execute := TRUE;
+          // set timeout
+          SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
+          // inc step counter
+         _stepCmd := _stepCmd + 1;       
+        ELSE
+          // check error ? 
+          IF (_readRobotData.Error)
+          THEN
+            ErrorID     := _readRobotData.ErrorID;
+            ErrorAddTxt := _readRobotData.ErrorAddTxt;;
+          END_IF  
+          // timeout exceeded ? 
+          IF (CheckTimeout(_timerCmd) = RobotLibraryConstants.OK)
+          THEN
+            ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+            ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
+          END_IF
+        END_IF
+      
+    
+    05: IF (( NOT _readRobotData.Busy  ) AND
+            (     _readRobotData.Done  ))
+        THEN       
+          // start function block
+         _readRobotData.Execute := FALSE;
+          // set timeout
+          SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
+          // inc step counter
+         _stepCmd := _stepCmd + 1;
+         ELSE
+           // check error ? 
+           IF (_readRobotData.Error)
+           THEN
+             ErrorID     := _readRobotData.ErrorID;
+             ErrorAddTxt := _readRobotData.ErrorAddTxt;;
+           END_IF  
+         
+           // timeout exceeded ? 
+           IF (CheckTimeout(_timerCmd) = RobotLibraryConstants.OK)
+           THEN
+             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+             ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
+           END_IF
+         END_IF
+  
+  
+    06: IF (( NOT _readMessages.Busy  ) AND 
+            ( NOT _readMessages.Error )) 
+        THEN
+          // start function block
+         _readMessages.Enable := TRUE;
+         _readMessages.ParCmd.MsgID := 0;
+         _readMessages.ParCmd.MessageLevel := _parCfg.Rob.Parameter.MessageLevel;
+          
+          // set timeout
+          SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
+          // inc step counter
+         _stepCmd := _stepCmd + 1;       
+        ELSE
+          // check error ? 
+          IF (_readMessages.Error)
+          THEN
+            ErrorID     := _readMessages.ErrorID;
+            ErrorAddTxt := _readMessages.ErrorAddTxt;;
+          END_IF  
+          // timeout exceeded ? 
+          IF (CheckTimeout(_timerCmd) = RobotLibraryConstants.OK)
+          THEN
+            ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+            ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
+          END_IF
+        END_IF
+    
+    07: IF ((     _readMessages.Enabled ) AND
+            ( NOT _readMessages.Busy    ) AND
+            ( NOT _readMessages.Error   ))
+        THEN       
+          // --------------------------------------------------------------- 
+          // !!! ReadMessages must stay active for the Message mechanism !!!
+          // --------------------------------------------------------------- 
+          // ReadMessages.Enable := FALSE;  
+          // Reset busy flag
+          Busy := FALSE;
+          // set initialized flag
+          Initialized := TRUE;       
+          // set timeout
+          SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
+          // inc step counter
+         _stepCmd := _stepCmd + 1;
+        ELSE
+           // check error ? 
+           IF (_readMessages.Error)
+           THEN
+             ErrorID     := _readMessages.ErrorID;
+             ErrorAddTxt := _readMessages.ErrorAddTxt;;
+           END_IF  
+         
+           // timeout exceeded ? 
+           IF (CheckTimeout(_timerCmd) = RobotLibraryConstants.OK)
+           THEN
+             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+             ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
+           END_IF
+         END_IF
+  
+         
+    08:  // Update Initialized state
+         Initialized := NOT Synchronized;
+  
+         // Wait for task disable
+         IF ( NOT Enable)
+         THEN
+           // Reset active command register
+           AxesGroup.Acyclic.ActiveCommandRegister.Reset();
+           // reset internal variables
+           Reset(AxesGroup := AxesGroup);
+           // Reset step counter
+          _stepCmd := 0;         
+           // finished okay
+           OnExecRun := RobotLibraryConstants.OK;
+         END_IF  
+  
+         
+  ELSE
+    // invalid step
+    ErrorID     := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
+    ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
+  END_CASE
+
+END_METHOD
+
+METHOD OnExecRun_Org : DINT
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup         : AxesGroup;
+END_VAR
+
+  // building rising and falling edges
+  _enable_R( CLK := Enable);
+  _enable_F( CLK := Enable);
+  
+  IF ( _enable_F.Q)
+  THEN
+    Reset(AxesGroup := AxesGroup);
+  END_IF
+  
+  
+  OnExecRun := RobotLibraryConstants.RUNNING;
+  
+  CASE _stepCmd OF
+    
+    00:  IF ( _enable_R.Q )
+         THEN
+           // Create log entry
+           CreateLogMessage ( Timestamp   := SystemTime,
+                              MessageType := MessageType.CMD,
+                              Severity    := Severity.INFO,
+                              MessageCode := 0,
+                              MessageText := 'Robot Task Enabled');
+         
+           // reset the rising edge
+          _enable_R();
+           // set busy flag
+           Busy := TRUE;
+           // set timeout
+           SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
+           // Reset FastStop       
+           AxesGroup.Cyclic.PlcToRob.FastStop := 0;
+           // Reset Active command register
+           AxesGroup.Acyclic.ActiveCommandRegister.Reset();
+         
+           // check parameter valid
+           IF ( CheckParameterValid(AxesGroup := AxesGroup) )
+           THEN
+             // take configuration parameter if not yet enabled
+            _parCfg := ParCfg;
+             // inc step counter
+            _stepCmd := _stepCmd + 1; 
+           END_IF
+         END_IF
+       
+    01:  CASE AxesGroup.Cyclic.RobToPlc.TelegramState  OF
+  
+           TelegramState.UNDEFINED : ;
+           
+           TelegramState.ERROR_161..TelegramState.ERROR_172:
+  
+             // clear error
+             AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.ACK_ERROR;        
+  
+           TelegramState.ERROR_173:
+  
+             // Reset interface including the ARC register on server side
+             AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.RESET;        
+             
+           TelegramState.READY_TO_RESUME :  
+           
+             // Resume
+             AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.RESUME;        
+           
+           TelegramState.READY_FOR_INITIALIZATION: 
+  
+             // Request initialization
+             AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.INITIALIZE;
+             
+           TelegramState.INITIALIZED: 
+  
+             // Reset Telegram Control 
+             AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.NONE;
+             // set timeout
+             SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
+             // inc step counter
+            _stepCmd := _stepCmd + 1; 
+  
+         ELSE
+           // TelegrammState in error          
            ErrorID := AxesGroup.Cyclic.RobToPlc.TelegramState;
            ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
          END_CASE
@@ -2517,7 +8133,7 @@ END_VAR
          // timeout exceeded ? 
          IF (CheckTimeout(_timerCmd) = RobotLibraryConstants.OK)
          THEN
-           ErrorID     := RobotLibraryEvents.ERR_TIMEOUT_CMD;
+           ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
            ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
          END_IF
   
@@ -2561,7 +8177,7 @@ END_VAR
           // timeout exceeded ? 
           IF (CheckTimeout(_timerCmd) = RobotLibraryConstants.OK)
           THEN
-            ErrorID     := RobotLibraryEvents.ERR_TIMEOUT_CMD;
+            ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
             ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
           END_IF
         END_IF
@@ -2589,7 +8205,7 @@ END_VAR
           // timeout exceeded ? 
           IF (CheckTimeout(_timerCmd) = RobotLibraryConstants.OK)
           THEN
-            ErrorID     := RobotLibraryEvents.ERR_TIMEOUT_CMD;
+            ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
             ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
           END_IF
         END_IF
@@ -2614,7 +8230,7 @@ END_VAR
           // timeout exceeded ? 
           IF (CheckTimeout(_timerCmd) = RobotLibraryConstants.OK)
           THEN
-            ErrorID     := RobotLibraryEvents.ERR_TIMEOUT_CMD;
+            ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
             ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
           END_IF
         END_IF
@@ -2640,7 +8256,7 @@ END_VAR
            // timeout exceeded ? 
            IF (CheckTimeout(_timerCmd) = RobotLibraryConstants.OK)
            THEN
-             ErrorID     := RobotLibraryEvents.ERR_TIMEOUT_CMD;
+             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
              ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
            END_IF
          END_IF
@@ -2668,7 +8284,7 @@ END_VAR
           // timeout exceeded ? 
           IF (CheckTimeout(_timerCmd) = RobotLibraryConstants.OK)
           THEN
-            ErrorID     := RobotLibraryEvents.ERR_TIMEOUT_CMD;
+            ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
             ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
           END_IF
         END_IF
@@ -2700,7 +8316,7 @@ END_VAR
            // timeout exceeded ? 
            IF (CheckTimeout(_timerCmd) = RobotLibraryConstants.OK)
            THEN
-             ErrorID     := RobotLibraryEvents.ERR_TIMEOUT_CMD;
+             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
              ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
            END_IF
          END_IF
@@ -2721,7 +8337,7 @@ END_VAR
          
   ELSE
     // invalid step
-    ErrorID     := RobotLibraryEvents.ERR_INVALID_STEP;
+    ErrorID     := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
     ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
   END_CASE
 
@@ -3208,11 +8824,45 @@ END_VAR
   // Set Client error to force server error
   AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.CLIENT_ERROR;
   
+  // Reset synchronisation state variables
+  AxesGroup.State.SyncStatePlc.InSync.Frame             := FALSE;
+  AxesGroup.State.SyncStatePlc.InSync.Tool              := FALSE;
+  AxesGroup.State.SyncStatePlc.InSync.Load              := FALSE;
+  AxesGroup.State.SyncStatePlc.InSync.WorkArea          := FALSE;
+  AxesGroup.State.SyncStatePlc.InSync.SwLimits          := FALSE;
+  AxesGroup.State.SyncStatePlc.InSync.DefaultDynamics   := FALSE;
+  AxesGroup.State.SyncStatePlc.InSync.ReferenceDynamics := FALSE;
+  
+  AxesGroup.State.SyncStatePlc.UnSyncNo.Frame    := 0;
+  AxesGroup.State.SyncStatePlc.UnSyncNo.Tool     := 0;
+  AxesGroup.State.SyncStatePlc.UnSyncNo.Load     := 0;
+  AxesGroup.State.SyncStatePlc.UnSyncNo.WorkArea := 0;
+  
+  AxesGroup.State.SyncStateRc .InSync.Frame             := FALSE;
+  AxesGroup.State.SyncStateRc .InSync.Tool              := FALSE;
+  AxesGroup.State.SyncStateRc .InSync.Load              := FALSE;
+  AxesGroup.State.SyncStateRc .InSync.WorkArea          := FALSE;
+  AxesGroup.State.SyncStateRc .InSync.SwLimits          := FALSE;
+  AxesGroup.State.SyncStateRc .InSync.DefaultDynamics   := FALSE;
+  AxesGroup.State.SyncStateRc .InSync.ReferenceDynamics := FALSE;
+  
+  AxesGroup.State.SyncStateRc .UnSyncNo.Frame    := 0;
+  AxesGroup.State.SyncStateRc .UnSyncNo.Tool     := 0;
+  AxesGroup.State.SyncStateRc .UnSyncNo.Load     := 0;
+  AxesGroup.State.SyncStateRc .UnSyncNo.WorkArea := 0;
+  
   // Reset active command register
   AxesGroup.Acyclic.ActiveCommandRegister.Reset();
         
-  // reset step counter
-  _stepCmd := 0;
+  // reset step counters
+  _stepCmd                   := 0;
+  _stepSyncFrameData         := 0;
+  _stepSyncLoadData          := 0;
+  _stepSyncDefaultDynamics   := 0;
+  _stepSyncReferenceDynamics := 0;
+  _stepSyncSWLimits          := 0;
+  _stepSyncToolData          := 0;
+  _stepSyncWorkArea          := 0;
 
 END_METHOD
 

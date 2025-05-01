@@ -3,15 +3,15 @@
 //  SRCI Robot Library                                                
 // ------------------------------------------------------------------------- 
 //                                                                           
-//  Object:      RobotWorkAreaLimitCartesian                                       
+//  Object:      Load                                   
 //  Author:      Thorsten Brach                                                
-//  Date:        2024-06-01
+//  Date:        2025-04-22
 //
 //  Description:                                              
 //   
 //                                                                           
 //  Copyright: 
-//    (C) 2024 Thorsten Brach. All rights reserved                                                                                                                                            
+//    (C) 2025 Thorsten Brach. All rights reserved                                                                                                                                            
 //             Licensed under the LGPL-3.0 license.
 //                                                                           
 //  Disclaimer:                                                                           
@@ -20,14 +20,12 @@
 //    own risk and responsibility.
 //
 // -------------------------------------------------------------------------
-TYPE RobotWorkAreaLimitCartesian :
+TYPE Load :
 STRUCT
-  /// Relates to AreaType Box, Cylinder and Sphere. 
-  /// Distance in negative Direction - Default 0  
-  LowerLimit : REAL := 0;
-  /// Relates to AreaType Box, Cylinder and Sphere.
-  /// Distance in positive Direction - Default 0  
-  UpperLimit : REAL := 0;
+  /// Load is available
+  Available : BOOL;
+  /// Load data
+  Data      : LoadData;
 END_STRUCT
 END_TYPE
 

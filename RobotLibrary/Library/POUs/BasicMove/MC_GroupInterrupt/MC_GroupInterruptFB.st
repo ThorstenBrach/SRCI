@@ -215,12 +215,6 @@ END_VAR
              CmdMessageState.ERROR       : Error           := TRUE;
              CmdMessageState.DONE        : Done            := TRUE;
               
-                                           // dec FastStop counter
-                                           {warning 'ToDo: for Jaka it is not allowed to decrement the FastStop'} 
-                                           (*                                        
-                                           AxesGroup.Cyclic.PlcToRob.FastStop 
-                                             :=  AxesGroup.Cyclic.PlcToRob.FastStop - 1;
-                                           *) 
            END_CASE
                   
            // Done, Aborted or Error ?
@@ -242,7 +236,7 @@ END_VAR
         END_IF     
   ELSE
     // invalid step
-    ErrorID := RobotLibraryEvents.ERR_INVALID_STEP;
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
   END_CASE
   
   

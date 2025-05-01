@@ -413,7 +413,7 @@ END_VAR
         END_IF     
   ELSE
     // invalid step
-    ErrorID := RobotLibraryEvents.ERR_INVALID_STEP;
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
   END_CASE
   
   

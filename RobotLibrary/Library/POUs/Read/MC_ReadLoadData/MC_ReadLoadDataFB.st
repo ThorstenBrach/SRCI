@@ -110,13 +110,23 @@ END_VAR
   CheckParameterValid := TRUE;
   
   // Check ParCmd.LoadNo valid ? 
-  IF (( ParCmd.LoadNo <  -1 ) OR  
-      ( ParCmd.LoadNo > 254 ))
+  IF (( ParCmd.LoadNo <  -1                                                ) OR  
+      ( ParCmd.LoadNo =   0                                                ) OR 
+      ( ParCmd.LoadNo > 254                                                ) OR
+      ( ParCmd.LoadNo > AxesGroup.State.ConfigurationData.HighestLoadIndex ) OR
+      ( ParCmd.LoadNo > RobotLibraryParameter.LOAD_MAX -1                  ))
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
-    // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Check LoadNo available on RC ? 
+    IF ( ParCmd.LoadNo > AxesGroup.State.ConfigurationData.HighestLoadIndex )
+    THEN
+      ErrorID := RobotLibraryErrorIdEnum.ERR_LOADNO_UNAVAILABLE;
+    ELSE
+      ErrorID := RobotLibraryErrorIdEnum.ERR_LOADNO_RANGE;
+  	END_IF  
+    
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -283,7 +293,7 @@ END_VAR
   
   ELSE
     // invalid step
-    ErrorID := RobotLibraryEvents.ERR_INVALID_STEP;
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
   END_CASE
   
   

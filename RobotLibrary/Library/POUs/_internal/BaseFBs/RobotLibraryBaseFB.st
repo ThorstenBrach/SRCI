@@ -125,7 +125,7 @@ VAR_IN_OUT
 END_VAR
 
   Error   := TRUE;
-  ErrorID := RobotLibraryEvents.ERR_FUNCTION_NOT_SUPPORTED;
+  ErrorID := RobotLibraryErrorIdEnum.ERR_FUNCTION_NOT_SUPPORTED;
   
   // Create log entry
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,

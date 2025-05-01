@@ -3,7 +3,7 @@
 //  SRCI Robot Library                                                
 // ------------------------------------------------------------------------- 
 //                                                                           
-//  Object:      RobotWorkArea                                       
+//  Object:      RobotWorkAreaData                                       
 //  Author:      Thorsten Brach                                                
 //  Date:        2024-06-01
 //
@@ -20,7 +20,7 @@
 //    own risk and responsibility.
 //
 // -------------------------------------------------------------------------
-TYPE RobotWorkArea :
+TYPE RobotWorkAreaData :
 STRUCT
   /// Timestamp
   Timestamp          : IEC_TIMESTAMP;
@@ -53,38 +53,38 @@ STRUCT
   /// Z-value of reference point in specified frame - Default: 0
   ZeroPointZ         : REAL := 0;
   /// Limit for cartesian X    
-  X                  : RobotWorkAreaLimitCartesian;
+  X                  : RobotWorkAreaDataLimitCartesian;
   /// Limit for cartesian Y    
-  Y                  : RobotWorkAreaLimitCartesian;
+  Y                  : RobotWorkAreaDataLimitCartesian;
   /// Limit for cartesian Z    
-  Z                  : RobotWorkAreaLimitCartesian;
+  Z                  : RobotWorkAreaDataLimitCartesian;
   /// Relates to AreaType Sphere. 
   /// Radius of cylinder or sphere - Default 0
   Radius             : REAL := 0;
   /// Limits for Joint J1  
-  J1Limit            : RobotWorkAreaLimitJoint;
+  J1Limit            : RobotWorkAreaDataLimitJoint;
   /// Limits for Joint J2  
-  J2Limit            : RobotWorkAreaLimitJoint;
+  J2Limit            : RobotWorkAreaDataLimitJoint;
   /// Limits for Joint J3  
-  J3Limit            : RobotWorkAreaLimitJoint;
+  J3Limit            : RobotWorkAreaDataLimitJoint;
   /// Limits for Joint J4  
-  J4Limit            : RobotWorkAreaLimitJoint;
+  J4Limit            : RobotWorkAreaDataLimitJoint;
   /// Limits for Joint J5  
-  J5Limit            : RobotWorkAreaLimitJoint;
+  J5Limit            : RobotWorkAreaDataLimitJoint;
   /// Limits for Joint J6  
-  J6Limit            : RobotWorkAreaLimitJoint;
+  J6Limit            : RobotWorkAreaDataLimitJoint;
   /// Limits for Joint E1  
-  E1Limit            : RobotWorkAreaLimitJoint;
+  E1Limit            : RobotWorkAreaDataLimitJoint;
   /// Limits for Joint E2  
-  E2Limit            : RobotWorkAreaLimitJoint;
+  E2Limit            : RobotWorkAreaDataLimitJoint;
   /// Limits for Joint E3  
-  E3Limit            : RobotWorkAreaLimitJoint;
+  E3Limit            : RobotWorkAreaDataLimitJoint;
   /// Limits for Joint E4  
-  E4Limit            : RobotWorkAreaLimitJoint;
+  E4Limit            : RobotWorkAreaDataLimitJoint;
   /// Limits for Joint E5  
-  E5Limit            : RobotWorkAreaLimitJoint;
+  E5Limit            : RobotWorkAreaDataLimitJoint;
   /// Limits for Joint E6  
-  E6Limit            : RobotWorkAreaLimitJoint;
+  E6Limit            : RobotWorkAreaDataLimitJoint;
 END_STRUCT
 END_TYPE
 

@@ -22,8 +22,10 @@
 // -------------------------------------------------------------------------
 TYPE AxesGroupStateSyncStatePlc :
 STRUCT
-  ///
+  /// Synchronisation state of the datasets
   InSync   : AxesGroupStateSyncState;
+  /// Number of the dataset which has been changed locally
+  UnSyncNo : AxesGroupStateSyncStateNo;
 END_STRUCT
 END_TYPE
 

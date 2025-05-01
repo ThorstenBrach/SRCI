@@ -110,13 +110,22 @@ END_VAR
   CheckParameterValid := TRUE;
   
   // Check ParCmd.FrameNo valid ? 
-  IF (( ParCmd.FrameNo <  -1 ) OR  
-      ( ParCmd.FrameNo > 254 ))
+  IF (( ParCmd.FrameNo <  -1                                                 ) OR  
+      ( ParCmd.FrameNo > 254                                                 ) OR
+      ( ParCmd.FrameNo > AxesGroup.State.ConfigurationData.HighestFrameIndex ) OR
+      ( ParCmd.FrameNo > RobotLibraryParameter.FRAME_MAX -1                  ))         
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
-    // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Check FrameNo available on RC ? 
+    IF ( ParCmd.FrameNo > AxesGroup.State.ConfigurationData.HighestFrameIndex )
+    THEN
+      ErrorID := RobotLibraryErrorIdEnum.ERR_FRAMENO_UNAVAILABLE;
+    ELSE
+      ErrorID := RobotLibraryErrorIdEnum.ERR_FRAMENO_RANGE;
+  	END_IF  
+    
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -284,7 +293,7 @@ END_VAR
   
   ELSE
     // invalid step
-    ErrorID := RobotLibraryEvents.ERR_INVALID_STEP;
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
   END_CASE
   
   
@@ -346,8 +355,9 @@ END_VAR
 // Byte 33 :         - FrameData.RZ HW LB;
 // Byte 34 :         - FrameData.RZ LW HB;
 // Byte 35 :         - FrameData.RZ LW LB;
-// Byte 36 : USINT   - FrameNo;
-// Byte 37 : BOOL    - DataChanged;
+{warning 'ToDo: value are swapped in comparation to Specification V1.3'}
+// Byte 36 : BOOL    - DataChanged; 
+// Byte 37 : USINT   - FrameNo;
 
   // call base implementation to parse the header from payload buffer
   ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
@@ -378,10 +388,14 @@ END_VAR
   _response.FrameData.Ry := ResponseData.GetReal();
   // Get Response.FrameData.Rz
   _response.FrameData.Rz := ResponseData.GetReal();
-  // Get Response.FrameNoReturn
-  _response.FrameNoReturn := ResponseData.GetUsint();
+  
+  {warning 'ToDo: value are swapped in comparation to Specification V1.3'}
+  
   // Get Response.DataChanged
   _response.DataChanged := ResponseData.GetBool();
+  // Get Response.FrameNoReturn
+  _response.FrameNoReturn := ResponseData.GetUsint();
+  
   
   // Create logging
   ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);

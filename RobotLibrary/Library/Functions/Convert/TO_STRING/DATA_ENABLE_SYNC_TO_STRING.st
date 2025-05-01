@@ -37,7 +37,6 @@ END_VAR
   _tmpByte.4 := Value.EnableSyncSWLimits;
   _tmpByte.5 := Value.EnableSyncDefaultDynamics;
   _tmpByte.6 := Value.EnableSyncReferenceDynamics;
-  _tmpByte.7 := Value.AllowDynamicBlending;
   
   DATA_ENABLE_SYNC_TO_STRING := BYTE_TO_STRING_BIN(_tmpByte);
 

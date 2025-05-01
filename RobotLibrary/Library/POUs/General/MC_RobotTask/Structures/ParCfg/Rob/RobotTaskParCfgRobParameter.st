@@ -43,8 +43,6 @@ STRUCT
   SyncDelay                  : UINT;
   /// Specifies system reaction in case inconsistency of synchronization data is detected according to Table 6-81. For more information refer to chapter 5.6.7.2
   SyncReaction               : SyncReaction;
-  /// Enable datas to synchronize
-  DataEnableSync             : DataEnableSync;
   /// Defines up to which level of severity messages will be transmitted to the PLC’s message buffer
   MessageLevel               : MessageLevel := MessageLevelEnum.WARNING;
 END_STRUCT

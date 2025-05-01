@@ -23,19 +23,19 @@
 TYPE AxesGroupStateDataChanged :
 STRUCT
   /// indicates that tool data has changed
-  Tool             : ARRAY[0..255] OF BOOL;
+  Tool              : ARRAY[0..RobotLibraryParameter.TOOL_MAX -1      ] OF BOOL;
   /// indicates that frame data has changed
-  Frame            : ARRAY[0..255] OF BOOL;
+  Frame             : ARRAY[0..RobotLibraryParameter.FRAME_MAX -1     ] OF BOOL;
   /// indicates that load data has changed
-  Load             : ARRAY[0..255] OF BOOL;
+  Load              : ARRAY[0..RobotLibraryParameter.LOAD_MAX -1      ] OF BOOL;
   /// indicates that work area has changed
-  WorkArea         : ARRAY[0..255] OF BOOL;
+  WorkArea          : ARRAY[0..RobotLibraryParameter.WORK_AREAS_MAX -1] OF BOOL;
   /// indicates that default dynamic has changed
-  DefaultDynamic   : BOOL;
+  DefaultDynamics   : BOOL;
   /// indicates that reference dynamic has changed
-  ReferenceDynamic : BOOL;
+  ReferenceDynamics : BOOL;
   /// indicates that software limits has changed
-  SwLimits         : BOOL;
+  SwLimits          : BOOL;
 END_STRUCT
 END_TYPE
 

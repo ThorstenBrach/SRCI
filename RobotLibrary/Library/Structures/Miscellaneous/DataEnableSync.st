@@ -36,11 +36,6 @@ STRUCT
   EnableSyncDefaultDynamics   : BOOL := TRUE;
   /// Set TRUE (default), to activate the synchronizationrelated comparison mechanism for reference dynamics
   EnableSyncReferenceDynamics : BOOL := TRUE;
-  /// - Allows blending when CallSubprogram is called in sequence and removed afterwards.
-  /// For more information see chapter 6.5.21.
-  /// • 0 (default): Dynamic blending is prevented 
-  /// • 1: Dynamic blending is allowed
-  AllowDynamicBlending        : BOOL ;
 END_STRUCT
 END_TYPE
 

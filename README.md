@@ -8,8 +8,8 @@ More information about SRCI : https://www.profibus.com/technologies/robotics-src
 
 # Status
 This project is still in an early stage of development. 
-The implementation is nearly complete, and initial testing has already begun. 
-At this point, basic telegrams can be exchanged, and the first commands can be executed.
+The implementation is nearly complete, and the testing is in progress...
+At this point, the SRCI Core Profile was successfully tested with Jaka, Yaskawa and Stäubli robots.
 
 Despite this progress, the software is still some way off from being ready for practical use. 
 Further optimizations and extensive testing are required to ensure the functionality.

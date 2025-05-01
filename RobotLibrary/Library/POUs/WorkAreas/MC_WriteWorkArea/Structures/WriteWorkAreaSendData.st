@@ -28,7 +28,7 @@ STRUCT
   /// • 0 (default)..254
   WorkAreaNo         : USINT;
   /// Data specific to the work area requested by Index.
-  WorkAreaData       : RobotWorkArea;
+  WorkAreaData       : RobotWorkAreaData;
   /// Data changed 
   DataChanged        : BOOL;
 END_STRUCT

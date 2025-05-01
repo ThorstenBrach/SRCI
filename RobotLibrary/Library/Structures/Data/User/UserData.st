@@ -22,20 +22,8 @@
 // -------------------------------------------------------------------------
 TYPE UserData :
 STRUCT
-  /// Set TRUE (default), to activate the synchronizationrelated comparison mechanism for tool data 
-  EnableSyncTool                 : BOOL;
-  /// Set TRUE (default), to activate the synchronizationrelated comparison mechanism for frame data
-  EnableSyncFrame                : BOOL;
-  /// Set TRUE (default), to activate the synchronizationrelated comparison mechanism for load data
-  EnableSyncLoad                 : BOOL;
-  /// Set TRUE (default), to activate the synchronizationrelated comparison mechanism for work area data
-  EnableSyncWorkArea             : BOOL;
-  /// Set TRUE (default), to activate the synchronizationrelated comparison mechanism for software limits
-  EnableSyncSWLimits             : BOOL;
-  /// Set TRUE (default), to activate the synchronizationrelated comparison mechanism for default dynamics
-  EnableSyncDefaultDynamics      : BOOL;
-  /// Set TRUE (default), to activate the synchronizationrelated comparison mechanism for reference dynamics
-  EnableSyncReferenceDynamics    : BOOL;
+  /// state of the synchronizationrelated comparison mechanism 
+  EnableSync                     : DataEnableSync;
   /// Set TRUE to define two sequences in one Telegram.
   ActivateTwoSequences           : BOOL;
   /// Synchronisation modes  

@@ -34,6 +34,8 @@ STRUCT
   InterfaceVersion     : STRING(8);
   /// Synchronization Modes
   SynchronizationModes : SynchronizationModes;  
+  /// Synchronization needs user interaction
+  SyncUserInteraction  : SyncUserInteraction;
 END_STRUCT               
 END_TYPE
 

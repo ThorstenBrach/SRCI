@@ -175,7 +175,6 @@ END_VAR
   _tmpByte.4 := Value.EnableSyncSWLimits;
   _tmpByte.5 := Value.EnableSyncDefaultDynamics;
   _tmpByte.6 := Value.EnableSyncReferenceDynamics;
-  _tmpByte.7 := Value.AllowDynamicBlending;
   
   
   AddByte(_tmpByte);

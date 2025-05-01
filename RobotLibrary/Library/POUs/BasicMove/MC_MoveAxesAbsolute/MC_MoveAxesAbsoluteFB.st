@@ -470,13 +470,22 @@ END_VAR
   
   
   // Check ParCmd.ToolNo valid ? 
-  IF (( ParCmd.ToolNo <   0 ) OR   
-      ( ParCmd.ToolNo > 254 ))
+  IF (( ParCmd.ToolNo <   0                                                ) OR   
+      ( ParCmd.ToolNo > 254                                                ) OR
+      ( ParCmd.ToolNo > AxesGroup.State.ConfigurationData.HighestToolIndex ) OR
+      ( ParCmd.ToolNo > RobotLibraryParameter.TOOL_MAX -1                  ))
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
-    // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Check ToolNo available on RC ? 
+    IF ( ParCmd.ToolNo > AxesGroup.State.ConfigurationData.HighestToolIndex )
+    THEN
+      ErrorID := RobotLibraryErrorIdEnum.ERR_TOOLNO_UNAVAILABLE;
+    ELSE
+      ErrorID := RobotLibraryErrorIdEnum.ERR_TOOLNO_RANGE;
+  	END_IF  
+    
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -1091,7 +1100,7 @@ END_VAR
         
   ELSE
     // invalid step
-    ErrorID := RobotLibraryEvents.ERR_INVALID_STEP;
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
   END_CASE
   
   

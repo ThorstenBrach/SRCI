@@ -27,7 +27,7 @@ STRUCT
   /// Index of the robot work area
   WorkAreaNoReturn : USINT;
   /// Data specific to the work area requested by Index.
-  WorkAreaData     : RobotWorkArea;
+  WorkAreaData     : RobotWorkAreaData;
   /// ToDo
   DataChanged      : BOOL;
 END_STRUCT

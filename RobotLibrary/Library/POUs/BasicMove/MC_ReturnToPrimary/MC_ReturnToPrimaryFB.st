@@ -230,13 +230,22 @@ END_VAR
   
   
   // Check ParCmd.ToolNo valid ? 
-  IF (( ParCmd.ToolNo <   0 ) OR   
-      ( ParCmd.ToolNo > 254 ))
+  IF (( ParCmd.ToolNo <   0                                                ) OR   
+      ( ParCmd.ToolNo > 254                                                ) OR
+      ( ParCmd.ToolNo > AxesGroup.State.ConfigurationData.HighestToolIndex ) OR
+      ( ParCmd.ToolNo > RobotLibraryParameter.TOOL_MAX -1                  ))
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
-    // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Check ToolNo available on RC ? 
+    IF ( ParCmd.ToolNo > AxesGroup.State.ConfigurationData.HighestToolIndex )
+    THEN
+      ErrorID := RobotLibraryErrorIdEnum.ERR_TOOLNO_UNAVAILABLE;
+    ELSE
+      ErrorID := RobotLibraryErrorIdEnum.ERR_TOOLNO_RANGE;
+  	END_IF  
+    
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -249,13 +258,22 @@ END_VAR
   
   
   // Check ParCmd.FrameNo valid ? 
-  IF (( ParCmd.FrameNo <   0 ) OR   
-      ( ParCmd.FrameNo > 254 ))
+  IF (( ParCmd.FrameNo <   0                                                 ) OR   
+      ( ParCmd.FrameNo > 254                                                 ) OR
+      ( ParCmd.FrameNo > AxesGroup.State.ConfigurationData.HighestFrameIndex ) OR
+      ( ParCmd.FrameNo > RobotLibraryParameter.FRAME_MAX -1                  ))         
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
-    // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Check FrameNo available on RC ? 
+    IF ( ParCmd.FrameNo > AxesGroup.State.ConfigurationData.HighestFrameIndex )
+    THEN
+      ErrorID := RobotLibraryErrorIdEnum.ERR_FRAMENO_UNAVAILABLE;
+    ELSE
+      ErrorID := RobotLibraryErrorIdEnum.ERR_FRAMENO_RANGE;
+  	END_IF  
+    
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -293,7 +311,7 @@ END_VAR
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    ErrorID := RobotLibraryErrorIdEnum.ERR_TRAJECTORYMODE_INVALID;
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -352,14 +370,14 @@ END_VAR
 // Byte 09  :       - DecelerationRate LW LB
 // Byte 10  : UINT  - JerkRate LW HB
 // Byte 11  :       - JerkRate LW LB
-// Byte 12  : REAL  - Limit HW HB
-// Byte 13  :       - Limit HW LB
-// Byte 14  :       - Limit LW HB
-// Byte 15  :       - Limit LW LB
+// Byte 12  : REAL  - DistanceLimit HW HB
+// Byte 13  :       - DistanceLimit HW LB
+// Byte 14  :       - DistanceLimit LW HB
+// Byte 15  :       - DistanceLimit LW LB
 // Byte 16  : USINT - ToolNo 
 // Byte 17  : USINT - FrameNo 
-// Byte 18  : UINT  - Time LW HB
-// Byte 19  : UINT  - Time LW LB
+// Byte 18  : UINT  - Move Time LW HB
+// Byte 19  : UINT  - Move Time LW LB
 // Byte 20  : BYTE  - BIT 00 : ReturnMode
 //                    BIT 01 : TrajectoryMode
 //                    BIT 02 : Enable
@@ -623,7 +641,7 @@ END_VAR
   
   ELSE
     // invalid step
-    ErrorID := RobotLibraryEvents.ERR_INVALID_STEP;
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
   END_CASE
   
   

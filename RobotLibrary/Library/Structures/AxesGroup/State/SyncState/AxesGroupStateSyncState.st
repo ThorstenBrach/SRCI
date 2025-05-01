@@ -32,10 +32,10 @@ STRUCT
   WorkArea         : BOOL;
   /// Bit 04: SwLimits
   SwLimits         : BOOL;
-  /// Bit 05: DefaultDynamic
-  DefaultDynamic   : BOOL;
-  /// Bit 06: ReferenceDynamic
-  ReferenceDynamic : BOOL;
+  /// Bit 05: DefaultDynamics
+  DefaultDynamics  : BOOL;
+  /// Bit 06: ReferenceDynamics
+  ReferenceDynamics: BOOL;
   /// Bit 07:
   Bit07            : BOOL;
   /// Bit 08:

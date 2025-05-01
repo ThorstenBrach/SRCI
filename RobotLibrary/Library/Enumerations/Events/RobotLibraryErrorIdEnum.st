@@ -3,12 +3,47 @@ TYPE RobotLibraryErrorIdEnum :
 (
   NO_ERROR := 0,
 
+  {warning 'ToDo: This is an internal error ID, which is not defined in SRCI specification'}
+  /// START
+  
+  /// Program fault : Invalid step
+  ERR_INVALID_STEP             := 1,
+  /// Program fault : Invalid library parameter
+  ERR_INVALID_LIBRARY_PARA     := 2,
+  /// Program fault : Invalid axes groups ID
+  ERR_INVALID_AXES_GROUP_ID    := 3,
+  /// Program fault : Invalid amount of axes groups 
+  ERR_INVALID_AXES_GROUP_COUNT := 4,
+  /// Function is not supported
+  ERR_FUNCTION_NOT_SUPPORTED   := 5,
+  /// Program fault : Timeout during command execution 
+  ERR_TIMEOUT_CMD              := 6,
+  /// Parameter fault : Invalid command parameter SyncReaction
+  ERR_INVALID_PAR_CMD_SYNC_REACTION  := 7,
   /// Invalid command parameter - see log file for details (LogLevel Error)
-  ERR_INVALID_PAR_CMD := 1, {warning 'ToDo: This is an internal error ID, which is not defined in SRCI specification'}
-
+  ERR_INVALID_PAR_CMD := 8,             
   /// Synchronisation state prohibits command execution
-  ERR_SYNC_STATE_PROHIBITS_COMMAND := 2, {warning 'ToDo: This is an internal error ID, which is not defined in SRCI specification'}
-
+  ERR_SYNC_STATE_PROHIBITS_COMMAND := 9,
+  /// Synchronisation mode is invalid
+  ERR_SYNC_MODE_INVALID := 10,     
+  /// Client Invalid parameter value - LoadNo not
+  /// available on RC
+  /// Commands using the parameter "LoadNo"
+  ERR_LOADNO_UNAVAILABLE  := 11,   
+  /// Client Invalid parameter value - WorkAreaNo outside of
+  /// the allowed range -1..254
+  /// Commands using the parameter "WorkAreaNo"
+  ERR_WORKAREANO_RANGE  := 12,
+  /// Client Invalid parameter value - LoadNo not
+  /// available on RC
+  /// Commands using the parameter "LoadNo"
+  ERR_WORKAREANO_UNAVAILABLE  := 13,   
+  
+  /// END
+  {warning 'ToDo: This is an internal error ID, which is not defined in SRCI specification'}
+  
+  
+  
   
   /// Telegram control does not match the telegram state
   ERR_TELEGRAM_CONTROL_MISMATCH_TELEGRAM_STATE_0xA1 := 16#A1,  

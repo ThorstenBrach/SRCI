@@ -110,13 +110,22 @@ END_VAR
   CheckParameterValid := TRUE;
   
   // Check ParCmd.ToolNo valid ? 
-  IF (( ParCmd.ToolNo <  -1 ) OR  
-      ( ParCmd.ToolNo > 254 ))
+  IF (( ParCmd.ToolNo <  -1                                                ) OR  
+      ( ParCmd.ToolNo > 254                                                ) OR
+      ( ParCmd.ToolNo > AxesGroup.State.ConfigurationData.HighestToolIndex ) OR
+      ( ParCmd.ToolNo > RobotLibraryParameter.TOOL_MAX -1                  ))
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
-    // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    
+    // Check ToolNo available on RC ? 
+    IF ( ParCmd.ToolNo > AxesGroup.State.ConfigurationData.HighestToolIndex )
+    THEN
+      ErrorID := RobotLibraryErrorIdEnum.ERR_TOOLNO_UNAVAILABLE;
+    ELSE
+      ErrorID := RobotLibraryErrorIdEnum.ERR_TOOLNO_RANGE;
+  	END_IF  
+    
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -283,7 +292,7 @@ END_VAR
   
   ELSE
     // invalid step
-    ErrorID := RobotLibraryEvents.ERR_INVALID_STEP;
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
   END_CASE
   
   
@@ -347,8 +356,10 @@ END_VAR
 // Byte 35 : USINT      ToolData.LoadNo;
 // Byte 36 : BOOL       ToolData.ExternalTCP;
 // Byte 37 : BYTE       Reserved;
-// Byte 38 : USINT      ToolNo;
-// Byte 39 : BOOL       DataChanged;
+
+{warning 'ToDo: value are swapped in comparation to Specification V1.3'}
+// Byte 38 : BOOL       DataChanged;
+// Byte 39 : USINT      ToolNo;
 // --------------------------
 
   // call base implementation to parse the header from payload buffer
@@ -384,10 +395,13 @@ END_VAR
   _response.ToolData.ExternalTCP := ResponseData.GetBool();
   // Get Response.Reserve
   _response.Reserve := ResponseData.GetByte();
-  // Get Response.ToolData.ToolNoReturn
-  _response.ToolNoReturn := ResponseData.GetUsint();
+  
+  {warning 'ToDo: value are swapped in comparation to Specification V1.3'}
   // Get Response.DataChanged
   _response.DataChanged := ResponseData.GetBool();
+  // Get Response.ToolData.ToolNoReturn
+  _response.ToolNoReturn := ResponseData.GetUsint();
+  
   
   // Create logging
   ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);

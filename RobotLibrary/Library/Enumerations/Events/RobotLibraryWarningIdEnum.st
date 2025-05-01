@@ -171,6 +171,12 @@ TYPE RobotLibraryWarningIdEnum :
   /// Client Synchronization of load is not possible due to error in the read or write load cmd. See dedicated message log entry for more information.
   WARN_LOAD_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD := 16#7046,
 
+  
+  /// Client Synchronization of workarea is not possible due to error in the read or write load cmd. See dedicated message log entry for more information.
+  WARN_WORK_AREA_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD := 16#7051, {warning 'ToDo: No event for WorkArea defined in specification V1.3 !!!'}
+
+  
+  
   /// Client Synchronization of swLimits is not possible due to error in the read or write swLimits cmd. See dedicated message log entry for more information.
   WARN_SW_LIMITS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD := 16#7047,
 
