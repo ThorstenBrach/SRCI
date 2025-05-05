@@ -1,9 +1,17 @@
-# SRCI
-Standard Robot Command Interface
+# Standard Robot Command Interface (SRCI)
 
-This is an open PLC client implementation of the SRCI interface for IEC61131-3, based on SRCI specification V1.3 (March 2023).
+![SRCI](https://raw.githubusercontent.com/wiki/ThorstenBrach/SRCI/Images/SRCI_Logo_small.png)
 
-More information about SRCI : https://www.profibus.com/technologies/robotics-srci
+**This is an open PLC client implementation of the SRCI interface for IEC61131-3, based on SRCI specification V1.3 (March 2023).**
+
+
+The Standard Robot Command Interface (SRCI) is an open, manufacturer-independent standard, designed to enable seamless integration and control of robots in PLC-based automation environments. It provides a consistent communication framework that simplifies the programming and operation of industrial and collaborative robots — regardless of the specific PLC or robot brand involved.
+
+More information about SRCI : 
+
+- General Info : https://www.profibus.com/technologies/robotics-srci
+- Project Wiki : https://github.com/ThorstenBrach/SRCI/wiki
+
 
 
 # Status
