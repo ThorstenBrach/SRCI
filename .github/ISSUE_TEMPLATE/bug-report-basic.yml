@@ -22,11 +22,11 @@ body:
       required: false
 
   - type: input
-    id: lib_item_version
+    id: lib_version
     attributes:
-      label: Version or date
-      description: Please provide the version or date of the library item. This is usually found in the header of the code.
-      placeholder: "e.g. `0.1.0` or `2024-06-01`"
+      label: Library version
+      description: Please provide the library version. This is usually found in the library manager of the engineering tool (e.g. TwinCAT).
+      placeholder: "e.g. `0.1.0`"
     validations:
       required: false
 
