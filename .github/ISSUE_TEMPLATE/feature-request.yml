@@ -1,0 +1,54 @@
+name: "⭐ Feature or enhancement request"
+description: Propose something new.
+title: "[Feature Request]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please make sure to [search for existing issues](https://github.com/mrBrutus/trial-SRCI/issues) before filing a new one!
+
+  - type: markdown
+    attributes:
+      value: |
+        ## About the library item
+
+  - type: input
+    id: lib_item_name
+    attributes:
+      label: Name
+      description: Please provide the name of the library item.
+      placeholder: "e.g. `MC_MoveLinearAbsolute`"
+    validations:
+      required: false
+
+  - type: input
+    id: lib_item_version
+    attributes:
+      label: Version or date
+      description: Please provide the version or date of the library item. This is usually found in the header of the code.
+      placeholder: "e.g. `0.1.0` or `2024-06-01`"
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: |
+        ## About the feature
+
+  - type: textarea
+    attributes:
+      label: Description of the new feature / enhancement
+      placeholder: What is the expected behavior of the proposed feature?
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Scenario when this would be used?
+      placeholder: What is the scenario this would be used?
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: Please limit one request per issue.
