@@ -96,6 +96,6 @@ body:
       description: |
         Please copy and paste any relevant output (e.g. from the message- or system log).
         This will automatically be formatted into code, so no need for backticks.
-    render: shell
+      render: shell
     validations:
       required: false
