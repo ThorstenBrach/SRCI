@@ -4,56 +4,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.0.0.42] - 2025-05-01
-
-### Added
-- Functions to compare data objects:
-  - `IsFrameDataEqual`
-  - `IsToolDataEqual`
-  - `IsLoadDataEqual`
-  - `IsSwLimitsEqual`
-  - `IsWorkAreaEqual`
-  - `IsDefaultDynamicsEqual`
-  - `IsReferenceDynamicsEqual`
-- Methods to handle synchronization:
-  - `HandleSyncFrameData`
-  - `HandleSyncToolData`
-  - `HandleSyncLoadData`
-  - `HandleSyncWorkArea`
-  - `HandleSyncSwLimits`
-  - `HandleSyncDefaultDynamics`
-  - `HandleSyncReferenceDynamics`
-- Some missing `Error`, `Warning`, and `Info` events from the specification (still incomplete).
-
-### Changed
-- Array definitions updated to use range `0..MAX-1` for:
-  - `FrameData`
-  - `ToolData`
-  - `LoadData`
-  - `WorkAreas`
-
-
-## [0.0.0.41] - 2025-04-13
-
-### Added
-- `SyncTime` Enum.
-- `TO_STRING` conversion for `SyncTime`.
-- Preparations for synchronization mechanism in `RobotTask` (not yet implemented).
-- Distinction between `SyncMode` values: `SYNC_DURING_STARTUP` and `SYNC_AFTER_STARTUP`.
-
-### Changed
-- Renamed:
-  - `RobotTask.ExchangeConfiguration` to `RobotTask._exchangeConfiguration`.
-  - `RobotTask.ReadRobotData` to `RobotTask._readRobotData`.
-  - `RobotTask.ReadMessaged` to `RobotTask._readmessaged`.
-- Consolidated `AxesGroup.InternalData` and `AxesGroup.State` into `AxesGroup.State`.
-- Standardized method usage: replaced `OnCall` with `OnExecRun` for command execution (`OnCall` remains in `BaseFB`).
-- Assigned more meaningful names to `SyncReaction` items.
-
-### Fixed
-- Issue with acknowledgement of `LogMessages` via `ReadMessagesFB`.
-
-
 ## [0.0.0.40] - 2025-04-03
 
 ### Added
