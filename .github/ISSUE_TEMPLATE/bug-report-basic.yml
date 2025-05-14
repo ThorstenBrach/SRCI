@@ -1,0 +1,101 @@
+name: "🕷️ Bug report"
+description: Report errors or unexpected behavior.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please make sure to [search for existing issues](https://github.com/ThorstenBrach/SRCI/issues) before filing a new one!
+
+  - type: markdown
+    attributes:
+      value: |
+        ## About the library item
+
+  - type: input
+    id: lib_item_name
+    attributes:
+      label: Name
+      description: Please provide the name of the library item.
+      placeholder: "e.g. `MC_MoveLinearAbsolute`"
+    validations:
+      required: false
+
+  - type: input
+    id: lib_version
+    attributes:
+      label: Library version
+      description: Please provide the library version. This is usually found in the library manager of the engineering tool (e.g. TwinCAT).
+      placeholder: "e.g. `0.1.0`"
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: |
+        ## About the bug
+
+  - type: textarea
+    attributes:
+      label: Current Behavior
+      placeholder: |
+        The counter is not working properly. It increments with steps of 11 instead of 1.
+      description: |
+        A concise description of what you're experiencing.
+
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Expected Behavior
+      placeholder: |
+        The counter should increment with steps of one.
+      description: A concise description of what you expected to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Steps To Reproduce
+      description: Steps to reproduce the behavior.
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Solution
+
+  - type: textarea
+    attributes:
+      label: Proposed solution
+      placeholder: |
+        Adjusting the value to `1` should fix the issue.
+
+        ```js
+        i := i + 1; // 11 changed to 1
+        ```
+      description: |
+        Tell us if you already have an idea how this can be fixed.
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Log data
+
+  - type: textarea
+    attributes:
+      label: Relevant log output
+      description: |
+        Please copy and paste any relevant output (e.g. from the message- or system log).
+        This will automatically be formatted into code, so no need for backticks.
+      render: shell
+    validations:
+      required: false
