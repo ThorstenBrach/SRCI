@@ -1,0 +1,126 @@
+name: create release # how it appears in the github UI
+
+on: # define the events
+  push:
+    # branches:
+    #   - "**" # push of any branch
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+*" # push of semantic version tag (e.g. v0.1.2)
+
+permissions:
+  contents: write
+
+jobs:
+  build_job:
+    name: ${{ matrix.name }} # build the name for the github UI
+    runs-on: ubuntu-latest
+    env:
+      TZ: Europe/Berlin
+    strategy:
+      fail-fast: true # stop if one setup fails
+      matrix: # define the setups in an array
+        include:
+          - name: Beckhoff
+            library_files: "RobotLibrary.* RobotLibrarySysDep_Tc.*"
+            source_files: "RobotLibrary/ RobotLibrarySysDep_Tc/"
+
+          - name: Codesys
+            library_files: "RobotLibrary.* RobotLibrarySysDep_3S.*"
+            source_files: "RobotLibrary/ RobotLibrarySysDep_3S/"
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+
+      - name: Commit info
+        shell: bash
+        run: |
+          COMMIT_SHA_SHORT=$(git rev-parse --short ${{ github.sha }})
+          echo "COMMIT_SHA_SHORT=${COMMIT_SHA_SHORT}" >> $GITHUB_ENV
+
+      - name: Setup folders
+        run: |
+          mkdir -p distribute/${{ matrix.name }}/lib
+          mkdir -p distribute/${{ matrix.name }}/src
+
+      - name: Build info
+        run: | # create a yaml file with the build info
+          echo "tag: ${{ github.ref_name }}" > distribute/${{ matrix.name }}/build-info.yaml
+          echo "commit_date: $(git log -1 --format=%cd --date=iso8601-strict)" >> distribute/${{ matrix.name }}/build-info.yaml
+          echo "commit_hash: ${{ github.sha }}" >> distribute/${{ matrix.name }}/build-info.yaml
+
+      - name: Copy files
+        run: |
+          cp -r LICENSE distribute/${{ matrix.name }}/LICENSE.md
+          cp -r CHANGELOG.md distribute/${{ matrix.name }}/
+          cp -r README.md distribute/${{ matrix.name }}/
+          cp -r ${{ matrix.library_files }} distribute/${{ matrix.name }}/lib/
+          cp -r ${{ matrix.source_files }} distribute/${{ matrix.name }}/src/
+
+      - name: View result
+        run: | # list the content
+          tree -d distribute/${{ matrix.name }}
+          cat distribute/${{ matrix.name }}/build-info.yaml
+
+      - name: Create archive
+        run: |
+          cd distribute
+          tar -czf "../${{ matrix.name }}.tar.gz" *
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: "_${{ matrix.name }}.tar.gz"
+          path: "${{ matrix.name }}.tar.gz"
+          retention-days: 1
+
+  deploy_job:
+    name: 🚀 Github release
+    if: startsWith(github.ref, 'refs/tags/') # only for tag build
+    needs: build_job
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout changelog
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            CHANGELOG.md
+          sparse-checkout-cone-mode: false
+
+      - name: Setup folders
+        run: |
+          mkdir -p distribute
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: _temp
+
+      - name: Extract archives
+        working-directory: _temp
+        run: |
+          for f in *.tar.gz; do tar -xzf "${f}/${f#_}" -C ${{github.workspace}}/distribute; done
+
+      - name: Rename folders
+        working-directory: distribute
+        run: | # rename to include version tag
+          for d in *; do mv -v "${d}" "${d}-${{ github.ref_name }}"; done
+
+      - name: Archive release assets
+        working-directory: distribute
+        run: |
+          for d in *; do 7z a -r -tzip "${d}.zip" "${d}/*"; done
+
+      - name: View result (depth=4)
+        run: tree -L 4
+
+      - name: Get relevant changelog data
+        run: sed -n '/^## /, $p' CHANGELOG.md > CHANGELOG.txt
+
+      - name: 🚀 Release # create a GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Release ${{ github.ref_name }}
+          prerelease: true
+          files: |
+            distribute/*.zip
+          body_path: CHANGELOG.txt
