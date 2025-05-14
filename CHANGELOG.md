@@ -4,35 +4,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [0.0.0.42] - 2025-05-01
-
-### Added
-- Functions to compare data objects:
-  - `IsFrameDataEqual`
-  - `IsToolDataEqual`
-  - `IsLoadDataEqual`
-  - `IsSwLimitsEqual`
-  - `IsWorkAreaEqual`
-  - `IsDefaultDynamicsEqual`
-  - `IsReferenceDynamicsEqual`
-- Methods to handle synchronization:
-  - `HandleSyncFrameData`
-  - `HandleSyncToolData`
-  - `HandleSyncLoadData`
-  - `HandleSyncWorkArea`
-  - `HandleSyncSwLimits`
-  - `HandleSyncDefaultDynamics`
-  - `HandleSyncReferenceDynamics`
-- Some missing `Error`, `Warning`, and `Info` events from the specification (still incomplete).
-
-### Changed
-- Array definitions updated to use range `0..MAX-1` for:
-  - `FrameData`
-  - `ToolData`
-  - `LoadData`
-  - `WorkAreas`
-
-
 ## [0.0.0.41] - 2025-04-13
 
 ### Added
