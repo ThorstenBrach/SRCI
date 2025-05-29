@@ -649,6 +649,7 @@ END_VAR
   MyType := 'MC_CalculateForwardKinematicFB';
   
   ExecMode := ExecutionMode.PARALLEL;
+  Priority := PriorityLevel.NORMAL;
 
 END_METHOD
 

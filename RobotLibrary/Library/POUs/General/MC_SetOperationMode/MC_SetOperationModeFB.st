@@ -204,6 +204,7 @@ END_VAR
   MyType := 'MC_SetOperationModeFB';
   
   ExecMode := ExecutionMode.PARALLEL;
+  Priority := PriorityLevel.NORMAL;
 
 END_METHOD
 

@@ -300,6 +300,10 @@ VAR_INPUT
 END_VAR
 
   MyType := 'MC_BrakeTestFB';
+  
+  ExecMode     := ExecutionMode.SEQUENCE_PRIMARY;
+  Priority     := PriorityLevel.NORMAL;
+  SequenceFlag := SequenceFlagEnum.PRIMARY_SEQUENCE;
 
 END_METHOD
 

@@ -156,6 +156,7 @@ END_VAR
   MyType := 'MC_RestartControllerFB';
   
   ExecMode := ExecutionMode.PARALLEL;
+  Priority := PriorityLevel.NORMAL;
 
 END_METHOD
 

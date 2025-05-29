@@ -24,6 +24,8 @@ FUNCTION_BLOCK MC_ActivateNextCommandFB EXTENDS RobotLibraryBaseExecuteFB
 VAR_INPUT
   /// Command parameter 
   ParCmd          : ActivateNextCommandParCmd;
+  /// Processing mode
+  ProcessingMode  : ProcessingMode;  
 END_VAR
 VAR_OUTPUT
   /// Command is transferred and confirmed by the RC
@@ -108,10 +110,10 @@ END_VAR
   CheckParameterValid := TRUE;
   
   // Check ParCmd.ProcessingMode valid ? 
-  IF (( ParCmd.ProcessingMode <> ProcessingMode.PARALLEL         ) AND
-      ( ParCmd.ProcessingMode <> ProcessingMode.DEACTIVATE       ) AND
-      ( ParCmd.ProcessingMode <> ProcessingMode.TRIGGER_ONCE     ) AND
-      ( ParCmd.ProcessingMode <> ProcessingMode.TRIGGER_MULTIPLE ))
+  IF (( ProcessingMode <> ProcessingModeEnum.PARALLEL         ) AND
+      ( ProcessingMode <> ProcessingModeEnum.DEACTIVATE       ) AND
+      ( ProcessingMode <> ProcessingModeEnum.TRIGGER_ONCE     ) AND
+      ( ProcessingMode <> ProcessingModeEnum.TRIGGER_MULTIPLE ))
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
@@ -123,7 +125,7 @@ END_VAR
                             Severity    := Severity.ERROR,
                             MessageCode := ErrorID,
                             MessageText := 'Invalid Parameter ParCmd.ProcessingMode = {1}',
-                            Para1       := PROCESSING_MODE_TO_STRING(ParCmd.ProcessingMode));
+                            Para1       := PROCESSING_MODE_TO_STRING(ProcessingMode));
     RETURN;                          
   END_IF
   
@@ -260,7 +262,9 @@ END_VAR
 
   MyType := 'MC_ActivateNextCommandFB';
   
-  ExecMode := ExecutionMode.PARALLEL;
+  ExecMode       := ExecutionMode.PARALLEL;
+  Priority       := PriorityLevel.NORMAL;
+  ProcessingMode := ProcessingModeEnum.PARALLEL;
 
 END_METHOD
 

@@ -204,6 +204,7 @@ END_VAR
   MyType := 'MC_ReadDHParameterFB';
   
   ExecMode := ExecutionMode.PARALLEL;
+  Priority := PriorityLevel.NORMAL;
 
 END_METHOD
 

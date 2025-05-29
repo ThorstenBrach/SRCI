@@ -1334,6 +1334,7 @@ END_VAR
   MyType := 'MC_WriteWorkAreaFB';
   
   ExecMode := ExecutionMode.PARALLEL;
+  Priority := PriorityLevel.NORMAL;
 
 END_METHOD
 

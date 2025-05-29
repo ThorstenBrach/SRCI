@@ -14,6 +14,9 @@ VAR_INPUT
 END_VAR
 
   MyType := 'MC_CreateServerLogFB';
+  
+  ExecMode := ExecutionMode.PARALLEL;
+  Priority := PriorityLevel.NORMAL;
 
 END_METHOD
 

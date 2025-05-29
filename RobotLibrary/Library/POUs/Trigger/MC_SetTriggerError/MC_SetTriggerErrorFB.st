@@ -121,7 +121,7 @@ END_VAR
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_ABORTINGMODE_INVALID;
+    ErrorID := RobotLibraryErrorIdEnum.ERR_PROCESSINGMODE_NOT_ALLOWED;
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -459,7 +459,9 @@ END_VAR
 
   MyType := 'MC_SetTriggerErrorFB';
   
-  ExecMode := ExecutionMode.PARALLEL;
+  ExecMode       := ExecutionMode.PARALLEL;
+  Priority       := PriorityLevel.NORMAL;
+  ProcessingMode := ProcessingModeEnum.TRIGGER_ONCE;
 
 END_METHOD
 

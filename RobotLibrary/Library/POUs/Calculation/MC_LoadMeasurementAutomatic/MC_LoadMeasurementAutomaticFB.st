@@ -1329,6 +1329,11 @@ VAR_INPUT
 END_VAR
 
   MyType := 'MC_LoadMeasurementAutomaticFB';
+  
+  ExecMode     := ExecutionMode.SEQUENCE_PRIMARY;
+  Priority     := PriorityLevel.NORMAL;
+  AbortingMode := AbortingModeEnum.BUFFER;  
+  SequenceFlag := SequenceFlagEnum.PRIMARY_SEQUENCE;
 
 END_METHOD
 

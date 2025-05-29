@@ -1,5 +1,5 @@
 /// Commands specified reaction from RA when defined force/torque detected
-FUNCTION_BLOCK MC_ForceLimitFB EXTENDS RobotLibraryBaseFB
+FUNCTION_BLOCK MC_ForceLimitFB EXTENDS RobotLibraryBaseEnableFB
 // ------------------------------------------------------------------------- 
 //  SRCI Robot Library                                                
 // ------------------------------------------------------------------------- 
@@ -22,8 +22,6 @@ FUNCTION_BLOCK MC_ForceLimitFB EXTENDS RobotLibraryBaseFB
 //
 // -------------------------------------------------------------------------
 VAR_INPUT
-  /// Set TRUE to activate force limiting
-  Enable            : BOOL;
   /// Command parameter 
   ParCmd            : ForceLimitParCmd;   
 END_VAR
@@ -31,8 +29,6 @@ END_VAR
 VAR_OUTPUT
   /// TRUE, while the following outputs return valid values
   Valid             : BOOL;
-  /// FB is being processed
-  Busy              : BOOL;
   /// Command is transferred and confirmed by the RC
   CommandBuffered   : BOOL;
   /// Receiving of input parameter values has been acknowledged by RC
@@ -49,10 +45,6 @@ VAR
  _command           : ForceLimitSendData;
   /// response data received
  _response          : ForceLimitRecvData;      
-  /// Rising edge for enable
- _enable_R          : R_TRIG;
-  /// Falling edge for enable
- _enable_F          : F_TRIG;  
 END_VAR
 
   SUPER^(AxesGroup := AxesGroup);
@@ -787,6 +779,9 @@ VAR_INPUT
 END_VAR
 
   MyType := 'MC_ForceLimitFB';
+  
+  ExecMode := ExecutionMode.CONTINUOUS;
+  Priority := PriorityLevel.NORMAL;
 
 END_METHOD
 
@@ -798,10 +793,6 @@ END_VAR
 
   // call base implementation
   SUPER^.OnExecRun(AxesGroup := AxesGroup);
-  
-  // building rising and falling edges
-  _enable_R( CLK := Enable);
-  _enable_F( CLK := Enable);
   
   CASE _stepCmd OF
     
@@ -849,19 +840,31 @@ END_VAR
                                            Valid              := TRUE;
              CmdMessageState.ERROR       : Error              := TRUE;
            END_CASE
+           
+           // Update results
+           OutCmd.ForceStatus.ForceControlEnabled         := _response.ForceStatus.0;
+           OutCmd.ForceStatus.ForceLimitEnabled           := _response.ForceStatus.1;
+           OutCmd.ForceStatus.ApplyingForce               := _response.ForceStatus.2;
+           OutCmd.ForceStatus.MaxDeviationReached         := _response.ForceStatus.3;
+           OutCmd.ForceStatus.SpecifiedForceTorqueReached := _response.ForceStatus.4;
+           OutCmd.ForceStatus.SpecifiedForceLimitReached  := _response.ForceStatus.5;
+           OutCmd.ForceStatus.Bit06                       := _response.ForceStatus.6;
+           OutCmd.ForceStatus.Bit07                       := _response.ForceStatus.7;  
+           OutCmd.FollowID                                := _response.OriginID; {warning 'ToDo'}
+           
+           // Update enable flag
+           Enabled := OutCmd.ForceStatus.ForceLimitEnabled;
+           
+           
+           // Enabled ? -> Reset Busy flag  
+           IF (Enabled)
+           THEN  
+             Busy := FALSE;
+  				 END_IF
+  
            // Done, Aborted or Error ?
            IF (_response.State >= CmdMessageState.DONE )
            THEN         
-             // Update results
-             OutCmd.ForceStatus.ForceControlEnabled         := _response.ForceStatus.0;
-             OutCmd.ForceStatus.ForceLimitEnabled           := _response.ForceStatus.1;
-             OutCmd.ForceStatus.ApplyingForce               := _response.ForceStatus.2;
-             OutCmd.ForceStatus.MaxDeviationReached         := _response.ForceStatus.3;
-             OutCmd.ForceStatus.SpecifiedForceTorqueReached := _response.ForceStatus.4;
-             OutCmd.ForceStatus.SpecifiedForceLimitReached  := _response.ForceStatus.5;
-             OutCmd.ForceStatus.Bit06                       := _response.ForceStatus.6;
-             OutCmd.ForceStatus.Bit07                       := _response.ForceStatus.7;  
-             OutCmd.FollowID                                := _response.OriginID; {warning 'ToDo'}
              // set timeout
              SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
              // inc step counter
@@ -870,11 +873,36 @@ END_VAR
    
          END_IF
   
+         // do not abort directly, so that the ParSeq update can be send
+         IF ( _enable_F.Q ) 
+         THEN
+           // Set Busy flag
+           Busy := TRUE;
+           // trigger parameter update to disable FB
+          _parameterUpdateInternal := TRUE;
+           // reset the falling edge
+          _enable_F();
+           // set timeout
+           SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
+           // inc step counter
+          _stepCmd := _stepCmd + 1; 
+         END_IF
   
-    02: IF (NOT Enable)
+        // Wait for response received or timeout or not Initialized
+    02: IF ((    _responseReceived                                   )  OR 
+            (     CheckTimeout(_timerCmd) = RobotLibraryConstants.OK )) OR 
+           (( NOT AxesGroup.State.Initialized                        )  AND
+            ( NOT AxesGroup.State.Synchronized                       ))
         THEN
-          Reset();
+          Reset();   
   	    END_IF
+        
+        // Wait for Enable = FALSE
+    03: IF ( NOT Enable )
+        THEN
+          Reset();   
+  	    END_IF
+  
   
   ELSE
     // invalid step
@@ -887,15 +915,7 @@ END_VAR
   IF (( _enable_R.Q ) OR
       ( _enable_F.Q ))
   THEN
-   _uniqueId           := 0;
-   _stepCmd            := 0;
-    Valid              := FALSE;
-    Busy               := FALSE;
-    CommandBuffered    := FALSE;
-    Error              := FALSE;
-    ErrorID            := 0;
-    WarningID          := 0;
-    InfoID             := 0;  
+    Reset();  
   END_IF
 
 END_METHOD

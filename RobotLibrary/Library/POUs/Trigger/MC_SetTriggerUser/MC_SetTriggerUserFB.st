@@ -292,6 +292,11 @@ VAR_INPUT
 END_VAR
 
   MyType := 'MC_SetTriggerUserFB';
+  
+  ExecMode       := ExecutionMode.PARALLEL;
+  Priority       := PriorityLevel.NORMAL;
+  ProcessingMode := ProcessingModeEnum.TRIGGER_ONCE;
+  SequenceFlag   := SequenceFlagEnum.NO_SEQUENCE;
 
 END_METHOD
 

@@ -759,6 +759,7 @@ END_VAR
   MyType := 'MC_CalculateCartesianPositionFB';
   
   ExecMode := ExecutionMode.PARALLEL;
+  Priority := PriorityLevel.NORMAL;
 
 END_METHOD
 

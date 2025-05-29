@@ -202,6 +202,7 @@ END_VAR
   MyType := 'MC_SetSequenceFB';
   
   ExecMode := ExecutionMode.PARALLEL;
+  Priority := PriorityLevel.NORMAL;
 
 END_METHOD
 

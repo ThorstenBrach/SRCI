@@ -20,40 +20,17 @@
 //    own risk and responsibility.
 //
 // -------------------------------------------------------------------------
-VAR_GLOBAL CONSTANT
-  /// Minimal amount of tools
-  TOOL_MIN                : DINT :=  16;
-  /// Maximal amount of tools
-  TOOL_MAX                : DINT := 255;
-  /// Minimal amount of frames
-  FRAME_MIN               : DINT :=  16;
-  /// Maximal amount of frames
-  FRAME_MAX               : DINT := 255;
-  /// Minimal amount of loads
-  LOAD_MIN                : DINT :=  16;  
-  /// Maximal amount of loads
-  LOAD_MAX                : DINT := 255;  
-  /// Minimal amount of work areas
-  WORK_AREAS_MIN          : DINT :=   8;  
-  /// Maximal amount of work areas
-  WORK_AREAS_MAX          : DINT := 255;  
-  /// Maximal amount of bytes which are allowed to be exchanged with the sub program of the RC
-  SUB_PROGRAM_DATA_MAX    : DINT := 190;
-  /// Warning limit for ARC registers running low
-  ARC_USAGE_WARNING_LIMIT : REAL := 80.0;  
-  
+VAR_GLOBAL CONSTANT  
   /// Version of SRCI specification
   /// Bit 0-4 : Minor version = Features        (0..31)
   /// Bit 5-7 : Major version = Breaking change (0..07)
   SRCIVersion             : VersionStruct := ( MajorVersion := 1, MinorVersion := 3, PatchVersion := 0);
   /// Version of the PLC library
-  PLCLibraryVersion       : VersionStruct := ( MajorVersion := 0, MinorVersion := 0, PatchVersion := 42);
-
+  PLCLibraryVersion       : VersionStruct := ( MajorVersion := 0, MinorVersion := 0, PatchVersion := 43);
   /// Minimal axes group ID
   AXES_GROUP_ID_MIN       : BYTE := 0;  
   /// Maximal axes groups ID
   AXES_GROUP_ID_MAX       : BYTE := 15;  
-
   /// OK = 0
   OK                      : DINT := 0;
   /// Running = 1

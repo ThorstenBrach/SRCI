@@ -158,6 +158,7 @@ END_VAR
   MyType := 'MC_GroupInterruptFB';
   
   ExecMode := ExecutionMode.PARALLEL;
+  Priority := PriorityLevel.NORMAL;
 
 END_METHOD
 

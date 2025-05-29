@@ -60,6 +60,9 @@ VAR_INPUT
 END_VAR
 
   MyType := 'MC_WriteCallSubprogramCyclicFB';
+  
+  ExecMode := ExecutionMode.PARALLEL;
+  Priority := PriorityLevel.NORMAL;
 
 END_METHOD
 

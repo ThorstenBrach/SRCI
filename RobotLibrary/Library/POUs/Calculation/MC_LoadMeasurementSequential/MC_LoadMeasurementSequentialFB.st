@@ -288,7 +288,9 @@ END_VAR
 
   MyType := 'MC_LoadMeasurementSequentialFB';
   
-  ExecMode := ExecutionMode.PARALLEL;
+  ExecMode := ExecutionMode.SEQUENCE_PRIMARY;
+  Priority := PriorityLevel.NORMAL;
+  SequenceFlag := SequenceFlagEnum.PRIMARY_SEQUENCE;
 
 END_METHOD
 

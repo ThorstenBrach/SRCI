@@ -4,6 +4,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.0.0.43] - 2025-05-29
+
+### Added
+ - function-specific initial value for `ExecMode` variable in all function FBs within the FB_init method.
+ - function-specific initial value for `Priority` variable in all function FBs within the FB_init method.
+ - function-specific initial value for `ProcessingMode` variable in all function FBs within the FB_init method.
+ - function-specific initial value for `AbortingMode` variable in all function FBs within the FB_init method.
+ - function-specific initial value for `SequenceFlag` variable in all function FBs within the FB_init method.
+ - missing Synchronized flag check and combined it with Initialized condition where applicable.
+
+### Changed
+ - moved declaration of `ARC_USAGE_WARNING_LIMIT` from `Constant` GVL to `Parameter` GVL.
+ - moved `ProcessingMode` variable from ParCmd structure to FB header in `MC_ActivateNextCommandFB`.
+ - Completly revised `MC_ReadCallSubprogramCyclic` function. 
+ - Corrected some incorrect error code assignments.
+ - Changed base FB type of `MC_ActivateConveyorTrackingFB` and adjusted implementation accordingly.
+ - Changed base FB type of `MC_ForceControlFB` and adjusted implementation accordingly. 
+ - Changed base FB type of `MC_ForceLimitFB` and adjusted implementation accordingly.
+
+### Removed
+ - duplicate declaration of `TOOL_MIN` — originally defined in `Parameter` GVL, but redundantly declared in `Constant` GVL.
+ - duplicate declaration of `TOOL_MAX` — originally defined in `Parameter` GVL, but redundantly declared in `Constant` GVL.
+ - duplicate declaration of `FRAME_MIN` — originally defined in `Parameter` GVL, but redundantly declared in `Constant` GVL.
+ - duplicate declaration of `FRAME_MAX` — originally defined in `Parameter` GVL, but redundantly declared in `Constant` GVL.
+ - duplicate declaration of `LOAD_MIN` — originally defined in `Parameter` GVL, but redundantly declared in `Constant` GVL.
+ - duplicate declaration of `LOAD_MAX` — originally defined in `Parameter` GVL, but redundantly declared in `Constant` GVL.
+ - duplicate declaration of `WORK_AREAS_MIN` — originally defined in `Parameter` GVL, but redundantly declared in `Constant` GVL.
+ - duplicate declaration of `WORK_AREAS_MAX` — originally defined in `Parameter` GVL, but redundantly declared in `Constant` GVL.
+ - duplicate declaration of `SUB_PROGRAM_DATA_MAX` — originally defined in `Parameter` GVL, but redundantly declared in `Constant` GVL.
+ - obsolete `OnExecRun_org` method from `MC_RobotTaskFB`.
+  
+
+
 ## [0.0.0.42] - 2025-05-01
 
 ### Added

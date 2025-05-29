@@ -22,8 +22,6 @@
 // -------------------------------------------------------------------------
 TYPE ActivateNextCommandParCmd :
 STRUCT
-  /// Processing mode
-  ProcessingMode : ProcessingMode;
   /// ID of the trigger function that may be triggered:
   /// • 0: Immediately (default). - Start executing THIS function immediately.
   /// • >0: Triggero Start executing when the trigger function with the identical EmitterID is called.

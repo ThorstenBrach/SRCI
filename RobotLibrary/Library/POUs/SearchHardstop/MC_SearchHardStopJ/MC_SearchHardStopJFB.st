@@ -901,6 +901,10 @@ VAR_INPUT
 END_VAR
 
   MyType := 'MC_SearchHardStopJFB';
+  
+  ExecMode     := ExecutionMode.SEQUENCE_PRIMARY;
+  Priority     := PriorityLevel.NORMAL;
+  SequenceFlag := SequenceFlagEnum.PRIMARY_SEQUENCE;
 
 END_METHOD
 

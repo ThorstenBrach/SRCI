@@ -198,6 +198,7 @@ END_VAR
   MyType := 'MC_AbortMeasuringInputFB';
   
   ExecMode := ExecutionMode.PARALLEL;
+  Priority := PriorityLevel.NORMAL;
 
 END_METHOD
 

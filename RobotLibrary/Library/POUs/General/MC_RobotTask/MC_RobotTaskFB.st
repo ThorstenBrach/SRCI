@@ -251,6 +251,10 @@ VAR
  _lastTelegramState           : TelegramState   := TelegramState.UNDEFINED;
    /// last telegram control
  _lastTelegramControl         : ControlHalfByte := ControlHalfByte.NONE;
+  /// array lower boundary
+ _lowerBound                  : DINT;
+  /// array upper boundary
+ _upperBound                  : DINT;
 END_VAR
 
 
@@ -279,6 +283,33 @@ VAR CONSTANT
   EMPTY_EOL_ENTRY      : DINT := 0;
 END_VAR
 
+  // Check ToolData boundary
+  (*
+  IF ( LOWER_BOUND(ToolData,1) <> 0 ) AND ( WarningID = 0 )  
+  THEN
+    WarningID := RobotLibraryWarningIdEnum.WARN_TOOL_DATA_ARRAY_NOT_START_AT_ZERO;
+  END_IF
+  
+  // Check LoadData boundary
+  IF ( LOWER_BOUND(LoadData,1) <> 0 ) AND ( WarningID = 0 )  
+  THEN
+    WarningID := RobotLibraryWarningIdEnum.WARN_TOOL_DATA_ARRAY_NOT_START_AT_ZERO;
+  END_IF
+  
+  // Check FrameData boundary
+  IF ( LOWER_BOUND(FrameData,1) <> 0 ) AND ( WarningID = 0 )  
+  THEN
+    WarningID := RobotLibraryWarningIdEnum.WARN_FRAME_DATA_ARRAY_NOT_START_AT_ZERO;
+  END_IF
+  
+  // Check WorkAreas boundary
+  IF ( LOWER_BOUND(WorkAreas,1) <> 0 ) AND ( WarningID = 0 )  
+  THEN
+    WarningID := RobotLibraryWarningIdEnum.WARN_FRAME_DATA_ARRAY_NOT_START_AT_ZERO;
+  END_IF
+  *)
+  
+  
   HandleAxesGroup              ( AxesGroup         := AxesGroup);
   HandleLifeSign               ( AxesGroup         := AxesGroup);
   HandleLogMessagesAck         ( AxesGroup         := AxesGroup);
@@ -1512,7 +1543,9 @@ END_VAR
     CheckParameterValid := FALSE;
    
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID; // own defined error - not in specification
+    // Set warning
+    WarningID := RobotLibraryWarningIdEnum.WARN_TOOL_DATA_SYNC_MODE_INVALID;
      
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := SystemTime,
@@ -1533,7 +1566,9 @@ END_VAR
     CheckParameterValid := FALSE;
    
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID; // own defined error - not in specification
+    // Set warning
+    WarningID := RobotLibraryWarningIdEnum.WARN_TOOL_DATA_SYNC_MODE_INVALID;
      
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := SystemTime,
@@ -1555,7 +1590,9 @@ END_VAR
     CheckParameterValid := FALSE;
    
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;// own defined error - not in specification
+    // Set warning
+    WarningID := RobotLibraryWarningIdEnum.WARN_FRAME_DATA_SYNC_MODE_INVALID;
      
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := SystemTime,
@@ -1577,7 +1614,9 @@ END_VAR
     CheckParameterValid := FALSE;
    
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;// own defined error - not in specification
+    // Set warning
+    WarningID := RobotLibraryWarningIdEnum.WARN_FRAME_DATA_SYNC_MODE_INVALID;
      
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := SystemTime,
@@ -1599,7 +1638,9 @@ END_VAR
     CheckParameterValid := FALSE;
    
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;// own defined error - not in specification
+    // Set warning
+    WarningID := RobotLibraryWarningIdEnum.WARN_LOAD_DATA_SYNC_MODE_INVALID;
      
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := SystemTime,
@@ -1621,7 +1662,9 @@ END_VAR
     CheckParameterValid := FALSE;
    
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;// own defined error - not in specification
+    // Set warning
+    WarningID := RobotLibraryWarningIdEnum.WARN_LOAD_DATA_SYNC_MODE_INVALID;
      
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := SystemTime,
@@ -1643,7 +1686,9 @@ END_VAR
     CheckParameterValid := FALSE;
    
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;// own defined error - not in specification
+    // Set warning
+    WarningID := RobotLibraryWarningIdEnum.WARN_WORK_AREA_SYNC_MODE_INVALID;
      
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := SystemTime,
@@ -1665,7 +1710,9 @@ END_VAR
     CheckParameterValid := FALSE;
    
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;// own defined error - not in specification
+    // Set warning
+    WarningID := RobotLibraryWarningIdEnum.WARN_WORK_AREA_SYNC_MODE_INVALID;
      
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := SystemTime,
@@ -1687,7 +1734,9 @@ END_VAR
     CheckParameterValid := FALSE;
    
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;// own defined error - not in specification
+    // Set warning
+    WarningID := RobotLibraryWarningIdEnum.WARN_SW_LIMITS_SYNC_MODE_INVALID;
      
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := SystemTime,
@@ -1709,7 +1758,9 @@ END_VAR
     CheckParameterValid := FALSE;
    
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;// own defined error - not in specification
+    // Set warning
+    WarningID := RobotLibraryWarningIdEnum.WARN_SW_LIMITS_SYNC_MODE_INVALID;
      
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := SystemTime,
@@ -1731,7 +1782,9 @@ END_VAR
     CheckParameterValid := FALSE;
    
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;// own defined error - not in specification
+    // Set warning
+    WarningID := RobotLibraryWarningIdEnum.WARN_DEFAULT_DYNAMICS_SYNC_MODE_INVALID;
      
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := SystemTime,
@@ -1753,7 +1806,9 @@ END_VAR
     CheckParameterValid := FALSE;
    
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;// own defined error - not in specification
+    // Set warning
+    WarningID := RobotLibraryWarningIdEnum.WARN_DEFAULT_DYNAMICS_SYNC_MODE_INVALID;
      
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := SystemTime,
@@ -1775,7 +1830,9 @@ END_VAR
     CheckParameterValid := FALSE;
    
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;// own defined error - not in specification
+    // Set warning
+    WarningID := RobotLibraryWarningIdEnum.WARN_REFERENCE_DYNAMICS_SYNC_MODE_INVALID;
      
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := SystemTime,
@@ -1797,7 +1854,9 @@ END_VAR
     CheckParameterValid := FALSE;
    
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;// own defined error - not in specification
+    // Set warning
+    WarningID := RobotLibraryWarningIdEnum.WARN_REFERENCE_DYNAMICS_SYNC_MODE_INVALID;
      
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := SystemTime,
@@ -7723,7 +7782,7 @@ END_VAR
   END_IF
   
   // Warning for ARC Registers running low
-  IF ( AxesGroup.Acyclic.ActiveCommandRegister.CurrenArcUsagePercent > RobotLibraryConstants.ARC_USAGE_WARNING_LIMIT )
+  IF ( AxesGroup.Acyclic.ActiveCommandRegister.CurrenArcUsagePercent > RobotLibraryParameter.ARC_USAGE_WARNING_LIMIT )
   THEN
     WarningID := RobotLibraryWarningIdEnum.WARN_ACR_FREE_ENTRIES_LOW;
   END_IF
@@ -7813,10 +7872,20 @@ END_VAR
   
              // Reset Telegram Control 
              AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.NONE;
-             // set timeout
-             SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
-             // inc step counter
-            _stepCmd := _stepCmd + 1; 
+             
+             // Check SRCI Version is compatible ? 
+             IF ( AxesGroup.Cyclic.RobToPlc.SRCIVersion.MajorVersion = RobotLibraryConstants.SRCIVersion.MajorVersion )
+             THEN
+               // set timeout
+               SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
+               // inc step counter
+              _stepCmd := _stepCmd + 1; 
+             ELSE
+               // set error 
+               ErrorID     := RobotLibraryErrorIdEnum.ERR_SRCI_MAJOR_VERSION_INCOMPATIBLE_0x80A4;
+               ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
+             END_IF
+             
   
          ELSE
            // TelegrammState in error          
@@ -8020,308 +8089,6 @@ END_VAR
          Initialized := NOT Synchronized;
   
          // Wait for task disable
-         IF ( NOT Enable)
-         THEN
-           // Reset active command register
-           AxesGroup.Acyclic.ActiveCommandRegister.Reset();
-           // reset internal variables
-           Reset(AxesGroup := AxesGroup);
-           // Reset step counter
-          _stepCmd := 0;         
-           // finished okay
-           OnExecRun := RobotLibraryConstants.OK;
-         END_IF  
-  
-         
-  ELSE
-    // invalid step
-    ErrorID     := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
-    ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
-  END_CASE
-
-END_METHOD
-
-METHOD OnExecRun_Org : DINT
-VAR_IN_OUT
-  /// Robot assignment of function
-  AxesGroup         : AxesGroup;
-END_VAR
-
-  // building rising and falling edges
-  _enable_R( CLK := Enable);
-  _enable_F( CLK := Enable);
-  
-  IF ( _enable_F.Q)
-  THEN
-    Reset(AxesGroup := AxesGroup);
-  END_IF
-  
-  
-  OnExecRun := RobotLibraryConstants.RUNNING;
-  
-  CASE _stepCmd OF
-    
-    00:  IF ( _enable_R.Q )
-         THEN
-           // Create log entry
-           CreateLogMessage ( Timestamp   := SystemTime,
-                              MessageType := MessageType.CMD,
-                              Severity    := Severity.INFO,
-                              MessageCode := 0,
-                              MessageText := 'Robot Task Enabled');
-         
-           // reset the rising edge
-          _enable_R();
-           // set busy flag
-           Busy := TRUE;
-           // set timeout
-           SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
-           // Reset FastStop       
-           AxesGroup.Cyclic.PlcToRob.FastStop := 0;
-           // Reset Active command register
-           AxesGroup.Acyclic.ActiveCommandRegister.Reset();
-         
-           // check parameter valid
-           IF ( CheckParameterValid(AxesGroup := AxesGroup) )
-           THEN
-             // take configuration parameter if not yet enabled
-            _parCfg := ParCfg;
-             // inc step counter
-            _stepCmd := _stepCmd + 1; 
-           END_IF
-         END_IF
-       
-    01:  CASE AxesGroup.Cyclic.RobToPlc.TelegramState  OF
-  
-           TelegramState.UNDEFINED : ;
-           
-           TelegramState.ERROR_161..TelegramState.ERROR_172:
-  
-             // clear error
-             AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.ACK_ERROR;        
-  
-           TelegramState.ERROR_173:
-  
-             // Reset interface including the ARC register on server side
-             AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.RESET;        
-             
-           TelegramState.READY_TO_RESUME :  
-           
-             // Resume
-             AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.RESUME;        
-           
-           TelegramState.READY_FOR_INITIALIZATION: 
-  
-             // Request initialization
-             AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.INITIALIZE;
-             
-           TelegramState.INITIALIZED: 
-  
-             // Reset Telegram Control 
-             AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.NONE;
-             // set timeout
-             SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
-             // inc step counter
-            _stepCmd := _stepCmd + 1; 
-  
-         ELSE
-           // TelegrammState in error          
-           ErrorID := AxesGroup.Cyclic.RobToPlc.TelegramState;
-           ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
-         END_CASE
-  
-         // timeout exceeded ? 
-         IF (CheckTimeout(_timerCmd) = RobotLibraryConstants.OK)
-         THEN
-           ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
-           ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
-         END_IF
-  
-         
-    02: IF (( NOT _exchangeConfiguration.Busy  ) AND 
-            ( NOT _exchangeConfiguration.Error ))
-        THEN
-          // set command parameter
-         _exchangeConfiguration.ParCmd.LogLevel                           :=  LogLevel; 
-         _exchangeConfiguration.ParCmd.WaitAtBlendingZone                 := _parCfg.Rob.Parameter.WaitAtBlendingZone;
-         _exchangeConfiguration.ParCmd.AllowSecSeqWhileSubprogram         := _parCfg.Rob.Parameter.AllowSecSeqWhileSubprogram;
-         _exchangeConfiguration.ParCmd.AllowDynamicBlending               := _parCfg.Rob.Parameter.AllowDynamicBlending;
-         _exchangeConfiguration.ParCmd.DelayTime                          := _parCfg.Rob.Parameter.DelayTime;
-         _exchangeConfiguration.ParCmd.WaitForNrOfCmd                     := _parCfg.Rob.Parameter.WaitForNrOfCmd;
-         _exchangeConfiguration.ParCmd.LifeSignTimeOut                    :=  TIME_TO_UINT(_parCfg.Com.LifeSignTimeOut);
-         _exchangeConfiguration.ParCmd.SyncDelay                          := _parCfg.Rob.Parameter.SyncDelay;
-         _exchangeConfiguration.ParCmd.SyncReaction                       := _parCfg.Rob.Parameter.SyncReaction;
-         _exchangeConfiguration.ParCmd.DataEnableSync                     := _parCfg.Rob.Parameter.DataEnableSync;
-         _exchangeConfiguration.ParCmd.DataInSync.ToolsInSync             :=  FALSE;
-         _exchangeConfiguration.ParCmd.DataInSync.FramesInSync            :=  FALSE;
-         _exchangeConfiguration.ParCmd.DataInSync.LoadsInSync             :=  FALSE;
-         _exchangeConfiguration.ParCmd.DataInSync.WorkAreasInSync         :=  FALSE;
-         _exchangeConfiguration.ParCmd.DataInSync.SoftwareLimitsInSync    :=  FALSE;
-         _exchangeConfiguration.ParCmd.DataInSync.DefaultDynamicsInSync   :=  FALSE;
-         _exchangeConfiguration.ParCmd.DataInSync.ReferenceDynamicsInSync :=  FALSE;         
-         
-          // start function block
-         _exchangeConfiguration.Enable := TRUE;
-          // set timeout
-          SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
-          // inc step counter
-         _stepCmd := _stepCmd + 1;       
-        ELSE
-          // check error ? 
-          IF (_exchangeConfiguration.Error)
-          THEN
-            ErrorID     := _exchangeConfiguration.ErrorID;
-            ErrorAddTxt := _exchangeConfiguration.ErrorAddTxt;;
-          END_IF  
-         
-          // timeout exceeded ? 
-          IF (CheckTimeout(_timerCmd) = RobotLibraryConstants.OK)
-          THEN
-            ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
-            ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
-          END_IF
-        END_IF
-    
-    
-    03: IF (( NOT _exchangeConfiguration.Busy              ) AND
-            (     _exchangeConfiguration.ParameterAccepted ))
-        THEN     
-          // --------------------------------------------------------------------- 
-          // !!! ExchangeConfiguration must stay active for the Sync mechanism !!!
-          // --------------------------------------------------------------------- 
-          // ExchangeConfiguration.Enable := FALSE;  
-          // set timeout
-          SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
-          // inc step counter
-         _stepCmd := _stepCmd + 1;       
-        ELSE
-          // check error ? 
-          IF (_exchangeConfiguration.Error)
-          THEN
-            ErrorID     := _exchangeConfiguration.ErrorID;
-            ErrorAddTxt := _exchangeConfiguration.ErrorAddTxt;;
-          END_IF  
-         
-          // timeout exceeded ? 
-          IF (CheckTimeout(_timerCmd) = RobotLibraryConstants.OK)
-          THEN
-            ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
-            ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
-          END_IF
-        END_IF
-  
-         
-    04: IF (( NOT _readRobotData.Busy  ) AND 
-            ( NOT _readRobotData.Error )) 
-        THEN
-          // start function block
-         _readRobotData.Execute := TRUE;
-          // set timeout
-          SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
-          // inc step counter
-         _stepCmd := _stepCmd + 1;       
-        ELSE
-          // check error ? 
-          IF (_readRobotData.Error)
-          THEN
-            ErrorID     := _readRobotData.ErrorID;
-            ErrorAddTxt := _readRobotData.ErrorAddTxt;;
-          END_IF  
-          // timeout exceeded ? 
-          IF (CheckTimeout(_timerCmd) = RobotLibraryConstants.OK)
-          THEN
-            ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
-            ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
-          END_IF
-        END_IF
-      
-    
-    05: IF (( NOT _readRobotData.Busy  ) AND
-            (     _readRobotData.Done  ))
-        THEN       
-          // start function block
-         _readRobotData.Execute := FALSE;
-          // set timeout
-          SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
-          // inc step counter
-         _stepCmd := _stepCmd + 1;
-         ELSE
-           // check error ? 
-           IF (_readRobotData.Error)
-           THEN
-             ErrorID     := _readRobotData.ErrorID;
-             ErrorAddTxt := _readRobotData.ErrorAddTxt;;
-           END_IF  
-         
-           // timeout exceeded ? 
-           IF (CheckTimeout(_timerCmd) = RobotLibraryConstants.OK)
-           THEN
-             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
-             ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
-           END_IF
-         END_IF
-  
-  
-    06: IF (( NOT _readMessages.Busy  ) AND 
-            ( NOT _readMessages.Error )) 
-        THEN
-          // start function block
-         _readMessages.Enable := TRUE;
-         _readMessages.ParCmd.MsgID := 0;
-         _readMessages.ParCmd.MessageLevel := _parCfg.Rob.Parameter.MessageLevel;
-          
-          // set timeout
-          SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
-          // inc step counter
-         _stepCmd := _stepCmd + 1;       
-        ELSE
-          // check error ? 
-          IF (_readMessages.Error)
-          THEN
-            ErrorID     := _readMessages.ErrorID;
-            ErrorAddTxt := _readMessages.ErrorAddTxt;;
-          END_IF  
-          // timeout exceeded ? 
-          IF (CheckTimeout(_timerCmd) = RobotLibraryConstants.OK)
-          THEN
-            ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
-            ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
-          END_IF
-        END_IF
-    
-    07: IF ((     _readMessages.Enabled ) AND
-            ( NOT _readMessages.Busy    ) AND
-            ( NOT _readMessages.Error   ))
-        THEN       
-          // --------------------------------------------------------------- 
-          // !!! ReadMessages must stay active for the Message mechanism !!!
-          // --------------------------------------------------------------- 
-          // ReadMessages.Enable := FALSE;  
-          // Reset busy flag
-          Busy := FALSE;
-          // set initialized flag
-          Initialized := TRUE;       
-          // set timeout
-          SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
-          // inc step counter
-         _stepCmd := _stepCmd + 1;
-        ELSE
-           // check error ? 
-           IF (_readMessages.Error)
-           THEN
-             ErrorID     := _readMessages.ErrorID;
-             ErrorAddTxt := _readMessages.ErrorAddTxt;;
-           END_IF  
-         
-           // timeout exceeded ? 
-           IF (CheckTimeout(_timerCmd) = RobotLibraryConstants.OK)
-           THEN
-             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
-             ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
-           END_IF
-         END_IF
-  
-    08:  // Wait for task disable
          IF ( NOT Enable)
          THEN
            // Reset active command register

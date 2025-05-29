@@ -84,6 +84,8 @@ VAR
  _messageLog        : AlarmMessage;  
   /// flag for free register found
  _freeRegisterFound : BOOL;
+  /// internal Arc error 
+ _errorArcEntry     : WORD := RobotLibraryErrorIdEnum.ERR_NO_FREE_ACR_ENTRY;  
 END_VAR
 
   // calculate the used length of the ARC 
@@ -133,6 +135,15 @@ END_VAR
   // Check a free register could be found ? 
   IF ( NOT _freeRegisterFound )
   THEN
+    // set error in Command FB   
+    IF ( pCommandFB <> RobotLibraryConstants.NULL_POINTER )
+    THEN
+      SysDepMemCpy( pDest   := ADR   ( pCommandFB^.ErrorID ), 
+                    pSrc    := ADR   ( _errorArcEntry      ),
+                    DataLen := SIZEOF( _errorArcEntry      )); 
+    END_IF
+  
+  
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := SystemTime,
                             MessageType := MessageType.CMD,
@@ -373,7 +384,7 @@ END_VAR
   END_IF
   
   // build rising edge for arc usage over 80% 
-  WarningArcUsage( CLK := CurrenArcUsagePercent > RobotLibraryConstants.ARC_USAGE_WARNING_LIMIT );
+  WarningArcUsage( CLK := CurrenArcUsagePercent > RobotLibraryParameter.ARC_USAGE_WARNING_LIMIT );
   
   IF ( WarningArcUsage.Q )
   THEN

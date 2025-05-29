@@ -250,7 +250,7 @@ END_VAR
   _command.Priority   :=  Priority;
   _command.EmitterID  := _parCmd.EmitterID;
   _command.Reserve    := 0;
-  _command.ListenerID := 0; {warning 'ToDo'}
+  _command.ListenerID := _parCmd.ListenerID;
   _command.Reserve    := 0;
   
   IF (_parCmd.TargetID = -1)
@@ -362,7 +362,10 @@ END_VAR
 
   MyType := 'MC_StopSubprogramFB';
   
-  ExecMode := ExecutionMode.PARALLEL;
+  ExecMode       := ExecutionMode.PARALLEL;
+  Priority       := PriorityLevel.NORMAL;
+  ProcessingMode := ProcessingModeEnum.PARALLEL;
+  SequenceFlag   := SequenceFlagEnum.NO_SEQUENCE;
 
 END_METHOD
 
