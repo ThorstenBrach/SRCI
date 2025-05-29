@@ -62,7 +62,8 @@ END_VAR
   
   // Check command execution is allowed ?
   IF ((     Enable                                 ) AND
-      ( NOT AxesGroup.State.Initialized     ) AND
+      ( NOT AxesGroup.State.Initialized            ) AND
+      ( NOT AxesGroup.State.Synchronized           ) AND
       (     MyType <> 'MC_ExchangeConfigurationFB' ) AND // is part of init sequence
       (     MyType <> 'MC_ReadMessagesFB'          ) AND // is part of init sequence
       (     MyType <> 'MC_ReadRobotDataFB'         ))    // is part of init sequence

@@ -22,9 +22,9 @@
 // -------------------------------------------------------------------------
 VAR_GLOBAL CONSTANT
   /// Maximal amount of input data
-  ROBOT_IN_DATA_MAX                   : UINT := 255; 
+  ROBOT_IN_DATA_MAX                   : UINT := 435; 
   /// Maximal amount of output data
-  ROBOT_OUT_DATA_MAX                  : UINT := 255;
+  ROBOT_OUT_DATA_MAX                  : UINT := 435;
   /// Maximal amount of tools
   TOOL_MAX                            : DINT := 16;
   /// Maximal amount of frames
@@ -61,6 +61,8 @@ VAR_GLOBAL CONSTANT
   SWAP_BYTE_ORDER                     : BOOL := TRUE; 
   /// Timeout for checking for invalid frames
   INVALID_FRAMES_CHECK_TIMEOUT        : TIME := T#60S;
+  /// Warning limit for ARC registers running low
+  ARC_USAGE_WARNING_LIMIT             : REAL := 80.0;  
 END_VAR
 
 

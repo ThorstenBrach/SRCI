@@ -237,6 +237,7 @@ END_VAR
   MyType := 'MC_MonitorWorkAreaFB';
   
   ExecMode := ExecutionMode.PARALLEL;
+  Priority := PriorityLevel.NORMAL;
 
 END_METHOD
 

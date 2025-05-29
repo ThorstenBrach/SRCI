@@ -548,6 +548,9 @@ VAR_INPUT
 END_VAR
 
   MyType := 'MC_ReturnToPrimaryFB';
+  
+  ExecMode := ExecutionMode.SEQUENCE_PRIMARY;
+  Priority := PriorityLevel.NORMAL;
 
 END_METHOD
 

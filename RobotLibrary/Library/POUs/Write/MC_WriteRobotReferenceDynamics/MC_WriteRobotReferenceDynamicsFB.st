@@ -22,8 +22,6 @@ FUNCTION_BLOCK MC_WriteRobotReferenceDynamicsFB EXTENDS RobotLibraryBaseExecuteF
 //
 // -------------------------------------------------------------------------
 VAR_INPUT
-  /// Processing Mode
-  ProcessingMode     : ProcessingMode;
   /// internal copy of command parameter 
   ParCmd             : WriteRobotReferenceDynamicsParCmd; 
 END_VAR
@@ -351,6 +349,7 @@ END_VAR
   MyType := 'MC_WriteRobotReferenceDynamicsFB';
   
   ExecMode := ExecutionMode.PARALLEL;
+  Priority := PriorityLevel.NORMAL;
 
 END_METHOD
 

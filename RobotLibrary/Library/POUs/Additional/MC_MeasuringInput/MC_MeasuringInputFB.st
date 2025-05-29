@@ -263,6 +263,7 @@ END_VAR
   MyType := 'MC_MeasuringInputFB';
   
   ExecMode := ExecutionMode.PARALLEL;
+  Priority := PriorityLevel.NORMAL;
 
 END_METHOD
 

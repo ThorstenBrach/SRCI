@@ -615,7 +615,10 @@ END_VAR
 
   MyType := 'MC_WriteLoadDataFB';
   
-  ExecMode := ExecutionMode.PARALLEL;
+  ExecMode       := ExecutionMode.PARALLEL;
+  Priority       := PriorityLevel.NORMAL;
+  ProcessingMode := ProcessingModeEnum.PARALLEL;
+  SequenceFlag   := SequenceFlagEnum.NO_SEQUENCE;
 
 END_METHOD
 

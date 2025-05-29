@@ -155,6 +155,7 @@ END_VAR
   MyType := 'MC_ReadRobotDefaultDynamicsFB';
   
   ExecMode := ExecutionMode.PARALLEL;
+  Priority := PriorityLevel.NORMAL;
 
 END_METHOD
 

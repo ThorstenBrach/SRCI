@@ -1,5 +1,5 @@
 /// Activate conveyor tracking mode
-FUNCTION_BLOCK MC_ActivateConveyorTrackingFB EXTENDS RobotLibraryBaseFB
+FUNCTION_BLOCK MC_ActivateConveyorTrackingFB EXTENDS RobotLibraryBaseEnableFB
 // ------------------------------------------------------------------------- 
 //  SRCI Robot Library                                                
 // ------------------------------------------------------------------------- 
@@ -22,8 +22,6 @@ FUNCTION_BLOCK MC_ActivateConveyorTrackingFB EXTENDS RobotLibraryBaseFB
 //
 // -------------------------------------------------------------------------
 VAR_INPUT
-  /// SSet TRUE to activate conveyor tracking functionality
-  Enable             : BOOL;
   /// Command parameter 
   ParCmd             : ActivateConveyorTrackingParCmd;      
 END_VAR
@@ -33,8 +31,6 @@ VAR_OUTPUT
   /// • TrackingStatusByte
   /// • RCEncoderValue
   Valid              : BOOL;
-  /// FB is being processed
-  Busy               : BOOL;
   /// Command is transferred and confirmed by the RC
   CommandBuffered    : BOOL;
   /// Receiving of input parameter values has been acknowledged by RC
@@ -50,10 +46,6 @@ VAR
  _command            : ActivateConveyorTrackingSendData;
   /// response data received
  _response           : ActivateConveyorTrackingRecvData;  
-  /// Rising edge for enable
- _enable_R          : R_TRIG;
-  /// Falling edge for enable
- _enable_F          : F_TRIG;    
 END_VAR
 
   SUPER^(AxesGroup := AxesGroup);
@@ -266,6 +258,9 @@ VAR_INPUT
 END_VAR
 
   MyType := 'MC_ActivateConveyorTrackingFB';
+  
+  ExecMode := ExecutionMode.CONTINUOUS;
+  Priority := PriorityLevel.NORMAL;
 
 END_METHOD
 
@@ -277,10 +272,6 @@ END_VAR
 
   // call base implementation
   SUPER^.OnExecRun(AxesGroup := AxesGroup);
-  
-  // building rising and falling edges
-  _enable_R( CLK := Enable);
-  _enable_F( CLK := Enable);
   
   CASE _stepCmd OF
     
@@ -328,11 +319,21 @@ END_VAR
              CmdMessageState.ERROR       : Error              := TRUE;
            END_CASE
                   
+           // Update results
+           OutCmd.TrackingStatus := _response.TrackingStatus;
+           // Update enable flag
+           Enabled := _response.TrackingStatus.ConveyorTrackingEnabled;
+           
+           
+           // Enabled ? -> Reset Busy flag  
+           IF (Enabled)
+           THEN  
+             Busy := FALSE;
+  				 END_IF
+                  
            // Done, Aborted or Error ?
            IF (_response.State >= CmdMessageState.DONE )
            THEN
-             // Update results
-             OutCmd.TrackingStatus := _response.TrackingStatus;
              // set timeout
              SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
              // inc step counter
@@ -340,10 +341,35 @@ END_VAR
            END_IF
          END_IF
   
-  
-    02: IF (NOT Enable)
+         // do not abort directly, so that the ParSeq update can be send
+         IF ( _enable_F.Q ) 
+         THEN
+           // Set Busy flag
+           Busy := TRUE;
+           // trigger parameter update to disable FB
+          _parameterUpdateInternal := TRUE;
+           // reset the falling edge
+          _enable_F();
+           // set timeout
+           SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
+           // inc step counter
+          _stepCmd := _stepCmd + 1; 
+         END_IF
+         
+         
+        // Wait for response received or timeout or not Initialized
+    02: IF ((    _responseReceived                                   )  OR 
+            (     CheckTimeout(_timerCmd) = RobotLibraryConstants.OK )) OR 
+           (( NOT AxesGroup.State.Initialized                        )  AND
+            ( NOT AxesGroup.State.Synchronized                       ))
         THEN
-          Reset();
+          Reset();   
+  	    END_IF
+        
+        // Wait for Enable = FALSE
+    03: IF ( NOT Enable )
+        THEN
+          Reset();   
   	    END_IF
         
   ELSE

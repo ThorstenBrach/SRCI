@@ -1015,6 +1015,7 @@ END_VAR
   MyType := 'MC_WriteRobotSWLimitsFB';
   
   ExecMode := ExecutionMode.PARALLEL;
+  Priority := PriorityLevel.NORMAL;
 
 END_METHOD
 

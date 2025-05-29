@@ -11,10 +11,8 @@ The Standard Robot Command Interface (SRCI) is an open, manufacturer-independent
 
 More information about SRCI : 
 
-- General Info : https://www.profibus.com/technologies/robotics-srci
-- Project Wiki : https://github.com/ThorstenBrach/SRCI/wiki
-
-
+👉 General Info : https://www.profibus.com/technologies/robotics-srci
+👉 Project Wiki : https://github.com/ThorstenBrach/SRCI/wiki
 
 # Status
 This project is still in an early stage of development. 
@@ -33,7 +31,9 @@ The library is licensed under the LGPL-3.0 license.
 
 # Disclaimer and Delimitation
 
-The developed software is based on the SRCI technology of "PROFIBUS and PROFINET International" (PI), but it is not an official publication of PI. It is a private project that is created and maintained exclusively by me.
+The developed software is based on the SRCI technology of "PROFIBUS and PROFINET International" (PI), but it is not an official publication of PI. It is a privately initiated project, created and currently maintained by me — but it is open to contributors for further development, improvement and ongoing maintenance.
+
+
 
 The use of PI technology only serves to ensure the interoperability and functionality of the SRCI interface. There is no connection or partnership between this project and the PI organization.
 

@@ -191,6 +191,7 @@ END_VAR
   MyType := 'MC_GroupContinueFB';
   
   ExecMode := ExecutionMode.PARALLEL;
+  Priority := PriorityLevel.NORMAL;
 
 END_METHOD
 

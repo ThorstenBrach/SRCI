@@ -38,6 +38,12 @@ TYPE RobotLibraryErrorIdEnum :
   /// available on RC
   /// Commands using the parameter "LoadNo"
   ERR_WORKAREANO_UNAVAILABLE  := 13,   
+  /// Client Specified TriggerMode not allowed
+  /// Commands using the parameter "TriggerMode"
+  ERR_TRIGGERMODE_NOT_ALLOWED := 14, 
+  /// Client Specified Frame calculation mode not valid
+  /// Commands using the parameter "FrameCalculationMode"
+  ERR_FRAMECALCULATIONMODE_INVALID := 15,
   
   /// END
   {warning 'ToDo: This is an internal error ID, which is not defined in SRCI specification'}

@@ -217,6 +217,7 @@ END_VAR
   MyType := 'MC_ReadLoadDataFB';
   
   ExecMode := ExecutionMode.PARALLEL;
+  Priority := PriorityLevel.NORMAL;
 
 END_METHOD
 

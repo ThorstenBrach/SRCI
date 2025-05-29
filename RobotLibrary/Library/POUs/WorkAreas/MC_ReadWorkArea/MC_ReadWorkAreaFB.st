@@ -213,6 +213,7 @@ END_VAR
   MyType := 'MC_ReadWorkAreaFB';
   
   ExecMode := ExecutionMode.PARALLEL;
+  Priority := PriorityLevel.NORMAL;
 
 END_METHOD
 

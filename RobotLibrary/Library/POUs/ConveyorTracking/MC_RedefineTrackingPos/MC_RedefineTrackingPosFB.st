@@ -463,6 +463,10 @@ VAR_INPUT
 END_VAR
 
   MyType := 'MC_RedefineTrackingPosFB';
+  
+  ExecMode       := ExecutionMode.SEQUENCE_PRIMARY;
+  Priority       := PriorityLevel.NORMAL;
+  ProcessingMode := ProcessingModeEnum.TRIGGER_ONCE;
 
 END_METHOD
 

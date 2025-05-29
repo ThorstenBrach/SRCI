@@ -424,7 +424,9 @@ END_VAR
 
   MyType := 'MC_ReadActualForceFB';
   
-  ExecMode := ExecutionMode.PARALLEL;
+  ExecMode       := ExecutionMode.PARALLEL;
+  Priority       := PriorityLevel.NORMAL;
+  ProcessingMode := ProcessingModeEnum.PARALLEL;
 
 END_METHOD
 

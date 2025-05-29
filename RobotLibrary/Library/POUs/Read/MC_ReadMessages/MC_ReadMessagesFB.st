@@ -254,6 +254,7 @@ END_VAR
   MyType := 'MC_ReadMessagesFB';
   
   ExecMode := ExecutionMode.PARALLEL;
+  Priority := PriorityLevel.NORMAL;
 
 END_METHOD
 
@@ -372,9 +373,10 @@ END_VAR
          END_IF
   
         // Wait for response received or timeout or not Initialized
-    02: IF ((   _responseReceived                                    ) OR 
-            (     CheckTimeout(_timerCmd) = RobotLibraryConstants.OK ) OR 
-            ( NOT AxesGroup.State.Initialized                 ))
+    02: IF ((    _responseReceived                                   )  OR 
+            (     CheckTimeout(_timerCmd) = RobotLibraryConstants.OK )) OR 
+           (( NOT AxesGroup.State.Initialized                        )  AND
+            ( NOT AxesGroup.State.Synchronized                       ))
         THEN
           Reset();   
   	    END_IF

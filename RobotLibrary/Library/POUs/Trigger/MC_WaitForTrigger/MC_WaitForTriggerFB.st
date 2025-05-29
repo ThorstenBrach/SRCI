@@ -396,6 +396,11 @@ VAR_INPUT
 END_VAR
 
   MyType := 'MC_WaitForTriggerFB';
+  
+  ExecMode       := ExecutionMode.SEQUENCE_PRIMARY;
+  Priority       := PriorityLevel.NORMAL;
+  ProcessingMode := ProcessingModeEnum.TRIGGER_BUFFERED;
+  SequenceFlag   := SequenceFlagEnum.PRIMARY_SEQUENCE;
 
 END_METHOD
 
