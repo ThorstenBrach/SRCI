@@ -14,8 +14,6 @@ More information about SRCI :
 👉 General Info : https://www.profibus.com/technologies/robotics-srci
 👉 Project Wiki : https://github.com/ThorstenBrach/SRCI/wiki
 
-
-
 # Status
 This project is still in an early stage of development. 
 The implementation is nearly complete, and the testing is in progress...
