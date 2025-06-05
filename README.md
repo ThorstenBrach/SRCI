@@ -1,4 +1,4 @@
-[![create release](https://github.com/ThorstenBrach/SRCI/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/ThorstenBrach/SRCI/actions/workflows/build.yml)
+[![create release](https://github.com/ThorstenBrach/SRCI/actions/workflows/build.yml/badge.svg)](https://github.com/ThorstenBrach/SRCI/actions/workflows/build.yml)
 
 # Standard Robot Command Interface (SRCI)
 
