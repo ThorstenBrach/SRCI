@@ -23,10 +23,12 @@ jobs:
           - name: Beckhoff
             library_files: "RobotLibrary.* RobotLibrarySysDep_Tc.*"
             source_files: "RobotLibrary/ RobotLibrarySysDep_Tc/"
+            example_files: "Example/Beckhoff/"
 
           - name: Codesys
             library_files: "RobotLibrary.* RobotLibrarySysDep_3S.*"
             source_files: "RobotLibrary/ RobotLibrarySysDep_3S/"
+            example_files: "Example/Codesys/"
     steps:
       - name: Checkout project
         uses: actions/checkout@v4
@@ -41,6 +43,7 @@ jobs:
         run: |
           mkdir -p distribute/${{ matrix.name }}/lib
           mkdir -p distribute/${{ matrix.name }}/src
+          mkdir -p distribute/${{ matrix.name }}/example
 
       - name: Build info
         run: | # create a yaml file with the build info
@@ -55,6 +58,7 @@ jobs:
           cp -r README.md distribute/${{ matrix.name }}/
           cp -r ${{ matrix.library_files }} distribute/${{ matrix.name }}/lib/
           cp -r ${{ matrix.source_files }} distribute/${{ matrix.name }}/src/
+          cp -r ${{ matrix.example_files }} distribute/${{ matrix.name }}/example/
 
       - name: View result
         run: | # list the content

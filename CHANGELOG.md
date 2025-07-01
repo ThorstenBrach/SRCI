@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.0.0.44] - 2025-07-01
+
+### Added
+ - Example project for `Beckhoff`
+ - Example project for `Codesys`
+  
+### Changed
+ - Build.yml to add the example project to the release
+
 ## [0.0.0.43] - 2025-05-29
 
 ### Added
