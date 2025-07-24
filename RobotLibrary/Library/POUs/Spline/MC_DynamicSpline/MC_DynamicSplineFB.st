@@ -63,6 +63,31 @@ END_VAR
 
 END_FUNCTION_BLOCK
 
+METHOD INTERNAL CheckAddParameter : BOOL
+VAR_INPUT
+  /// Payload pointer
+  PayloadPtr : UDINT;
+END_VAR
+VAR
+  /// Payload as byte array
+  Payload    : ARRAY [1..SIZEOF(_command)] OF BYTE;
+  /// Null Byte array 
+  Null       : ARRAY [1..SIZEOF(_command)] OF BYTE;
+  /// Data length to compare
+  DataLen    : UDINT;
+END_VAR
+
+  // Payload pointer must be decreased by one byte, because ADR(Payload) is already one byte !
+  PayloadPtr := LIMIT (0, PayloadPtr - 1, SIZEOF(Payload) -1);
+  // Convert command struct to payload array
+  SysDepMemCpy( pDest := ADR(Payload), pSrc := ADR(_command), DataLen := SIZEOF(_command));
+  // Calculate the data length to compare - at least one byte must be compared !
+  DataLen := LIMIT(1, SIZEOF(Payload) - PayloadPtr, SIZEOF(Payload)); 
+  // Compare Payload-Array with Null-Byte-Array
+  CheckAddParameter := SysDepMemCmp( pData1 := ADR(Payload) + PayloadPtr , pData2 := ADR(Null), DataLen := DataLen) <>  RobotLibraryConstants.OK ;
+
+END_METHOD
+
 METHOD PROTECTED CheckFunctionSupported : BOOL
 VAR_IN_OUT
   /// Robot assignment of function
@@ -740,6 +765,10 @@ VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
+VAR
+  /// Parameter count
+ _parameterCnt : DINT;
+END_VAR
 // Table 6-772: Sent CMD payload (PLC to RC) of "DynamicSpline"
 // --------------------------
 // Header
@@ -862,74 +891,288 @@ END_VAR
     _command.SplineData[_idx].MoveTime         := TIME_TO_UINT(_parCmd.SplineData[_idx].MoveTime);
   END_FOR
   
+  
   // copy command data to header
   _cmdHeader := _command;
   // call base implementation to copy header to payload buffer
   CreateCommandPayload := SUPER^.CreateCommandPayload(AxesGroup := AxesGroup);
   
   
-  // add command.Mode
-  CreateCommandPayload.AddUint(_command.Mode);
-  // add command.BlendingMode
-  CreateCommandPayload.AddUsint(_command.BlendingMode);
-  // add command.BlendingParameter[0]
-  CreateCommandPayload.AddReal(_command.BlendingParameter[0]);
-  // add command.BlendingParameter[1]
-  CreateCommandPayload.AddReal(_command.BlendingParameter[1]);
-  // add command.MoveTime
-  CreateCommandPayload.AddUint(_command.MoveTime);
-  // add command.StartPosition
-  CreateCommandPayload.AddInt(_command.StartPosition);
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.Mode
+    CreateCommandPayload.AddUint(_command.Mode);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.BlendingMode
+    CreateCommandPayload.AddUsint(_command.BlendingMode);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.BlendingParameter[0]
+    CreateCommandPayload.AddReal(_command.BlendingParameter[0]);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.BlendingParameter[1]
+    CreateCommandPayload.AddReal(_command.BlendingParameter[1]);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.MoveTime
+    CreateCommandPayload.AddUint(_command.MoveTime);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.StartPosition
+    CreateCommandPayload.AddInt(_command.StartPosition);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
   
   
   FOR _idx := 1 TO RobotLibraryParameter.SPLINE_DATA_MAX
   DO
-    // add command.VelocityRate
-    CreateCommandPayload.AddUint(_command.SplineData[_idx].VelocityRate);
-    // add command.AccelerationRate
-    CreateCommandPayload.AddUint(_command.SplineData[_idx].AccelerationRate);
-    // add command.DecelerationRate
-    CreateCommandPayload.AddUint(_command.SplineData[_idx].DecelerationRate);
-    // add command.JerkRate
-    CreateCommandPayload.AddUint(_command.SplineData[_idx].JerkRate);
-    // add command.ToolNo
-    CreateCommandPayload.AddUsint(_command.SplineData[_idx].ToolNo);
-    // add command.FrameNo
-    CreateCommandPayload.AddUsint(_command.SplineData[_idx].FrameNo);
-    // add command.SplineData[_idx].Position.X
-    CreateCommandPayload.AddReal(_command.SplineData[_idx].Position.X);
-    // add command.SplineData[_idx].Position.Y
-    CreateCommandPayload.AddReal(_command.SplineData[_idx].Position.Y);
-    // add command.SplineData[_idx].Position.Z
-    CreateCommandPayload.AddReal(_command.SplineData[_idx].Position.Z);
-    // add command.SplineData[_idx].Position.Rx
-    CreateCommandPayload.AddReal(_command.SplineData[_idx].Position.Rx);
-    // add command.SplineData[_idx].Position.Ry
-    CreateCommandPayload.AddReal(_command.SplineData[_idx].Position.Ry);
-    // add command.SplineData[_idx].Position.Rz
-    CreateCommandPayload.AddReal(_command.SplineData[_idx].Position.Rz);
-    // add command.SplineData[_idx].Position.Config
-    CreateCommandPayload.AddArmConfig(_command.SplineData[_idx].Position.Config);
-    // add command.SplineData[_idx].Position.TurnNumber
-    CreateCommandPayload.AddTurnNumber(_command.SplineData[_idx].Position.TurnNumber);
-    // add command.SplineData[_idx].Position.E1
-    CreateCommandPayload.AddReal(_command.SplineData[_idx].Position.E1);
-    // add command.SplineData[_idx].MoveTime
-    CreateCommandPayload.AddUint(_command.SplineData[_idx].MoveTime);  
-    // add command.SplineData[_idx].Position.E2
-    CreateCommandPayload.AddReal(_command.SplineData[_idx].Position.E2);
-    // add command.SplineData[_idx].Position.E3
-    CreateCommandPayload.AddReal(_command.SplineData[_idx].Position.E3);
-    // add command.SplineData[_idx].Position.E4
-    CreateCommandPayload.AddReal(_command.SplineData[_idx].Position.E4);
-    // add command.SplineData[_idx].Position.E5
-    CreateCommandPayload.AddReal(_command.SplineData[_idx].Position.E5);
-    // add command.SplineData[_idx].Position.E6
-    CreateCommandPayload.AddReal(_command.SplineData[_idx].Position.E6);
+    // Check parameter must be added ? 
+    IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+    THEN
+      // add command.VelocityRate
+      CreateCommandPayload.AddUint(_command.SplineData[_idx].VelocityRate);
+      // inc parameter counter
+     _parameterCnt := _parameterCnt + 1;  
+    END_IF
+  
+  
+    // Check parameter must be added ? 
+    IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+    THEN
+      // add command.AccelerationRate
+      CreateCommandPayload.AddUint(_command.SplineData[_idx].AccelerationRate);
+      // inc parameter counter
+     _parameterCnt := _parameterCnt + 1;  
+    END_IF
+    
+  
+    // Check parameter must be added ? 
+    IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+    THEN
+      // add command.DecelerationRate
+      CreateCommandPayload.AddUint(_command.SplineData[_idx].DecelerationRate);
+      // inc parameter counter
+     _parameterCnt := _parameterCnt + 1;  
+    END_IF
+    
+  
+    // Check parameter must be added ? 
+    IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+    THEN
+      // add command.JerkRate
+      CreateCommandPayload.AddUint(_command.SplineData[_idx].JerkRate);
+      // inc parameter counter
+     _parameterCnt := _parameterCnt + 1;  
+    END_IF
+    
+  
+    // Check parameter must be added ? 
+    IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+    THEN
+      // add command.ToolNo
+      CreateCommandPayload.AddUsint(_command.SplineData[_idx].ToolNo);
+      // inc parameter counter
+     _parameterCnt := _parameterCnt + 1;  
+    END_IF
+    
+  
+    // Check parameter must be added ? 
+    IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+    THEN
+      // add command.FrameNo
+      CreateCommandPayload.AddUsint(_command.SplineData[_idx].FrameNo);
+      // inc parameter counter
+     _parameterCnt := _parameterCnt + 1;  
+    END_IF
+    
+  
+    // Check parameter must be added ? 
+    IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+    THEN
+      // add command.SplineData[_idx].Position.X
+      CreateCommandPayload.AddReal(_command.SplineData[_idx].Position.X);
+      // inc parameter counter
+     _parameterCnt := _parameterCnt + 1;  
+    END_IF
+    
+  
+    // Check parameter must be added ? 
+    IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+    THEN
+      // add command.SplineData[_idx].Position.Y
+      CreateCommandPayload.AddReal(_command.SplineData[_idx].Position.Y);
+      // inc parameter counter
+     _parameterCnt := _parameterCnt + 1;  
+    END_IF
+    
+  
+    // Check parameter must be added ? 
+    IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+    THEN
+      // add command.SplineData[_idx].Position.Z
+      CreateCommandPayload.AddReal(_command.SplineData[_idx].Position.Z);
+      // inc parameter counter
+     _parameterCnt := _parameterCnt + 1;  
+    END_IF
+    
+  
+    // Check parameter must be added ? 
+    IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+    THEN
+      // add command.SplineData[_idx].Position.Rx
+      CreateCommandPayload.AddReal(_command.SplineData[_idx].Position.Rx);
+      // inc parameter counter
+     _parameterCnt := _parameterCnt + 1;  
+    END_IF
+    
+  
+    // Check parameter must be added ? 
+    IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+    THEN
+      // add command.SplineData[_idx].Position.Ry
+      CreateCommandPayload.AddReal(_command.SplineData[_idx].Position.Ry);
+      // inc parameter counter
+     _parameterCnt := _parameterCnt + 1;  
+    END_IF
+    
+  
+    // Check parameter must be added ? 
+    IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+    THEN
+      // add command.SplineData[_idx].Position.Rz
+      CreateCommandPayload.AddReal(_command.SplineData[_idx].Position.Rz);
+      // inc parameter counter
+     _parameterCnt := _parameterCnt + 1;  
+    END_IF
+    
+  
+    // Check parameter must be added ? 
+    IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+    THEN
+      // add command.SplineData[_idx].Position.Config
+      CreateCommandPayload.AddArmConfig(_command.SplineData[_idx].Position.Config);
+      // inc parameter counter
+     _parameterCnt := _parameterCnt + 1;  
+    END_IF
+    
+  
+    // Check parameter must be added ? 
+    IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+    THEN
+      // add command.SplineData[_idx].Position.TurnNumber
+      CreateCommandPayload.AddTurnNumber(_command.SplineData[_idx].Position.TurnNumber);
+      // inc parameter counter
+     _parameterCnt := _parameterCnt + 1;  
+    END_IF
+    
+  
+    // Check parameter must be added ? 
+    IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+    THEN
+      // add command.SplineData[_idx].Position.E1
+      CreateCommandPayload.AddReal(_command.SplineData[_idx].Position.E1);
+      // inc parameter counter
+     _parameterCnt := _parameterCnt + 1;  
+    END_IF
+    
+  
+    // Check parameter must be added ? 
+    IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+    THEN
+      // add command.SplineData[_idx].MoveTime
+      CreateCommandPayload.AddUint(_command.SplineData[_idx].MoveTime);  
+      // inc parameter counter
+     _parameterCnt := _parameterCnt + 1;  
+    END_IF
+    
+  
+    // Check parameter must be added ? 
+    IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+    THEN
+      // add command.SplineData[_idx].Position.E2
+      CreateCommandPayload.AddReal(_command.SplineData[_idx].Position.E2);
+      // inc parameter counter
+     _parameterCnt := _parameterCnt + 1;  
+    END_IF
+    
+  
+    // Check parameter must be added ? 
+    IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+    THEN
+      // add command.SplineData[_idx].Position.E3
+      CreateCommandPayload.AddReal(_command.SplineData[_idx].Position.E3);
+      // inc parameter counter
+     _parameterCnt := _parameterCnt + 1;  
+    END_IF
+    
+  
+    // Check parameter must be added ? 
+    IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+    THEN
+      // add command.SplineData[_idx].Position.E4
+      CreateCommandPayload.AddReal(_command.SplineData[_idx].Position.E4);
+      // inc parameter counter
+     _parameterCnt := _parameterCnt + 1;  
+    END_IF
+    
+  
+    // Check parameter must be added ? 
+    IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+    THEN
+      // add command.SplineData[_idx].Position.E5
+      CreateCommandPayload.AddReal(_command.SplineData[_idx].Position.E5);
+      // inc parameter counter
+     _parameterCnt := _parameterCnt + 1;  
+    END_IF
+    
+  
+    // Check parameter must be added ? 
+    IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+    THEN
+      // add command.SplineData[_idx].Position.E6
+      CreateCommandPayload.AddReal(_command.SplineData[_idx].Position.E6);
+      // inc parameter counter
+     _parameterCnt := _parameterCnt + 1;  
+    END_IF
   END_FOR
   
+  
   // Create logging
-  CreateCommandPayloadLog(AxesGroup := AxesGroup);
+  CreateCommandPayloadLog(AxesGroup := AxesGroup, ParameterCnt := _parameterCnt);
 
 END_METHOD
 
@@ -938,18 +1181,28 @@ VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
+VAR_INPUT
+  /// Parameter count
+  ParameterCnt : DINT;
+END_VAR
 VAR 
   /// internal index for loops
  _idx : DINT;
 END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := AxesGroup.State.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Create command payload with the following parameter(s) :');
+                          MessageText := 'Create command payload with the {1} parameter(s) :',
+                          Para1       := DINT_TO_STRING(ParameterCnt));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Mode
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -958,6 +1211,11 @@ END_VAR
                           MessageText := 'Command.Mode = {1}',
                           Para1       :=  SPLINE_MODE_TO_STRING(_command.Mode));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for BlendingMode
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -966,6 +1224,11 @@ END_VAR
                           MessageText := 'Command.BlendingMode = {1}',
                           Para1       :=  BLENDING_MODE_TO_STRING(_command.BlendingMode));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for BlendingParameter[0]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -974,6 +1237,11 @@ END_VAR
                           MessageText := 'Command.BlendingParameter[0] = {1}',
                           Para1       :=  REAL_TO_STRING(_command.BlendingParameter[0]));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for BlendingParameter[1]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -982,6 +1250,11 @@ END_VAR
                           MessageText := 'Command.BlendingParameter[1] = {1}',
                           Para1       :=  REAL_TO_STRING(_command.BlendingParameter[1]));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for MoveTime
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -990,6 +1263,11 @@ END_VAR
                           MessageText := 'Command.MoveTime = {1}',
                           Para1       :=  REAL_TO_STRING(_command.MoveTime));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for StartPosition
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1001,6 +1279,10 @@ END_VAR
   // Create log entry for SplineData[x]
   FOR _idx := 1 TO RobotLibraryParameter.SPLINE_DATA_MAX
   DO
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for VelocityRate
     CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -1010,6 +1292,11 @@ END_VAR
                             Para1       :=  UINT_TO_STRING(_command.SplineData[_idx].VelocityRate),
                             Para2       :=  DINT_TO_STRING(_idx));
   
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for AccelerationRate
     CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -1019,6 +1306,11 @@ END_VAR
                             Para1       :=  UINT_TO_STRING(_command.SplineData[_idx].AccelerationRate),
                             Para2       :=  DINT_TO_STRING(_idx));
   
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for DecelerationRate
     CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -1028,6 +1320,11 @@ END_VAR
                             Para1       :=  UINT_TO_STRING(_command.SplineData[_idx].DecelerationRate),
                             Para2       :=  DINT_TO_STRING(_idx));
                             
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for JerkRate
     CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -1038,6 +1335,11 @@ END_VAR
                             Para2       :=  DINT_TO_STRING(_idx));
   
                             
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for ToolNo
     CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -1047,6 +1349,11 @@ END_VAR
                             Para1       :=  USINT_TO_STRING(_command.SplineData[_idx].ToolNo),
                             Para2       :=  DINT_TO_STRING(_idx));
     
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for FrameNo
     CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -1056,6 +1363,11 @@ END_VAR
                             Para1       :=  USINT_TO_STRING(_command.SplineData[_idx].FrameNo),
                             Para2       :=  DINT_TO_STRING(_idx));
                             
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Position.X
     CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -1065,6 +1377,11 @@ END_VAR
                             Para1       :=  REAL_TO_STRING(_command.SplineData[_idx].Position.X),
                             Para2       :=  DINT_TO_STRING(_idx));
   
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Position.Y
     CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -1074,6 +1391,11 @@ END_VAR
                             Para1       :=  REAL_TO_STRING(_command.SplineData[_idx].Position.Y),
                             Para2       :=  DINT_TO_STRING(_idx));
                             
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Position.Z
     CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -1083,6 +1405,11 @@ END_VAR
                             Para1       :=  REAL_TO_STRING(_command.SplineData[_idx].Position.Z),
                             Para2       :=  DINT_TO_STRING(_idx));
   
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Position.Rx
     CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -1092,6 +1419,11 @@ END_VAR
                             Para1       :=  REAL_TO_STRING(_command.SplineData[_idx].Position.Rx),
                             Para2       :=  DINT_TO_STRING(_idx));
                             
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Position.Ry
     CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -1101,6 +1433,11 @@ END_VAR
                             Para1       :=  REAL_TO_STRING(_command.SplineData[_idx].Position.Ry),
                             Para2       :=  DINT_TO_STRING(_idx));
                             
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Position.Rz
     CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -1110,6 +1447,11 @@ END_VAR
                             Para1       :=  REAL_TO_STRING(_command.SplineData[_idx].Position.Rz),
                             Para2       :=  DINT_TO_STRING(_idx));
   
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Position.Config
     CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -1119,6 +1461,11 @@ END_VAR
                             Para1       :=  ARM_CONFIG_TO_STRING(_command.SplineData[_idx].Position.Config),
                             Para2       :=  DINT_TO_STRING(_idx));
   
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Position.TurnNumber[0]
     CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -1129,6 +1476,11 @@ END_VAR
                                                                             HalfSintLo := _command.SplineData[_idx].Position.TurnNumber.J1Turns)),                          
                             Para2       :=  DINT_TO_STRING(_idx));
   
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Position.TurnNumber[1]
     CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -1138,7 +1490,12 @@ END_VAR
                             Para1       :=  BYTE_TO_STRING(CombineHalfSints(HalfSintHi := _command.SplineData[_idx].Position.TurnNumber.J4Turns,
                                                                             HalfSintLo := _command.SplineData[_idx].Position.TurnNumber.J3Turns)),                          
                             Para2       :=  DINT_TO_STRING(_idx));
+  
                             
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Position.TurnNumber[2]
     CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -1149,6 +1506,11 @@ END_VAR
                                                                             HalfSintLo := _command.SplineData[_idx].Position.TurnNumber.J5Turns)),                          
                             Para2       :=  DINT_TO_STRING(_idx));
   
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Position.TurnNumber[3]
     CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -1158,6 +1520,11 @@ END_VAR
                             Para1       :=  SINT_TO_STRING(_command.SplineData[_idx].Position.TurnNumber.E1Turns),                          
                             Para2       :=  DINT_TO_STRING(_idx));
                             
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Position.E1
     CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -1167,6 +1534,11 @@ END_VAR
                             Para1       :=  REAL_TO_STRING(_command.SplineData[_idx].Position.E1),
                             Para2       :=  DINT_TO_STRING(_idx));
   
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for MoveTime
     CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -1176,6 +1548,11 @@ END_VAR
                             Para1       :=  UINT_TO_STRING(_command.SplineData[_idx].MoveTime),
                             Para2       :=  DINT_TO_STRING(_idx));
   
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Position.E2
     CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -1185,6 +1562,11 @@ END_VAR
                             Para1       :=  REAL_TO_STRING(_command.SplineData[_idx].Position.E2),
                             Para2       :=  DINT_TO_STRING(_idx));
   
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Position.E3
     CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -1194,6 +1576,11 @@ END_VAR
                             Para1       :=  REAL_TO_STRING(_command.SplineData[_idx].Position.E3),
                             Para2       :=  DINT_TO_STRING(_idx));
   
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Position.E4
     CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -1203,6 +1590,11 @@ END_VAR
                             Para1       :=  REAL_TO_STRING(_command.SplineData[_idx].Position.E4),
                             Para2       :=  DINT_TO_STRING(_idx));
                             
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Position.E5
     CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -1212,6 +1604,11 @@ END_VAR
                             Para1       :=  REAL_TO_STRING(_command.SplineData[_idx].Position.E5),
                             Para2       :=  DINT_TO_STRING(_idx));
                             
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Position.E6
     CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -1346,6 +1743,10 @@ VAR_INPUT
   /// Timestamp
   Timestamp    : SystemTime;  
 END_VAR
+VAR
+  /// Parameter count
+ _parameterCnt : DINT;
+END_VAR
 // Table 6-773: Received CMD payload (RC to PLC) of "DynamicSpline"
 // --------------------------
 // Header
@@ -1374,21 +1775,69 @@ END_VAR
   _response.AlarmMessageSeverity := _rspHeader.AlarmMessageSeverity;
   _response.AlarmMessageCode     := _rspHeader.AlarmMessageCode;
   
-  // Get Response.Progress
-  _response.SegmentProgress := ResponseData.GetUint();
-  // Get Response.RemainingDistance
-  _response.RemainingDistance := ResponseData.GetReal();
-  // Get Response.Buffered
-  _response.Buffered := ResponseData.GetInt();
-  // Get Response.Calculated
-  _response.Calculated := ResponseData.GetInt();
-  // Get Response.ActiveIndex
-  _response.ActiveIndex := ResponseData.GetSint();
-  // Get Response.TrajectoryCompleted
-  _response.TrajectoryCompleted := ResponseData.GetBool();
   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.Progress
+   _response.SegmentProgress := ResponseData.GetUint();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.RemainingDistance
+   _response.RemainingDistance := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.Buffered
+   _response.Buffered := ResponseData.GetInt();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.Calculated
+   _response.Calculated := ResponseData.GetInt();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.ActiveIndex
+   _response.ActiveIndex := ResponseData.GetSint();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.TrajectoryCompleted
+   _response.TrajectoryCompleted := ResponseData.GetBool();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+   
   // Create logging
-  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp, ParameterCnt := _parameterCnt);
 
 END_METHOD
 
@@ -1398,15 +1847,23 @@ VAR_INPUT
   ResponseData : RobotLibraryResponseDataFB;
   /// Timestamp
   Timestamp    : SystemTime;  
+  /// Parameter count
+  ParameterCnt : DINT;
 END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := Timestamp,
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Parsed the following parameter(s) from response data:');
+                          MessageText := '{1} parameter(s) to parse from the response data:',
+                          Para1       := DINT_TO_STRING(ParameterCnt));
                           
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for SegmentProgress
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -1415,6 +1872,11 @@ END_VAR
                           MessageText := 'Response.SegmentProgress = {1}',
                           Para1       :=  REAL_TO_STRING(_response.SegmentProgress));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for RemainingDistance
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -1423,6 +1885,11 @@ END_VAR
                           MessageText := 'Response.RemainingDistance = {1}',
                           Para1       :=  REAL_TO_STRING(_response.RemainingDistance));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Buffered
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -1431,6 +1898,11 @@ END_VAR
                           MessageText := 'Response.Buffered = {1}',
                           Para1       :=  INT_TO_STRING(_response.Buffered));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Calculated
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -1439,6 +1911,11 @@ END_VAR
                           MessageText := 'Response.Calculated = {1}',
                           Para1       :=  INT_TO_STRING(_response.Calculated));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ActiveIndex
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -1447,6 +1924,11 @@ END_VAR
                           MessageText := 'Response.ActiveIndex = {1}',
                           Para1       :=  SINT_TO_STRING(_response.ActiveIndex));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for TrajectoryCompleted
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,

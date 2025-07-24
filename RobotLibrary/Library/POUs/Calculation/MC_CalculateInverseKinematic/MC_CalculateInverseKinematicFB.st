@@ -44,6 +44,31 @@ END_VAR
 
 END_FUNCTION_BLOCK
 
+METHOD INTERNAL CheckAddParameter : BOOL
+VAR_INPUT
+  /// Payload pointer
+  PayloadPtr : UDINT;
+END_VAR
+VAR
+  /// Payload as byte array
+  Payload    : ARRAY [1..SIZEOF(_command)] OF BYTE;
+  /// Null Byte array 
+  Null       : ARRAY [1..SIZEOF(_command)] OF BYTE;
+  /// Data length to compare
+  DataLen    : UDINT;
+END_VAR
+
+  // Payload pointer must be decreased by one byte, because ADR(Payload) is already one byte !
+  PayloadPtr := LIMIT (0, PayloadPtr - 1, SIZEOF(Payload) -1);
+  // Convert command struct to payload array
+  SysDepMemCpy( pDest := ADR(Payload), pSrc := ADR(_command), DataLen := SIZEOF(_command));
+  // Calculate the data length to compare - at least one byte must be compared !
+  DataLen := LIMIT(1, SIZEOF(Payload) - PayloadPtr, SIZEOF(Payload)); 
+  // Compare Payload-Array with Null-Byte-Array
+  CheckAddParameter := SysDepMemCmp( pData1 := ADR(Payload) + PayloadPtr , pData2 := ADR(Null), DataLen := DataLen) <>  RobotLibraryConstants.OK ;
+
+END_METHOD
+
 METHOD PROTECTED CheckFunctionSupported : BOOL
 VAR_IN_OUT
   /// Robot assignment of function
@@ -464,6 +489,10 @@ VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
+VAR
+  /// Parameter count
+ _parameterCnt : DINT;
+END_VAR
 // Table 6-638: Sent CMD payload (PLC to RC) of "CalculateInverseKinematic"
 // --------------------------
 // Header
@@ -547,41 +576,169 @@ END_VAR
   // call base implementation to copy header to payload buffer
   CreateCommandPayload := SUPER^.CreateCommandPayload(AxesGroup := AxesGroup);
   
-  // add command.TargetFrameNo
-  CreateCommandPayload.AddUsint(_command.ToolNo);
-  // add command.FrameNo
-  CreateCommandPayload.AddUsint(_command.FrameNo);
-  // add command.CartesianPosition.X
-  CreateCommandPayload.AddReal(_command.CartesianPosition.X);
-  // add command.CartesianPosition.Y
-  CreateCommandPayload.AddReal(_command.CartesianPosition.Y);
-  // add command.CartesianPosition.Z
-  CreateCommandPayload.AddReal(_command.CartesianPosition.Z);
-  // add command.CartesianPosition.Rx
-  CreateCommandPayload.AddReal(_command.CartesianPosition.Rx);
-  // add command.CartesianPosition.Ry
-  CreateCommandPayload.AddReal(_command.CartesianPosition.Ry);
-  // add command.CartesianPosition.Rz
-  CreateCommandPayload.AddReal(_command.CartesianPosition.Rz);
-  // add command.CartesianPosition.Config
-  CreateCommandPayload.AddArmConfig(_command.CartesianPosition.Config);
-  // add command.CartesianPosition.TurnNumber
-  CreateCommandPayload.AddTurnNumber(_command.CartesianPosition.TurnNumber);
-  // add command.CartesianPosition.E1
-  CreateCommandPayload.AddReal(_command.CartesianPosition.E1);
-  // add command.CartesianPosition.E2
-  CreateCommandPayload.AddReal(_command.CartesianPosition.E2);
-  // add command.CartesianPosition.E3
-  CreateCommandPayload.AddReal(_command.CartesianPosition.E3);
-  // add command.CartesianPosition.E4
-  CreateCommandPayload.AddReal(_command.CartesianPosition.E4);
-  // add command.CartesianPosition.E5
-  CreateCommandPayload.AddReal(_command.CartesianPosition.E5);
-  // add command.CartesianPosition.E6
-  CreateCommandPayload.AddReal(_command.CartesianPosition.E6);
   
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.TargetFrameNo
+    CreateCommandPayload.AddUsint(_command.ToolNo);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.FrameNo
+    CreateCommandPayload.AddUsint(_command.FrameNo);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.CartesianPosition.X
+    CreateCommandPayload.AddReal(_command.CartesianPosition.X);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.CartesianPosition.Y
+    CreateCommandPayload.AddReal(_command.CartesianPosition.Y);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.CartesianPosition.Z
+    CreateCommandPayload.AddReal(_command.CartesianPosition.Z);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.CartesianPosition.Rx
+    CreateCommandPayload.AddReal(_command.CartesianPosition.Rx);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.CartesianPosition.Ry
+    CreateCommandPayload.AddReal(_command.CartesianPosition.Ry);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.CartesianPosition.Rz
+    CreateCommandPayload.AddReal(_command.CartesianPosition.Rz);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.CartesianPosition.Config
+    CreateCommandPayload.AddArmConfig(_command.CartesianPosition.Config);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.CartesianPosition.TurnNumber
+    CreateCommandPayload.AddTurnNumber(_command.CartesianPosition.TurnNumber);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.CartesianPosition.E1
+    CreateCommandPayload.AddReal(_command.CartesianPosition.E1);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.CartesianPosition.E2
+    CreateCommandPayload.AddReal(_command.CartesianPosition.E2);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.CartesianPosition.E3
+    CreateCommandPayload.AddReal(_command.CartesianPosition.E3);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.CartesianPosition.E4
+    CreateCommandPayload.AddReal(_command.CartesianPosition.E4);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.CartesianPosition.E5
+    CreateCommandPayload.AddReal(_command.CartesianPosition.E5);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.CartesianPosition.E6
+    CreateCommandPayload.AddReal(_command.CartesianPosition.E6);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+    
   // Create logging
-  CreateCommandPayloadLog(AxesGroup := AxesGroup);
+  CreateCommandPayloadLog(AxesGroup := AxesGroup, ParameterCnt := _parameterCnt);
 
 END_METHOD
 
@@ -590,14 +747,24 @@ VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
+VAR_INPUT
+  /// Parameter count
+  ParameterCnt : DINT;
+END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := AxesGroup.State.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Create command payload with the following parameter(s) :');
+                          MessageText := 'Create command payload with the {1} parameter(s) :',
+                          Para1       := DINT_TO_STRING(ParameterCnt));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ToolNo
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -606,6 +773,11 @@ END_VAR
                           MessageText := 'Command.ToolNo = {1}',
                           Para1       :=  USINT_TO_STRING(_command.ToolNo));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for FrameNo
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -614,6 +786,11 @@ END_VAR
                           MessageText := 'Command.FrameNo = {1}',
                           Para1       :=  USINT_TO_STRING(_command.FrameNo));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for CartesianPosition.X
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -622,6 +799,11 @@ END_VAR
                           MessageText := 'Command.CartesianPosition.X = {1}',
                           Para1       :=  REAL_TO_STRING(_command.CartesianPosition.X));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for CartesianPosition.Y
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -630,6 +812,11 @@ END_VAR
                           MessageText := 'Command.CartesianPosition.Y = {1}',
                           Para1       :=  REAL_TO_STRING(_command.CartesianPosition.Y));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for CartesianPosition.Z
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -638,6 +825,11 @@ END_VAR
                           MessageText := 'Command.CartesianPosition.Z = {1}',
                           Para1       :=  REAL_TO_STRING(_command.CartesianPosition.Z));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for CartesianPosition.Rx
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -646,6 +838,11 @@ END_VAR
                           MessageText := 'Command.CartesianPosition.Rx = {1}',
                           Para1       :=  REAL_TO_STRING(_command.CartesianPosition.Rx));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for CartesianPosition.Ry
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -654,6 +851,11 @@ END_VAR
                           MessageText := 'Command.CartesianPosition.Ry = {1}',
                           Para1       :=  REAL_TO_STRING(_command.CartesianPosition.Ry));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for CartesianPosition.Rz
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -662,6 +864,11 @@ END_VAR
                           MessageText := 'Command.CartesianPosition.Rz = {1}',
                           Para1       :=  REAL_TO_STRING(_command.CartesianPosition.Rz));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for CartesianPosition.Config
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -670,6 +877,11 @@ END_VAR
                           MessageText := 'Command.CartesianPosition.Config = {1}',
                           Para1       :=  ARM_CONFIG_TO_STRING(_command.CartesianPosition.Config));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for CartesianPosition.TurnNumber[0]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -679,6 +891,11 @@ END_VAR
                           Para1       :=  BYTE_TO_STRING(CombineHalfSints(HalfSintHi := _command.CartesianPosition.TurnNumber.J2Turns, 
                                                                           HalfSintLo := _command.CartesianPosition.TurnNumber.J1Turns)));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for CartesianPosition.TurnNumber[1]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -688,6 +905,11 @@ END_VAR
                           Para1       :=  BYTE_TO_STRING(CombineHalfSints(HalfSintHi := _command.CartesianPosition.TurnNumber.J4Turns, 
                                                                           HalfSintLo := _command.CartesianPosition.TurnNumber.J3Turns)));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for CartesianPosition.TurnNumber[2]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -697,6 +919,11 @@ END_VAR
                           Para1       :=  BYTE_TO_STRING(CombineHalfSints(HalfSintHi := _command.CartesianPosition.TurnNumber.J6Turns, 
                                                                           HalfSintLo := _command.CartesianPosition.TurnNumber.J5Turns)));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for CartesianPosition.TurnNumber[3]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -705,6 +932,11 @@ END_VAR
                           MessageText := 'Command.CartesianPosition.TurnNumber[3] = {1}',
                           Para1       :=  SINT_TO_STRING(_command.CartesianPosition.TurnNumber.E1Turns));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for CartesianPosition.E1
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -713,6 +945,11 @@ END_VAR
                           MessageText := 'Command.CartesianPosition.E1 = {1}',
                           Para1       :=  REAL_TO_STRING(_command.CartesianPosition.E1));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for CartesianPosition.E2
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -721,6 +958,11 @@ END_VAR
                           MessageText := 'Command.CartesianPosition.E2 = {1}',
                           Para1       :=  REAL_TO_STRING(_command.CartesianPosition.E2));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for CartesianPosition.E3
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -729,6 +971,11 @@ END_VAR
                           MessageText := 'Command.CartesianPosition.E3 = {1}',
                           Para1       :=  REAL_TO_STRING(_command.CartesianPosition.E3));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for CartesianPosition.E4
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -737,6 +984,11 @@ END_VAR
                           MessageText := 'Command.CartesianPosition.E4 = {1}',
                           Para1       :=  REAL_TO_STRING(_command.CartesianPosition.E4));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for CartesianPosition.E5
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -745,6 +997,11 @@ END_VAR
                           MessageText := 'Command.CartesianPosition.E5 = {1}',
                           Para1       :=  REAL_TO_STRING(_command.CartesianPosition.E5));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for CartesianPosition.E6
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -861,6 +1118,10 @@ VAR_INPUT
   /// Timestamp
   Timestamp    : SystemTime;  
 END_VAR
+VAR
+  /// Parameter count
+ _parameterCnt : DINT;
+END_VAR
 // Table 6-639: Received CMD payload (RC to PLC) of "CalculateInverseKinematic"
 // --------------------------
 // Header
@@ -931,33 +1192,129 @@ END_VAR
   _response.AlarmMessageSeverity := _rspHeader.AlarmMessageSeverity;
   _response.AlarmMessageCode     := _rspHeader.AlarmMessageCode;
   
-  // Get Response.JointPosition.J1
-  _response.JointPosition.J1 := ResponseData.GetReal();
-  // Get Response.JointPosition.J2
-  _response.JointPosition.J2 := ResponseData.GetReal();
-  // Get Response.JointPosition.J3
-  _response.JointPosition.J3 := ResponseData.GetReal();
-  // Get Response.JointPosition.J4
-  _response.JointPosition.J4 := ResponseData.GetReal();
-  // Get Response.JointPosition.J5
-  _response.JointPosition.J5 := ResponseData.GetReal();
-  // Get Response.JointPosition.J6
-  _response.JointPosition.J6 := ResponseData.GetReal();
-  // Get Response.JointPosition.E1
-  _response.JointPosition.E1 := ResponseData.GetReal();
-  // Get Response.JointPosition.E2
-  _response.JointPosition.E2 := ResponseData.GetReal();
-  // Get Response.JointPosition.E3
-  _response.JointPosition.E3 := ResponseData.GetReal();
-  // Get Response.JointPosition.E4
-  _response.JointPosition.E4 := ResponseData.GetReal();
-  // Get Response.JointPosition.E5
-  _response.JointPosition.E5 := ResponseData.GetReal();
-  // Get Response.JointPosition.E6
-  _response.JointPosition.E6 := ResponseData.GetReal();
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+   // Get Response.JointPosition.J1
+   _response.JointPosition.J1 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.JointPosition.J2
+   _response.JointPosition.J2 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.JointPosition.J3
+   _response.JointPosition.J3 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.JointPosition.J4
+   _response.JointPosition.J4 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.JointPosition.J5
+   _response.JointPosition.J5 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.JointPosition.J6
+   _response.JointPosition.J6 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.JointPosition.E1
+   _response.JointPosition.E1 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.JointPosition.E2
+   _response.JointPosition.E2 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.JointPosition.E3
+   _response.JointPosition.E3 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.JointPosition.E4
+   _response.JointPosition.E4 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.JointPosition.E5
+   _response.JointPosition.E5 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.JointPosition.E6
+   _response.JointPosition.E6 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
   
   // Create logging
-  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp, ParameterCnt := _parameterCnt);
 
 END_METHOD
 
@@ -967,15 +1324,23 @@ VAR_INPUT
   ResponseData : RobotLibraryResponseDataFB;
   /// Timestamp
   Timestamp    : SystemTime;  
+  /// Parameter count
+  ParameterCnt : DINT;
 END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := Timestamp,
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Parsed the following parameter(s) from response data:');
+                          MessageText := '{1} parameter(s) to parse from the response data:',
+                          Para1       := DINT_TO_STRING(ParameterCnt));
                           
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for JointPosition.J1
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -984,6 +1349,11 @@ END_VAR
                           MessageText := 'Response.JointPosition.J1 = {1}',
                           Para1       :=  REAL_TO_STRING(_response.JointPosition.J1));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for JointPosition.J2
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -992,6 +1362,11 @@ END_VAR
                           MessageText := 'Response.JointPosition.J2 = {1}',
                           Para1       :=  REAL_TO_STRING(_response.JointPosition.J2));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for JointPosition.J3
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -1000,6 +1375,11 @@ END_VAR
                           MessageText := 'Response.JointPosition.J3 = {1}',
                           Para1       :=  REAL_TO_STRING(_response.JointPosition.J3));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for JointPosition.J4
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -1008,6 +1388,11 @@ END_VAR
                           MessageText := 'Response.JointPosition.J4 = {1}',
                           Para1       :=  REAL_TO_STRING(_response.JointPosition.J4));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for JointPosition.J5
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -1016,6 +1401,11 @@ END_VAR
                           MessageText := 'Response.JointPosition.J5 = {1}',
                           Para1       :=  REAL_TO_STRING(_response.JointPosition.J5));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for JointPosition.J6
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -1024,6 +1414,11 @@ END_VAR
                           MessageText := 'Response.JointPosition.J6 = {1}',
                           Para1       :=  REAL_TO_STRING(_response.JointPosition.J6));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for JointPosition.E1
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -1032,6 +1427,11 @@ END_VAR
                           MessageText := 'Response.JointPosition.E1 = {1}',
                           Para1       :=  REAL_TO_STRING(_response.JointPosition.E1));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for JointPosition.E2
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -1040,6 +1440,11 @@ END_VAR
                           MessageText := 'Response.JointPosition.E2 = {1}',
                           Para1       :=  REAL_TO_STRING(_response.JointPosition.E2));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for JointPosition.E3
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -1048,6 +1453,11 @@ END_VAR
                           MessageText := 'Response.JointPosition.E3 = {1}',
                           Para1       :=  REAL_TO_STRING(_response.JointPosition.E3));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for JointPosition.E4
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -1056,6 +1466,11 @@ END_VAR
                           MessageText := 'Response.JointPosition.E4 = {1}',
                           Para1       :=  REAL_TO_STRING(_response.JointPosition.E4));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for JointPosition.E5
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -1064,6 +1479,11 @@ END_VAR
                           MessageText := 'Response.JointPosition.E5 = {1}',
                           Para1       :=  REAL_TO_STRING(_response.JointPosition.E5));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for JointPosition.E6
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,

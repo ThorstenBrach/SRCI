@@ -127,6 +127,17 @@ END_VAR
 
 END_METHOD
 
+METHOD PROTECTED OnExecErrorClear : DINT
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+  // Overwrite base implementation, because FB does not send telegrams via ARC
+  OnExecErrorClear := Reset();
+
+END_METHOD
+
 METHOD PROTECTED OnExecRun : DINT
 VAR_IN_OUT
   /// Robot assignment of function

@@ -48,6 +48,31 @@ END_VAR
 
 END_FUNCTION_BLOCK
 
+METHOD INTERNAL CheckAddParameter : BOOL
+VAR_INPUT
+  /// Payload pointer
+  PayloadPtr : UDINT;
+END_VAR
+VAR
+  /// Payload as byte array
+  Payload    : ARRAY [1..SIZEOF(_command)] OF BYTE;
+  /// Null Byte array 
+  Null       : ARRAY [1..SIZEOF(_command)] OF BYTE;
+  /// Data length to compare
+  DataLen    : UDINT;
+END_VAR
+
+  // Payload pointer must be decreased by one byte, because ADR(Payload) is already one byte !
+  PayloadPtr := LIMIT (0, PayloadPtr - 1, SIZEOF(Payload) -1);
+  // Convert command struct to payload array
+  SysDepMemCpy( pDest := ADR(Payload), pSrc := ADR(_command), DataLen := SIZEOF(_command));
+  // Calculate the data length to compare - at least one byte must be compared !
+  DataLen := LIMIT(1, SIZEOF(Payload) - PayloadPtr, SIZEOF(Payload)); 
+  // Compare Payload-Array with Null-Byte-Array
+  CheckAddParameter := SysDepMemCmp( pData1 := ADR(Payload) + PayloadPtr , pData2 := ADR(Null), DataLen := DataLen) <>  RobotLibraryConstants.OK ;
+
+END_METHOD
+
 METHOD PROTECTED CheckFunctionSupported : BOOL
 VAR_IN_OUT
   /// Robot assignment of function
@@ -161,6 +186,10 @@ VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
+VAR
+  /// Parameter count
+ _parameterCnt : DINT;
+END_VAR
 // Table 6-107: Sent CMD payload (PLC to RC) of "ReadMessages"
 // --------------------------
 // Header
@@ -192,15 +221,38 @@ END_VAR
   // call base implementation to copy header to payload buffer
   CreateCommandPayload := SUPER^.CreateCommandPayload(AxesGroup := AxesGroup);
   
-  // add command.MsgID
-  CreateCommandPayload.AddUsint(_command.MsgID);
-  // add command.Enable
-  CreateCommandPayload.AddBool(_command.Enable);
-  // add command.MessageLevel
-  CreateCommandPayload.AddUsint(_command.MessageLevel);
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.MsgID
+    CreateCommandPayload.AddUsint(_command.MsgID);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.Enable
+    CreateCommandPayload.AddBool(_command.Enable);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.MessageLevel
+    CreateCommandPayload.AddUsint(_command.MessageLevel);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
   
   // Create logging
-  CreateCommandPayloadLog(AxesGroup := AxesGroup);
+  CreateCommandPayloadLog(AxesGroup := AxesGroup, ParameterCnt := _parameterCnt);
 
 END_METHOD
 
@@ -209,14 +261,24 @@ VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
+VAR_INPUT
+  /// Parameter count
+  ParameterCnt : DINT;
+END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := AxesGroup.State.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Create command payload with the following parameter(s) :');
+                          MessageText := 'Create command payload with the {1} parameter(s) :',
+                          Para1       := DINT_TO_STRING(ParameterCnt));
     
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for MsgID
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -225,6 +287,11 @@ END_VAR
                           MessageText := 'Command.MsgID = {1}',
                           Para1       :=  USINT_TO_STRING(_command.MsgID));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Enable
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -233,6 +300,11 @@ END_VAR
                           MessageText := 'Command.Enable = {1}',
                           Para1       :=  BOOL_TO_STRING(_command.Enable));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for MessageLevel
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -255,6 +327,54 @@ END_VAR
   
   ExecMode := ExecutionMode.PARALLEL;
   Priority := PriorityLevel.NORMAL;
+
+END_METHOD
+
+METHOD PROTECTED OnExecErrorClear : DINT
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+  OnExecErrorClear := RobotLibraryConstants.RUNNING;
+  
+  CASE _stepClearError OF
+    
+    0:  // Reset 
+        Reset();
+        // trigger parameter update to disable FB
+       _parameterUpdateInternal := TRUE;
+        // call Check Parameter changed method to trigger the parameter update to deactivate jogging mode
+        CheckParameterChanged(AxesGroup := AxesGroup);
+        // set timeout
+        SetTimeout(PT := _timeoutClearError, rTimer := _timerClearError);
+        // inc step counter
+       _stepClearError := _stepClearError + 1; 
+        
+    1: IF ( _responseReceived )
+       THEN     
+         // reset response received flag
+        _responseReceived := FALSE;
+         // reset step counter
+        _stepClearError := 0;
+         // finished
+         OnExecErrorClear := RobotLibraryConstants.OK;
+       ELSE
+         // timeout exceeded ? 
+         IF (CheckTimeout(_timerClearError) = RobotLibraryConstants.OK)
+         THEN
+           OnExecErrorClear := RobotLibraryConstants.HAS_ERROR;
+         END_IF
+  	   END_IF
+    
+  END_CASE
+  
+  
+  // reset step counter
+  IF (OnExecErrorClear <> RobotLibraryConstants.RUNNING)
+  THEN
+   _stepClearError := 0;
+  END_IF
 
 END_METHOD
 
@@ -337,24 +457,13 @@ END_VAR
            OutCmd.ErrorCode              := _response.ErrorCode;
            OutCmd.Text                   := _response.Text;
   
-           // Enabled ? -> Reset Busy flag  
-           IF (Enabled)
+           // Enabled, Aborted or Error ? -> Reset Busy flag  
+           IF (( Enabled ) OR 
+               ( Error   ))
            THEN  
              Busy := FALSE;
   				 END_IF
   
-           // Done, Aborted or Error ?
-           IF (_response.State >= CmdMessageState.DONE )
-           THEN
-             // Reset Enabled flag
-             Enabled := FALSE;
-             // Reset Busy flag
-             Busy := FALSE;
-             // set timeout
-             SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
-             // inc step counter
-            _stepCmd := _stepCmd + 2; 
-           END_IF
          END_IF
   
          // do not abort directly, so that the ParSeq update can be send
@@ -380,12 +489,6 @@ END_VAR
         THEN
           Reset();   
   	    END_IF
-        
-        // Wait for Enable = FALSE
-    03: IF ( NOT Enable )
-        THEN
-          Reset();   
-  	    END_IF
   
   ELSE
     // invalid step
@@ -408,6 +511,10 @@ VAR_INPUT
   ResponseData : RobotLibraryResponseDataFB;
   /// Timestamp
   Timestamp    : SystemTime;  
+END_VAR
+VAR
+  /// Parameter count
+ _parameterCnt : DINT;
 END_VAR
 // Table 6-108: Received CMD payload (RC to PLC) of "ReadMessages"
 // --------------------------
@@ -600,31 +707,109 @@ END_VAR
   _response.AlarmMessageCode     := _rspHeader.AlarmMessageCode;
   
   {warning 'ToDo: value are swapped in comparation to Specification V1.3'}
-  // Get Response.MsgID
-  _response.MsgID := ResponseData.GetUsint();
-  // Get Response.Enabled
-  _response.Enabled := ResponseData.GetBool();
   
   
-  // Get Response.NumberOfActiveErrors
-  _response.NumberOfActiveErrors := ResponseData.GetUsint();
-  // Get Response.NumberOfActiveWarnings
-  _response.NumberOfActiveWarnings := ResponseData.GetUsint();
-  // Get Response.Timestamp.IEC_DATE
-  _response.Timestamp.IEC_DATE := ResponseData.GetIecDate();
-  // Get Response.Timestamp.IEC_TIME
-  _response.Timestamp.IEC_TIME := ResponseData.GetIecTime();
-  // Get Response.MsgType
-  _response.MsgType := ResponseData.GetUsint();
-  // Get Response.Severity
-  _response.Severity := ResponseData.GetSint();
-  // Get Response.ErrorCode
-  _response.ErrorCode := ResponseData.GetDword();
-  // Get _response.RCManufacturer
-  ResponseData.GetDataBlock(pData := ADR(_response.Text) , SIZEOF(_response.Text) , IsString := TRUE );
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.MsgID
+   _response.MsgID := ResponseData.GetUsint();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.Enabled
+   _response.Enabled := ResponseData.GetBool();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.NumberOfActiveErrors
+   _response.NumberOfActiveErrors := ResponseData.GetUsint();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.NumberOfActiveWarnings
+   _response.NumberOfActiveWarnings := ResponseData.GetUsint();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.Timestamp.IEC_DATE
+   _response.Timestamp.IEC_DATE := ResponseData.GetIecDate();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.Timestamp.IEC_TIME
+   _response.Timestamp.IEC_TIME := ResponseData.GetIecTime();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.MsgType
+   _response.MsgType := ResponseData.GetUsint();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.Severity
+   _response.Severity := ResponseData.GetSint();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.ErrorCode
+   _response.ErrorCode := ResponseData.GetDword();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get _response.RCManufacturer
+    ResponseData.GetDataBlock(pData := ADR(_response.Text) , SIZEOF(_response.Text) , IsString := TRUE );
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+    
   // Create logging
-  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp, ParameterCnt := _parameterCnt);
 
 END_METHOD
 
@@ -634,15 +819,23 @@ VAR_INPUT
   ResponseData : RobotLibraryResponseDataFB;
   /// Timestamp
   Timestamp    : SystemTime;  
+  /// Parameter count
+  ParameterCnt : DINT;
 END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := Timestamp,
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Parsed the following parameter(s) from response data:');
+                          MessageText := '{1} parameter(s) to parse from the response data:',
+                          Para1       := DINT_TO_STRING(ParameterCnt));
                           
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Enabled
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -651,6 +844,11 @@ END_VAR
                           MessageText := 'Response.Enabled = {1}',
                           Para1       :=  BOOL_TO_STRING(_response.Enabled));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for MsgID
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -659,6 +857,11 @@ END_VAR
                           MessageText := 'Response.MsgID = {1}',
                           Para1       :=  USINT_TO_STRING(_response.MsgID));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for NumberOfActiveErrors
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -667,6 +870,11 @@ END_VAR
                           MessageText := 'Response.NumberOfActiveErrors = {1}',
                           Para1       :=  USINT_TO_STRING(_response.NumberOfActiveErrors));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for NumberOfActiveWarnings
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -675,6 +883,11 @@ END_VAR
                           MessageText := 'Response.NumberOfActiveWarnings = {1}',
                           Para1       :=  USINT_TO_STRING(_response.NumberOfActiveWarnings));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Timestamp.IEC_DATE
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -683,6 +896,11 @@ END_VAR
                           MessageText := 'Response.Timestamp.IEC_DATE = {1}',
                           Para1       :=  IEC_DATE_TO_STRING(_response.Timestamp.IEC_DATE));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Timestamp.IEC_TIME
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -691,6 +909,11 @@ END_VAR
                           MessageText := 'Response.Timestamp.IEC_TIME = {1}',
                           Para1       :=  IEC_TIME_TO_STRING(_response.Timestamp.IEC_TIME));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for MsgType
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -699,6 +922,11 @@ END_VAR
                           MessageText := 'Response.MsgType = {1}',
                           Para1       :=  USINT_TO_STRING(_response.MsgType));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Severity
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -707,6 +935,11 @@ END_VAR
                           MessageText := 'Response.Severity = {1}',
                           Para1       :=  SEVERITY_TO_STRING(_response.Severity,AlignString := FALSE));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ErrorCode
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -715,6 +948,11 @@ END_VAR
                           MessageText := 'Response.ErrorCode = {1}',
                           Para1       :=  DWORD_TO_STRING(_response.ErrorCode));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Text
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,

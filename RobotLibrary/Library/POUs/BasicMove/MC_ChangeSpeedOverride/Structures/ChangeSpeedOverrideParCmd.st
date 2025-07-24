@@ -26,7 +26,7 @@ STRUCT
   /// • 0% No movement of the robot
   /// • 10% default
   /// • ≤100%: use input parameter value
-  Override        : REAL;
+  Override        : REAL := 5;
 END_STRUCT
 END_TYPE
 

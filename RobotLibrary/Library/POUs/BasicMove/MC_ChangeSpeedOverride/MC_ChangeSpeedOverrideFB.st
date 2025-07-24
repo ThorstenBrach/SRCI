@@ -45,6 +45,31 @@ END_VAR
 
 END_FUNCTION_BLOCK
 
+METHOD INTERNAL CheckAddParameter : BOOL
+VAR_INPUT
+  /// Payload pointer
+  PayloadPtr : UDINT;
+END_VAR
+VAR
+  /// Payload as byte array
+  Payload    : ARRAY [1..SIZEOF(_command)] OF BYTE;
+  /// Null Byte array 
+  Null       : ARRAY [1..SIZEOF(_command)] OF BYTE;
+  /// Data length to compare
+  DataLen    : UDINT;
+END_VAR
+
+  // Payload pointer must be decreased by one byte, because ADR(Payload) is already one byte !
+  PayloadPtr := LIMIT (0, PayloadPtr - 1, SIZEOF(Payload) -1);
+  // Convert command struct to payload array
+  SysDepMemCpy( pDest := ADR(Payload), pSrc := ADR(_command), DataLen := SIZEOF(_command));
+  // Calculate the data length to compare - at least one byte must be compared !
+  DataLen := LIMIT(1, SIZEOF(Payload) - PayloadPtr, SIZEOF(Payload)); 
+  // Compare Payload-Array with Null-Byte-Array
+  CheckAddParameter := SysDepMemCmp( pData1 := ADR(Payload) + PayloadPtr , pData2 := ADR(Null), DataLen := DataLen) <>  RobotLibraryConstants.OK ;
+
+END_METHOD
+
 METHOD PROTECTED CheckFunctionSupported : BOOL
 VAR_IN_OUT
   /// Robot assignment of function
@@ -131,6 +156,10 @@ VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
+VAR
+  /// Parameter count
+ _parameterCnt : DINT;
+END_VAR
 // Table 6-98: Sent CMD payload (PLC to RC) of "ChangeSpeedOverride"
 // --------------------------
 // Header
@@ -158,11 +187,19 @@ END_VAR
   // call base implementation to copy header to payload buffer
   CreateCommandPayload := SUPER^.CreateCommandPayload(AxesGroup := AxesGroup);
   
-  // add command.Override
-  CreateCommandPayload.AddUint(_command.Override);
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.Override
+    CreateCommandPayload.AddUint(_command.Override);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
   
   // create logging
-  CreateCommandPayloadLog(AxesGroup := AxesGroup);
+  CreateCommandPayloadLog(AxesGroup := AxesGroup, ParameterCnt := _parameterCnt);
 
 END_METHOD
 
@@ -171,14 +208,24 @@ VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
+VAR_INPUT
+  /// Parameter count
+  ParameterCnt : DINT;
+END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := AxesGroup.State.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Create command payload with the following parameter(s) :');
+                          MessageText := 'Create command payload with the {1} parameter(s) :',
+                          Para1       := DINT_TO_STRING(ParameterCnt));
     
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Enable
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -292,6 +339,10 @@ VAR_INPUT
   /// Timestamp
   Timestamp    : SystemTime;  
 END_VAR
+VAR
+  /// Parameter count
+ _parameterCnt : DINT;
+END_VAR
 // Table 6-99: Received CMD payload (RC to PLC) of "ChangeSpeedOverride"
 // --------------------------
 // Header
@@ -311,7 +362,7 @@ END_VAR
   _response.AlarmMessageCode     := _rspHeader.AlarmMessageCode;
   
   // Create logging
-  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp, ParameterCnt := _parameterCnt);
 
 END_METHOD
 
@@ -321,15 +372,23 @@ VAR_INPUT
   ResponseData : RobotLibraryResponseDataFB;
   /// Timestamp
   Timestamp    : SystemTime;  
+  /// Parameter count
+  ParameterCnt : DINT;
 END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := Timestamp,
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Parsed the following parameter(s) from response data:');
+                          MessageText := '{1} parameter(s) to parse from the response data:',
+                          Para1       := DINT_TO_STRING(ParameterCnt));
                           
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for no parameter 
   CreateLogMessage      ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,

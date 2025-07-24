@@ -58,6 +58,31 @@ END_VAR
 
 END_FUNCTION_BLOCK
 
+METHOD INTERNAL CheckAddParameter : BOOL
+VAR_INPUT
+  /// Payload pointer
+  PayloadPtr : UDINT;
+END_VAR
+VAR
+  /// Payload as byte array
+  Payload    : ARRAY [1..SIZEOF(_command)] OF BYTE;
+  /// Null Byte array 
+  Null       : ARRAY [1..SIZEOF(_command)] OF BYTE;
+  /// Data length to compare
+  DataLen    : UDINT;
+END_VAR
+
+  // Payload pointer must be decreased by one byte, because ADR(Payload) is already one byte !
+  PayloadPtr := LIMIT (0, PayloadPtr - 1, SIZEOF(Payload) -1);
+  // Convert command struct to payload array
+  SysDepMemCpy( pDest := ADR(Payload), pSrc := ADR(_command), DataLen := SIZEOF(_command));
+  // Calculate the data length to compare - at least one byte must be compared !
+  DataLen := LIMIT(1, SIZEOF(Payload) - PayloadPtr, SIZEOF(Payload)); 
+  // Compare Payload-Array with Null-Byte-Array
+  CheckAddParameter := SysDepMemCmp( pData1 := ADR(Payload) + PayloadPtr , pData2 := ADR(Null), DataLen := DataLen) <>  RobotLibraryConstants.OK ;
+
+END_METHOD
+
 METHOD PROTECTED CheckFunctionSupported : BOOL
 VAR_IN_OUT
   /// Robot assignment of function
@@ -603,6 +628,10 @@ VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
+VAR
+  /// Parameter count
+ _parameterCnt : DINT;
+END_VAR
 // Table 6-470: Sent CMD payload (PLC to RC) of "MoveSuperImposedDynamic"
 // --------------------------
 // Header
@@ -710,55 +739,217 @@ END_VAR
   // call base implementation to copy header to payload buffer
   CreateCommandPayload := SUPER^.CreateCommandPayload(AxesGroup := AxesGroup);
   
-  // add command.VelocityDiffRate
-  CreateCommandPayload.AddUint(_command.VelocityDiffRate);
-  // add command.AccelerationDiffRate
-  CreateCommandPayload.AddUint(_command.AccelerationDiffRate);
-  // add command.DecelerationDiffRate
-  CreateCommandPayload.AddUint(_command.DecelerationDiffRate);
-  // add command.JerkDiffRate
-  CreateCommandPayload.AddUint(_command.JerkDiffRate);
-  // add command.ToolNo
-  CreateCommandPayload.AddUsint(_command.ToolNo);
-  // add command.FrameNo
-  CreateCommandPayload.AddUsint(_command.FrameNo);
-  // add command.Reserve_X
-  CreateCommandPayload.AddReal(_command.Reserve_X);
-  // add command.Offset.X
-  CreateCommandPayload.AddReal(_command.Offset.X);
-  // add command.Offset.Y
-  CreateCommandPayload.AddReal(_command.Offset.Y);
-  // add command.Offset.Z
-  CreateCommandPayload.AddReal(_command.Offset.Z);
-  // add command.Offset.Rx
-  CreateCommandPayload.AddReal(_command.Offset.Rx);
-  // add command.Offset.Ry
-  CreateCommandPayload.AddReal(_command.Offset.Ry);
-  // add command.Offset.Rz
-  CreateCommandPayload.AddReal(_command.Offset.Rz);
-  // add command.Offset.Config
-  CreateCommandPayload.AddArmConfig(_command.Offset.Config);
-  // add command.Offset.TurnNumber
-  CreateCommandPayload.AddTurnNumber(_command.Offset.TurnNumber);
-  // add command.Offset.E1
-  CreateCommandPayload.AddReal(_command.Offset.E1);
-  // add command.ReferenceType
-  CreateCommandPayload.AddUsint(_command.ReferenceType);
-  // add command.InterpolationMode
-  CreateCommandPayload.AddUsint(_command.InterpolationMode);
-  // add command.Offset.E2
-  CreateCommandPayload.AddReal(_command.Offset.E2);
-  // add command.Offset.E3
-  CreateCommandPayload.AddReal(_command.Offset.E3);
-  // add command.Offset.E4
-  CreateCommandPayload.AddReal(_command.Offset.E4);
-  // add command.Offset.E5
-  CreateCommandPayload.AddReal(_command.Offset.E5);
-  // add command.Offset.E6
-  CreateCommandPayload.AddReal(_command.Offset.E6);
   
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.VelocityDiffRate
+    CreateCommandPayload.AddUint(_command.VelocityDiffRate);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.AccelerationDiffRate
+    CreateCommandPayload.AddUint(_command.AccelerationDiffRate);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.DecelerationDiffRate
+    CreateCommandPayload.AddUint(_command.DecelerationDiffRate);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.JerkDiffRate
+    CreateCommandPayload.AddUint(_command.JerkDiffRate);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.ToolNo
+    CreateCommandPayload.AddUsint(_command.ToolNo);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.FrameNo
+    CreateCommandPayload.AddUsint(_command.FrameNo);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.Reserve_X
+    CreateCommandPayload.AddReal(_command.Reserve_X);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.Offset.X
+    CreateCommandPayload.AddReal(_command.Offset.X);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.Offset.Y
+    CreateCommandPayload.AddReal(_command.Offset.Y);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.Offset.Z
+    CreateCommandPayload.AddReal(_command.Offset.Z);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.Offset.Rx
+    CreateCommandPayload.AddReal(_command.Offset.Rx);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.Offset.Ry
+    CreateCommandPayload.AddReal(_command.Offset.Ry);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.Offset.Rz
+    CreateCommandPayload.AddReal(_command.Offset.Rz);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.Offset.Config
+    CreateCommandPayload.AddArmConfig(_command.Offset.Config);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.Offset.TurnNumber
+    CreateCommandPayload.AddTurnNumber(_command.Offset.TurnNumber);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.Offset.E1
+    CreateCommandPayload.AddReal(_command.Offset.E1);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.ReferenceType
+    CreateCommandPayload.AddUsint(_command.ReferenceType);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.InterpolationMode
+    CreateCommandPayload.AddUsint(_command.InterpolationMode);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.Offset.E2
+    CreateCommandPayload.AddReal(_command.Offset.E2);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.Offset.E3
+    CreateCommandPayload.AddReal(_command.Offset.E3);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.Offset.E4
+    CreateCommandPayload.AddReal(_command.Offset.E4);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.Offset.E5
+    CreateCommandPayload.AddReal(_command.Offset.E5);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.Offset.E6
+    CreateCommandPayload.AddReal(_command.Offset.E6);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+    
   // Create logging
-  CreateCommandPayloadLog(AxesGroup := AxesGroup);
+  CreateCommandPayloadLog(AxesGroup := AxesGroup, ParameterCnt := _parameterCnt);
 
 END_METHOD
 
@@ -767,18 +958,28 @@ VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
+VAR_INPUT
+  /// Parameter count
+  ParameterCnt : DINT;
+END_VAR
 VAR 
   /// internal index for loops
  _idx : DINT;
 END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := AxesGroup.State.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Create command payload with the following parameter(s) :');
+                          MessageText := 'Create command payload with the {1} parameter(s) :',
+                          Para1       := DINT_TO_STRING(ParameterCnt));
     
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for VelocityDiffRate
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -787,6 +988,11 @@ END_VAR
                           MessageText := 'Command.VelocityDiffRate = {1}',
                           Para1       :=  UINT_TO_STRING(_command.VelocityDiffRate));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for AccelerationDiffRate
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -795,6 +1001,11 @@ END_VAR
                           MessageText := 'Command.AccelerationDiffRate = {1}',
                           Para1       :=  UINT_TO_STRING(_command.AccelerationDiffRate));
                           
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for DecelerationDiffRate
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -803,6 +1014,11 @@ END_VAR
                           MessageText := 'Command.DecelerationDiffRate = {1}',
                           Para1       :=  UINT_TO_STRING(_command.DecelerationDiffRate));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for JerkDiffRate
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -811,6 +1027,11 @@ END_VAR
                           MessageText := 'Command.JerkDiffRate = {1}',
                           Para1       :=  UINT_TO_STRING(_command.JerkDiffRate));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ToolNo
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -819,6 +1040,11 @@ END_VAR
                           MessageText := 'Command.ToolNo = {1}',
                           Para1       :=  USINT_TO_STRING(_command.ToolNo));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for FrameNo
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -827,6 +1053,11 @@ END_VAR
                           MessageText := 'Command.FrameNo = {1}',
                           Para1       :=  USINT_TO_STRING(_command.FrameNo));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Reserve_X
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -835,6 +1066,11 @@ END_VAR
                           MessageText := 'Command.Reserve_X = {1}',
                           Para1       :=  REAL_TO_STRING(_command.Reserve_X));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Offset.X
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -843,6 +1079,11 @@ END_VAR
                           MessageText := 'Command.Offset.X = {1}',
                           Para1       :=  REAL_TO_STRING(_command.Offset.X));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Offset.Y
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -851,6 +1092,11 @@ END_VAR
                           MessageText := 'Command.Offset.Y = {1}',
                           Para1       :=  REAL_TO_STRING(_command.Offset.Y));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Offset.Z
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -859,6 +1105,11 @@ END_VAR
                           MessageText := 'Command.Offset.Z = {1}',
                           Para1       :=  REAL_TO_STRING(_command.Offset.Z));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Offset.Rx
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -867,6 +1118,11 @@ END_VAR
                           MessageText := 'Command.Offset.Rx = {1}',
                           Para1       :=  REAL_TO_STRING(_command.Offset.Rx));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Offset.Ry
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -875,6 +1131,11 @@ END_VAR
                           MessageText := 'Command.Offset.Ry = {1}',
                           Para1       :=  REAL_TO_STRING(_command.Offset.Ry));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Offset.Rz
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -883,6 +1144,11 @@ END_VAR
                           MessageText := 'Command.Offset.Rz = {1}',
                           Para1       :=  REAL_TO_STRING(_command.Offset.Rz));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Offset.Config
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -891,6 +1157,11 @@ END_VAR
                           MessageText := 'Command.Offset.Config = {1}',
                           Para1       :=  ARM_CONFIG_TO_STRING(_command.Offset.Config));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Offset.TurnNumber[0]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -900,6 +1171,11 @@ END_VAR
                           Para1       :=  BYTE_TO_STRING(CombineHalfSints(HalfSintHi := _command.Offset.TurnNumber.J2Turns,
                                                                           HalfSintLo := _command.Offset.TurnNumber.J1Turns)));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Offset.TurnNumber[1]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -909,6 +1185,11 @@ END_VAR
                           Para1       :=  BYTE_TO_STRING(CombineHalfSints(HalfSintHi := _command.Offset.TurnNumber.J4Turns, 
                                                                           HalfSintLo := _command.Offset.TurnNumber.J3Turns)));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Offset.TurnNumber[2]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -918,6 +1199,11 @@ END_VAR
                           Para1       :=  BYTE_TO_STRING(CombineHalfSints(HalfSintHi := _command.Offset.TurnNumber.J6Turns, 
                                                                           HalfSintLo := _command.Offset.TurnNumber.J5Turns)));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Offset.TurnNumber[3]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -926,6 +1212,11 @@ END_VAR
                           MessageText := 'Command.Position.TurnNumber[3] = {1}',
                           Para1       :=  SINT_TO_STRING(_command.Offset.TurnNumber.E1Turns));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Offset.E1
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -934,6 +1225,11 @@ END_VAR
                           MessageText := 'Command.Offset.E1 = {1}',
                           Para1       :=  REAL_TO_STRING(_command.Offset.E1));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ReferenceType
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -942,6 +1238,11 @@ END_VAR
                           MessageText := 'Command.ReferenceType = {1}',
                           Para1       :=  REFERENCE_TYPE_TO_STRING(_command.ReferenceType));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for InterpolationMode
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -950,6 +1251,11 @@ END_VAR
                           MessageText := 'Command.InterpolationMode = {1}',
                           Para1       :=  INTERPOLATION_MODE_TO_STRING(_command.InterpolationMode));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Offset.E2
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -958,6 +1264,11 @@ END_VAR
                           MessageText := 'Command.Offset.E2 = {1}',
                           Para1       :=  REAL_TO_STRING(_command.Offset.E2));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Offset.E3
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -966,6 +1277,11 @@ END_VAR
                           MessageText := 'Command.Offset.E3 = {1}',
                           Para1       :=  REAL_TO_STRING(_command.Offset.E3));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Offset.E4
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -974,6 +1290,11 @@ END_VAR
                           MessageText := 'Command.Offset.E4 = {1}',
                           Para1       :=  REAL_TO_STRING(_command.Offset.E4));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Offset.E5
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -982,6 +1303,11 @@ END_VAR
                           MessageText := 'Command.Offset.E5 = {1}',
                           Para1       :=  REAL_TO_STRING(_command.Offset.E5));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Offset.E6
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1109,6 +1435,10 @@ VAR_INPUT
   /// Timestamp
   Timestamp    : SystemTime;  
 END_VAR
+VAR
+  /// Parameter count
+ _parameterCnt : DINT;
+END_VAR
 // Table 6-471: Received CMD payload (RC to PLC) of "MoveSuperImposedDynamic"
 // --------------------------
 // Header
@@ -1138,15 +1468,39 @@ END_VAR
   _response.AlarmMessageSeverity := _rspHeader.AlarmMessageSeverity;
   _response.AlarmMessageCode     := _rspHeader.AlarmMessageCode;
   
-  // Get Response.Progress
-  _response.Progress := ResponseData.GetUint();
-  // Get Response.RemainingDistance
-  _response.RemainingDistance := ResponseData.GetReal();
-  // Get Response.OffsetReached
-  _response.OffsetReached := ResponseData.GetBool();
   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.Progress
+   _response.Progress := ResponseData.GetUint();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.RemainingDistance
+   _response.RemainingDistance := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.OffsetReached
+   _response.OffsetReached := ResponseData.GetBool();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+   
   // Create logging
-  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp, ParameterCnt := _parameterCnt);
 
 END_METHOD
 
@@ -1156,15 +1510,23 @@ VAR_INPUT
   ResponseData : RobotLibraryResponseDataFB;
   /// Timestamp
   Timestamp    : SystemTime;  
+  /// Parameter count
+  ParameterCnt : DINT;
 END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := Timestamp,
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Parsed the following parameter(s) from response data:');
+                          MessageText := '{1} parameter(s) to parse from the response data:',
+                          Para1       := DINT_TO_STRING(ParameterCnt));
                           
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Progress
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -1173,6 +1535,11 @@ END_VAR
                           MessageText := 'Response.Progress = {1}',
                           Para1       :=  UINT_TO_STRING(_response.Progress));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for RemainingDistance
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -1181,6 +1548,11 @@ END_VAR
                           MessageText := 'Response.RemainingDistance = {1}',
                           Para1       :=  REAL_TO_STRING(_response.RemainingDistance));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for OffsetReached
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,

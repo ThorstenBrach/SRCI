@@ -51,6 +51,31 @@ END_VAR
 
 END_FUNCTION_BLOCK
 
+METHOD INTERNAL CheckAddParameter : BOOL
+VAR_INPUT
+  /// Payload pointer
+  PayloadPtr : UDINT;
+END_VAR
+VAR
+  /// Payload as byte array
+  Payload    : ARRAY [1..SIZEOF(_command)] OF BYTE;
+  /// Null Byte array 
+  Null       : ARRAY [1..SIZEOF(_command)] OF BYTE;
+  /// Data length to compare
+  DataLen    : UDINT;
+END_VAR
+
+  // Payload pointer must be decreased by one byte, because ADR(Payload) is already one byte !
+  PayloadPtr := LIMIT (0, PayloadPtr - 1, SIZEOF(Payload) -1);
+  // Convert command struct to payload array
+  SysDepMemCpy( pDest := ADR(Payload), pSrc := ADR(_command), DataLen := SIZEOF(_command));
+  // Calculate the data length to compare - at least one byte must be compared !
+  DataLen := LIMIT(1, SIZEOF(Payload) - PayloadPtr, SIZEOF(Payload)); 
+  // Compare Payload-Array with Null-Byte-Array
+  CheckAddParameter := SysDepMemCmp( pData1 := ADR(Payload) + PayloadPtr , pData2 := ADR(Null), DataLen := DataLen) <>  RobotLibraryConstants.OK ;
+
+END_METHOD
+
 METHOD PROTECTED CheckFunctionSupported : BOOL
 VAR_IN_OUT
   /// Robot assignment of function
@@ -331,6 +356,12 @@ VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
+VAR
+  /// internal index for loops
+ _idx          : DINT;
+  /// Parameter count
+ _parameterCnt : DINT;
+END_VAR
 // Table 6-727: Sent CMD payload (PLC to RC) of "ForceLimit"
 // --------------------------
 // Header
@@ -456,70 +487,141 @@ END_VAR
   CreateCommandPayload := SUPER^.CreateCommandPayload(AxesGroup := AxesGroup);
   
   
-  // add command.EmitterID[0]
-  CreateCommandPayload.AddSint(_command.EmitterID[0]);
-  // add command.EmitterID[1]
-  CreateCommandPayload.AddSint(_command.EmitterID[1]);
-  // add command.EmitterID[2]
-  CreateCommandPayload.AddSint(_command.EmitterID[2]);
-  // add command.EmitterID[3]
-  CreateCommandPayload.AddSint(_command.EmitterID[3]);
-  // add command.ListenerID
-  CreateCommandPayload.AddSint(_command.ListenerID);
-  // add command.Reserve
-  CreateCommandPayload.AddByte(_command.Reserve);
-  // add command.ToolNo
-  CreateCommandPayload.AddUsint(_command.ToolNo);
-  // add command.FrameNo
-  CreateCommandPayload.AddUsint(_command.FrameNo);
-  // add command.ConnectionMode
-  CreateCommandPayload.AddUsint(_command.ConnectionMode);
-  // add command.FixedSensor
-  CreateCommandPayload.AddByte(_command.FixedSensor);
-  // add command.SensorFrame[0]
-  CreateCommandPayload.AddReal(_command.SensorFrame[0]);
-  // add command.SensorFrame[1]
-  CreateCommandPayload.AddReal(_command.SensorFrame[1]);
-  // add command.SensorFrame[2]
-  CreateCommandPayload.AddReal(_command.SensorFrame[2]);
-  // add command.SensorFrame[3]
-  CreateCommandPayload.AddReal(_command.SensorFrame[3]);
-  // add command.SensorFrame[4]
-  CreateCommandPayload.AddReal(_command.SensorFrame[4]);
-  // add command.SensorFrame[5]
-  CreateCommandPayload.AddReal(_command.SensorFrame[5]);
-  // add command.CalibrationData
-  CreateCommandPayload.AddUsint(_command.CalibrationData);
-  // add command.ReferenceType
-  CreateCommandPayload.AddUsint(_command.ReferenceType);
-  // add command.SensorValue[0]
-  CreateCommandPayload.AddReal(_command.SensorValue[0]);
-  // add command.SensorValue[1]
-  CreateCommandPayload.AddReal(_command.SensorValue[1]);
-  // add command.SensorValue[2]
-  CreateCommandPayload.AddReal(_command.SensorValue[2]);
-  // add command.SensorValue[3]
-  CreateCommandPayload.AddReal(_command.SensorValue[3]);
-  // add command.SensorValue[4]
-  CreateCommandPayload.AddReal(_command.SensorValue[4]);
-  // add command.SensorValue[5]
-  CreateCommandPayload.AddReal(_command.SensorValue[5]);
+  FOR _idx := 0 TO 3 
+  DO
+    // Check parameter must be added ? 
+    IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+    THEN
+      // add command.EmitterID[x]
+      CreateCommandPayload.AddSint(_command.EmitterID[_idx]);
+      // inc parameter counter
+     _parameterCnt := _parameterCnt + 1;  
+    END_IF
+  END_FOR
   
-  // add command.ForceLimit[0]
-  CreateCommandPayload.AddReal(_command.ForceLimit[0]);
-  // add command.ForceLimit[1]
-  CreateCommandPayload.AddReal(_command.ForceLimit[1]);
-  // add command.ForceLimit[2]
-  CreateCommandPayload.AddReal(_command.ForceLimit[2]);
-  // add command.ForceLimit[3]
-  CreateCommandPayload.AddReal(_command.ForceLimit[3]);
-  // add command.ForceLimit[4]
-  CreateCommandPayload.AddReal(_command.ForceLimit[4]);
-  // add command.ForceLimit[5]
-  CreateCommandPayload.AddReal(_command.ForceLimit[5]);
   
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.ListenerID
+    CreateCommandPayload.AddSint(_command.ListenerID);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.Reserve
+    CreateCommandPayload.AddByte(_command.Reserve);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.ToolNo
+    CreateCommandPayload.AddUsint(_command.ToolNo);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.FrameNo
+    CreateCommandPayload.AddUsint(_command.FrameNo);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.ConnectionMode
+    CreateCommandPayload.AddUsint(_command.ConnectionMode);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.FixedSensor
+    CreateCommandPayload.AddByte(_command.FixedSensor);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  FOR _idx := 0 TO 5
+  DO  
+    // Check parameter must be added ? 
+    IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+    THEN
+      // add command.SensorFrame[x]
+      CreateCommandPayload.AddReal(_command.SensorFrame[_idx]);
+      // inc parameter counter
+     _parameterCnt := _parameterCnt + 1;  
+    END_IF
+  END_FOR
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.CalibrationData
+    CreateCommandPayload.AddUsint(_command.CalibrationData);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.ReferenceType
+    CreateCommandPayload.AddUsint(_command.ReferenceType);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  FOR _idx := 0 TO 5
+  DO
+    // Check parameter must be added ? 
+    IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+    THEN
+      // add command.SensorValue[x]
+      CreateCommandPayload.AddReal(_command.SensorValue[_idx]);
+      // inc parameter counter
+     _parameterCnt := _parameterCnt + 1;  
+    END_IF
+  END_FOR
+  
+  
+  
+  FOR _idx := 0 TO 5
+  DO
+    // Check parameter must be added ? 
+    IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+    THEN
+      // add command.ForceLimit[x]
+      CreateCommandPayload.AddReal(_command.ForceLimit[_idx]);
+      // inc parameter counter
+     _parameterCnt := _parameterCnt + 1;  
+    END_IF
+  END_FOR
+  
+    
   // Create logging
-  CreateCommandPayloadLog(AxesGroup := AxesGroup);
+  CreateCommandPayloadLog(AxesGroup := AxesGroup, ParameterCnt := _parameterCnt);
 
 END_METHOD
 
@@ -528,29 +630,31 @@ VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
+VAR_INPUT
+  /// Parameter count
+  ParameterCnt : DINT;
+END_VAR
 VAR 
   /// internal index for loops
  _idx : DINT;
 END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := AxesGroup.State.SystemTime,
-                          MessageType := MessageType.CMD,
-                          Severity    := Severity.DEBUG,
-                          MessageCode := 0,
-                          MessageText := 'Create command payload with the following parameter(s) :');
-  
-  // Create log entry for EmitterID[0]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Command.EmitterID[0] = {1}',
-                          Para1       :=  SINT_TO_STRING(_command.EmitterID[0]));
+                          MessageText := 'Create command payload with the {1} parameter(s) :',
+                          Para1       := DINT_TO_STRING(ParameterCnt));
   
   // Create log entry for EmitterID[x]
   FOR _idx := 0 TO 3
   DO
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
+    // Create log entry for Command.EmitterID
     CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
                             Severity    := Severity.DEBUG,
@@ -560,6 +664,13 @@ END_VAR
                             Para2       :=  DINT_TO_STRING(_idx));
   END_FOR
   
+  
+  {warning 'ToDo: Use a loop for the array elements'}
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ListenerID
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -568,6 +679,11 @@ END_VAR
                           MessageText := 'Command.ListenerID = {1}',
                           Para1       :=  SINT_TO_STRING(_command.ListenerID));
                           
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Reserve
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -576,6 +692,11 @@ END_VAR
                           MessageText := 'Command.Reserve = {1}',
                           Para1       :=  BYTE_TO_STRING(_command.Reserve));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ToolNo
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -584,6 +705,11 @@ END_VAR
                           MessageText := 'Command.ToolNo = {1}',
                           Para1       :=  USINT_TO_STRING(_command.ToolNo));
                           
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for FrameNo
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -592,6 +718,11 @@ END_VAR
                           MessageText := 'Command.FrameNo = {1}',
                           Para1       :=  USINT_TO_STRING(_command.FrameNo));
                           
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ConnectionMode
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -600,6 +731,11 @@ END_VAR
                           MessageText := 'Command.ConnectionMode = {1}',
                           Para1       :=  CONNECTION_MODE_TO_STRING(USINT_TO_SINT(_command.ConnectionMode)));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for FixedSensor
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -608,6 +744,11 @@ END_VAR
                           MessageText := 'Command.FixedSensor = {1}',
                           Para1       :=  BYTE_TO_STRING(_command.FixedSensor));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for SensorFrame[0]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -616,6 +757,11 @@ END_VAR
                           MessageText := 'Command.SensorFrame[0] = {1}',
                           Para1       :=  REAL_TO_STRING(_command.SensorFrame[0]));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for SensorFrame[1]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -624,6 +770,11 @@ END_VAR
                           MessageText := 'Command.SensorFrame[1] = {1}',
                           Para1       :=  REAL_TO_STRING(_command.SensorFrame[1]));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for SensorFrame[2]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -632,6 +783,11 @@ END_VAR
                           MessageText := 'Command.SensorFrame[2] = {1}',
                           Para1       :=  REAL_TO_STRING(_command.SensorFrame[2]));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for SensorFrame[3]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -640,6 +796,11 @@ END_VAR
                           MessageText := 'Command.SensorFrame[3] = {1}',
                           Para1       :=  REAL_TO_STRING(_command.SensorFrame[3]));
                                                   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for SensorFrame[4]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -648,6 +809,11 @@ END_VAR
                           MessageText := 'Command.SensorFrame[4] = {1}',
                           Para1       :=  REAL_TO_STRING(_command.SensorFrame[4]));
                                                   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for SensorFrame[5]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -656,6 +822,11 @@ END_VAR
                           MessageText := 'Command.SensorFrame[5] = {1}',
                           Para1       :=  REAL_TO_STRING(_command.SensorFrame[5]));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for CalibrationData
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -664,6 +835,11 @@ END_VAR
                           MessageText := 'Command.CalibrationData = {1}',
                           Para1       :=  USINT_TO_STRING(_command.CalibrationData));
                           
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ReferenceType
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -672,6 +848,11 @@ END_VAR
                           MessageText := 'Command.ReferenceType = {1}',
                           Para1       :=  REFERENCE_TYPE_TO_STRING(_command.ReferenceType));                        
                                                   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for SensorValue[0]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -680,6 +861,11 @@ END_VAR
                           MessageText := 'Command.SensorValue[0] = {1}',
                           Para1       :=  REAL_TO_STRING(_command.SensorValue[0]));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for SensorValue[1]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -688,6 +874,11 @@ END_VAR
                           MessageText := 'Command.SensorValue[1] = {1}',
                           Para1       :=  REAL_TO_STRING(_command.SensorValue[1]));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for SensorValue[2]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -696,6 +887,11 @@ END_VAR
                           MessageText := 'Command.SensorValue[2] = {1}',
                           Para1       :=  REAL_TO_STRING(_command.SensorValue[2]));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for SensorValue[3]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -704,6 +900,11 @@ END_VAR
                           MessageText := 'Command.SensorValue[3] = {1}',
                           Para1       :=  REAL_TO_STRING(_command.SensorValue[3]));
                                                   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for SensorValue[4]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -712,6 +913,11 @@ END_VAR
                           MessageText := 'Command.SensorValue[4] = {1}',
                           Para1       :=  REAL_TO_STRING(_command.SensorValue[4]));
                                                   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for SensorValue[5]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -720,6 +926,11 @@ END_VAR
                           MessageText := 'Command.SensorValue[5] = {1}',
                           Para1       :=  REAL_TO_STRING(_command.SensorValue[5]));
                                                   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ForceLimit[0]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -728,6 +939,11 @@ END_VAR
                           MessageText := 'Command.ForceLimit[0] = {1}',
                           Para1       :=  REAL_TO_STRING(_command.ForceLimit[0]));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ForceLimit[1]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -736,6 +952,11 @@ END_VAR
                           MessageText := 'Command.ForceLimit[1] = {1}',
                           Para1       :=  REAL_TO_STRING(_command.ForceLimit[1]));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ForceLimit[2]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -744,6 +965,11 @@ END_VAR
                           MessageText := 'Command.ForceLimit[2] = {1}',
                           Para1       :=  REAL_TO_STRING(_command.ForceLimit[2]));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ForceLimit[3]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -752,6 +978,11 @@ END_VAR
                           MessageText := 'Command.ForceLimit[3] = {1}',
                           Para1       :=  REAL_TO_STRING(_command.ForceLimit[3]));
                                                   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ForceLimit[4]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -760,6 +991,11 @@ END_VAR
                           MessageText := 'Command.ForceLimit[4] = {1}',
                           Para1       :=  REAL_TO_STRING(_command.ForceLimit[4]));
                                                   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ForceLimit[5]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -782,6 +1018,54 @@ END_VAR
   
   ExecMode := ExecutionMode.CONTINUOUS;
   Priority := PriorityLevel.NORMAL;
+
+END_METHOD
+
+METHOD PROTECTED OnExecErrorClear : DINT
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+  OnExecErrorClear := RobotLibraryConstants.RUNNING;
+  
+  CASE _stepClearError OF
+    
+    0:  // Reset 
+        Reset();
+        // trigger parameter update to disable FB
+       _parameterUpdateInternal := TRUE;
+        // call Check Parameter changed method to trigger the parameter update to deactivate jogging mode
+        CheckParameterChanged(AxesGroup := AxesGroup);
+        // set timeout
+        SetTimeout(PT := _timeoutClearError, rTimer := _timerClearError);
+        // inc step counter
+       _stepClearError := _stepClearError + 1; 
+        
+    1: IF ( _responseReceived )
+       THEN     
+         // reset response received flag
+        _responseReceived := FALSE;
+         // reset step counter
+        _stepClearError := 0;
+         // finished
+         OnExecErrorClear := RobotLibraryConstants.OK;
+       ELSE
+         // timeout exceeded ? 
+         IF (CheckTimeout(_timerClearError) = RobotLibraryConstants.OK)
+         THEN
+           OnExecErrorClear := RobotLibraryConstants.HAS_ERROR;
+         END_IF
+  	   END_IF
+    
+  END_CASE
+  
+  
+  // reset step counter
+  IF (OnExecErrorClear <> RobotLibraryConstants.RUNNING)
+  THEN
+   _stepClearError := 0;
+  END_IF
 
 END_METHOD
 
@@ -856,21 +1140,13 @@ END_VAR
            Enabled := OutCmd.ForceStatus.ForceLimitEnabled;
            
            
-           // Enabled ? -> Reset Busy flag  
-           IF (Enabled)
+           // Enabled or Error ? -> Reset Busy flag  
+           IF (( Enabled ) OR 
+               ( Error   ))
            THEN  
              Busy := FALSE;
   				 END_IF
   
-           // Done, Aborted or Error ?
-           IF (_response.State >= CmdMessageState.DONE )
-           THEN         
-             // set timeout
-             SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
-             // inc step counter
-            _stepCmd := _stepCmd + 1;
-           END_IF
-   
          END_IF
   
          // do not abort directly, so that the ParSeq update can be send
@@ -897,13 +1173,6 @@ END_VAR
           Reset();   
   	    END_IF
         
-        // Wait for Enable = FALSE
-    03: IF ( NOT Enable )
-        THEN
-          Reset();   
-  	    END_IF
-  
-  
   ELSE
     // invalid step
     ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
@@ -926,6 +1195,10 @@ VAR_INPUT
   ResponseData : RobotLibraryResponseDataFB;
   /// Timestamp
   Timestamp    : SystemTime;  
+END_VAR
+VAR
+  /// Parameter count
+ _parameterCnt : DINT;
 END_VAR
 // Table 6-728: Received CMD payload (RC to PLC) of "ForceLimit"
 // --------------------------
@@ -954,17 +1227,59 @@ END_VAR
   _response.AlarmMessageSeverity  := _rspHeader.AlarmMessageSeverity;
   _response.AlarmMessageCode      := _rspHeader.AlarmMessageCode;
   
-  // Get Response.InvocationCounter
-  _response.InvocationCounter := ResponseData.GetUsint();
-  // Get Response.Reserved
-  _response.Reserved := ResponseData.GetSint();
-  // Get Response.OriginID
-  _response.OriginID := ResponseData.GetInt();
-  // Get Response.ForceStatus
-  _response.ForceStatus := ResponseData.GetByte();
   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN 
+    // Get Response.ForceStatus
+   _response.ForceStatus := ResponseData.GetByte();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN 
+    // Get Response.InvocationCounter
+   _response.InvocationCounter := ResponseData.GetUsint();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN 
+    // Get Response.Reserved
+   _response.Reserved := ResponseData.GetSint();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN 
+    // Get Response.OriginID
+   _response.OriginID := ResponseData.GetInt();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN 
+    // Get Response.ForceStatus
+   _response.ForceStatus := ResponseData.GetByte();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+   
   // Create logging
-  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp, ParameterCnt := _parameterCnt);
 
 END_METHOD
 
@@ -974,15 +1289,23 @@ VAR_INPUT
   ResponseData : RobotLibraryResponseDataFB;
   /// Timestamp
   Timestamp    : SystemTime;  
+  /// Parameter count
+  ParameterCnt : DINT;
 END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := Timestamp,
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Parsed the following parameter(s) from response data:');
+                          MessageText := '{1} parameter(s) to parse from the response data:',
+                          Para1       := DINT_TO_STRING(ParameterCnt));
                           
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for InvocationCounter
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -991,6 +1314,11 @@ END_VAR
                           MessageText := 'Response.InvocationCounter = {1}',
                           Para1       :=  USINT_TO_STRING(_response.InvocationCounter));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Reserve
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -999,6 +1327,11 @@ END_VAR
                           MessageText := 'Response.Reserve = {1}',
                           Para1       :=  SINT_TO_STRING(_response.Reserved));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for OriginID
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -1007,6 +1340,11 @@ END_VAR
                           MessageText := 'Response.OriginID = {1}',
                           Para1       :=  INT_TO_STRING(_response.OriginID));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ForceStatus
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,

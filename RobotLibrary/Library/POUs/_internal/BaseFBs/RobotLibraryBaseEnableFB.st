@@ -28,12 +28,8 @@ END_VAR
 VAR_OUTPUT
   /// FB is being processed
   Busy              : BOOL;
-  /// Command is transferred and confirmed by the RC
-//CommandBuffered   : BOOL;
   /// TRUE while function is active
   Enabled           : BOOL;
-  /// Receiving of input parameter values has been acknowledged by RC
-//ParameterAccepted : BOOL;
 END_VAR
 
 VAR
@@ -50,7 +46,12 @@ END_FUNCTION_BLOCK
 METHOD PROTECTED OnCall
 VAR_IN_OUT
   /// Robot assignment of function
-  AxesGroup         : AxesGroup; 
+  AxesGroup : AxesGroup; 
+END_VAR
+
+VAR
+  /// internal return value
+ _retVal : DINT;
 END_VAR
 
   SUPER^.OnCall(AxesGroup := AxesGroup);
@@ -82,17 +83,43 @@ END_VAR
   
   
   // On execution cancel  
-  IF (Busy) AND ( _enable_F.Q) 
+  IF ( Busy ) AND ( _enable_F.Q ) 
+  THEN
+    // set cancel flag
+   _cancel := TRUE;
+  END_IF
+  
+  IF ( _cancel )
   THEN
     // call Cancel
-    OnExecCancel(AxesGroup := AxesGroup);
+   _retVal := OnExecCancel(AxesGroup := AxesGroup);
+    
+    // done or error ?
+    IF ( _retVal <> RobotLibraryConstants.RUNNING )
+    THEN
+      // reset cancel flag
+     _cancel := FALSE;
+  	END_IF
   END_IF
   
   
   // On execution error clear
   IF ( Error ) AND ( _enable_F.Q )
   THEN
-    OnExecErrorClear(AxesGroup := AxesGroup);
+    // set ClearError flag
+   _clearError := TRUE;
+  END_IF
+  
+  IF ( _clearError )
+  THEN
+   _retVal := OnExecErrorClear(AxesGroup := AxesGroup); 
+  
+    // done or error ?
+    IF ( _retVal <> RobotLibraryConstants.RUNNING )
+    THEN
+      // reset ClearError flag
+     _clearError := FALSE;
+  	END_IF
   END_IF
 
 END_METHOD
@@ -108,7 +135,7 @@ END_VAR
   // try to remove cmd
   AxesGroup.Acyclic.ActiveCommandRegister.RemoveCmd(_uniqueID);
   
-  
+  // Create log entry
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
@@ -124,7 +151,45 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
-  Reset();
+  OnExecErrorClear := RobotLibraryConstants.RUNNING;
+  
+  CASE _stepClearError OF
+    
+    0:  // Reset 
+        Reset();
+        // trigger parameter update to disable FB
+       _parameterUpdateInternal := TRUE;
+        // call Check Parameter changed method to trigger the parameter update to deactivate jogging mode
+        CheckParameterChanged(AxesGroup := AxesGroup);
+        // set timeout
+        SetTimeout(PT := _timeoutClearError, rTimer := _timerClearError);
+        // inc step counter
+       _stepClearError := _stepClearError + 1; 
+        
+    1: IF ( _responseReceived )
+       THEN     
+         // reset response received flag
+        _responseReceived := FALSE;
+         // reset step counter
+        _stepClearError := 0;
+         // finished
+         OnExecErrorClear := RobotLibraryConstants.OK;
+       ELSE
+         // timeout exceeded ? 
+         IF (CheckTimeout(_timerClearError) = RobotLibraryConstants.OK)
+         THEN
+           OnExecErrorClear := RobotLibraryConstants.HAS_ERROR;
+         END_IF
+  	   END_IF
+    
+  END_CASE
+  
+  
+  // reset step counter
+  IF (OnExecErrorClear <> RobotLibraryConstants.RUNNING)
+  THEN
+   _stepClearError := 0;
+  END_IF
 
 END_METHOD
 

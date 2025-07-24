@@ -30,6 +30,17 @@ END_VAR
 
 END_FUNCTION_BLOCK
 
+PROPERTY IsPayloadRemaining : BOOL
+
+
+GET
+VAR
+END_VAR
+
+  IsPayloadRemaining := PayloadPtr < UDINT_TO_DINT(PayloadLen );
+
+END_GET
+
 /// Resets the payload buffer, the payload pointer and the payload length
 METHOD Reset
 VAR_INPUT

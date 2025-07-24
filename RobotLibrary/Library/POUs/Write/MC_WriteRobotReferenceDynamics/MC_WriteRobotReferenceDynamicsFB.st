@@ -49,6 +49,31 @@ END_VAR
 
 END_FUNCTION_BLOCK
 
+METHOD INTERNAL CheckAddParameter : BOOL
+VAR_INPUT
+  /// Payload pointer
+  PayloadPtr : UDINT;
+END_VAR
+VAR
+  /// Payload as byte array
+  Payload    : ARRAY [1..SIZEOF(_command)] OF BYTE;
+  /// Null Byte array 
+  Null       : ARRAY [1..SIZEOF(_command)] OF BYTE;
+  /// Data length to compare
+  DataLen    : UDINT;
+END_VAR
+
+  // Payload pointer must be decreased by one byte, because ADR(Payload) is already one byte !
+  PayloadPtr := LIMIT (0, PayloadPtr - 1, SIZEOF(Payload) -1);
+  // Convert command struct to payload array
+  SysDepMemCpy( pDest := ADR(Payload), pSrc := ADR(_command), DataLen := SIZEOF(_command));
+  // Calculate the data length to compare - at least one byte must be compared !
+  DataLen := LIMIT(1, SIZEOF(Payload) - PayloadPtr, SIZEOF(Payload)); 
+  // Compare Payload-Array with Null-Byte-Array
+  CheckAddParameter := SysDepMemCmp( pData1 := ADR(Payload) + PayloadPtr , pData2 := ADR(Null), DataLen := DataLen) <>  RobotLibraryConstants.OK ;
+
+END_METHOD
+
 METHOD PROTECTED CheckFunctionSupported : BOOL
 VAR_IN_OUT
   /// Robot assignment of function
@@ -200,6 +225,10 @@ VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
+VAR
+  /// Parameter count
+ _parameterCnt : DINT;
+END_VAR
 // Table 6-139: Sent CMD payload (PLC to RC) of "WriteRobotReferenceDynamics"
 // --------------------------
 // Header
@@ -251,27 +280,74 @@ END_VAR
    _command.DecelerationReference := REAL_TO_PERCENT_UINT(_parCmd.DynamicValues.DecelerationReference , IsOptional := TRUE );
   *)
   
-  
   // copy command data to header
   _cmdHeader := _command;
   // call base implementation to copy header to payload buffer
   CreateCommandPayload := SUPER^.CreateCommandPayload(AxesGroup := AxesGroup);
   
-  // add command.DynamicValues.Timestamp.IEC_DATE
-  CreateCommandPayload.AddUint(_command.DynamicValues.Timestamp.IEC_DATE);
-  // add command.DynamicValues.Timestamp.IEC_TIME
-  CreateCommandPayload.AddTime(_command.DynamicValues.Timestamp.IEC_TIME);
-  // add command.DynamicValues.VelocityReference
-  CreateCommandPayload.AddReal(_command.DynamicValues.VelocityReference);
-  // add command.DynamicValues.AccelerationReference
-  CreateCommandPayload.AddReal(_command.DynamicValues.AccelerationReference);
-  // add command.DynamicValues.DecelerationRate
-  CreateCommandPayload.AddReal(_command.DynamicValues.DecelerationReference);
-  // add command.DynamicValues.JerkRate
-  CreateCommandPayload.AddReal(_command.DynamicValues.JerkReference);
   
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.DynamicValues.Timestamp.IEC_DATE
+    CreateCommandPayload.AddUint(_command.DynamicValues.Timestamp.IEC_DATE);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.DynamicValues.Timestamp.IEC_TIME
+    CreateCommandPayload.AddTime(_command.DynamicValues.Timestamp.IEC_TIME);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.DynamicValues.VelocityReference
+    CreateCommandPayload.AddReal(_command.DynamicValues.VelocityReference);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.DynamicValues.AccelerationReference
+    CreateCommandPayload.AddReal(_command.DynamicValues.AccelerationReference);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.DynamicValues.DecelerationRate
+    CreateCommandPayload.AddReal(_command.DynamicValues.DecelerationReference);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.DynamicValues.JerkRate
+    CreateCommandPayload.AddReal(_command.DynamicValues.JerkReference);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+    
+    
   // Create logging
-  CreateCommandPayloadLog(AxesGroup := AxesGroup);
+  CreateCommandPayloadLog(AxesGroup := AxesGroup, ParameterCnt := _parameterCnt);
 
 END_METHOD
 
@@ -280,14 +356,24 @@ VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
+VAR_INPUT
+  /// Parameter count
+  ParameterCnt : DINT;
+END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := AxesGroup.State.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Create command payload with the following parameter(s) :');
+                          MessageText := 'Create command payload with the {1} parameter(s) :',
+                          Para1       := DINT_TO_STRING(ParameterCnt));
     
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for DynamicValues.Timestamp.IEC_DATE
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -296,6 +382,11 @@ END_VAR
                           MessageText := 'Command.DynamicValues.Timestamp.IEC_DATE = {1}',
                           Para1       :=  IEC_DATE_TO_STRING(_command.DynamicValues.Timestamp.IEC_DATE));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for DynamicValues.Timestamp.IEC_TIME
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -304,6 +395,11 @@ END_VAR
                           MessageText := 'Command.DynamicValues.Timestamp.IEC_TIME = {1}',
                           Para1       :=  IEC_TIME_TO_STRING(_command.DynamicValues.Timestamp.IEC_TIME));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for DynamicValues.VelocityReference
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -312,6 +408,11 @@ END_VAR
                           MessageText := 'Command..DynamicValues.VelocityReference = {1}',
                           Para1       :=  REAL_TO_STRING(_command.DynamicValues.VelocityReference));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for DynamicValues.AccelerationReference
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -320,6 +421,11 @@ END_VAR
                           MessageText := 'Command.DynamicValues.AccelerationReference = {1}',
                           Para1       :=  REAL_TO_STRING(_command.DynamicValues.AccelerationReference));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for DynamicValues.DecelerationReference
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -328,6 +434,11 @@ END_VAR
                           MessageText := 'Command.DynamicValues.DecelerationReference = {1}',
                           Para1       :=  REAL_TO_STRING(_command.DynamicValues.DecelerationReference));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for DynamicValues.JerkReference
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -450,6 +561,10 @@ VAR_INPUT
   /// Timestamp
   Timestamp    : SystemTime;  
 END_VAR
+VAR
+  /// Parameter count
+ _parameterCnt : DINT;
+END_VAR
 // Table 6-140: Received CMD payload (RC to PLC) of "WriteRobotReferenceDynamics"
 // --------------------------
 // Header
@@ -488,17 +603,49 @@ END_VAR
   _response.AlarmMessageSeverity := _rspHeader.AlarmMessageSeverity;
   _response.AlarmMessageCode     := _rspHeader.AlarmMessageCode;
   
-  // Get Response.ReferenceDynamicValues.VelocityReference
-  _response.ReferenceDynamicValues.VelocityReference := ResponseData.GetReal();
-  // Get Response.ReferenceDynamicValues.AccelerationReference
-  _response.ReferenceDynamicValues.AccelerationReference := ResponseData.GetReal();
-  // Get Response.ReferenceDynamicValues.DecelerationReference
-  _response.ReferenceDynamicValues.DecelerationReference := ResponseData.GetReal();
-  // Get ReferenceDynamicValues.JerkReference
-  _response.ReferenceDynamicValues.JerkReference := ResponseData.GetReal();
   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.ReferenceDynamicValues.VelocityReference
+   _response.ReferenceDynamicValues.VelocityReference := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.ReferenceDynamicValues.AccelerationReference
+   _response.ReferenceDynamicValues.AccelerationReference := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.ReferenceDynamicValues.DecelerationReference
+   _response.ReferenceDynamicValues.DecelerationReference := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get ReferenceDynamicValues.JerkReference
+   _response.ReferenceDynamicValues.JerkReference := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+   
   // Create logging
-  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp, ParameterCnt := _parameterCnt);
 
 END_METHOD
 
@@ -508,15 +655,23 @@ VAR_INPUT
   ResponseData : RobotLibraryResponseDataFB;
   /// Timestamp
   Timestamp    : SystemTime;  
+  /// Parameter count
+  ParameterCnt : DINT;
 END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := Timestamp,
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Parsed the following parameter(s) from response data:');
+                          MessageText := '{1} parameter(s) to parse from the response data:',
+                          Para1       := DINT_TO_STRING(ParameterCnt));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ReferenceDynamicValues.VelocityReference
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -525,6 +680,11 @@ END_VAR
                           MessageText := 'Response.ReferenceDynamicValues.VelocityReference = {1}',
                           Para1       :=  REAL_TO_STRING(_response.ReferenceDynamicValues.VelocityReference));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ReferenceDynamicValues.AccelerationReference
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -533,6 +693,11 @@ END_VAR
                           MessageText := 'Response.ReferenceDynamicValues.AccelerationReference = {1}',
                           Para1       :=  REAL_TO_STRING(_response.ReferenceDynamicValues.AccelerationReference));
                           
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ReferenceDynamicValues.DecelerationReference
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -541,6 +706,11 @@ END_VAR
                           MessageText := 'Response.ReferenceDynamicValues.DecelerationReference = {1}',
                           Para1       :=  REAL_TO_STRING(_response.ReferenceDynamicValues.DecelerationReference));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ReferenceDynamicValues.JerkReference
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,

@@ -56,6 +56,31 @@ END_VAR
 
 END_FUNCTION_BLOCK
 
+METHOD INTERNAL CheckAddParameter : BOOL
+VAR_INPUT
+  /// Payload pointer
+  PayloadPtr : UDINT;
+END_VAR
+VAR
+  /// Payload as byte array
+  Payload    : ARRAY [1..SIZEOF(_command)] OF BYTE;
+  /// Null Byte array 
+  Null       : ARRAY [1..SIZEOF(_command)] OF BYTE;
+  /// Data length to compare
+  DataLen    : UDINT;
+END_VAR
+
+  // Payload pointer must be decreased by one byte, because ADR(Payload) is already one byte !
+  PayloadPtr := LIMIT (0, PayloadPtr - 1, SIZEOF(Payload) -1);
+  // Convert command struct to payload array
+  SysDepMemCpy( pDest := ADR(Payload), pSrc := ADR(_command), DataLen := SIZEOF(_command));
+  // Calculate the data length to compare - at least one byte must be compared !
+  DataLen := LIMIT(1, SIZEOF(Payload) - PayloadPtr, SIZEOF(Payload)); 
+  // Compare Payload-Array with Null-Byte-Array
+  CheckAddParameter := SysDepMemCmp( pData1 := ADR(Payload) + PayloadPtr , pData2 := ADR(Null), DataLen := DataLen) <>  RobotLibraryConstants.OK ;
+
+END_METHOD
+
 METHOD PROTECTED CheckFunctionSupported : BOOL
 VAR_IN_OUT
   /// Robot assignment of function
@@ -205,6 +230,10 @@ VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
+VAR
+  /// Parameter count
+ _parameterCnt : DINT;
+END_VAR
 // Table 6-784: Sent CMD payload (PLC to RC) of "LoadMeasurementSequential"
 // --------------------------
 // Header
@@ -237,13 +266,28 @@ END_VAR
   CreateCommandPayload := SUPER^.CreateCommandPayload(AxesGroup := AxesGroup);
   
   
-  // add command.Mass
-  CreateCommandPayload.AddReal(_command.Mass);
-  // add command.Mode
-  CreateCommandPayload.AddUsint(_command.Mode);
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.Mass
+    CreateCommandPayload.AddReal(_command.Mass);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.Mode
+    CreateCommandPayload.AddUsint(_command.Mode);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
   
   // Create logging
-  CreateCommandPayloadLog(AxesGroup := AxesGroup);
+  CreateCommandPayloadLog(AxesGroup := AxesGroup, ParameterCnt := _parameterCnt);
 
 END_METHOD
 
@@ -252,14 +296,24 @@ VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
+VAR_INPUT
+  /// Parameter count
+  ParameterCnt : DINT;
+END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := AxesGroup.State.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Create command payload with the following parameter(s) :');
+                          MessageText := 'Create command payload with the {1} parameter(s) :',
+                          Para1       := DINT_TO_STRING(ParameterCnt));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Mass
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -267,7 +321,12 @@ END_VAR
                           MessageCode := 0,
                           MessageText := 'Command.Mass = {1}',
                           Para1       :=  REAL_TO_STRING(_command.Mass));
+  
                           
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Mode
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -391,6 +450,10 @@ VAR_INPUT
   /// Timestamp
   Timestamp    : SystemTime;  
 END_VAR
+VAR
+  /// Parameter count
+ _parameterCnt : DINT;
+END_VAR
 // Table 6-785: Received CMD payload (RC to PLC) of "LoadMeasurementSequential"
 // --------------------------
 // Header
@@ -458,35 +521,139 @@ END_VAR
   _response.AlarmMessageSeverity := _rspHeader.AlarmMessageSeverity;
   _response.AlarmMessageCode     := _rspHeader.AlarmMessageCode;
   
-  // Get Response.LoadData.Timestamp.TsData
-  _response.LoadData.Timestamp.IEC_DATE := ResponseData.GetIecDate();
-  // Get Response.LoadData.Timestamp.TsTime
-  _response.LoadData.Timestamp.IEC_TIME := ResponseData.GetIecTime();
-  // Get Response.LoadData.X
-  _response.LoadData.X := ResponseData.GetReal();
-  // Get Response.LoadData.Y
-  _response.LoadData.Y := ResponseData.GetReal();
-  // Get Response.LoadData.Z
-  _response.LoadData.Z := ResponseData.GetReal();
-  // Get Response.LoadData.Rx
-  _response.LoadData.Rx := ResponseData.GetReal();
-  // Get Response.LoadData.Ry
-  _response.LoadData.Ry := ResponseData.GetReal();
-  // Get Response.LoadData.Rz
-  _response.LoadData.Rz := ResponseData.GetReal();
-  // Get Response.LoadData.Mass
-  _response.LoadData.Mass := ResponseData.GetReal();
-  // Get Response.LoadData.Ix
-  _response.LoadData.Ix := ResponseData.GetReal();
-  // Get Response.LoadData.Iy
-  _response.LoadData.Iy := ResponseData.GetReal();
-  // Get Response.LoadData.Iz
-  _response.LoadData.Iz := ResponseData.GetReal();
-  // Get Response.LoadDataAvailable
-  _response.LoadDataAvailable := ResponseData.GetBool();
   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.LoadData.Timestamp.TsData
+   _response.LoadData.Timestamp.IEC_DATE := ResponseData.GetIecDate();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.LoadData.Timestamp.TsTime
+   _response.LoadData.Timestamp.IEC_TIME := ResponseData.GetIecTime();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.LoadData.X
+   _response.LoadData.X := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.LoadData.Y
+   _response.LoadData.Y := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.LoadData.Z
+   _response.LoadData.Z := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.LoadData.Rx
+   _response.LoadData.Rx := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.LoadData.Ry
+   _response.LoadData.Ry := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.LoadData.Rz
+   _response.LoadData.Rz := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.LoadData.Mass
+   _response.LoadData.Mass := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.LoadData.Ix
+   _response.LoadData.Ix := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.LoadData.Iy
+   _response.LoadData.Iy := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.LoadData.Iz
+   _response.LoadData.Iz := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.LoadDataAvailable
+   _response.LoadDataAvailable := ResponseData.GetBool();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+   
   // Create logging
-  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp, ParameterCnt := _parameterCnt);
 
 END_METHOD
 
@@ -496,15 +663,23 @@ VAR_INPUT
   ResponseData : RobotLibraryResponseDataFB;
   /// Timestamp
   Timestamp    : SystemTime;  
+  /// Parameter count
+  ParameterCnt : DINT;
 END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := Timestamp,
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Parsed the following parameter(s) from response data:');
+                          MessageText := '{1} parameter(s) to parse from the response data:',
+                          Para1       := DINT_TO_STRING(ParameterCnt));
                           
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LoadData.Timestamp.IEC_DATE
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -513,6 +688,11 @@ END_VAR
                           MessageText := 'Response.LoadData.Timestamp.IEC_DATE = {1}',
                           Para1       :=  IEC_DATE_TO_STRING(_response.LoadData.Timestamp.IEC_DATE));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LoadData.Timestamp.IEC_TIME
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -521,6 +701,11 @@ END_VAR
                           MessageText := 'Response.LoadData.Timestamp.IEC_TIME = {1}',
                           Para1       :=  IEC_TIME_TO_STRING(_response.LoadData.Timestamp.IEC_TIME));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LoadData.X
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -529,6 +714,11 @@ END_VAR
                           MessageText := 'Response.LoadData.X = {1}',
                           Para1       :=  REAL_TO_STRING(_response.LoadData.X));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LoadData.Y
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -537,6 +727,11 @@ END_VAR
                           MessageText := 'Response.LoadData.Y = {1}',
                           Para1       :=  REAL_TO_STRING(_response.LoadData.Y));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LoadData.Z
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -545,6 +740,11 @@ END_VAR
                           MessageText := 'Response.LoadData.Z = {1}',
                           Para1       :=  REAL_TO_STRING(_response.LoadData.Z));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LoadData.Rx
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -553,6 +753,11 @@ END_VAR
                           MessageText := 'Response.LoadData.Rx = {1}',
                           Para1       :=  REAL_TO_STRING(_response.LoadData.Rx));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LoadData.Ry
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -561,6 +766,11 @@ END_VAR
                           MessageText := 'Response.LoadData.Ry = {1}',
                           Para1       :=  REAL_TO_STRING(_response.LoadData.Ry));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LoadData.Rz
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -569,6 +779,11 @@ END_VAR
                           MessageText := 'Response.LoadData.Rz = {1}',
                           Para1       :=  REAL_TO_STRING(_response.LoadData.Rz));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LoadData.Mass
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -577,6 +792,11 @@ END_VAR
                           MessageText := 'Response.LoadData.Mass = {1}',
                           Para1       :=  REAL_TO_STRING(_response.LoadData.Mass));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LoadData.Ix
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -585,6 +805,11 @@ END_VAR
                           MessageText := 'Response.LoadData.Ix = {1}',
                           Para1       :=  REAL_TO_STRING(_response.LoadData.Ix));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LoadData.Iy
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -593,6 +818,11 @@ END_VAR
                           MessageText := 'Response.LoadData.Iy = {1}',
                           Para1       :=  REAL_TO_STRING(_response.LoadData.Iy));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LoadData.Iz
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -601,6 +831,11 @@ END_VAR
                           MessageText := 'Response.LoadData.Iz = {1}',
                           Para1       :=  REAL_TO_STRING(_response.LoadData.Iz));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LoadDataAvailable
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,

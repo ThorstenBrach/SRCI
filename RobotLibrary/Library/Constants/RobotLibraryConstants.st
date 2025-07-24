@@ -35,6 +35,8 @@ VAR_GLOBAL CONSTANT
   OK                      : DINT := 0;
   /// Running = 1
   RUNNING                 : DINT := 1;
+  /// HasError = -1
+  HAS_ERROR               : DINT := -1;  
   /// Null pointer
   XNULL                   : DWORD := 0;
   /// Null pointer
@@ -47,6 +49,15 @@ VAR_GLOBAL CONSTANT
   BUFFER_CMD              : UDINT := 2;
   /// Maximal length of additional text 
   MAX_ADD_TEXT_LENGTH     : DINT := 40;
+  
+  /// Minimal amount of tools
+  TOOL_MIN                : DINT := 1;
+  /// Minimal amount of frames
+  FRAME_MIN               : DINT := 1;
+  /// Minimal amount of loads
+  LOAD_MIN                : DINT := 1;  
+  /// Minimal amount of work areas
+  WORK_AREAS_MIN          : DINT := 1;
  END_VAR
 
 

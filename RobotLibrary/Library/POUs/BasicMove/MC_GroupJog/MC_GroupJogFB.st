@@ -52,6 +52,31 @@ END_VAR
 
 END_FUNCTION_BLOCK
 
+METHOD INTERNAL CheckAddParameter : BOOL
+VAR_INPUT
+  /// Payload pointer
+  PayloadPtr : UDINT;
+END_VAR
+VAR
+  /// Payload as byte array
+  Payload    : ARRAY [1..SIZEOF(_command)] OF BYTE;
+  /// Null Byte array 
+  Null       : ARRAY [1..SIZEOF(_command)] OF BYTE;
+  /// Data length to compare
+  DataLen    : UDINT;
+END_VAR
+
+  // Payload pointer must be decreased by one byte, because ADR(Payload) is already one byte !
+  PayloadPtr := LIMIT (0, PayloadPtr - 1, SIZEOF(Payload) -1);
+  // Convert command struct to payload array
+  SysDepMemCpy( pDest := ADR(Payload), pSrc := ADR(_command), DataLen := SIZEOF(_command));
+  // Calculate the data length to compare - at least one byte must be compared !
+  DataLen := LIMIT(1, SIZEOF(Payload) - PayloadPtr, SIZEOF(Payload)); 
+  // Compare Payload-Array with Null-Byte-Array
+  CheckAddParameter := SysDepMemCmp( pData1 := ADR(Payload) + PayloadPtr , pData2 := ADR(Null), DataLen := DataLen) <>  RobotLibraryConstants.OK ;
+
+END_METHOD
+
 METHOD PROTECTED CheckFunctionSupported : BOOL
 VAR_IN_OUT
   /// Robot assignment of function
@@ -75,7 +100,7 @@ VAR_IN_OUT
 END_VAR
 
   // Check ParCmd Size is > 0, because MemCmp does not work correctly with size = 0
-  IF (SIZEOF(ParCmd) = 0) OR (_stepCmd = 0)
+  IF (( SIZEOF(ParCmd) = 0) OR (_stepCmd = 0)) AND ( NOT _parameterUpdateInternal )
   THEN 
     RETURN;
   END_IF
@@ -257,6 +282,10 @@ VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
+VAR
+  /// Parameter count
+ _parameterCnt : DINT;
+END_VAR
 // Table 6-236: Sent CMD payload (PLC to RC) of "GroupJog"
 // --------------------------
 // Header
@@ -269,21 +298,23 @@ END_VAR
 // Datablock
 // --------------------------
 // Byte 04 : BOOL       - Enable
-// Byte 05 : USINT      - ToolNo
-// Byte 06 : USINT      - FrameNo
-// Byte 07 : USINT      - Mode
-// Byte 08 : REAL       - IncrementalTranslation HW HB
-// Byte 09 :            - IncrementalTranslation HW LB
-// Byte 10 :            - IncrementalTranslation LW HB
-// Byte 11 :            - IncrementalTranslation LW LB
-// Byte 12 : REAL       - IncrementalRotation HW HB
-// Byte 13 :            - IncrementalRotation HW LB
-// Byte 14 :            - IncrementalRotation LW HB
-// Byte 15 :            - IncrementalRotation LW LB
-// Byte 16 : USINT      - Override
-// Byte 17 : BYTE       - JogControl[0]
-// Byte 18 : BYTE       - JogControl[1]
-// Byte 19 : BYTE       - JogControl[2]
+// Byte 05 : BYTE       - Reserve
+// Byte 06 : USINT      - ToolNo
+// Byte 07 : USINT      - FrameNo
+// Byte 08 : USINT      - Mode
+// Byte 09 : REAL       - IncrementalTranslation HW HB
+// Byte 10 :            - IncrementalTranslation HW LB
+// Byte 11 :            - IncrementalTranslation LW HB
+// Byte 12 :            - IncrementalTranslation LW LB
+// Byte 13 : REAL       - IncrementalRotation HW HB
+// Byte 14 :            - IncrementalRotation HW LB
+// Byte 15 :            - IncrementalRotation LW HB
+// Byte 16 :            - IncrementalRotation LW LB
+// Byte 17 : UINT       - Override
+// Byte 18 : UINT       - Override
+// Byte 19 : BYTE       - JogControl[0]
+// Byte 20 : BYTE       - JogControl[1]
+// Byte 21 : BYTE       - JogControl[2]
 // --------------------------
 
   // set command parameter 
@@ -329,36 +360,130 @@ END_VAR
   // call base implementation to copy header to payload buffer
   CreateCommandPayload := SUPER^.CreateCommandPayload(AxesGroup := AxesGroup);
   
-  // add command.Enable
-  CreateCommandPayload.AddBool(_command.Enable);
-  // add command.Reserve 
-  CreateCommandPayload.AddByte(0); {warning 'ToDo: Not in SRCI Spec V1.3'}
   
-  // add command.ToolNo
-  CreateCommandPayload.AddUsint(_command.ToolNo);
-  // add command.FrameNo
-  CreateCommandPayload.AddUsint(_command.FrameNo);
-  // add command.Mode
-  CreateCommandPayload.AddUsint(_command.Mode);
-  // add command.Reserve 
-  CreateCommandPayload.AddByte(0); {warning 'ToDo: Not in SRCI Spec V1.3'}
   
-  // add command.IncrementalTranslation
-  CreateCommandPayload.AddReal(_command.IncrementalTranslation);
-  // add command.IncrementalRotation
-  CreateCommandPayload.AddReal(_command.IncrementalRotation);
-  // add command.Override
-  CreateCommandPayload.AddUint(_command.Override);
-  // add command.JogControl[0]
-  CreateCommandPayload.AddByte(_command.JogControl[0]);
-  // add command.JogControl[1]
-  CreateCommandPayload.AddByte(_command.JogControl[1]);
-  // add command.JogControl[2]
-  CreateCommandPayload.AddByte(_command.JogControl[2]);
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr)) OR TRUE // send always
+  THEN
+    // add command.Enable
+    CreateCommandPayload.AddBool(_command.Enable);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.Reserve 
+    CreateCommandPayload.AddByte(0); {warning 'ToDo: Not in SRCI Spec V1.3'}
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.ToolNo
+    CreateCommandPayload.AddUsint(_command.ToolNo);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.FrameNo
+    CreateCommandPayload.AddUsint(_command.FrameNo);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.Mode
+    CreateCommandPayload.AddUsint(_command.Mode);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.Reserve 
+    CreateCommandPayload.AddByte(0); {warning 'ToDo: Not in SRCI Spec V1.3'}
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.IncrementalTranslation
+    CreateCommandPayload.AddReal(_command.IncrementalTranslation);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.IncrementalRotation
+    CreateCommandPayload.AddReal(_command.IncrementalRotation);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.Override
+    CreateCommandPayload.AddUint(_command.Override);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.JogControl[0]
+    CreateCommandPayload.AddByte(_command.JogControl[0]);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.JogControl[1]
+    CreateCommandPayload.AddByte(_command.JogControl[1]);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.JogControl[2]
+    CreateCommandPayload.AddByte(_command.JogControl[2]);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
   
   
   // Create log entry for Parameter start
-  CreateCommandPayloadLog(AxesGroup := AxesGroup);
+  CreateCommandPayloadLog(AxesGroup := AxesGroup, ParameterCnt := _parameterCnt);
 
 END_METHOD
 
@@ -367,14 +492,24 @@ VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
+VAR_INPUT
+  /// Parameter count
+  ParameterCnt : DINT;
+END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := AxesGroup.State.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Create command payload with the following parameter(s) :');
+                          MessageText := 'Create command payload with the {1} parameter(s) :',
+                          Para1       := DINT_TO_STRING(ParameterCnt));
     
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Enable
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -383,6 +518,11 @@ END_VAR
                           MessageText := 'Command.Enable = {1}',
                           Para1       :=  BOOL_TO_STRING(_command.Enable));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ToolNo
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -391,6 +531,11 @@ END_VAR
                           MessageText := 'Command.ToolNo = {1}',
                           Para1       :=  USINT_TO_STRING(_command.ToolNo));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for FrameNo
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -399,6 +544,11 @@ END_VAR
                           MessageText := 'Command.FrameNo = {1}',
                           Para1       :=  USINT_TO_STRING(_command.FrameNo));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for JogMode
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -407,6 +557,11 @@ END_VAR
                           MessageText := 'Command.JogMode = {1}',
                           Para1       :=  JOG_MODE_TO_STRING(_command.Mode));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for IncrementalTranslation
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -415,6 +570,11 @@ END_VAR
                           MessageText := 'Command.IncrementalTranslation = {1}',
                           Para1       :=  REAL_TO_STRING(_command.IncrementalTranslation));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for IncrementalRotation
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -423,6 +583,11 @@ END_VAR
                           MessageText := 'Command.IncrementalRotation = {1}',
                           Para1       :=  REAL_TO_STRING(_command.IncrementalRotation));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Override
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -431,6 +596,11 @@ END_VAR
                           MessageText := 'Command.Override = {1}',
                           Para1       :=  UINT_TO_STRING(_command.Override));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for JogControl[0]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -439,6 +609,11 @@ END_VAR
                           MessageText := 'Command.JogControl[0] = {1}',
                           Para1       :=  BYTE_TO_STRING_BIN(_command.JogControl[0]));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for JogControl[1]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -447,6 +622,11 @@ END_VAR
                           MessageText := 'Command.JogControl[1] = {1}',
                           Para1       :=  BYTE_TO_STRING_BIN(_command.JogControl[1]));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for JogControl[2]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -469,6 +649,54 @@ END_VAR
   
   ExecMode := ExecutionMode.SEQUENCE_SECONDARY;
   Priority := PriorityLevel.NORMAL;
+
+END_METHOD
+
+METHOD PROTECTED OnExecErrorClear : DINT
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+  OnExecErrorClear := RobotLibraryConstants.RUNNING;
+  
+  CASE _stepClearError OF
+    
+    0:  // Reset 
+        Reset();
+        // trigger parameter update to disable FB
+       _parameterUpdateInternal := TRUE;
+        // call Check Parameter changed method to trigger the parameter update to deactivate jogging mode
+        CheckParameterChanged(AxesGroup := AxesGroup);
+        // set timeout
+        SetTimeout(PT := _timeoutClearError, rTimer := _timerClearError);
+        // inc step counter
+       _stepClearError := _stepClearError + 1; 
+        
+    1: IF ( _responseReceived )
+       THEN     
+         // reset response received flag
+        _responseReceived := FALSE;
+         // reset step counter
+        _stepClearError := 0;
+         // finished
+         OnExecErrorClear := RobotLibraryConstants.OK;
+       ELSE
+         // timeout exceeded ? 
+         IF (CheckTimeout(_timerClearError) = RobotLibraryConstants.OK)
+         THEN
+           OnExecErrorClear := RobotLibraryConstants.HAS_ERROR;
+         END_IF
+  	   END_IF
+    
+  END_CASE
+  
+  
+  // reset step counter
+  IF (OnExecErrorClear <> RobotLibraryConstants.RUNNING)
+  THEN
+   _stepClearError := 0;
+  END_IF
 
 END_METHOD
 
@@ -513,7 +741,6 @@ END_VAR
            END_IF 
          END_IF
        
-  
     01:  // Wait for responce received
          IF ( _responseReceived )
          THEN
@@ -538,31 +765,23 @@ END_VAR
            OutCmd.DistanceReached := _response.Status.1;
            OutCmd.MotionActive    := _response.Status.2;        
            
-           // Enabled ? -> Reset Busy flag  
-           IF (Enabled)
+           // Enabled, Aborted or Error ? -> Reset Busy flag  
+           IF ( Enabled        ) OR 
+              ( Error          ) OR 
+              ( CommandAborted )
            THEN  
              Busy := FALSE;
   				 END_IF
-                   
-           // Done, Aborted or Error ?
-           IF  ( _response.State >= CmdMessageState.DONE ) 
-           THEN
-             // reset busy flag
-             Enabled := FALSE; 
-             // reset busy flag
-             Busy := FALSE;   
-             // set timeout
-             SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
-             // inc step counter
-            _stepCmd := _stepCmd + 2;
-           END_IF
-          END_IF
+  
+         END_IF
   
          // do not abort directly, so that the ParSeq update can be send
-         IF ( _enable_F.Q ) 
+         IF ( _enable_F.Q )
          THEN
            // Set Busy flag
            Busy := TRUE;
+           // reset busy flag
+           Enabled := FALSE;  {warning 'ToDo: doit for all others the same'} 
            // trigger parameter update to disable FB
           _parameterUpdateInternal := TRUE;
            // reset the falling edge
@@ -582,18 +801,13 @@ END_VAR
           Reset();   
   	    END_IF
         
-        // Wait for Enable = FALSE
-    03: IF ( NOT Enable )
-        THEN
-          Reset();   
-  	    END_IF
-        
   ELSE
     // invalid step
     ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
   END_CASE
   
   
+  RETURN;
   
   // Reset FB
   IF (( _enable_R.Q ) OR
@@ -610,6 +824,10 @@ VAR_INPUT
   ResponseData : RobotLibraryResponseDataFB;
   /// Timestamp
   Timestamp    : SystemTime;  
+END_VAR
+VAR
+  /// Parameter count
+ _parameterCnt : DINT;
 END_VAR
 // Table 6-237: Received CMD payload (RC to PLC) of "GroupJog"
 // --------------------------
@@ -638,7 +856,7 @@ END_VAR
   _response.Status := ResponseData.GetByte();
   
   // Create logging
-  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp, ParameterCnt := _parameterCnt);
 
 END_METHOD
 
@@ -648,15 +866,23 @@ VAR_INPUT
   ResponseData : RobotLibraryResponseDataFB;
   /// Timestamp
   Timestamp    : SystemTime;  
+  /// Parameter count
+  ParameterCnt : DINT;
 END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := Timestamp,
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Parsed the following parameter(s) from response data:');
+                          MessageText := '{1} parameter(s) to parse from the response data:',
+                          Para1       := DINT_TO_STRING(ParameterCnt));
                           
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Status
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,

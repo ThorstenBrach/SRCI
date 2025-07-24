@@ -45,6 +45,31 @@ END_VAR
 
 END_FUNCTION_BLOCK
 
+METHOD INTERNAL CheckAddParameter : BOOL
+VAR_INPUT
+  /// Payload pointer
+  PayloadPtr : UDINT;
+END_VAR
+VAR
+  /// Payload as byte array
+  Payload    : ARRAY [1..SIZEOF(_command)] OF BYTE;
+  /// Null Byte array 
+  Null       : ARRAY [1..SIZEOF(_command)] OF BYTE;
+  /// Data length to compare
+  DataLen    : UDINT;
+END_VAR
+
+  // Payload pointer must be decreased by one byte, because ADR(Payload) is already one byte !
+  PayloadPtr := LIMIT (0, PayloadPtr - 1, SIZEOF(Payload) -1);
+  // Convert command struct to payload array
+  SysDepMemCpy( pDest := ADR(Payload), pSrc := ADR(_command), DataLen := SIZEOF(_command));
+  // Calculate the data length to compare - at least one byte must be compared !
+  DataLen := LIMIT(1, SIZEOF(Payload) - PayloadPtr, SIZEOF(Payload)); 
+  // Compare Payload-Array with Null-Byte-Array
+  CheckAddParameter := SysDepMemCmp( pData1 := ADR(Payload) + PayloadPtr , pData2 := ADR(Null), DataLen := DataLen) <>  RobotLibraryConstants.OK ;
+
+END_METHOD
+
 METHOD PROTECTED CheckFunctionSupported : BOOL
 VAR_IN_OUT
   /// Robot assignment of function
@@ -171,6 +196,10 @@ VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
+VAR
+  /// Parameter count
+ _parameterCnt : DINT;
+END_VAR
 // Table 6-565: Sent CMD payload (PLC to RC) of "MeasuringInput"
 // --------------------------
 // Header
@@ -201,15 +230,39 @@ END_VAR
   // call base implementation to copy header to payload buffer
   CreateCommandPayload := SUPER^.CreateCommandPayload(AxesGroup := AxesGroup);
   
-  // add command.MeasuringMode
-  CreateCommandPayload.AddUsint(_command.MeasuringMode);
-  // add command.Index
-  CreateCommandPayload.AddUsint(_command.Index);
-  // add command.BitNumber
-  CreateCommandPayload.AddUsint(_command.BitNumber);
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.MeasuringMode
+    CreateCommandPayload.AddUsint(_command.MeasuringMode);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.Index
+    CreateCommandPayload.AddUsint(_command.Index);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.BitNumber
+    CreateCommandPayload.AddUsint(_command.BitNumber);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
   
   // Create logging
-  CreateCommandPayloadLog(AxesGroup := AxesGroup);
+  CreateCommandPayloadLog(AxesGroup := AxesGroup, ParameterCnt := _parameterCnt);
 
 END_METHOD
 
@@ -218,14 +271,24 @@ VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
+VAR_INPUT
+  /// Parameter count
+  ParameterCnt : DINT;
+END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := AxesGroup.State.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Create command payload with the following parameter(s) :');
+                          MessageText := 'Create command payload with the {1} parameter(s) :',
+                          Para1       := DINT_TO_STRING(ParameterCnt));
     
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for MeasuringMode
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -234,6 +297,11 @@ END_VAR
                           MessageText := 'Command.MeasuringMode = {1}',
                           Para1       :=  USINT_TO_STRING(_command.MeasuringMode));
                           
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Index
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -242,6 +310,11 @@ END_VAR
                           MessageText := 'Command.Index = {1}',
                           Para1       :=  USINT_TO_STRING(_command.Index));
                           
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for BitNumber
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -358,6 +431,10 @@ VAR_INPUT
   ResponseData : RobotLibraryResponseDataFB;
   /// Timestamp
   Timestamp    : SystemTime;  
+END_VAR
+VAR
+  /// Parameter count
+ _parameterCnt : DINT;
 END_VAR
 // Table 6-566: Received CMD payload (RC to PLC) of "MeasuringInput"
 // --------------------------
@@ -591,123 +668,578 @@ END_VAR
   _response.AlarmMessageCode     := _rspHeader.AlarmMessageCode;
   
   
-  // Get Response.MeasuringID
-  _response.MeasuringID   := ResponseData.GetUint();
-  // Get Response.Measurings[1].ToolNo
-  _response.Measurings[1].ToolNo := ResponseData.GetUsint();
-  // Get Response.Measurings[1].FrameNo
-  _response.Measurings[1].FrameNo := ResponseData.GetUsint();
-  // Get Response.Measurings[2].ToolNo
-  _response.Measurings[2].ToolNo := ResponseData.GetUsint();
-  // Get Response.Measurings[2].FrameNo
-  _response.Measurings[2].FrameNo := ResponseData.GetUsint();
-  // Get Response.Measurings[1].MeasuredCartesianPosition.X
-  _response.Measurings[1].MeasuredCartesianPosition.X := ResponseData.GetReal();
-  // Get Response.Measurings[1].MeasuredCartesianPosition.Y
-  _response.Measurings[1].MeasuredCartesianPosition.Y := ResponseData.GetReal();
-  // Get Response.Measurings[1].MeasuredCartesianPosition.Z
-  _response.Measurings[1].MeasuredCartesianPosition.Z := ResponseData.GetReal();
-  // Get Response.Measurings[1].MeasuredCartesianPosition.Rx
-  _response.Measurings[1].MeasuredCartesianPosition.Rx := ResponseData.GetReal();
-  // Get Response.Measurings[1].MeasuredCartesianPosition.Ry
-  _response.Measurings[1].MeasuredCartesianPosition.Ry := ResponseData.GetReal();
-  // Get Response.Measurings[1].MeasuredCartesianPosition.Rz
-  _response.Measurings[1].MeasuredCartesianPosition.Rz := ResponseData.GetReal();
-  // Get Response.Measurings[1].MeasuredCartesianPosition.Config
-  _response.Measurings[1].MeasuredCartesianPosition.Config := ResponseData.GetArmConfig();
-  // Get Response.Measurings[1].MeasuredCartesianPosition.TurnNumber
-  _response.Measurings[1].MeasuredCartesianPosition.TurnNumber := ResponseData.GetTurnNumbers();
-  // Get Response.Measurings[1].MeasuredCartesianPosition.E1
-  _response.Measurings[1].MeasuredCartesianPosition.E1 := ResponseData.GetReal();
-  // Get Response.Measurings[1].MeasuredJointPosition.J1
-  _response.Measurings[1].MeasuredJointPosition.J1 := ResponseData.GetReal();
-  // Get Response.Measurings[1].MeasuredJointPosition.J2
-  _response.Measurings[1].MeasuredJointPosition.J2 := ResponseData.GetReal();
-  // Get Response.Measurings[1].MeasuredJointPosition.J3
-  _response.Measurings[1].MeasuredJointPosition.J3 := ResponseData.GetReal();
-  // Get Response.Measurings[1].MeasuredJointPosition.J4
-  _response.Measurings[1].MeasuredJointPosition.J4 := ResponseData.GetReal();
-  // Get Response.Measurings[1].MeasuredJointPosition.J5
-  _response.Measurings[1].MeasuredJointPosition.J5 := ResponseData.GetReal();
-  // Get Response.Measurings[1].MeasuredJointPosition.J6
-  _response.Measurings[1].MeasuredJointPosition.J6 := ResponseData.GetReal();
-  // Get Response.Measurings[1].MeasuredJointPosition.E1
-  _response.Measurings[1].MeasuredJointPosition.E1 := ResponseData.GetReal();
-  // Get Response.Measurings[2].MeasuredCartesianPosition.X
-  _response.Measurings[2].MeasuredCartesianPosition.X := ResponseData.GetReal();
-  // Get Response.Measurings[2].MeasuredCartesianPosition.Y
-  _response.Measurings[2].MeasuredCartesianPosition.Y := ResponseData.GetReal();
-  // Get Response.Measurings[2].MeasuredCartesianPosition.Z
-  _response.Measurings[2].MeasuredCartesianPosition.Z := ResponseData.GetReal();
-  // Get Response.Measurings[2].MeasuredCartesianPosition.Rx
-  _response.Measurings[2].MeasuredCartesianPosition.Rx := ResponseData.GetReal();
-  // Get Response.Measurings[2].MeasuredCartesianPosition.Ry
-  _response.Measurings[2].MeasuredCartesianPosition.Ry := ResponseData.GetReal();
-  // Get Response.Measurings[2].MeasuredCartesianPosition.Rz
-  _response.Measurings[2].MeasuredCartesianPosition.Rz := ResponseData.GetReal();
-  // Get Response.Measurings[2].MeasuredCartesianPosition.Config
-  _response.Measurings[2].MeasuredCartesianPosition.Config := ResponseData.GetArmConfig();
-  // Get Response.Measurings[2].MeasuredCartesianPosition.TurnNumber
-  _response.Measurings[2].MeasuredCartesianPosition.TurnNumber := ResponseData.GetTurnNumbers();
-  // Get Response.Measurings[2].MeasuredCartesianPosition.E1
-  _response.Measurings[2].MeasuredCartesianPosition.E1 := ResponseData.GetReal();
-  // Get Response.Measurings[2].MeasuredJointPosition.J1
-  _response.Measurings[2].MeasuredJointPosition.J1 := ResponseData.GetReal();
-  // Get Response.Measurings[2].MeasuredJointPosition.J2
-  _response.Measurings[2].MeasuredJointPosition.J2 := ResponseData.GetReal();
-  // Get Response.Measurings[2].MeasuredJointPosition.J3
-  _response.Measurings[2].MeasuredJointPosition.J3 := ResponseData.GetReal();
-  // Get Response.Measurings[2].MeasuredJointPosition.J4
-  _response.Measurings[2].MeasuredJointPosition.J4 := ResponseData.GetReal();
-  // Get Response.Measurings[2].MeasuredJointPosition.J5
-  _response.Measurings[2].MeasuredJointPosition.J5 := ResponseData.GetReal();
-  // Get Response.Measurings[2].MeasuredJointPosition.J6
-  _response.Measurings[2].MeasuredJointPosition.J6 := ResponseData.GetReal();
-  // Get Response.Measurings[2].MeasuredJointPosition.E1
-  _response.Measurings[2].MeasuredJointPosition.E1 := ResponseData.GetReal();
-  // Get Response.Measurings[1].MeasuredCartesianPosition.E2
-  _response.Measurings[1].MeasuredCartesianPosition.E2 := ResponseData.GetReal();
-  // Get Response.Measurings[1].MeasuredCartesianPosition.E3
-  _response.Measurings[1].MeasuredCartesianPosition.E3 := ResponseData.GetReal();
-  // Get Response.Measurings[1].MeasuredCartesianPosition.E4
-  _response.Measurings[1].MeasuredCartesianPosition.E4 := ResponseData.GetReal();
-  // Get Response.Measurings[1].MeasuredCartesianPosition.E5
-  _response.Measurings[1].MeasuredCartesianPosition.E5 := ResponseData.GetReal();
-  // Get Response.Measurings[1].MeasuredCartesianPosition.E6
-  _response.Measurings[1].MeasuredCartesianPosition.E6 := ResponseData.GetReal();
-  // Get Response.Measurings[1].MeasuredJointPosition.E2
-  _response.Measurings[1].MeasuredJointPosition.E2 := ResponseData.GetReal();
-  // Get Response.Measurings[1].MeasuredJointPosition.E3
-  _response.Measurings[1].MeasuredJointPosition.E3 := ResponseData.GetReal();
-  // Get Response.Measurings[1].MeasuredJointPosition.E4
-  _response.Measurings[1].MeasuredJointPosition.E4 := ResponseData.GetReal();
-  // Get Response.Measurings[1].MeasuredJointPosition.E5
-  _response.Measurings[1].MeasuredJointPosition.E5 := ResponseData.GetReal();
-  // Get Response.Measurings[1].MeasuredJointPosition.E6
-  _response.Measurings[1].MeasuredJointPosition.E6 := ResponseData.GetReal();
-  // Get Response.Measurings[2].MeasuredCartesianPosition.E2
-  _response.Measurings[2].MeasuredCartesianPosition.E2 := ResponseData.GetReal();
-  // Get Response.Measurings[2].MeasuredCartesianPosition.E3
-  _response.Measurings[2].MeasuredCartesianPosition.E3 := ResponseData.GetReal();
-  // Get Response.Measurings[2].MeasuredCartesianPosition.E4
-  _response.Measurings[2].MeasuredCartesianPosition.E4 := ResponseData.GetReal();
-  // Get Response.Measurings[2].MeasuredCartesianPosition.E5
-  _response.Measurings[2].MeasuredCartesianPosition.E5 := ResponseData.GetReal();
-  // Get Response.Measurings[2].MeasuredCartesianPosition.E6
-  _response.Measurings[2].MeasuredCartesianPosition.E6 := ResponseData.GetReal();
-  // Get Response.Measurings[2].MeasuredJointPosition.E2
-  _response.Measurings[2].MeasuredJointPosition.E2 := ResponseData.GetReal();
-  // Get Response.Measurings[2].MeasuredJointPosition.E3
-  _response.Measurings[2].MeasuredJointPosition.E3 := ResponseData.GetReal();
-  // Get Response.Measurings[2].MeasuredJointPosition.E4
-  _response.Measurings[2].MeasuredJointPosition.E4 := ResponseData.GetReal();
-  // Get Response.Measurings[2].MeasuredJointPosition.E5
-  _response.Measurings[2].MeasuredJointPosition.E5 := ResponseData.GetReal();
-  // Get Response.Measurings[2].MeasuredJointPosition.E6
-  _response.Measurings[2].MeasuredJointPosition.E6 := ResponseData.GetReal();
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.MeasuringID
+    _response.MeasuringID   := ResponseData.GetUint();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
   
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[1].ToolNo
+   _response.Measurings[1].ToolNo := ResponseData.GetUsint();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[1].FrameNo
+   _response.Measurings[1].FrameNo := ResponseData.GetUsint();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[2].ToolNo
+   _response.Measurings[2].ToolNo := ResponseData.GetUsint();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[2].FrameNo
+   _response.Measurings[2].FrameNo := ResponseData.GetUsint();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[1].MeasuredCartesianPosition.X
+   _response.Measurings[1].MeasuredCartesianPosition.X := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[1].MeasuredCartesianPosition.Y
+   _response.Measurings[1].MeasuredCartesianPosition.Y := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[1].MeasuredCartesianPosition.Z
+   _response.Measurings[1].MeasuredCartesianPosition.Z := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[1].MeasuredCartesianPosition.Rx
+   _response.Measurings[1].MeasuredCartesianPosition.Rx := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[1].MeasuredCartesianPosition.Ry
+   _response.Measurings[1].MeasuredCartesianPosition.Ry := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[1].MeasuredCartesianPosition.Rz
+   _response.Measurings[1].MeasuredCartesianPosition.Rz := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[1].MeasuredCartesianPosition.Config
+   _response.Measurings[1].MeasuredCartesianPosition.Config := ResponseData.GetArmConfig();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[1].MeasuredCartesianPosition.TurnNumber
+   _response.Measurings[1].MeasuredCartesianPosition.TurnNumber := ResponseData.GetTurnNumbers();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[1].MeasuredCartesianPosition.E1
+   _response.Measurings[1].MeasuredCartesianPosition.E1 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[1].MeasuredJointPosition.J1
+   _response.Measurings[1].MeasuredJointPosition.J1 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[1].MeasuredJointPosition.J2
+   _response.Measurings[1].MeasuredJointPosition.J2 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[1].MeasuredJointPosition.J3
+   _response.Measurings[1].MeasuredJointPosition.J3 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[1].MeasuredJointPosition.J4
+   _response.Measurings[1].MeasuredJointPosition.J4 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[1].MeasuredJointPosition.J5
+   _response.Measurings[1].MeasuredJointPosition.J5 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[1].MeasuredJointPosition.J6
+   _response.Measurings[1].MeasuredJointPosition.J6 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[1].MeasuredJointPosition.E1
+   _response.Measurings[1].MeasuredJointPosition.E1 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[2].MeasuredCartesianPosition.X
+   _response.Measurings[2].MeasuredCartesianPosition.X := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[2].MeasuredCartesianPosition.Y
+   _response.Measurings[2].MeasuredCartesianPosition.Y := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[2].MeasuredCartesianPosition.Z
+   _response.Measurings[2].MeasuredCartesianPosition.Z := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[2].MeasuredCartesianPosition.Rx
+   _response.Measurings[2].MeasuredCartesianPosition.Rx := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[2].MeasuredCartesianPosition.Ry
+   _response.Measurings[2].MeasuredCartesianPosition.Ry := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[2].MeasuredCartesianPosition.Rz
+   _response.Measurings[2].MeasuredCartesianPosition.Rz := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[2].MeasuredCartesianPosition.Config
+   _response.Measurings[2].MeasuredCartesianPosition.Config := ResponseData.GetArmConfig();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[2].MeasuredCartesianPosition.TurnNumber
+   _response.Measurings[2].MeasuredCartesianPosition.TurnNumber := ResponseData.GetTurnNumbers();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[2].MeasuredCartesianPosition.E1
+   _response.Measurings[2].MeasuredCartesianPosition.E1 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[2].MeasuredJointPosition.J1
+   _response.Measurings[2].MeasuredJointPosition.J1 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[2].MeasuredJointPosition.J2
+   _response.Measurings[2].MeasuredJointPosition.J2 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[2].MeasuredJointPosition.J3
+   _response.Measurings[2].MeasuredJointPosition.J3 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[2].MeasuredJointPosition.J4
+   _response.Measurings[2].MeasuredJointPosition.J4 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[2].MeasuredJointPosition.J5
+   _response.Measurings[2].MeasuredJointPosition.J5 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[2].MeasuredJointPosition.J6
+   _response.Measurings[2].MeasuredJointPosition.J6 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[2].MeasuredJointPosition.E1
+   _response.Measurings[2].MeasuredJointPosition.E1 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[1].MeasuredCartesianPosition.E2
+   _response.Measurings[1].MeasuredCartesianPosition.E2 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[1].MeasuredCartesianPosition.E3
+   _response.Measurings[1].MeasuredCartesianPosition.E3 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[1].MeasuredCartesianPosition.E4
+   _response.Measurings[1].MeasuredCartesianPosition.E4 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[1].MeasuredCartesianPosition.E5
+   _response.Measurings[1].MeasuredCartesianPosition.E5 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[1].MeasuredCartesianPosition.E6
+   _response.Measurings[1].MeasuredCartesianPosition.E6 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[1].MeasuredJointPosition.E2
+   _response.Measurings[1].MeasuredJointPosition.E2 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[1].MeasuredJointPosition.E3
+   _response.Measurings[1].MeasuredJointPosition.E3 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[1].MeasuredJointPosition.E4
+   _response.Measurings[1].MeasuredJointPosition.E4 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[1].MeasuredJointPosition.E5
+   _response.Measurings[1].MeasuredJointPosition.E5 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+    // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[1].MeasuredJointPosition.E6
+   _response.Measurings[1].MeasuredJointPosition.E6 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[2].MeasuredCartesianPosition.E2
+   _response.Measurings[2].MeasuredCartesianPosition.E2 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[2].MeasuredCartesianPosition.E3
+   _response.Measurings[2].MeasuredCartesianPosition.E3 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[2].MeasuredCartesianPosition.E4
+   _response.Measurings[2].MeasuredCartesianPosition.E4 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[2].MeasuredCartesianPosition.E5
+   _response.Measurings[2].MeasuredCartesianPosition.E5 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[2].MeasuredCartesianPosition.E6
+   _response.Measurings[2].MeasuredCartesianPosition.E6 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[2].MeasuredJointPosition.E2
+   _response.Measurings[2].MeasuredJointPosition.E2 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[2].MeasuredJointPosition.E3
+   _response.Measurings[2].MeasuredJointPosition.E3 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[2].MeasuredJointPosition.E4
+   _response.Measurings[2].MeasuredJointPosition.E4 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[2].MeasuredJointPosition.E5
+   _response.Measurings[2].MeasuredJointPosition.E5 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+   
+   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.Measurings[2].MeasuredJointPosition.E6
+   _response.Measurings[2].MeasuredJointPosition.E6 := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+   
   // Create logging
-  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp, ParameterCnt := _parameterCnt);
 
 END_METHOD
 
@@ -717,6 +1249,8 @@ VAR_INPUT
   ResponseData : RobotLibraryResponseDataFB;
   /// Timestamp
   Timestamp    : SystemTime;  
+  /// Parameter count
+  ParameterCnt : DINT;
 END_VAR
 VAR
   /// internal index for loops
@@ -724,12 +1258,18 @@ VAR
 END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := Timestamp,
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Parsed the following parameter(s) from response data:');
-                          
+                          MessageText := '{1} parameter(s) to parse from the response data:',
+                          Para1       := DINT_TO_STRING(ParameterCnt));
+  
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for MeasuringID
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -738,6 +1278,11 @@ END_VAR
                           MessageText := 'Response.MeasuringID = {1}',
                           Para1       :=  UINT_TO_STRING(_response.MeasuringID));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for MeasuringID
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -749,6 +1294,10 @@ END_VAR
   // Create log entry for Measurings[x]
   FOR _idx := 1 TO 2
   DO
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Measurings[x].ToolNo
     CreateLogMessagePara2 ( Timestamp   := Timestamp,
                             MessageType := MessageType.CMD,
@@ -758,6 +1307,11 @@ END_VAR
                             Para1       :=  USINT_TO_STRING(_response.Measurings[_idx].ToolNo),
                             Para2       :=  DINT_TO_STRING(_idx));
   
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Measurings[x].FrameNo
     CreateLogMessagePara2 ( Timestamp   := Timestamp,
                             MessageType := MessageType.CMD,
@@ -772,6 +1326,10 @@ END_VAR
   // Create log entry for Measurings[x]
   FOR _idx := 1 TO 2
   DO
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Measurings[x].MeasuredCartesianPosition.X
     CreateLogMessagePara2 ( Timestamp   := Timestamp,
                             MessageType := MessageType.CMD,
@@ -781,6 +1339,11 @@ END_VAR
                             Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.X),
                             Para2       :=  DINT_TO_STRING(_idx));
   
+                            
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Measurings[x].MeasuredCartesianPosition.Y
     CreateLogMessagePara2 ( Timestamp   := Timestamp,
                             MessageType := MessageType.CMD,
@@ -790,6 +1353,11 @@ END_VAR
                             Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.Y),
                             Para2       :=  DINT_TO_STRING(_idx));
                             
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Measurings[x].MeasuredCartesianPosition.Z
     CreateLogMessagePara2 ( Timestamp   := Timestamp,
                             MessageType := MessageType.CMD,
@@ -799,6 +1367,11 @@ END_VAR
                             Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.Z),
                             Para2       :=  DINT_TO_STRING(_idx));
                             
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Measurings[x].MeasuredCartesianPosition.Rx
     CreateLogMessagePara2 ( Timestamp   := Timestamp,
                             MessageType := MessageType.CMD,
@@ -808,6 +1381,11 @@ END_VAR
                             Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.Rx),
                             Para2       :=  DINT_TO_STRING(_idx));
   
+                            
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Measurings[x].MeasuredCartesianPosition.Ry
     CreateLogMessagePara2 ( Timestamp   := Timestamp,
                             MessageType := MessageType.CMD,
@@ -817,6 +1395,11 @@ END_VAR
                             Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.Ry),
                             Para2       :=  DINT_TO_STRING(_idx));
   
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Measurings[x].MeasuredCartesianPosition.Rz
     CreateLogMessagePara2 ( Timestamp   := Timestamp,
                             MessageType := MessageType.CMD,
@@ -826,6 +1409,11 @@ END_VAR
                             Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.Rz),
                             Para2       :=  DINT_TO_STRING(_idx));
   
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Measurings[x].MeasuredCartesianPosition.Config
     CreateLogMessagePara2 ( Timestamp   := Timestamp,
                             MessageType := MessageType.CMD,
@@ -835,6 +1423,11 @@ END_VAR
                             Para1       :=  ARM_CONFIG_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.Config),
                             Para2       :=  DINT_TO_STRING(_idx));
   
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Measurings[x].MeasuredCartesianPosition.TurnNumber.J1Turns
     CreateLogMessagePara2 ( Timestamp   := Timestamp,
                             MessageType := MessageType.CMD,
@@ -844,6 +1437,11 @@ END_VAR
                             Para1       :=  SINT_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.TurnNumber.J1Turns),
                             Para2       :=  DINT_TO_STRING(_idx));
   
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Measurings[x].MeasuredCartesianPosition.TurnNumber.J2Turns
     CreateLogMessagePara2 ( Timestamp   := Timestamp,
                             MessageType := MessageType.CMD,
@@ -853,6 +1451,11 @@ END_VAR
                             Para1       :=  SINT_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.TurnNumber.J2Turns),
                             Para2       :=  DINT_TO_STRING(_idx));
   
+                            
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Measurings[x].MeasuredCartesianPosition.TurnNumber.J3Turns
     CreateLogMessagePara2 ( Timestamp   := Timestamp,
                             MessageType := MessageType.CMD,
@@ -861,7 +1464,12 @@ END_VAR
                             MessageText := 'Response.Measurings[{2}].MeasuredCartesianPosition.TurnNumber.J3Turns = {1}',
                             Para1       :=  SINT_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.TurnNumber.J3Turns),
                             Para2       :=  DINT_TO_STRING(_idx));
+  
                             
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Measurings[x].MeasuredCartesianPosition.TurnNumber.J4Turns
     CreateLogMessagePara2 ( Timestamp   := Timestamp,
                             MessageType := MessageType.CMD,
@@ -871,6 +1479,11 @@ END_VAR
                             Para1       :=  SINT_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.TurnNumber.J4Turns),
                             Para2       :=  DINT_TO_STRING(_idx));
   
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Measurings[x].MeasuredCartesianPosition.TurnNumber.J5Turns
     CreateLogMessagePara2 ( Timestamp   := Timestamp,
                             MessageType := MessageType.CMD,
@@ -879,7 +1492,12 @@ END_VAR
                             MessageText := 'Response.Measurings[{2}].MeasuredCartesianPosition.TurnNumber.J5Turns = {1}',
                             Para1       :=  SINT_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.TurnNumber.J5Turns),
                             Para2       :=  DINT_TO_STRING(_idx));
+  
                             
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Measurings[x].MeasuredCartesianPosition.TurnNumber.J6Turns
     CreateLogMessagePara2 ( Timestamp   := Timestamp,
                             MessageType := MessageType.CMD,
@@ -889,6 +1507,11 @@ END_VAR
                             Para1       :=  SINT_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.TurnNumber.J6Turns),
                             Para2       :=  DINT_TO_STRING(_idx));
   
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Measurings[x].MeasuredCartesianPosition.TurnNumber.E1Turns
     CreateLogMessagePara2 ( Timestamp   := Timestamp,
                             MessageType := MessageType.CMD,
@@ -898,6 +1521,11 @@ END_VAR
                             Para1       :=  SINT_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.TurnNumber.E1Turns),
                             Para2       :=  DINT_TO_STRING(_idx));
   
+                            
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Measurings[x].MeasuredCartesianPosition.E1
     CreateLogMessagePara2 ( Timestamp   := Timestamp,
                             MessageType := MessageType.CMD,
@@ -907,6 +1535,11 @@ END_VAR
                             Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.E1),
                             Para2       :=  DINT_TO_STRING(_idx));
                             
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Measurings[x].MeasuredJointPosition.J1
     CreateLogMessagePara2 ( Timestamp   := Timestamp,
                             MessageType := MessageType.CMD,
@@ -916,6 +1549,11 @@ END_VAR
                             Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredJointPosition.J1),
                             Para2       :=  DINT_TO_STRING(_idx));
                             
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Measurings[x].MeasuredJointPosition.J2
     CreateLogMessagePara2 ( Timestamp   := Timestamp,
                             MessageType := MessageType.CMD,
@@ -925,6 +1563,11 @@ END_VAR
                             Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredJointPosition.J2),
                             Para2       :=  DINT_TO_STRING(_idx));
   
+    
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Measurings[x].MeasuredJointPosition.J3
     CreateLogMessagePara2 ( Timestamp   := Timestamp,
                             MessageType := MessageType.CMD,
@@ -933,7 +1576,12 @@ END_VAR
                             MessageText := 'Response.Measurings[{2}].MeasuredJointPosition.J3 = {1}',
                             Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredJointPosition.J3),
                             Para2       :=  DINT_TO_STRING(_idx));
+  
                             
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Measurings[x].MeasuredJointPosition.J4
     CreateLogMessagePara2 ( Timestamp   := Timestamp,
                             MessageType := MessageType.CMD,
@@ -943,6 +1591,11 @@ END_VAR
                             Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredJointPosition.J4),
                             Para2       :=  DINT_TO_STRING(_idx));
   
+                            
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Measurings[x].MeasuredJointPosition.J5
     CreateLogMessagePara2 ( Timestamp   := Timestamp,
                             MessageType := MessageType.CMD,
@@ -951,7 +1604,12 @@ END_VAR
                             MessageText := 'Response.Measurings[{2}].MeasuredJointPosition.J5 = {1}',
                             Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredJointPosition.J5),
                             Para2       :=  DINT_TO_STRING(_idx));
-                            
+    
+                          
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Measurings[x].MeasuredJointPosition.J6
     CreateLogMessagePara2 ( Timestamp   := Timestamp,
                             MessageType := MessageType.CMD,
@@ -960,7 +1618,12 @@ END_VAR
                             MessageText := 'Response.Measurings[{2}].MeasuredJointPosition.J6 = {1}',
                             Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredJointPosition.J6),
                             Para2       :=  DINT_TO_STRING(_idx));
-  
+                            
+                            
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Measurings[x].MeasuredJointPosition.E1
     CreateLogMessagePara2 ( Timestamp   := Timestamp,
                             MessageType := MessageType.CMD,
@@ -975,6 +1638,10 @@ END_VAR
   // Create log entry for Measurings[x]
   FOR _idx := 1 TO 2
   DO
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Measurings[x].MeasuredCartesianPosition.E2
     CreateLogMessagePara2 ( Timestamp   := Timestamp,
                             MessageType := MessageType.CMD,
@@ -984,6 +1651,11 @@ END_VAR
                             Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.E2),
                             Para2       :=  DINT_TO_STRING(_idx));
   
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Measurings[x].MeasuredCartesianPosition.E3
     CreateLogMessagePara2 ( Timestamp   := Timestamp,
                             MessageType := MessageType.CMD,
@@ -993,6 +1665,11 @@ END_VAR
                             Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.E3),
                             Para2       :=  DINT_TO_STRING(_idx));
                             
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Measurings[x].MeasuredCartesianPosition.E4
     CreateLogMessagePara2 ( Timestamp   := Timestamp,
                             MessageType := MessageType.CMD,
@@ -1002,6 +1679,11 @@ END_VAR
                             Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.E4),
                             Para2       :=  DINT_TO_STRING(_idx));
                             
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Measurings[x].MeasuredCartesianPosition.E5
     CreateLogMessagePara2 ( Timestamp   := Timestamp,
                             MessageType := MessageType.CMD,
@@ -1011,6 +1693,11 @@ END_VAR
                             Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.E5),
                             Para2       :=  DINT_TO_STRING(_idx));
                             
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Measurings[x].MeasuredCartesianPosition.E6
     CreateLogMessagePara2 ( Timestamp   := Timestamp,
                             MessageType := MessageType.CMD,
@@ -1020,6 +1707,11 @@ END_VAR
                             Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredCartesianPosition.E6),
                             Para2       :=  DINT_TO_STRING(_idx));
   
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Measurings[x].MeasuredJointPosition.E2
     CreateLogMessagePara2 ( Timestamp   := Timestamp,
                             MessageType := MessageType.CMD,
@@ -1029,6 +1721,11 @@ END_VAR
                             Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredJointPosition.E2),
                             Para2       :=  DINT_TO_STRING(_idx));
   
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Measurings[x].MeasuredJointPosition.E3
     CreateLogMessagePara2 ( Timestamp   := Timestamp,
                             MessageType := MessageType.CMD,
@@ -1038,6 +1735,11 @@ END_VAR
                             Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredJointPosition.E3),
                             Para2       :=  DINT_TO_STRING(_idx));
                             
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Measurings[x].MeasuredJointPosition.E4
     CreateLogMessagePara2 ( Timestamp   := Timestamp,
                             MessageType := MessageType.CMD,
@@ -1047,6 +1749,11 @@ END_VAR
                             Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredJointPosition.E4),
                             Para2       :=  DINT_TO_STRING(_idx));
                             
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Measurings[x].MeasuredJointPosition.E5
     CreateLogMessagePara2 ( Timestamp   := Timestamp,
                             MessageType := MessageType.CMD,
@@ -1056,6 +1763,11 @@ END_VAR
                             Para1       :=  REAL_TO_STRING(_response.Measurings[_idx].MeasuredJointPosition.E5),
                             Para2       :=  DINT_TO_STRING(_idx));
                             
+  
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for Measurings[x].MeasuredJointPosition.E6
     CreateLogMessagePara2 ( Timestamp   := Timestamp,
                             MessageType := MessageType.CMD,

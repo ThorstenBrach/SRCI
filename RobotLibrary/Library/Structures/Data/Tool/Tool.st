@@ -25,7 +25,7 @@ STRUCT
   /// Tool is available
   Available : BOOL;
   /// Tool data
-   Data  : ToolData;
+  Data  : ToolData;
 END_STRUCT
 END_TYPE
 

@@ -59,6 +59,10 @@ VAR
  _warning_R                : R_TRIG;
   /// Rising edge for information
  _info_R                   : R_TRIG;
+  /// clear error active
+ _clearError               : BOOL;
+  /// cancel active
+ _cancel                   : BOOL; 
   /// unique ID
  _uniqueID                 : UDINT;  
   /// flag for response received
@@ -69,6 +73,12 @@ VAR
  _timerCmd                 : TON;
   /// internal timeout 
  _timeoutCmd               : TIME := T#5S;
+  /// internal step counter
+ _stepClearError           : DINT;
+  /// internal timer  
+ _timerClearError          : TON;
+  /// internal timeout 
+ _timeoutClearError        : TIME := T#5S;
   /// internal command header
  _cmdHeader                : CmdHeader;  
   /// internal response header

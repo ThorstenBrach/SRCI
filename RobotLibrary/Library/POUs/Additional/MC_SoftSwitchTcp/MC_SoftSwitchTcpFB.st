@@ -55,6 +55,31 @@ END_VAR
 
 END_FUNCTION_BLOCK
 
+METHOD INTERNAL CheckAddParameter : BOOL
+VAR_INPUT
+  /// Payload pointer
+  PayloadPtr : UDINT;
+END_VAR
+VAR
+  /// Payload as byte array
+  Payload    : ARRAY [1..SIZEOF(_command)] OF BYTE;
+  /// Null Byte array 
+  Null       : ARRAY [1..SIZEOF(_command)] OF BYTE;
+  /// Data length to compare
+  DataLen    : UDINT;
+END_VAR
+
+  // Payload pointer must be decreased by one byte, because ADR(Payload) is already one byte !
+  PayloadPtr := LIMIT (0, PayloadPtr - 1, SIZEOF(Payload) -1);
+  // Convert command struct to payload array
+  SysDepMemCpy( pDest := ADR(Payload), pSrc := ADR(_command), DataLen := SIZEOF(_command));
+  // Calculate the data length to compare - at least one byte must be compared !
+  DataLen := LIMIT(1, SIZEOF(Payload) - PayloadPtr, SIZEOF(Payload)); 
+  // Compare Payload-Array with Null-Byte-Array
+  CheckAddParameter := SysDepMemCmp( pData1 := ADR(Payload) + PayloadPtr , pData2 := ADR(Null), DataLen := DataLen) <>  RobotLibraryConstants.OK ;
+
+END_METHOD
+
 METHOD PROTECTED CheckFunctionSupported : BOOL
 VAR_IN_OUT
   /// Robot assignment of function
@@ -327,6 +352,10 @@ VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
+VAR
+  /// Parameter count
+ _parameterCnt : DINT;
+END_VAR
 // Table 6-748: Sent CMD payload (PLC to RC) of "SoftSwitchTCP"
 // --------------------------
 // Header
@@ -408,45 +437,189 @@ END_VAR
   // call base implementation to copy header to payload buffer
   CreateCommandPayload := SUPER^.CreateCommandPayload(AxesGroup := AxesGroup);
   
-  // add command.LimitMode
-  CreateCommandPayload.AddUsint(_command.LimitMode);
-  // add command.CompliantAxes
-  CreateCommandPayload.AddByte(_command.CompliantAxes);
-  // add command.ReferenceType
-  CreateCommandPayload.AddBool(_command.ReferenceType.0);
-  // add command.ReferenceNo
-  CreateCommandPayload.AddUsint(_command.ReferenceNo);
-  // add command.ResistanceForceTCP
-  CreateCommandPayload.AddInt(_command.ResistanceForceTCP);
-  // add command.ResistanceForceAxis[0]
-  CreateCommandPayload.AddUint(_command.ResistanceForceAxis[0]);
-  // add command.ResistanceForceAxis[1]
-  CreateCommandPayload.AddUint(_command.ResistanceForceAxis[1]);
-  // add command.ResistanceForceAxis[2]
-  CreateCommandPayload.AddUint(_command.ResistanceForceAxis[2]);
-  // add command.ResistanceForceAxis[3]
-  CreateCommandPayload.AddUint(_command.ResistanceForceAxis[3]);
-  // add command.ResistanceForceAxis[4]
-  CreateCommandPayload.AddUint(_command.ResistanceForceAxis[4]);
-  // add command.ResistanceForceAxis[5]
-  CreateCommandPayload.AddUint(_command.ResistanceForceAxis[5]);
-  // add command.VectorData[0]
-  CreateCommandPayload.AddReal(_command.VectorData[0]);
-  // add command.VectorData[1]
-  CreateCommandPayload.AddReal(_command.VectorData[1]);
-  // add command.VectorData[2]
-  CreateCommandPayload.AddReal(_command.VectorData[2]);
-  // add command.VectorData[3]
-  CreateCommandPayload.AddReal(_command.VectorData[3]);
-  // add command.VectorData[4]
-  CreateCommandPayload.AddReal(_command.VectorData[4]);
-  // add command.VectorData[5]
-  CreateCommandPayload.AddReal(_command.VectorData[5]);
-  // add command.ResistanceForceMode
-  CreateCommandPayload.AddUsint(_command.ResistanceForceMode);
   
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.LimitMode
+    CreateCommandPayload.AddUsint(_command.LimitMode);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.CompliantAxes
+    CreateCommandPayload.AddByte(_command.CompliantAxes);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.ReferenceType
+    CreateCommandPayload.AddBool(_command.ReferenceType.0);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.ReferenceNo
+    CreateCommandPayload.AddUsint(_command.ReferenceNo);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.ResistanceForceTCP
+    CreateCommandPayload.AddInt(_command.ResistanceForceTCP);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.ResistanceForceAxis[0]
+    CreateCommandPayload.AddUint(_command.ResistanceForceAxis[0]);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.ResistanceForceAxis[1]
+    CreateCommandPayload.AddUint(_command.ResistanceForceAxis[1]);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.ResistanceForceAxis[2]
+    CreateCommandPayload.AddUint(_command.ResistanceForceAxis[2]);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.ResistanceForceAxis[3]
+    CreateCommandPayload.AddUint(_command.ResistanceForceAxis[3]);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.ResistanceForceAxis[4]
+    CreateCommandPayload.AddUint(_command.ResistanceForceAxis[4]);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.ResistanceForceAxis[5]
+    CreateCommandPayload.AddUint(_command.ResistanceForceAxis[5]);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.VectorData[0]
+    CreateCommandPayload.AddReal(_command.VectorData[0]);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.VectorData[1]
+    CreateCommandPayload.AddReal(_command.VectorData[1]);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.VectorData[2]
+    CreateCommandPayload.AddReal(_command.VectorData[2]);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.VectorData[3]
+    CreateCommandPayload.AddReal(_command.VectorData[3]);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.VectorData[4]
+    CreateCommandPayload.AddReal(_command.VectorData[4]);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.VectorData[5]
+    CreateCommandPayload.AddReal(_command.VectorData[5]);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.ResistanceForceMode
+    CreateCommandPayload.AddUsint(_command.ResistanceForceMode);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+    
   // Create logging
-  CreateCommandPayloadLog(AxesGroup := AxesGroup);
+  CreateCommandPayloadLog(AxesGroup := AxesGroup, ParameterCnt := _parameterCnt);
 
 END_METHOD
 
@@ -455,14 +628,24 @@ VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
+VAR_INPUT
+  /// Parameter count
+  ParameterCnt : DINT;
+END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := AxesGroup.State.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Create command payload with the following parameter(s) :');
+                          MessageText := 'Create command payload with the {1} parameter(s) :',
+                          Para1       := DINT_TO_STRING(ParameterCnt));
     
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LimitMode
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -471,6 +654,11 @@ END_VAR
                           MessageText := 'Command.LimitMode = {1}',
                           Para1       :=  LIMIT_MODE_TO_STRING(_command.LimitMode));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for CompliantAxes
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -479,6 +667,11 @@ END_VAR
                           MessageText := 'Command.CompliantAxes = {1}',
                           Para1       :=  BYTE_TO_STRING(_command.CompliantAxes));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ReferenceType
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -487,6 +680,11 @@ END_VAR
                           MessageText := 'Command.ReferenceType = {1}',
                           Para1       :=  BYTE_TO_STRING_BIN(_command.ReferenceType));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ReferenceNo
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -495,6 +693,11 @@ END_VAR
                           MessageText := 'Command.ReferenceNo = {1}',
                           Para1       :=  USINT_TO_STRING(_command.ReferenceNo));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ResistanceForceTCP
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -503,6 +706,11 @@ END_VAR
                           MessageText := 'Command.ResistanceForceTCP = {1}',
                           Para1       :=  INT_TO_STRING(_command.ResistanceForceTCP));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ResistanceForceAxis[0]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -511,6 +719,11 @@ END_VAR
                           MessageText := 'Command.ResistanceForceAxis[0] = {1}',
                           Para1       :=  UINT_TO_STRING(_command.ResistanceForceAxis[0]));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ResistanceForceAxis[1]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -519,6 +732,11 @@ END_VAR
                           MessageText := 'Command.ResistanceForceAxis[1] = {1}',
                           Para1       :=  UINT_TO_STRING(_command.ResistanceForceAxis[1]));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ResistanceForceAxis[2]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -527,6 +745,11 @@ END_VAR
                           MessageText := 'Command.ResistanceForceAxis[2] = {1}',
                           Para1       :=  UINT_TO_STRING(_command.ResistanceForceAxis[2]));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ResistanceForceAxis[3]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -535,6 +758,11 @@ END_VAR
                           MessageText := 'Command.ResistanceForceAxis[3] = {1}',
                           Para1       :=  UINT_TO_STRING(_command.ResistanceForceAxis[3]));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ResistanceForceAxis[4]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -543,6 +771,11 @@ END_VAR
                           MessageText := 'Command.ResistanceForceAxis[4] = {1}',
                           Para1       :=  UINT_TO_STRING(_command.ResistanceForceAxis[4]));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ResistanceForceAxis[5]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -551,6 +784,11 @@ END_VAR
                           MessageText := 'Command.ResistanceForceAxis[5] = {1}',
                           Para1       :=  UINT_TO_STRING(_command.ResistanceForceAxis[5]));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for VectorData[0]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -559,6 +797,11 @@ END_VAR
                           MessageText := 'Command.VectorData[0] = {1}',
                           Para1       :=  REAL_TO_STRING(_command.VectorData[0]));
                           
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for VectorData[1]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -567,6 +810,11 @@ END_VAR
                           MessageText := 'Command.VectorData[1] = {1}',
                           Para1       :=  REAL_TO_STRING(_command.VectorData[1]));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for VectorData[2]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -575,6 +823,11 @@ END_VAR
                           MessageText := 'Command.VectorData[2] = {1}',
                           Para1       :=  REAL_TO_STRING(_command.VectorData[2]));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for VectorData[3]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -583,6 +836,11 @@ END_VAR
                           MessageText := 'Command.VectorData[3] = {1}',
                           Para1       :=  REAL_TO_STRING(_command.VectorData[3]));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for VectorData[4]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -591,6 +849,11 @@ END_VAR
                           MessageText := 'Command.VectorData[4] = {1}',
                           Para1       :=  REAL_TO_STRING(_command.VectorData[4]));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for VectorData[5]
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -599,6 +862,11 @@ END_VAR
                           MessageText := 'Command.VectorData[5] = {1}',
                           Para1       :=  REAL_TO_STRING(_command.VectorData[5]));
                           
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ResistanceForceMode
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -721,6 +989,10 @@ VAR_INPUT
   /// Timestamp
   Timestamp    : SystemTime;  
 END_VAR
+VAR
+  /// Parameter count
+ _parameterCnt : DINT;
+END_VAR
 // Table 6-749: Received CMD payload (RC to PLC) of "SoftSwitchTCP"
 // --------------------------
 // Header
@@ -743,11 +1015,19 @@ END_VAR
   _response.AlarmMessageSeverity := _rspHeader.AlarmMessageSeverity;
   _response.AlarmMessageCode     := _rspHeader.AlarmMessageCode;
   
-  // Get Response.SoftMovement
-  _response.SoftMovement := ResponseData.GetBool();
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+    // Get Response.SoftMovement
+   _response.SoftMovement := ResponseData.GetBool();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
   
   // Create logging
-  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp, ParameterCnt := _parameterCnt);
 
 END_METHOD
 
@@ -757,15 +1037,23 @@ VAR_INPUT
   ResponseData : RobotLibraryResponseDataFB;
   /// Timestamp
   Timestamp    : SystemTime;  
+  /// Parameter count
+  ParameterCnt : DINT;
 END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := Timestamp,
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Parsed the following parameter(s) from response data:');
+                          MessageText := '{1} parameter(s) to parse from the response data:',
+                          Para1       := DINT_TO_STRING(ParameterCnt));
                           
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for SoftMovement
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,

@@ -2671,6 +2671,9 @@ VAR
  _InSyncReferenceDynamicOk : BOOL;
 END_VAR
 
+  HandleSyncToolData              ( AxesGroup := AxesGroup, ToolData          := ToolData);
+  RETURN; {warning 'ToDo: Enable Sync again'}
+  
   HandleSyncFrameData             ( AxesGroup := AxesGroup, FrameData         := FrameData);
   HandleSyncLoadData              ( AxesGroup := AxesGroup, LoadData          := LoadData);
   HandleSyncRobotDefaultDynamics  ( AxesGroup := AxesGroup, DefaultDynamics   := DefaultDynamics);

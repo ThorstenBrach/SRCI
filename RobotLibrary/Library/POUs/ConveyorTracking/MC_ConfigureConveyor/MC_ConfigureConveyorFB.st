@@ -46,6 +46,31 @@ END_VAR
 
 END_FUNCTION_BLOCK
 
+METHOD INTERNAL CheckAddParameter : BOOL
+VAR_INPUT
+  /// Payload pointer
+  PayloadPtr : UDINT;
+END_VAR
+VAR
+  /// Payload as byte array
+  Payload    : ARRAY [1..SIZEOF(_command)] OF BYTE;
+  /// Null Byte array 
+  Null       : ARRAY [1..SIZEOF(_command)] OF BYTE;
+  /// Data length to compare
+  DataLen    : UDINT;
+END_VAR
+
+  // Payload pointer must be decreased by one byte, because ADR(Payload) is already one byte !
+  PayloadPtr := LIMIT (0, PayloadPtr - 1, SIZEOF(Payload) -1);
+  // Convert command struct to payload array
+  SysDepMemCpy( pDest := ADR(Payload), pSrc := ADR(_command), DataLen := SIZEOF(_command));
+  // Calculate the data length to compare - at least one byte must be compared !
+  DataLen := LIMIT(1, SIZEOF(Payload) - PayloadPtr, SIZEOF(Payload)); 
+  // Compare Payload-Array with Null-Byte-Array
+  CheckAddParameter := SysDepMemCmp( pData1 := ADR(Payload) + PayloadPtr , pData2 := ADR(Null), DataLen := DataLen) <>  RobotLibraryConstants.OK ;
+
+END_METHOD
+
 METHOD PROTECTED CheckFunctionSupported : BOOL
 VAR_IN_OUT
   /// Robot assignment of function
@@ -380,6 +405,10 @@ VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
+VAR
+  /// Parameter count
+ _parameterCnt : DINT;
+END_VAR
 // Table 6-458: Sent CMD payload (PLC to RC) of "ConfigureConveyor"
 // --------------------------
 // Header
@@ -468,45 +497,188 @@ END_VAR
   CreateCommandPayload := SUPER^.CreateCommandPayload(AxesGroup := AxesGroup);
   
   
-  // add command.ConveyorOrigin.Timestamp.IEC_DATE
-  CreateCommandPayload.AddIecDate(_command.ConveyorOrigin.Timestamp.IEC_DATE);
-  // add command.ConveyorOrigin.Timestamp.IEC_TIME
-  CreateCommandPayload.AddIecTime(_command.ConveyorOrigin.Timestamp.IEC_TIME);
-  // add command.ConveyorOrigin.ReferenceFrame
-  CreateCommandPayload.AddUsint(_command.ConveyorOrigin.ReferenceFrame);
-  // add command.ConveyorOrigin.Reserve
-  CreateCommandPayload.AddByte(0);
-  // add command.ConveyorOrigin.ReferenceFrame.X
-  CreateCommandPayload.AddReal(_command.ConveyorOrigin.X);
-  // add command.ConveyorOrigin.ReferenceFrame.Y
-  CreateCommandPayload.AddReal(_command.ConveyorOrigin.Y);
-  // add command.ConveyorOrigin.ReferenceFrame.Z
-  CreateCommandPayload.AddReal(_command.ConveyorOrigin.Z);
-  // add command.ConveyorOrigin.ReferenceFrame.Rx
-  CreateCommandPayload.AddReal(_command.ConveyorOrigin.Rx);
-  // add command.ConveyorOrigin.ReferenceFrame.Ry
-  CreateCommandPayload.AddReal(_command.ConveyorOrigin.Ry);
-  // add command.ConveyorOrigin.ReferenceFrame.Rz
-  CreateCommandPayload.AddReal(_command.ConveyorOrigin.Rz);
-  // add command.ConveyorOriginAvailable
-  CreateCommandPayload.AddBool(_command.ConveyorOriginAvailable);
-  // add command.ConveyorNo
-  CreateCommandPayload.AddUsint(_command.ConveyorNo);
-  // add command.ConveyorType
-  CreateCommandPayload.AddUsint(_command.ConveyorType);
-  // add command.Radius
-  CreateCommandPayload.AddReal(_command.Radius);
-  // add command.StartDistance
-  CreateCommandPayload.AddReal(_command.StartDistance);
-  // add command.EndDistance
-  CreateCommandPayload.AddReal(_command.EndDistance);
-  // add command.SyncInLength
-  CreateCommandPayload.AddReal(_command.SyncInLength);
-  // add command.SyncOutLength
-  CreateCommandPayload.AddReal(_command.SyncOutLength);
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.ConveyorOrigin.Timestamp.IEC_DATE
+    CreateCommandPayload.AddIecDate(_command.ConveyorOrigin.Timestamp.IEC_DATE);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
   
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.ConveyorOrigin.Timestamp.IEC_TIME
+    CreateCommandPayload.AddIecTime(_command.ConveyorOrigin.Timestamp.IEC_TIME);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.ConveyorOrigin.ReferenceFrame
+    CreateCommandPayload.AddUsint(_command.ConveyorOrigin.ReferenceFrame);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.ConveyorOrigin.Reserve
+    CreateCommandPayload.AddByte(0);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.ConveyorOrigin.ReferenceFrame.X
+    CreateCommandPayload.AddReal(_command.ConveyorOrigin.X);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.ConveyorOrigin.ReferenceFrame.Y
+    CreateCommandPayload.AddReal(_command.ConveyorOrigin.Y);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.ConveyorOrigin.ReferenceFrame.Z
+    CreateCommandPayload.AddReal(_command.ConveyorOrigin.Z);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.ConveyorOrigin.ReferenceFrame.Rx
+    CreateCommandPayload.AddReal(_command.ConveyorOrigin.Rx);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.ConveyorOrigin.ReferenceFrame.Ry
+    CreateCommandPayload.AddReal(_command.ConveyorOrigin.Ry);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.ConveyorOrigin.ReferenceFrame.Rz
+    CreateCommandPayload.AddReal(_command.ConveyorOrigin.Rz);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.ConveyorOriginAvailable
+    CreateCommandPayload.AddBool(_command.ConveyorOriginAvailable);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.ConveyorNo
+    CreateCommandPayload.AddUsint(_command.ConveyorNo);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.ConveyorType
+    CreateCommandPayload.AddUsint(_command.ConveyorType);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.Radius
+    CreateCommandPayload.AddReal(_command.Radius);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.StartDistance
+    CreateCommandPayload.AddReal(_command.StartDistance);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.EndDistance
+    CreateCommandPayload.AddReal(_command.EndDistance);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.SyncInLength
+    CreateCommandPayload.AddReal(_command.SyncInLength);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.SyncOutLength
+    CreateCommandPayload.AddReal(_command.SyncOutLength);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+    
   // Create logging
-  CreateCommandPayloadLog(AxesGroup := AxesGroup);
+  CreateCommandPayloadLog(AxesGroup := AxesGroup, ParameterCnt := _parameterCnt);
 
 END_METHOD
 
@@ -515,14 +687,24 @@ VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
+VAR_INPUT
+  /// Parameter count
+  ParameterCnt : DINT;
+END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := AxesGroup.State.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Create command payload with the following parameter(s) :');
+                          MessageText := 'Create command payload with the {1} parameter(s) :',
+                          Para1       := DINT_TO_STRING(ParameterCnt));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ConveyorOrigin.Timestamp.IEC_DATE
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -531,6 +713,11 @@ END_VAR
                           MessageText := 'Command.ConveyorOrigin.Timestamp.IEC_DATE = {1}',
                           Para1       :=  IEC_DATE_TO_STRING(_command.ConveyorOrigin.Timestamp.IEC_DATE));
                          
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ConveyorOrigin.Timestamp.IEC_TIME
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -539,6 +726,11 @@ END_VAR
                           MessageText := 'Command.ConveyorOrigin.Timestamp.IEC_TIME = {1}',
                           Para1       :=  IEC_TIME_TO_STRING(_command.ConveyorOrigin.Timestamp.IEC_TIME));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ConveyorOrigin.ReferenceFrame
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -547,6 +739,11 @@ END_VAR
                           MessageText := 'Command.ConveyorOrigin.ReferenceFrame = {1}',
                           Para1       :=  USINT_TO_STRING(_command.ConveyorOrigin.ReferenceFrame));
                           
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Reserve
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -555,6 +752,11 @@ END_VAR
                           MessageText := 'Command.Reserve = {1}',
                           Para1       :=  BYTE_TO_STRING(0));        
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ConveyorOrigin.X
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -563,6 +765,11 @@ END_VAR
                           MessageText := 'Command.ConveyorOrigin.X = {1}',
                           Para1       :=  REAL_TO_STRING(_command.ConveyorOrigin.X));
                           
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ConveyorOrigin.Y
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -571,6 +778,11 @@ END_VAR
                           MessageText := 'Command.ConveyorOrigin.Y = {1}',
                           Para1       :=  REAL_TO_STRING(_command.ConveyorOrigin.Y));
                           
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ConveyorOrigin.Z
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -579,6 +791,11 @@ END_VAR
                           MessageText := 'Command.ConveyorOrigin.Z = {1}',
                           Para1       :=  REAL_TO_STRING(_command.ConveyorOrigin.Z));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ConveyorOrigin.Rx
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -587,6 +804,11 @@ END_VAR
                           MessageText := 'Command.ConveyorOrigin.Rx = {1}',
                           Para1       :=  REAL_TO_STRING(_command.ConveyorOrigin.Rx));
                           
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ConveyorOrigin.Ry
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -595,6 +817,11 @@ END_VAR
                           MessageText := 'Command.ConveyorOrigin.Ry = {1}',
                           Para1       :=  REAL_TO_STRING(_command.ConveyorOrigin.Ry));
                           
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ConveyorOrigin.Rz
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -603,6 +830,11 @@ END_VAR
                           MessageText := 'Command.ConveyorOrigin.Rz = {1}',
                           Para1       :=  REAL_TO_STRING(_command.ConveyorOrigin.Rz));                        
                           
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ConveyorOriginAvailable
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -611,6 +843,11 @@ END_VAR
                           MessageText := 'Command.ConveyorOriginAvailable = {1}',
                           Para1       :=  BOOL_TO_STRING(_command.ConveyorOriginAvailable));
                           
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ConveyorNo
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -619,6 +856,11 @@ END_VAR
                           MessageText := 'Command.ConveyorNo = {1}',
                           Para1       :=  USINT_TO_STRING(_command.ConveyorNo));
                           
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for ConveyorType
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -627,6 +869,11 @@ END_VAR
                           MessageText := 'Command.ConveyorType = {1}',
                           Para1       :=  CONVEYOR_TYPE_TO_STRING(_command.ConveyorType));                        
                           
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Radius
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -635,6 +882,11 @@ END_VAR
                           MessageText := 'Command.Radius = {1}',
                           Para1       :=  REAL_TO_STRING(_command.Radius));       
                           
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for StartDistance
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -643,6 +895,11 @@ END_VAR
                           MessageText := 'Command.StartDistance = {1}',
                           Para1       :=  REAL_TO_STRING(_command.StartDistance));       
       
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for EndDistance
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -651,6 +908,11 @@ END_VAR
                           MessageText := 'Command.EndDistance = {1}',
                           Para1       :=  REAL_TO_STRING(_command.EndDistance));           
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for SyncInLength
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -659,6 +921,11 @@ END_VAR
                           MessageText := 'Command.SyncInLength = {1}',
                           Para1       :=  REAL_TO_STRING(_command.SyncInLength));           
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for SyncOutLength
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -774,6 +1041,10 @@ VAR_INPUT
   /// Timestamp
   Timestamp    : SystemTime;  
 END_VAR
+VAR
+  /// Parameter count
+ _parameterCnt : DINT;
+END_VAR
 // Table 6-459: Received CMD payload (RC to PLC) of "ConfigureConveyor"
 // --------------------------
 // Header
@@ -794,7 +1065,7 @@ END_VAR
   _response.AlarmMessageCode      := _rspHeader.AlarmMessageCode;
   
   // Create logging
-  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp, ParameterCnt := _parameterCnt);
 
 END_METHOD
 
@@ -804,15 +1075,23 @@ VAR_INPUT
   ResponseData : RobotLibraryResponseDataFB;
   /// Timestamp
   Timestamp    : SystemTime;  
+  /// Parameter count
+  ParameterCnt : DINT;
 END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := Timestamp,
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Parsed the following parameter(s) from response data:');
+                          MessageText := '{1} parameter(s) to parse from the response data:',
+                          Para1       := DINT_TO_STRING(ParameterCnt));
                           
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for no parameter 
   CreateLogMessage      ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,

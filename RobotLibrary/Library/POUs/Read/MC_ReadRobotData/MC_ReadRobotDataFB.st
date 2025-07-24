@@ -47,6 +47,31 @@ END_VAR
 
 END_FUNCTION_BLOCK
 
+METHOD INTERNAL CheckAddParameter : BOOL
+VAR_INPUT
+  /// Payload pointer
+  PayloadPtr : UDINT;
+END_VAR
+VAR
+  /// Payload as byte array
+  Payload    : ARRAY [1..SIZEOF(_command)] OF BYTE;
+  /// Null Byte array 
+  Null       : ARRAY [1..SIZEOF(_command)] OF BYTE;
+  /// Data length to compare
+  DataLen    : UDINT;
+END_VAR
+
+  // Payload pointer must be decreased by one byte, because ADR(Payload) is already one byte !
+  PayloadPtr := LIMIT (0, PayloadPtr - 1, SIZEOF(Payload) -1);
+  // Convert command struct to payload array
+  SysDepMemCpy( pDest := ADR(Payload), pSrc := ADR(_command), DataLen := SIZEOF(_command));
+  // Calculate the data length to compare - at least one byte must be compared !
+  DataLen := LIMIT(1, SIZEOF(Payload) - PayloadPtr, SIZEOF(Payload)); 
+  // Compare Payload-Array with Null-Byte-Array
+  CheckAddParameter := SysDepMemCmp( pData1 := ADR(Payload) + PayloadPtr , pData2 := ADR(Null), DataLen := DataLen) <>  RobotLibraryConstants.OK ;
+
+END_METHOD
+
 METHOD PROTECTED CheckFunctionSupported : BOOL
 VAR_IN_OUT
   /// Robot assignment of function
@@ -107,6 +132,10 @@ VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
+VAR
+  /// Parameter count
+ _parameterCnt : DINT;
+END_VAR
 // Table 6-17: Sent CMD payload (PLC to RC) of "ReadRobotData"
 // --------------------------
 // Header
@@ -129,7 +158,7 @@ END_VAR
   CreateCommandPayload := SUPER^.CreateCommandPayload(AxesGroup := AxesGroup);
   
   // Create logging
-  CreateCommandPayloadLog(AxesGroup := AxesGroup);
+  CreateCommandPayloadLog(AxesGroup := AxesGroup, ParameterCnt := _parameterCnt);
 
 END_METHOD
 
@@ -138,13 +167,18 @@ VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
+VAR_INPUT
+  /// Parameter count
+  ParameterCnt : DINT;
+END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := AxesGroup.State.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Create command payload without additional parameter(s)');
+                          MessageText := 'Create command payload with the {1} parameter(s) :',
+                          Para1       := DINT_TO_STRING(ParameterCnt));
 
 END_METHOD
 
@@ -271,6 +305,10 @@ VAR_INPUT
   ResponseData : RobotLibraryResponseDataFB;
   /// Timestamp
   Timestamp    : SystemTime;  
+END_VAR
+VAR
+  /// Parameter count
+ _parameterCnt : DINT;
 END_VAR
 // Table 6-18: Received CMD payload (RC to PLC) of "ReadRobotData"
 // --------------------------
@@ -424,40 +462,159 @@ END_VAR
   _response.AlarmMessageSeverity := _rspHeader.AlarmMessageSeverity;
   _response.AlarmMessageCode     := _rspHeader.AlarmMessageCode;
   
-  // Get _response.RCManufacturer
-  ResponseData.GetDataBlock(pData := ADR(_response.RCManufacturer)      , SIZEOF(_response.RCManufacturer   )   , IsString := TRUE );
-  // Get _response.RCOrderID
-  ResponseData.GetDataBlock(pData := ADR(_response.RCOrderID)           , SIZEOF(_response.RCOrderID        )   , IsString := TRUE );
-  // Get _response.RCSerialNumber
-  ResponseData.GetDataBlock(pData := ADR(_response.RCSerialNumber)      , SIZEOF(_response.RCSerialNumber   )   , IsString := TRUE );
-  // Get _response.RASerialNumber
-  ResponseData.GetDataBlock(pData := ADR(_response.RASerialNumber)      , SIZEOF(_response.RASerialNumber   )   , IsString := TRUE );
-  // Get _response.RCFirmwareVersion
-  ResponseData.GetDataBlock(pData := ADR(_response.RCFirmwareVersion)   , SIZEOF(_response.RCFirmwareVersion)   , IsString := TRUE );
-  // Get _response.RCInterpreterVersion
-  ResponseData.GetDataBlock(pData := ADR(_response.RCInterpreterVersion), SIZEOF(_response.RCInterpreterVersion), IsString := TRUE );
   
-  // Get _response.Reserve
-  _response.Reserve := ResponseData.GetByte(); 
-  // Get _response.AxisJointUsed
-  _response.AxisJointUsed := ResponseData.GetByte(); 
-  // Get _response.AxisExternalUsed
-  _response.AxisExternalUsed := ResponseData.GetByte(); 
-  // Get _response.AxisJointUnit
-  _response.AxisJointUnit := ResponseData.GetByte(); 
-  // Get _response.AxisExternalUnit
-  _response.AxisExternalUnit := ResponseData.GetByte();
-  // Get _response.RCSupportedFunctions
-  ResponseData.GetDataBlock(pData := ADR(_response.RCSupportedFunctions), SIZEOF(_response.RCSupportedFunctions), IsString := FALSE );
-  // Get _response.Reserve2
-  _response.Reserve2 := ResponseData.GetByte(); 
-  // Get _response.RobotID
-  ResponseData.GetDataBlock(pData := ADR(_response.RobotID)             , SIZEOF(_response.RobotID)             , IsString := TRUE );
-  // Get _response.InterpreterCycleTime
-  _response.InterpreterCycleTime := ResponseData.GetUsint(); 
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get _response.RCManufacturer
+    ResponseData.GetDataBlock(pData := ADR(_response.RCManufacturer)      , SIZEOF(_response.RCManufacturer   )   , IsString := TRUE );
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
   
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get _response.RCOrderID
+    ResponseData.GetDataBlock(pData := ADR(_response.RCOrderID)           , SIZEOF(_response.RCOrderID        )   , IsString := TRUE );
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get _response.RCSerialNumber
+    ResponseData.GetDataBlock(pData := ADR(_response.RCSerialNumber)      , SIZEOF(_response.RCSerialNumber   )   , IsString := TRUE );
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get _response.RASerialNumber
+    ResponseData.GetDataBlock(pData := ADR(_response.RASerialNumber)      , SIZEOF(_response.RASerialNumber   )   , IsString := TRUE );
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get _response.RCFirmwareVersion
+    ResponseData.GetDataBlock(pData := ADR(_response.RCFirmwareVersion)   , SIZEOF(_response.RCFirmwareVersion)   , IsString := TRUE );
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get _response.RCInterpreterVersion
+    ResponseData.GetDataBlock(pData := ADR(_response.RCInterpreterVersion), SIZEOF(_response.RCInterpreterVersion), IsString := TRUE );
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get _response.Reserve
+   _response.Reserve := ResponseData.GetByte(); 
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get _response.AxisJointUsed
+   _response.AxisJointUsed := ResponseData.GetByte(); 
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get _response.AxisExternalUsed
+   _response.AxisExternalUsed := ResponseData.GetByte(); 
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get _response.AxisJointUnit
+   _response.AxisJointUnit := ResponseData.GetByte(); 
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get _response.AxisExternalUnit
+   _response.AxisExternalUnit := ResponseData.GetByte();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get _response.RCSupportedFunctions
+    ResponseData.GetDataBlock(pData := ADR(_response.RCSupportedFunctions), SIZEOF(_response.RCSupportedFunctions), IsString := FALSE );
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get _response.Reserve2
+   _response.Reserve2 := ResponseData.GetByte(); 
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get _response.RobotID
+    ResponseData.GetDataBlock(pData := ADR(_response.RobotID)             , SIZEOF(_response.RobotID)             , IsString := TRUE );
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get _response.InterpreterCycleTime
+   _response.InterpreterCycleTime := ResponseData.GetUsint(); 
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+   
   // Create logging
-  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp, ParameterCnt := _parameterCnt);
 
 END_METHOD
 
@@ -467,6 +624,8 @@ VAR_INPUT
   ResponseData : RobotLibraryResponseDataFB;
   /// Timestamp
   Timestamp    : SystemTime;  
+  /// Parameter count
+  ParameterCnt : DINT;
 END_VAR
 VAR 
   /// internal index for loops
@@ -476,12 +635,18 @@ VAR
 END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := Timestamp,
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Parsed the following parameter(s) from response data:');
+                          MessageText := '{1} parameter(s) to parse from the response data:',
+                          Para1       := DINT_TO_STRING(ParameterCnt));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for RCManufacturer
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -490,6 +655,11 @@ END_VAR
                           MessageText := 'Response.RCManufacturer = {1}',
                           Para1       := _response.RCManufacturer);
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for RCOrderID
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -498,6 +668,11 @@ END_VAR
                           MessageText := 'Response.RCOrderID = {1}',
                           Para1       := _response.RCOrderID);
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for RCSerialNumber
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -506,6 +681,11 @@ END_VAR
                           MessageText := 'Response.RCSerialNumber = {1}',
                           Para1       := _response.RCSerialNumber);
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for RASerialNumber
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -514,6 +694,11 @@ END_VAR
                           MessageText := 'Response.RASerialNumber = {1}',
                           Para1       := _response.RASerialNumber);
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for RCFirmwareVersion
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -522,6 +707,11 @@ END_VAR
                           MessageText := 'Response.RCFirmwareVersion = {1}',
                           Para1       := _response.RCFirmwareVersion);
                           
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for RCInterpreterVersion
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -530,6 +720,11 @@ END_VAR
                           MessageText := 'Response.RCInterpreterVersion = {1}',
                           Para1       := _response.RCInterpreterVersion);
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Reserve
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -538,6 +733,11 @@ END_VAR
                           MessageText := 'Response.Reserve = {1}',
                           Para1       :=  BYTE_TO_STRING(_response.Reserve));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for AxisJointUsed
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -546,6 +746,11 @@ END_VAR
                           MessageText := 'Response.AxisJointUsed = {1}',
                           Para1       :=  BYTE_TO_STRING_BIN(_response.AxisJointUsed));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for AxisExternalUsed
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -554,6 +759,11 @@ END_VAR
                           MessageText := 'Response.AxisExternalUsed = {1}',
                           Para1       :=  BYTE_TO_STRING_BIN(_response.AxisExternalUsed));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for AxisJointUnit
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -562,6 +772,11 @@ END_VAR
                           MessageText := 'Response.AxisJointUnit = {1}',
                           Para1       :=  BYTE_TO_STRING(_response.AxisJointUnit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for AxisExternalUnit
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -572,9 +787,13 @@ END_VAR
   
   FOR _idx := 0 TO 18
   do
-   _tmpStr := '16#';
+   _tmpStr := '2#';
    _tmpStr := CONCAT( _tmpStr, BYTE_TO_STRING_BIN(_response.RCSupportedFunctions[_idx]));
   
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
     // Create log entry for RCSupportedFunctions
     CreateLogMessagePara2 ( Timestamp   := Timestamp,
                             MessageType := MessageType.CMD,
@@ -585,6 +804,11 @@ END_VAR
                             Para2       :=  DINT_TO_STRING(_idx));
   END_FOR
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for Reserve2
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -593,6 +817,11 @@ END_VAR
                           MessageText := 'Response.Reserve2 = {1}',
                           Para1       :=  BYTE_TO_STRING(_response.Reserve2));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for RobotID
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -601,6 +830,11 @@ END_VAR
                           MessageText := 'Response.RobotID = {1}',
                           Para1       :=  _response.RobotID);
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for InterpreterCycleTime
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,

@@ -46,6 +46,31 @@ END_VAR
 
 END_FUNCTION_BLOCK
 
+METHOD INTERNAL CheckAddParameter : BOOL
+VAR_INPUT
+  /// Payload pointer
+  PayloadPtr : UDINT;
+END_VAR
+VAR
+  /// Payload as byte array
+  Payload    : ARRAY [1..SIZEOF(_command)] OF BYTE;
+  /// Null Byte array 
+  Null       : ARRAY [1..SIZEOF(_command)] OF BYTE;
+  /// Data length to compare
+  DataLen    : UDINT;
+END_VAR
+
+  // Payload pointer must be decreased by one byte, because ADR(Payload) is already one byte !
+  PayloadPtr := LIMIT (0, PayloadPtr - 1, SIZEOF(Payload) -1);
+  // Convert command struct to payload array
+  SysDepMemCpy( pDest := ADR(Payload), pSrc := ADR(_command), DataLen := SIZEOF(_command));
+  // Calculate the data length to compare - at least one byte must be compared !
+  DataLen := LIMIT(1, SIZEOF(Payload) - PayloadPtr, SIZEOF(Payload)); 
+  // Compare Payload-Array with Null-Byte-Array
+  CheckAddParameter := SysDepMemCmp( pData1 := ADR(Payload) + PayloadPtr , pData2 := ADR(Null), DataLen := DataLen) <>  RobotLibraryConstants.OK ;
+
+END_METHOD
+
 METHOD PROTECTED CheckFunctionSupported : BOOL
 VAR_IN_OUT
   /// Robot assignment of function
@@ -103,6 +128,10 @@ VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
+VAR
+  /// Parameter count
+ _parameterCnt : DINT;
+END_VAR
 // Table 6-178: Sent CMD payload (PLC to RC) of "ReadRobotSWLimits"
 // --------------------------
 // Header
@@ -125,7 +154,7 @@ END_VAR
   CreateCommandPayload := SUPER^.CreateCommandPayload(AxesGroup := AxesGroup);
   
   // Create logging
-  CreateCommandPayloadLog(AxesGroup := AxesGroup);
+  CreateCommandPayloadLog(AxesGroup := AxesGroup, ParameterCnt := _parameterCnt);
 
 END_METHOD
 
@@ -134,13 +163,18 @@ VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
+VAR_INPUT
+  /// Parameter count
+  ParameterCnt : DINT;
+END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := AxesGroup.State.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Create command payload without additional parameter(s)');
+                          MessageText := 'Create command payload with the {1} parameter(s) :',
+                          Para1       := DINT_TO_STRING(ParameterCnt));
 
 END_METHOD
 
@@ -249,6 +283,10 @@ VAR_INPUT
   ResponseData : RobotLibraryResponseDataFB;
   /// Timestamp
   Timestamp    : SystemTime;  
+END_VAR
+VAR
+  /// Parameter count
+ _parameterCnt : DINT;
 END_VAR
 // Table 6-179: Received CMD payload (RC to PLC) of "WriteRobotSWLimits"
 // --------------------------
@@ -375,61 +413,269 @@ END_VAR
   _response.AlarmMessageSeverity := _rspHeader.AlarmMessageSeverity;
   _response.AlarmMessageCode     := _rspHeader.AlarmMessageCode;
   
-  // Get Response.LimitValues.Timestamp.IEC_DATE
-  _response.LimitValues.Timestamp.IEC_DATE := ResponseData.GetIecDate();
-  // Get Response.LimitValues.Timestamp.IEC_TIME
-  _response.LimitValues.Timestamp.IEC_TIME := ResponseData.GetIecTime();
-  // Get Response.LimitValues.J1LowerLimit
-  _response.LimitValues.J1LowerLimit := ResponseData.GetReal();
-  // Get Response.LimitValues.J2LowerLimit
-  _response.LimitValues.J2LowerLimit := ResponseData.GetReal();
-  // Get Response.LimitValues.J3LowerLimit
-  _response.LimitValues.J3LowerLimit := ResponseData.GetReal();
-  // Get Response.LimitValues.J4LowerLimit
-  _response.LimitValues.J4LowerLimit := ResponseData.GetReal();
-  // Get Response.LimitValues.J5LowerLimit
-  _response.LimitValues.J5LowerLimit := ResponseData.GetReal();
-  // Get Response.LimitValues.J6LowerLimit
-  _response.LimitValues.J6LowerLimit := ResponseData.GetReal();
-  // Get Response.LimitValues.E1LowerLimit
-  _response.LimitValues.E1LowerLimit := ResponseData.GetReal();
-  // Get Response.LimitValues.J1UpperLimit
-  _response.LimitValues.J1UpperLimit := ResponseData.GetReal();
-  // Get Response.LimitValues.J2UpperLimit
-  _response.LimitValues.J2UpperLimit := ResponseData.GetReal();
-  // Get Response.LimitValues.J3UpperLimit
-  _response.LimitValues.J3UpperLimit := ResponseData.GetReal();
-  // Get Response.LimitValues.J4UpperLimit
-  _response.LimitValues.J4UpperLimit := ResponseData.GetReal();
-  // Get Response.LimitValues.J5UpperLimit
-  _response.LimitValues.J5UpperLimit := ResponseData.GetReal();
-  // Get Response.LimitValues.J6UpperLimit
-  _response.LimitValues.J6UpperLimit := ResponseData.GetReal();
-  // Get Response.LimitValues.E1UpperLimit
-  _response.LimitValues.E1UpperLimit := ResponseData.GetReal();
-  // Get Response.LimitValues.E2LowerLimit
-  _response.LimitValues.E2LowerLimit := ResponseData.GetReal();
-  // Get Response.LimitValues.E3LowerLimit
-  _response.LimitValues.E3LowerLimit := ResponseData.GetReal();
-  // Get Response.LimitValues.E4LowerLimit
-  _response.LimitValues.E4LowerLimit := ResponseData.GetReal();
-  // Get Response.LimitValues.E5LowerLimit
-  _response.LimitValues.E5LowerLimit := ResponseData.GetReal();
-  // Get Response.LimitValues.E6LowerLimit
-  _response.LimitValues.E6LowerLimit := ResponseData.GetReal();
-  // Get Response.LimitValues.E2UpperLimit
-  _response.LimitValues.E2UpperLimit := ResponseData.GetReal();
-  // Get Response.LimitValues.E3UpperLimit
-  _response.LimitValues.E3UpperLimit := ResponseData.GetReal();
-  // Get Response.LimitValues.E4UpperLimit
-  _response.LimitValues.E4UpperLimit := ResponseData.GetReal();
-  // Get Response.LimitValues.E5UpperLimit
-  _response.LimitValues.E5UpperLimit := ResponseData.GetReal();
-  // Get Response.LimitValues.E6UpperLimit
-  _response.LimitValues.E6UpperLimit := ResponseData.GetReal();
   
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.LimitValues.Timestamp.IEC_DATE
+   _response.LimitValues.Timestamp.IEC_DATE := ResponseData.GetIecDate();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.LimitValues.Timestamp.IEC_TIME
+   _response.LimitValues.Timestamp.IEC_TIME := ResponseData.GetIecTime();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.LimitValues.J1LowerLimit
+   _response.LimitValues.J1LowerLimit := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.LimitValues.J2LowerLimit
+   _response.LimitValues.J2LowerLimit := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.LimitValues.J3LowerLimit
+   _response.LimitValues.J3LowerLimit := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.LimitValues.J4LowerLimit
+   _response.LimitValues.J4LowerLimit := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.LimitValues.J5LowerLimit
+   _response.LimitValues.J5LowerLimit := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.LimitValues.J6LowerLimit
+   _response.LimitValues.J6LowerLimit := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.LimitValues.E1LowerLimit
+   _response.LimitValues.E1LowerLimit := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.LimitValues.J1UpperLimit
+   _response.LimitValues.J1UpperLimit := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.LimitValues.J2UpperLimit
+   _response.LimitValues.J2UpperLimit := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.LimitValues.J3UpperLimit
+   _response.LimitValues.J3UpperLimit := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.LimitValues.J4UpperLimit
+   _response.LimitValues.J4UpperLimit := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.LimitValues.J5UpperLimit
+   _response.LimitValues.J5UpperLimit := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.LimitValues.J6UpperLimit
+   _response.LimitValues.J6UpperLimit := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.LimitValues.E1UpperLimit
+   _response.LimitValues.E1UpperLimit := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.LimitValues.E2LowerLimit
+   _response.LimitValues.E2LowerLimit := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.LimitValues.E3LowerLimit
+   _response.LimitValues.E3LowerLimit := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.LimitValues.E4LowerLimit
+   _response.LimitValues.E4LowerLimit := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.LimitValues.E5LowerLimit
+   _response.LimitValues.E5LowerLimit := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.LimitValues.E6LowerLimit
+   _response.LimitValues.E6LowerLimit := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.LimitValues.E2UpperLimit
+   _response.LimitValues.E2UpperLimit := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.LimitValues.E3UpperLimit
+   _response.LimitValues.E3UpperLimit := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.LimitValues.E4UpperLimit
+   _response.LimitValues.E4UpperLimit := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.LimitValues.E5UpperLimit
+   _response.LimitValues.E5UpperLimit := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+  
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.LimitValues.E6UpperLimit
+   _response.LimitValues.E6UpperLimit := ResponseData.GetReal();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
+   
   // Create logging
-  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp, ParameterCnt := _parameterCnt);
 
 END_METHOD
 
@@ -439,15 +685,23 @@ VAR_INPUT
   ResponseData : RobotLibraryResponseDataFB;
   /// Timestamp
   Timestamp    : SystemTime;  
+  /// Parameter count
+  ParameterCnt : DINT;
 END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := Timestamp,
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Parsed the following parameter(s) from response data:');
+                          MessageText := '{1} parameter(s) to parse from the response data:',
+                          Para1       := DINT_TO_STRING(ParameterCnt));
                           
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LimitValues.Timestamp.IEC_DATE
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -456,6 +710,11 @@ END_VAR
                           MessageText := 'Response.LimitValues.Timestamp.IEC_DATE = {1}',
                           Para1       :=  IEC_DATE_TO_STRING(_response.LimitValues.Timestamp.IEC_DATE));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LimitValues.Timestamp.IEC_TIME
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -464,6 +723,11 @@ END_VAR
                           MessageText := 'Response.LimitValues.Timestamp.IEC_TIME = {1}',
                           Para1       :=  IEC_TIME_TO_STRING(_response.LimitValues.Timestamp.IEC_TIME));
                           
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LimitValues.J1LowerLimit
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -472,6 +736,11 @@ END_VAR
                           MessageText := 'Response.LimitValues.J1LowerLimit = {1}',
                           Para1       :=  REAL_TO_STRING(_response.LimitValues.J1LowerLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LimitValues.J2LowerLimit
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -480,6 +749,11 @@ END_VAR
                           MessageText := 'Response.LimitValues.J2LowerLimit = {1}',
                           Para1       :=  REAL_TO_STRING(_response.LimitValues.J2LowerLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LimitValues.J3LowerLimit
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -488,6 +762,11 @@ END_VAR
                           MessageText := 'Response.LimitValues.J3LowerLimit = {1}',
                           Para1       :=  REAL_TO_STRING(_response.LimitValues.J3LowerLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LimitValues.J4LowerLimit
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -496,6 +775,11 @@ END_VAR
                           MessageText := 'Response.LimitValues.J4LowerLimit = {1}',
                           Para1       :=  REAL_TO_STRING(_response.LimitValues.J4LowerLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LimitValues.J5LowerLimit
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -504,6 +788,11 @@ END_VAR
                           MessageText := 'Response.LimitValues.J5LowerLimit = {1}',
                           Para1       :=  REAL_TO_STRING(_response.LimitValues.J5LowerLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LimitValues.J6LowerLimit
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -512,6 +801,11 @@ END_VAR
                           MessageText := 'Response.LimitValues.J6LowerLimit = {1}',
                           Para1       :=  REAL_TO_STRING(_response.LimitValues.J6LowerLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LimitValues.E1LowerLimit
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -520,6 +814,11 @@ END_VAR
                           MessageText := 'Response.LimitValues.E1LowerLimit = {1}',
                           Para1       :=  REAL_TO_STRING(_response.LimitValues.E1LowerLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LimitValues.J1UpperLimit
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -528,6 +827,11 @@ END_VAR
                           MessageText := 'Response.LimitValues.J1UpperLimit = {1}',
                           Para1       :=  REAL_TO_STRING(_response.LimitValues.J1UpperLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LimitValues.J2UpperLimit
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -536,6 +840,11 @@ END_VAR
                           MessageText := 'Response.LimitValues.J2UpperLimit = {1}',
                           Para1       :=  REAL_TO_STRING(_response.LimitValues.J2UpperLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LimitValues.J3UpperLimit
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -544,6 +853,11 @@ END_VAR
                           MessageText := 'Response.LimitValues.J3UpperLimit = {1}',
                           Para1       :=  REAL_TO_STRING(_response.LimitValues.J3UpperLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LimitValues.J4UpperLimit
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -552,6 +866,11 @@ END_VAR
                           MessageText := 'Response.LimitValues.J4UpperLimit = {1}',
                           Para1       :=  REAL_TO_STRING(_response.LimitValues.J4UpperLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LimitValues.J5UpperLimit
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -560,6 +879,11 @@ END_VAR
                           MessageText := 'Response.LimitValues.J5UpperLimit = {1}',
                           Para1       :=  REAL_TO_STRING(_response.LimitValues.J5UpperLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LimitValues.J6UpperLimit
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -568,6 +892,11 @@ END_VAR
                           MessageText := 'Response.LimitValues.J6UpperLimit = {1}',
                           Para1       :=  REAL_TO_STRING(_response.LimitValues.J6UpperLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LimitValues.E1UpperLimit
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -576,6 +905,11 @@ END_VAR
                           MessageText := 'Response.LimitValues.E1UpperLimit = {1}',
                           Para1       :=  REAL_TO_STRING(_response.LimitValues.E1UpperLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LimitValues.E2LowerLimit
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -584,6 +918,11 @@ END_VAR
                           MessageText := 'Response.LimitValues.E2LowerLimit = {1}',
                           Para1       :=  REAL_TO_STRING(_response.LimitValues.E2LowerLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LimitValues.E3LowerLimit
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -592,6 +931,11 @@ END_VAR
                           MessageText := 'Response.LimitValues.E3LowerLimit = {1}',
                           Para1       :=  REAL_TO_STRING(_response.LimitValues.E3LowerLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LimitValues.E4LowerLimit
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -600,6 +944,11 @@ END_VAR
                           MessageText := 'Response.LimitValues.E4LowerLimit = {1}',
                           Para1       :=  REAL_TO_STRING(_response.LimitValues.E4LowerLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LimitValues.E5LowerLimit
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -608,6 +957,11 @@ END_VAR
                           MessageText := 'Response.LimitValues.E5LowerLimit = {1}',
                           Para1       :=  REAL_TO_STRING(_response.LimitValues.E5LowerLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LimitValues.E6LowerLimit
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -616,6 +970,11 @@ END_VAR
                           MessageText := 'Response.LimitValues.E6LowerLimit = {1}',
                           Para1       :=  REAL_TO_STRING(_response.LimitValues.E6LowerLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LimitValues.E2UpperLimit
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -624,6 +983,11 @@ END_VAR
                           MessageText := 'Response.LimitValues.E2UpperLimit = {1}',
                           Para1       :=  REAL_TO_STRING(_response.LimitValues.E2UpperLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LimitValues.E3UpperLimit
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -632,6 +996,11 @@ END_VAR
                           MessageText := 'Response.LimitValues.E3UpperLimit = {1}',
                           Para1       :=  REAL_TO_STRING(_response.LimitValues.E3UpperLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LimitValues.E4UpperLimit
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -640,6 +1009,11 @@ END_VAR
                           MessageText := 'Response.LimitValues.E4UpperLimit = {1}',
                           Para1       :=  REAL_TO_STRING(_response.LimitValues.E4UpperLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LimitValues.E5UpperLimit
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
@@ -648,6 +1022,11 @@ END_VAR
                           MessageText := 'Response.LimitValues.E5UpperLimit = {1}',
                           Para1       :=  REAL_TO_STRING(_response.LimitValues.E5UpperLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for LimitValues.E6UpperLimit
   CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,

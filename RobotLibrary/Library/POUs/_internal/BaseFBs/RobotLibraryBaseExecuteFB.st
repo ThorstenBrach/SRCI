@@ -52,6 +52,11 @@ VAR_IN_OUT
   AxesGroup         : AxesGroup; 
 END_VAR
 
+VAR
+  /// internal return value
+ _retVal : DINT;
+END_VAR
+
   SUPER^.OnCall(AxesGroup := AxesGroup);
   
   // building rising and falling edges
@@ -80,17 +85,43 @@ END_VAR
   
   
   // On execution cancel  
-  IF (Busy) AND ( _execute_F.Q) 
+  IF ( Busy ) AND ( _execute_F.Q ) 
+  THEN
+    // set cancel flag
+   _cancel := TRUE;
+  END_IF
+  
+  IF ( _cancel )
   THEN
     // call Cancel
-    OnExecCancel(AxesGroup := AxesGroup);
+   _retVal := OnExecCancel(AxesGroup := AxesGroup);
+    
+    // done or error ?
+    IF ( _retVal <> RobotLibraryConstants.RUNNING )
+    THEN
+      // reset cancel flag
+     _cancel := FALSE;
+  	END_IF
   END_IF
   
   
   // On execution error clear
   IF ( Error ) AND ( _execute_F.Q )
   THEN
-    OnExecErrorClear(AxesGroup := AxesGroup);
+    // set ClearError flag
+   _clearError := TRUE;
+  END_IF
+  
+  IF ( _clearError )
+  THEN
+   _retVal := OnExecErrorClear(AxesGroup := AxesGroup); 
+  
+    // done or error ?
+    IF ( _retVal <> RobotLibraryConstants.RUNNING )
+    THEN
+      // reset ClearError flag
+     _clearError := FALSE;
+  	END_IF
   END_IF
 
 END_METHOD
@@ -122,7 +153,7 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
-  Reset();
+  OnExecErrorClear := Reset();
 
 END_METHOD
 

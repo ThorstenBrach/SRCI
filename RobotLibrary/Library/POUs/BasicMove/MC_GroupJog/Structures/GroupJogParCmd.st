@@ -29,7 +29,7 @@ STRUCT
   /// •    0%: No movement of the robot
   /// •   10%: default
   /// • ≤100%: use input parameter value
-  Override               : UINT;
+  Override               : UINT := 5;
   /// Change to jog and define direction according to Mode. See Table 6-223
   Control                : JogControl;
   /// Relates to Mode 0 (JogFrame) and 1 (JogTool) Index of tool

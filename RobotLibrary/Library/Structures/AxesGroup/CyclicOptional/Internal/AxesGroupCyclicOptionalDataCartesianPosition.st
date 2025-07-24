@@ -20,7 +20,7 @@
 //    own risk and responsibility.
 //
 // -------------------------------------------------------------------------
-TYPE AxesGroupCyclicOptionalDataCartesianPosition EXTENDS  RobotCartesianPositionShort :
+TYPE AxesGroupCyclicOptionalDataCartesianPosition EXTENDS RobotCartesianPositionShort :
 STRUCT
   /// indicates that this optional parameter will be used
   Active           : BOOL;

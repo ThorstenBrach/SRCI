@@ -47,6 +47,31 @@ END_VAR
 
 END_FUNCTION_BLOCK
 
+METHOD INTERNAL CheckAddParameter : BOOL
+VAR_INPUT
+  /// Payload pointer
+  PayloadPtr : UDINT;
+END_VAR
+VAR
+  /// Payload as byte array
+  Payload    : ARRAY [1..SIZEOF(_command)] OF BYTE;
+  /// Null Byte array 
+  Null       : ARRAY [1..SIZEOF(_command)] OF BYTE;
+  /// Data length to compare
+  DataLen    : UDINT;
+END_VAR
+
+  // Payload pointer must be decreased by one byte, because ADR(Payload) is already one byte !
+  PayloadPtr := LIMIT (0, PayloadPtr - 1, SIZEOF(Payload) -1);
+  // Convert command struct to payload array
+  SysDepMemCpy( pDest := ADR(Payload), pSrc := ADR(_command), DataLen := SIZEOF(_command));
+  // Calculate the data length to compare - at least one byte must be compared !
+  DataLen := LIMIT(1, SIZEOF(Payload) - PayloadPtr, SIZEOF(Payload)); 
+  // Compare Payload-Array with Null-Byte-Array
+  CheckAddParameter := SysDepMemCmp( pData1 := ADR(Payload) + PayloadPtr , pData2 := ADR(Null), DataLen := DataLen) <>  RobotLibraryConstants.OK ;
+
+END_METHOD
+
 METHOD PROTECTED CheckFunctionSupported : BOOL
 VAR_IN_OUT
   /// Robot assignment of function
@@ -681,6 +706,10 @@ VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
+VAR
+  /// Parameter count
+ _parameterCnt : DINT;
+END_VAR
 // Table 6-205: Sent CMD payload (PLC to RC) of "WriteWorkArea"
 // --------------------------
 // Header
@@ -860,99 +889,449 @@ END_VAR
   // call base implementation to copy header to payload buffer
   CreateCommandPayload := SUPER^.CreateCommandPayload(AxesGroup := AxesGroup);
   
-  // add command.WorkAreaNo
-  CreateCommandPayload.AddUint(_command.WorkAreaNo);
-  // add command.ToolData.Timestamp.IEC_DATE
-  CreateCommandPayload.AddUint(_command.WorkAreaData.Timestamp.IEC_DATE);
-  // add command.ToolData.Timestamp.IEC_TIME
-  CreateCommandPayload.AddTime(_command.WorkAreaData.Timestamp.IEC_TIME);
-  // add command.WorkAreaData.AreaType
-  CreateCommandPayload.AddUsint(_command.WorkAreaData.AreaType);
-  // add command.WorkAreaData.AreaMode
-  CreateCommandPayload.AddBool(_command.WorkAreaData.AreaMode);
-  // add command.WorkAreaData.ReactionMode
-  CreateCommandPayload.AddUsint(_command.WorkAreaData.ReactionMode);
-  // add command.WorkAreaData.ActiveModification
-  CreateCommandPayload.AddBool(_command.WorkAreaData.ActiveModification);
-  // add command.WorkAreaData.DefinitionMode
-  CreateCommandPayload.AddUsint(_command.WorkAreaData.DefinitionMode);
-  // add command.WorkAreaData.FrameNo
-  CreateCommandPayload.AddUsint(_command.WorkAreaData.FrameNo);
-  // add command.WorkAreaData.ZeroPointX
-  CreateCommandPayload.AddReal(_command.WorkAreaData.ZeroPointX);
-  // add command.WorkAreaData.ZeroPointY
-  CreateCommandPayload.AddReal(_command.WorkAreaData.ZeroPointY);
-  // add command.WorkAreaData.ZeroPointZ
-  CreateCommandPayload.AddReal(_command.WorkAreaData.ZeroPointZ);
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaNo
+    CreateCommandPayload.AddUint(_command.WorkAreaNo);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
   
   
-  // add command.WorkAreaData.X.LowerLimit
-  CreateCommandPayload.AddReal(_command.WorkAreaData.X.LowerLimit);
-  // add command.WorkAreaData.X.UpperLimit
-  CreateCommandPayload.AddReal(_command.WorkAreaData.X.UpperLimit);
-  // add command.WorkAreaData.Y.LowerLimit
-  CreateCommandPayload.AddReal(_command.WorkAreaData.Y.LowerLimit);
-  // add command.WorkAreaData.Y.UpperLimit
-  CreateCommandPayload.AddReal(_command.WorkAreaData.Y.UpperLimit);
-  // add command.WorkAreaData.Z.LowerLimit
-  CreateCommandPayload.AddReal(_command.WorkAreaData.Z.LowerLimit);
-  // add command.WorkAreaData.Z.UpperLimit
-  CreateCommandPayload.AddReal(_command.WorkAreaData.Z.UpperLimit);
-  // add command.WorkAreaData.Radius
-  CreateCommandPayload.AddReal(_command.WorkAreaData.Radius);
-  // add command.WorkAreaData.J1Limit.LowerLimit
-  CreateCommandPayload.AddReal(_command.WorkAreaData.J1Limit.LowerLimit);
-  // add command.WorkAreaData.J2Limit.LowerLimit
-  CreateCommandPayload.AddReal(_command.WorkAreaData.J2Limit.LowerLimit);
-  // add command.WorkAreaData.J3Limit.LowerLimit
-  CreateCommandPayload.AddReal(_command.WorkAreaData.J3Limit.LowerLimit);
-  // add command.WorkAreaData.J4Limit.LowerLimit
-  CreateCommandPayload.AddReal(_command.WorkAreaData.J4Limit.LowerLimit);
-  // add command.WorkAreaData.J5Limit.LowerLimit
-  CreateCommandPayload.AddReal(_command.WorkAreaData.J5Limit.LowerLimit);
-  // add command.WorkAreaData.J6Limit.LowerLimit
-  CreateCommandPayload.AddReal(_command.WorkAreaData.J6Limit.LowerLimit);
-  // add command.WorkAreaData.E1Limit.LowerLimit
-  CreateCommandPayload.AddReal(_command.WorkAreaData.E1Limit.LowerLimit);
-  // add command.WorkAreaData.J1Limit.UpperLimit
-  CreateCommandPayload.AddReal(_command.WorkAreaData.J1Limit.UpperLimit);
-  // add command.WorkAreaData.J2Limit.UpperLimit
-  CreateCommandPayload.AddReal(_command.WorkAreaData.J2Limit.UpperLimit);
-  // add command.WorkAreaData.J3Limit.UpperLimit
-  CreateCommandPayload.AddReal(_command.WorkAreaData.J3Limit.UpperLimit);
-  // add command.WorkAreaData.J4Limit.UpperLimit
-  CreateCommandPayload.AddReal(_command.WorkAreaData.J4Limit.UpperLimit);
-  // add command.WorkAreaData.J5Limit.UpperLimit
-  CreateCommandPayload.AddReal(_command.WorkAreaData.J5Limit.UpperLimit);
-  // add command.WorkAreaData.J6Limit.UpperLimit
-  CreateCommandPayload.AddReal(_command.WorkAreaData.J6Limit.UpperLimit);
-  // add command.WorkAreaData.E1Limit.UpperLimit
-  CreateCommandPayload.AddReal(_command.WorkAreaData.E1Limit.UpperLimit);
-  // add command.WorkAreaData.E2Limit.LowerLimit
-  CreateCommandPayload.AddReal(_command.WorkAreaData.E2Limit.LowerLimit);
-  // add command.WorkAreaData.E3Limit.LowerLimit
-  CreateCommandPayload.AddReal(_command.WorkAreaData.E3Limit.LowerLimit);
-  // add command.WorkAreaData.E4Limit.LowerLimit
-  CreateCommandPayload.AddReal(_command.WorkAreaData.E4Limit.LowerLimit);
-  // add command.WorkAreaData.E5Limit.LowerLimit
-  CreateCommandPayload.AddReal(_command.WorkAreaData.E5Limit.LowerLimit);
-  // add command.WorkAreaData.E6Limit.LowerLimit
-  CreateCommandPayload.AddReal(_command.WorkAreaData.E6Limit.LowerLimit);
-  // add command.WorkAreaData.E2Limit.UpperLimit
-  CreateCommandPayload.AddReal(_command.WorkAreaData.E2Limit.UpperLimit);
-  // add command.WorkAreaData.E3Limit.UpperLimit
-  CreateCommandPayload.AddReal(_command.WorkAreaData.E3Limit.UpperLimit);
-  // add command.WorkAreaData.E4Limit.UpperLimit
-  CreateCommandPayload.AddReal(_command.WorkAreaData.E4Limit.UpperLimit);
-  // add command.WorkAreaData.E5Limit.UpperLimit
-  CreateCommandPayload.AddReal(_command.WorkAreaData.E5Limit.UpperLimit);
-  // add command.WorkAreaData.E6Limit.UpperLimit
-  CreateCommandPayload.AddReal(_command.WorkAreaData.E6Limit.UpperLimit);
-  // add command.DataChanged
-  CreateCommandPayload.AddBool(_command.DataChanged);
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.ToolData.Timestamp.IEC_DATE
+    CreateCommandPayload.AddUint(_command.WorkAreaData.Timestamp.IEC_DATE);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
   
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.ToolData.Timestamp.IEC_TIME
+    CreateCommandPayload.AddTime(_command.WorkAreaData.Timestamp.IEC_TIME);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.AreaType
+    CreateCommandPayload.AddUsint(_command.WorkAreaData.AreaType);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.AreaMode
+    CreateCommandPayload.AddBool(_command.WorkAreaData.AreaMode);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.ReactionMode
+    CreateCommandPayload.AddUsint(_command.WorkAreaData.ReactionMode);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.ActiveModification
+    CreateCommandPayload.AddBool(_command.WorkAreaData.ActiveModification);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.DefinitionMode
+    CreateCommandPayload.AddUsint(_command.WorkAreaData.DefinitionMode);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.FrameNo
+    CreateCommandPayload.AddUsint(_command.WorkAreaData.FrameNo);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.ZeroPointX
+    CreateCommandPayload.AddReal(_command.WorkAreaData.ZeroPointX);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.ZeroPointY
+    CreateCommandPayload.AddReal(_command.WorkAreaData.ZeroPointY);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.ZeroPointZ
+    CreateCommandPayload.AddReal(_command.WorkAreaData.ZeroPointZ);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.X.LowerLimit
+    CreateCommandPayload.AddReal(_command.WorkAreaData.X.LowerLimit);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.X.UpperLimit
+    CreateCommandPayload.AddReal(_command.WorkAreaData.X.UpperLimit);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.Y.LowerLimit
+    CreateCommandPayload.AddReal(_command.WorkAreaData.Y.LowerLimit);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.Y.UpperLimit
+    CreateCommandPayload.AddReal(_command.WorkAreaData.Y.UpperLimit);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.Z.LowerLimit
+    CreateCommandPayload.AddReal(_command.WorkAreaData.Z.LowerLimit);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.Z.UpperLimit
+    CreateCommandPayload.AddReal(_command.WorkAreaData.Z.UpperLimit);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.Radius
+    CreateCommandPayload.AddReal(_command.WorkAreaData.Radius);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.J1Limit.LowerLimit
+    CreateCommandPayload.AddReal(_command.WorkAreaData.J1Limit.LowerLimit);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.J2Limit.LowerLimit
+    CreateCommandPayload.AddReal(_command.WorkAreaData.J2Limit.LowerLimit);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.J3Limit.LowerLimit
+    CreateCommandPayload.AddReal(_command.WorkAreaData.J3Limit.LowerLimit);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.J4Limit.LowerLimit
+    CreateCommandPayload.AddReal(_command.WorkAreaData.J4Limit.LowerLimit);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.J5Limit.LowerLimit
+    CreateCommandPayload.AddReal(_command.WorkAreaData.J5Limit.LowerLimit);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.J6Limit.LowerLimit
+    CreateCommandPayload.AddReal(_command.WorkAreaData.J6Limit.LowerLimit);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.E1Limit.LowerLimit
+    CreateCommandPayload.AddReal(_command.WorkAreaData.E1Limit.LowerLimit);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.J1Limit.UpperLimit
+    CreateCommandPayload.AddReal(_command.WorkAreaData.J1Limit.UpperLimit);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.J2Limit.UpperLimit
+    CreateCommandPayload.AddReal(_command.WorkAreaData.J2Limit.UpperLimit);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.J3Limit.UpperLimit
+    CreateCommandPayload.AddReal(_command.WorkAreaData.J3Limit.UpperLimit);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.J4Limit.UpperLimit
+    CreateCommandPayload.AddReal(_command.WorkAreaData.J4Limit.UpperLimit);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.J5Limit.UpperLimit
+    CreateCommandPayload.AddReal(_command.WorkAreaData.J5Limit.UpperLimit);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.J6Limit.UpperLimit
+    CreateCommandPayload.AddReal(_command.WorkAreaData.J6Limit.UpperLimit);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.E1Limit.UpperLimit
+    CreateCommandPayload.AddReal(_command.WorkAreaData.E1Limit.UpperLimit);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.E2Limit.LowerLimit
+    CreateCommandPayload.AddReal(_command.WorkAreaData.E2Limit.LowerLimit);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.E3Limit.LowerLimit
+    CreateCommandPayload.AddReal(_command.WorkAreaData.E3Limit.LowerLimit);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.E4Limit.LowerLimit
+    CreateCommandPayload.AddReal(_command.WorkAreaData.E4Limit.LowerLimit);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.E5Limit.LowerLimit
+    CreateCommandPayload.AddReal(_command.WorkAreaData.E5Limit.LowerLimit);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.E6Limit.LowerLimit
+    CreateCommandPayload.AddReal(_command.WorkAreaData.E6Limit.LowerLimit);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.E2Limit.UpperLimit
+    CreateCommandPayload.AddReal(_command.WorkAreaData.E2Limit.UpperLimit);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.E3Limit.UpperLimit
+    CreateCommandPayload.AddReal(_command.WorkAreaData.E3Limit.UpperLimit);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.E4Limit.UpperLimit
+    CreateCommandPayload.AddReal(_command.WorkAreaData.E4Limit.UpperLimit);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.E5Limit.UpperLimit
+    CreateCommandPayload.AddReal(_command.WorkAreaData.E5Limit.UpperLimit);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.WorkAreaData.E6Limit.UpperLimit
+    CreateCommandPayload.AddReal(_command.WorkAreaData.E6Limit.UpperLimit);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
+    // add command.DataChanged
+    CreateCommandPayload.AddBool(_command.DataChanged);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+    
   // Create logging
-  CreateCommandPayloadLog(AxesGroup := AxesGroup);
+  CreateCommandPayloadLog(AxesGroup := AxesGroup, ParameterCnt := _parameterCnt);
 
 END_METHOD
 
@@ -961,14 +1340,24 @@ VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
+VAR_INPUT
+  /// Parameter count
+  ParameterCnt : DINT;
+END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := AxesGroup.State.SystemTime,
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Create command payload with the following parameter(s) :');
+                          MessageText := 'Create command payload with the {1} parameter(s) :',
+                          Para1       := DINT_TO_STRING(ParameterCnt));
                          
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaNo
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -977,6 +1366,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaNo = {1}',
                           Para1       :=  UINT_TO_STRING(_command.WorkAreaNo));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.Timestamp.IEC_DATE
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -985,6 +1379,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.Timestamp.IEC_DATE = {1}',
                           Para1       :=  IEC_DATE_TO_STRING(_command.WorkAreaData.Timestamp.IEC_DATE));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.Timestamp.IEC_DATE
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -993,6 +1392,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.Timestamp.IEC_TIME = {1}',
                           Para1       :=  IEC_TIME_TO_STRING(_command.WorkAreaData.Timestamp.IEC_TIME));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.AreaType
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1001,6 +1405,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.AreaType = {1}',
                           Para1       :=  AREA_TYPE_TO_STRING(_command.WorkAreaData.AreaType));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.AreaMode
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1009,6 +1418,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.AreaMode = {1}',
                           Para1       :=  BOOL_TO_STRING(_command.WorkAreaData.AreaMode));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.ReactionMode
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1017,6 +1431,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.ReactionMode = {1}',
                           Para1       := WORK_AREA_REACTION_MODE_TO_STRING(_command.WorkAreaData.ReactionMode));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.ActiveModification
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1025,6 +1444,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.ActiveModification = {1}',
                           Para1       := BOOL_TO_STRING(_command.WorkAreaData.ActiveModification));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.DefinitionMode
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1033,6 +1457,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.DefinitionMode = {1}',
                           Para1       := DEFINITION_MODE_TO_STRING(_command.WorkAreaData.DefinitionMode));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.FrameNo
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1041,6 +1470,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.FrameNo = {1}',
                           Para1       := USINT_TO_STRING(_command.WorkAreaData.FrameNo));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.ZeroPointX
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1049,6 +1483,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.ZeroPointX = {1}',
                           Para1       := REAL_TO_STRING(_command.WorkAreaData.ZeroPointX));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.ZeroPointY
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1057,6 +1496,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.ZeroPointY = {1}',
                           Para1       := REAL_TO_STRING(_command.WorkAreaData.ZeroPointY));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.ZeroPointZ
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1065,6 +1509,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.ZeroPointZ = {1}',
                           Para1       := REAL_TO_STRING(_command.WorkAreaData.ZeroPointZ));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.X.LowerLimit
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1073,6 +1522,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.X.LowerLimit = {1}',
                           Para1       := REAL_TO_STRING(_command.WorkAreaData.X.LowerLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.X.UpperLimit
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1081,6 +1535,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.X.UpperLimit = {1}',
                           Para1       := REAL_TO_STRING(_command.WorkAreaData.X.UpperLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.Y.LowerLimit
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1089,6 +1548,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.Y.LowerLimit = {1}',
                           Para1       := REAL_TO_STRING(_command.WorkAreaData.Y.LowerLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.Y.UpperLimit
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1097,6 +1561,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.Y.UpperLimit = {1}',
                           Para1       := REAL_TO_STRING(_command.WorkAreaData.Y.UpperLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.Z.LowerLimit
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1105,6 +1574,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.Z.LowerLimit = {1}',
                           Para1       := REAL_TO_STRING(_command.WorkAreaData.Z.LowerLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.Z.UpperLimit
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1113,6 +1587,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.Z.UpperLimit = {1}',
                           Para1       := REAL_TO_STRING(_command.WorkAreaData.Z.UpperLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.Radius
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1121,6 +1600,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.Radius = {1}',
                           Para1       := REAL_TO_STRING(_command.WorkAreaData.Radius));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.J1Limit.LowerLimit
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1129,6 +1613,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.J1Limit.LowerLimit = {1}',
                           Para1       := REAL_TO_STRING(_command.WorkAreaData.J1Limit.LowerLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.J2Limit.LowerLimit
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1137,6 +1626,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.J2Limit.LowerLimit = {1}',
                           Para1       := REAL_TO_STRING(_command.WorkAreaData.J2Limit.LowerLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.J3Limit.LowerLimit
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1145,6 +1639,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.J3Limit.LowerLimit = {1}',
                           Para1       := REAL_TO_STRING(_command.WorkAreaData.J3Limit.LowerLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.J4Limit.LowerLimit
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1153,6 +1652,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.J4Limit.LowerLimit = {1}',
                           Para1       := REAL_TO_STRING(_command.WorkAreaData.J4Limit.LowerLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.J5Limit.LowerLimit
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1161,6 +1665,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.J5Limit.LowerLimit = {1}',
                           Para1       := REAL_TO_STRING(_command.WorkAreaData.J5Limit.LowerLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.J6Limit.LowerLimit
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1169,6 +1678,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.J6Limit.LowerLimit = {1}',
                           Para1       := REAL_TO_STRING(_command.WorkAreaData.J6Limit.LowerLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.E1Limit.LowerLimit
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1177,6 +1691,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.E1Limit.LowerLimit = {1}',
                           Para1       := REAL_TO_STRING(_command.WorkAreaData.E1Limit.LowerLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.J1Limit.UpperLimit
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1185,6 +1704,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.J1Limit.UpperLimit = {1}',
                           Para1       := REAL_TO_STRING(_command.WorkAreaData.J1Limit.UpperLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.J2Limit.UpperLimit
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1193,6 +1717,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.J2Limit.UpperLimit = {1}',
                           Para1       := REAL_TO_STRING(_command.WorkAreaData.J2Limit.UpperLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.J3Limit.UpperLimit
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1201,6 +1730,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.J3Limit.UpperLimit = {1}',
                           Para1       := REAL_TO_STRING(_command.WorkAreaData.J3Limit.UpperLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.J4Limit.UpperLimit
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1209,6 +1743,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.J4Limit.UpperLimit = {1}',
                           Para1       := REAL_TO_STRING(_command.WorkAreaData.J4Limit.UpperLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.J5Limit.UpperLimit
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1217,6 +1756,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.J5Limit.UpperLimit = {1}',
                           Para1       := REAL_TO_STRING(_command.WorkAreaData.J5Limit.UpperLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.J6Limit.UpperLimit
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1225,6 +1769,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.J6Limit.UpperLimit = {1}',
                           Para1       := REAL_TO_STRING(_command.WorkAreaData.J6Limit.UpperLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.E1Limit.UpperLimit
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1233,6 +1782,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.E1Limit.UpperLimit = {1}',
                           Para1       := REAL_TO_STRING(_command.WorkAreaData.E1Limit.UpperLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.E2Limit.LowerLimit
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1241,6 +1795,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.E2Limit.LowerLimit = {1}',
                           Para1       := REAL_TO_STRING(_command.WorkAreaData.E2Limit.LowerLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.E3Limit.LowerLimit
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1249,6 +1808,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.E3Limit.LowerLimit = {1}',
                           Para1       := REAL_TO_STRING(_command.WorkAreaData.E3Limit.LowerLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.E4Limit.LowerLimit
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1257,6 +1821,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.E4Limit.LowerLimit = {1}',
                           Para1       := REAL_TO_STRING(_command.WorkAreaData.E4Limit.LowerLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.E5Limit.LowerLimit
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1265,6 +1834,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.E5Limit.LowerLimit = {1}',
                           Para1       := REAL_TO_STRING(_command.WorkAreaData.E5Limit.LowerLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.E6Limit.LowerLimit
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1273,6 +1847,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.E6Limit.LowerLimit = {1}',
                           Para1       := REAL_TO_STRING(_command.WorkAreaData.E6Limit.LowerLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.E2Limit.UpperLimit
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1281,6 +1860,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.E2Limit.UpperLimit = {1}',
                           Para1       := REAL_TO_STRING(_command.WorkAreaData.E2Limit.UpperLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.E3Limit.UpperLimit
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1289,6 +1873,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.E3Limit.UpperLimit = {1}',
                           Para1       := REAL_TO_STRING(_command.WorkAreaData.E3Limit.UpperLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.E4Limit.UpperLimit
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1297,6 +1886,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.E4Limit.UpperLimit = {1}',
                           Para1       := REAL_TO_STRING(_command.WorkAreaData.E4Limit.UpperLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.E5Limit.UpperLimit
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1305,6 +1899,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.E5Limit.UpperLimit = {1}',
                           Para1       := REAL_TO_STRING(_command.WorkAreaData.E5Limit.UpperLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for WorkAreaData.E6Limit.UpperLimit
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1313,6 +1912,11 @@ END_VAR
                           MessageText := 'Command.WorkAreaData.E6Limit.UpperLimit = {1}',
                           Para1       := REAL_TO_STRING(_command.WorkAreaData.E6Limit.UpperLimit));
   
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for DataChanged
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -1427,6 +2031,10 @@ VAR_INPUT
   /// Timestamp
   Timestamp    : SystemTime;  
 END_VAR
+VAR
+  /// Parameter count
+ _parameterCnt : DINT;
+END_VAR
 // Table 6-206: Received CMD payload (RC to PLC) of "WriteWorkArea"
 // --------------------------
 // Header
@@ -1449,7 +2057,7 @@ END_VAR
   _response.AlarmMessageCode     := _rspHeader.AlarmMessageCode;
   
   // Create logging
-  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp);
+  ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp, ParameterCnt := _parameterCnt);
 
 END_METHOD
 
@@ -1459,15 +2067,23 @@ VAR_INPUT
   ResponseData : RobotLibraryResponseDataFB;
   /// Timestamp
   Timestamp    : SystemTime;  
+  /// Parameter count
+  ParameterCnt : DINT;
 END_VAR
 
   // Create log entry for Parameter start
-  CreateLogMessage      ( Timestamp   := Timestamp,
+  CreateLogMessagePara1 ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Parsed the following parameter(s) from response data:');
+                          MessageText := '{1} parameter(s) to parse from the response data:',
+                          Para1       := DINT_TO_STRING(ParameterCnt));
                           
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for no parameter 
   CreateLogMessage      ( Timestamp   := Timestamp,
                           MessageType := MessageType.CMD,
