@@ -4,6 +4,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.0.0.45] - 2025-07-24
+
+### Added
+ - Added constant `HAS_ERROR = -1` to allow checking function return values for `-1` in a more readable way.
+ - Added new method `CheckAddParameter` to determine whether a parameter needs to be sent or can be omitted—along with all following parameters — if it and the remaining values are null.
+ - Added property `IsPayloadRemaining` to `RobotLibraryResponseDataFB`, which returns `TRUE` if there is remaining data in the payload. This is relevant for parsing incoming payloads that may have been shortened.
+
+### Changed
+ - Outgoing payload generation was optimized to include only as many parameters as actual values are present in the message. Trailing null values are omitted to save payload size, in accordance with the specification.
+ - Outgoing payload logging now excludes trailing parameters with null values that were not transmitted.
+ - Incoming payload handling now imports only parameters that have non-null values, assuming the sender already shortened the message accordingly.
+ - Incoming payload logging now logs only parameters that actually received a value from the payload.
+ - Logging during payload parsing now includes the number of parsed parameters in the initial log message.
+ - Logging during payload sending now includes the number of transmitted parameters in the initial log message.
+ - `OnExecCancel` is now called repeatedly until it returns either `OK` or `HAS_ERROR`, instead of being called only once. This change applies to both `RobotLibraryBaseExecuteFB` and `RobotLibraryBaseEnableFB`.
+ - `OnExecErrorClear` is now called repeatedly until it returns either `OK` or `HAS_ERROR`, instead of being called only once. This change applies to both `RobotLibraryBaseExecuteFB` and `RobotLibraryBaseEnableFB`.
+ - Overridden the `OnExecErrorClear` method in all `RobotLibraryBaseEnableFB` derivatives to ensure that an additional telegram with `Enable = FALSE` is always sent when acknowledging an error. This prevents functions—such as `GroupJog`—from getting stuck in certain cases.
+
+
 ## [0.0.0.44] - 2025-07-01
 
 ### Added
