@@ -4,12 +4,45 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.0.0.46] - 2025-08-02
+
+### Added
+ - Added two missing reserve bytes in `GroupJogSendData`.
+ - Introduced `ReadingCartesianPosition`, `ReadingCartesianPositionExt`, `ReadingJointPosition`, and `ReadingJointPositionExt` flags to the `AxesGroupState` structure.
+ - Added missing comments to some variables for better code documentation.
+
+### Changed
+ - Moved the configuration of two sequences from global library parameters to the local `ParCfg.Com` of `RobotTaskFB`, enabling instance-specific configurations.
+ - Fixed a bug in the split transmission of command payloads where too few bytes were added.
+ - Fixed a bug in `ReadToolData` where ToolNo was transmitted as `SINT` instead of `USINT`, causing the tool values of the `Flange` to always be returned.
+ - Fixed a bug in `ReadFrameData` where the date was parsed as `USINT` instead of `UINT`, resulting in incorrect values.
+ - Fixed a bug in `ReadRobotData` where the robot interpreter version was displayed with special characters (e.g., $0). Changed the variable to `STRING(5)` and added a dot separator between version numbers.
+ - Updated `RemainingDistance` and `Progress` values of all motion commands during the `ACTIVE` state, not just upon reaching the `DONE` state.
+ - The `RemoveCmd` method of `ActiveCommandRegisterFB` now returns feedback indicating whether the command was successfully removed.
+ - Fixed a bug in all FBs inheriting from `EnableBaseFB` where, in case of cancelation, no telegram with `Enable` = `FALSE` was sent if the `RemoveCmd` method failed because the command was already executing.
+ - Fixed a bug in all FBs inheriting from `ExecuteBaseFB` where, after a reset, the `RemoveCmd` method was called with `UniqueID` = `0` due to the reset clearing the ID.
+ - Overrode the `OnCall` method of `MC_ReadActualPositionCyclicFB` to update the `AxesGroup.State` flags for reading position data. The base implementation of `OnCall` is still invoked.
+ - Updated the `ReadingCartesianPosition`, `ReadingCartesianPositionExt`, `ReadingJointPosition`, and `ReadingJointPositionExt` flags in the `HandleUserData` method of `RobotTaskFB`.
+ - Hid several local variables from the online view using the `hide` pragma to improve clarity and reduce visual clutter in diagnostics.
+ - Removed the `CreateUniqueID` method from `ActiveCommandRegisterFB`, as the `UniqueID` corresponds to the `ARC index`.
+ - Improved logging in `ActiveCommandRegisterFB` by including the current `ARC index` and `CmdType` where previously missing.
+### Removed
+ - Removed several `ToDo` pragmas, as the associated items were clarified and already correctly implemented (primarily regarding `ListenerIDs` / `EmitterIDs`, which are always 0).
+ - Removed unused structure `AxesGroupAcyclicAcrEntryCmd`
+ - Removed unused structure `AxesGroupAcyclicAcrEntryCmdHeader`
+ - Removed unused structure `AxesGroupAcyclicAcrEntryCmdTrigger`
+ - Removed unused structure `AxesGroupAcyclicAcrEntryRsp`
+ - Removed unused structure `AxesGroupAcyclicAcrEntryRspHeader`
+ - Removed unused structure `AxesGroupAcyclicAcrEntryRspTrigger`
+ - Removed unused structure `AxesGroupParameterCmdEntry`
+
+
 ## [0.0.0.45] - 2025-07-24
 
 ### Added
- - Added constant `HAS_ERROR = -1` to allow checking function return values for `-1` in a more readable way.
- - Added new method `CheckAddParameter` to determine whether a parameter needs to be sent or can be omitted—along with all following parameters — if it and the remaining values are null.
- - Added property `IsPayloadRemaining` to `RobotLibraryResponseDataFB`, which returns `TRUE` if there is remaining data in the payload. This is relevant for parsing incoming payloads that may have been shortened.
+ - Constant `HAS_ERROR = -1` to allow checking function return values for `-1` in a more readable way.
+ - New method `CheckAddParameter` to determine whether a parameter needs to be sent or can be omitted—along with all following parameters — if it and the remaining values are null.
+ - Property `IsPayloadRemaining` to `RobotLibraryResponseDataFB`, which returns `TRUE` if there is remaining data in the payload. This is relevant for parsing incoming payloads that may have been shortened.
 
 ### Changed
  - Outgoing payload generation was optimized to include only as many parameters as actual values are present in the message. Trailing null values are omitted to save payload size, in accordance with the specification.

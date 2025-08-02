@@ -1251,8 +1251,7 @@ END_VAR
   _command.ParSeq              := _command.ParSeq;
   _command.Priority            :=  Priority;
   _command.EmitterID           := _parCmd.EmitterID;
-  _command.Reserve             :=  0;
-  _command.ListenerID          :=  0; {warning 'ToDo'}
+  _command.ListenerID          :=  0;
   _command.Reserve             :=  0;
   _command.VelocityRate        :=  REAL_TO_PERCENT_UINT(_parCmd.VelocityRate     , IsOptional := FALSE);
   _command.AccelerationRate    :=  REAL_TO_PERCENT_UINT(_parCmd.AccelerationRate , IsOptional := FALSE);
@@ -2540,12 +2539,17 @@ END_VAR
            
            CASE  _response.State 
            OF
-             CmdMessageState.BUFFERED    : CommandBuffered    := TRUE;
-             CmdMessageState.ACTIVE      : Active             := TRUE;
-             CmdMessageState.INTERRUPTED : CommandInterrupted := TRUE;           
-             CmdMessageState.DONE        : Done               := TRUE;           
-             CmdMessageState.ABORTED     : CommandAborted     := TRUE;
-             CmdMessageState.ERROR       : Error              := TRUE;
+             CmdMessageState.BUFFERED    : CommandBuffered          := TRUE;
+             CmdMessageState.ACTIVE      : Active                   := TRUE;
+                                           // Update results
+                                           OutCmd.Progress          :=  PERCENT_UINT_TO_REAL( Value := _response.Progress, IsOptional := FALSE);
+                                           OutCmd.FollowID          := _response.OriginID;
+                                           OutCmd.RemainingDistance := _response.RemainingDistance;
+             
+             CmdMessageState.INTERRUPTED : CommandInterrupted       := TRUE;           
+             CmdMessageState.DONE        : Done                     := TRUE;           
+             CmdMessageState.ABORTED     : CommandAborted           := TRUE;
+             CmdMessageState.ERROR       : Error                    := TRUE;
            END_CASE
                   
            // Done, Aborted or Error ?

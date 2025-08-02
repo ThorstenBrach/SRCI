@@ -48,7 +48,7 @@ STRUCT
   /// •   0% : Use internal minimal jerk
   /// • 100% : Use the entire reference jerk, given by the user (Trapezoidal if possible) 
   JerkRate         : UINT;  
-  /// ToDo
+  /// The status bit "DataChanged" represents the modification state 
   DataChanged      : BOOL;
 END_STRUCT
 END_TYPE

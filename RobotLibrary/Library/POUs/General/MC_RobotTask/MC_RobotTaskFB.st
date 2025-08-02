@@ -135,7 +135,6 @@ VAR
   /// FB for read robot reference dynamics
  _readRobotReferenceDynamics   : MC_ReadRobotReferenceDynamicsFB;  
 
-  
   /// FB for write tool data
  _writeToolData                : MC_WriteToolDataFB;  
   /// FB for write frame data
@@ -157,29 +156,39 @@ VAR
   /// Telegram 
   Telegram                     : Telegram; 
 
+  /// Telegram 
+  TelegramDebugArray           : ARRAY[1..10] OF Telegram; 
+  
+  
   /// internal step counter for command
  _stepCmd                      : DINT;
   /// internal timer for command 
+  {attribute 'hide'}
  _timerCmd                     : TON;
   /// internal timeout for command
+  {attribute 'hide'}
  _timeoutCmd                   : TIME := T#5S; 
 
   /// internal step counter for synchronisation of frame data
  _stepSyncFrameData            : DINT;
   /// internal timer for synchronisation of frame data
+  {attribute 'hide'}
  _timerSyncFrameData           : TON;
   /// internal timeout for synchronisation of frame data
+  {attribute 'hide'}
  _timeoutSyncFrameData         : TIME := T#5S;
    /// internal index for frame data synchronisation
- _syncIdxFrameData              : USINT;
+ _syncIdxFrameData             : USINT;
   /// internal index for maximal amount of frames data( MIN(PLC,RC) ) 
- _syncIdxMaxFrameData           : DINT;
+ _syncIdxMaxFrameData          : DINT;
  
   /// internal step counter for synchronisation of load data
- _stepSyncLoadData              : DINT;
+ _stepSyncLoadData             : DINT;
   /// internal timer for synchronisation of load data
+  {attribute 'hide'}
  _timerSyncLoadData             : TON;
   /// internal timeout for synchronisation of load data
+  {attribute 'hide'}
  _timeoutSyncLoadData           : TIME := T#5S; 
   /// internal index for load data synchronisation
  _syncIdxLoadData               : USINT;
@@ -189,8 +198,10 @@ VAR
   /// internal step counter for synchronisation of tool data
  _stepSyncToolData              : DINT;
   /// internal timer for synchronisation of tool data
+  {attribute 'hide'}
  _timerSyncToolData             : TON;
   /// internal timeout for synchronisation of tool data
+  {attribute 'hide'}
  _timeoutSyncToolData           : TIME := T#5S; 
   /// internal index for tool data synchronisation
  _syncIdxToolData               : USINT;
@@ -200,8 +211,10 @@ VAR
   /// internal step counter for synchronisation of work areas
  _stepSyncWorkArea            : DINT;
  /// internal timer for synchronisation of work areas
+  {attribute 'hide'}
  _timerSyncWorkArea           : TON;
   /// internal timeout for synchronisation of work areas
+  {attribute 'hide'}
  _timeoutSyncWorkArea         : TIME := T#5S; 
   /// internal index for WorkArea synchronisation
  _syncIdxWorkArea             : USINT;
@@ -211,30 +224,38 @@ VAR
   /// internal step counter for synchronisation of software limits
  _stepSyncSWLimits            : DINT;
   /// internal timer for synchronisation of software limits
+  {attribute 'hide'}
  _timerSyncSWLimits           : TON;
   /// internal timeout for synchronisation of software limits
+  {attribute 'hide'}
  _timeoutSyncSWLimits         : TIME := T#5S; 
 
   /// internal step counter for synchronisation of default dynamics
  _stepSyncDefaultDynamics      : DINT;
   /// internal timer for synchronisation of default dynamics
+  {attribute 'hide'}
  _timerSyncDefaultDynamics     : TON;
   /// internal timeout for synchronisation of default dynamics
+  {attribute 'hide'}
  _timeoutSyncDefaultDynamics   : TIME := T#5S; 
  
   /// internal step counter for synchronisation of reference dynamics
  _stepSyncReferenceDynamics    : DINT;
   /// internal timer for synchronisation of reference dynamics
+  {attribute 'hide'}
  _timerSyncReferenceDynamics   : TON;
   /// internal timeout for synchronisation of reference dynamics
+  {attribute 'hide'}
  _timeoutSyncReferenceDynamics : TIME := T#5S; 
 
 
  
  
   /// Rising edge for enable
+  {attribute 'hide'}
  _enable_R                    : R_TRIG;
   /// Falling edge for enable
+  {attribute 'hide'}
  _enable_F                    : F_TRIG;
 
   /// Flag that indicated the the connection is alive (data exchange)
@@ -244,42 +265,57 @@ VAR
   /// timer for detecting alive state
  _aliveCheck                  : TON;
   /// rising edge for connection is alive
+  {attribute 'hide'}
  _alive_R                     : R_TRIG;
   /// falling edge for connection is alive
+  {attribute 'hide'}
  _alive_F                     : F_TRIG;
    /// last telegram state
  _lastTelegramState           : TelegramState   := TelegramState.UNDEFINED;
    /// last telegram control
  _lastTelegramControl         : ControlHalfByte := ControlHalfByte.NONE;
   /// array lower boundary
+  {attribute 'hide'}
  _lowerBound                  : DINT;
   /// array upper boundary
+  {attribute 'hide'}
  _upperBound                  : DINT;
 END_VAR
 
 
 VAR CONSTANT
   /// Size of the fragment header
+  {attribute 'hide'}
   FRAGMENT_HEADER_SIZE : UDINT := SIZEOF(TelegramPlcToRobFragmentHeader);
   /// Size of the comand header
+  {attribute 'hide'}
   COMMAND_HEADER_SIZE  : UDINT := SIZEOF(TelegramPlcToRobCommandHeader);
   /// Size of the footer
+  {attribute 'hide'}
   FOOTER_SIZE          : UDINT := 1;
   /// Minimal payload size for telegram
+  {attribute 'hide'}
   MIN_PAYLOAD_SIZE     : UDINT := 1;
   /// Active command
+  {attribute 'hide'}
   ACTIVE_CMD           : UDINT := 1;
   /// Buffered command
+  {attribute 'hide'}
   BUFFER_CMD           : UDINT := 2;
   /// Empty command entry
+  {attribute 'hide'}
   EMPTY_CMD_ENTRY      : AxesGroupAcyclicAcrEntryCmdBuffer := (State := BufferStateCmd.EMPTY);
   /// bitmask to mask the LifeSign out of the halfbyte
+  {attribute 'hide'}
   LIFESIGN_BIT_MASK    : BYTE := 2#000_1111;   
   /// Primary sequence
+  {attribute 'hide'}
   PRIMARY_SEQUENCE     : DINT := 0;
   /// Secondary sequence
+  {attribute 'hide'}
   SECONDARY_SEQUENCE   : DINT := 1;  
   /// Empty Execution-Order-List entry
+  {attribute 'hide'}
   EMPTY_EOL_ENTRY      : DINT := 0;
 END_VAR
 
@@ -537,6 +573,18 @@ END_VAR
   AxesGroupToTelegramSequence      (AxesGroup := AxesGroup);
   AxesGroupToTelegramFooter        (AxesGroup := AxesGroup);
   AxesGroupToTelegramLogging       (AxesGroup := AxesGroup);
+  
+  
+  IF ( AxesGroup.State.NewSEQ[0] AND Telegram.PlcToRob.Sequence[0].Header.PayloadLength > 0)
+  THEN
+   // move entries in Debug array
+   FOR _idx := 10  TO 2 BY -1
+   DO
+     TelegramDebugArray[_idx] := TelegramDebugArray[_idx -1];
+   END_FOR
+   // add new entry
+   TelegramDebugArray[1] := Telegram;
+  END_IF
 
 END_METHOD
 
@@ -705,14 +753,15 @@ END_VAR
       IF ( Telegram.PlcToRob.Sequence[_seqIdx].Header.PayloadLength > 0 ) 
       THEN
         // Create log entry
-        CreateLogMessagePara3 ( Timestamp   := SystemTime,
+        CreateLogMessagePara4 ( Timestamp   := SystemTime,
                                 MessageType := MessageType.CMD,
                                 Severity    := Severity.DEBUG,
                                 MessageCode := 0,
-                                MessageText := 'SendData: SEQ = {1}, added Sequence [{2}] with PayloadLength = {3}',
+                                MessageText := 'SendData: SEQ = {1}, added Sequence [{2}] with PayloadLength = {3}, HeaderLength = {4}',
                                 Para1       :=  UINT_TO_STRING(Telegram.PlcToRob.Sequence[_seqIdx].Header.SEQ_ACK),
                                 Para2       :=  DINT_TO_STRING(_seqIdx),
-                                Para3       :=  UINT_TO_STRING(Telegram.PlcToRob.Sequence[_seqIdx].Header.PayloadLength));
+                                Para3       :=  UINT_TO_STRING(Telegram.PlcToRob.Sequence[_seqIdx].Header.PayloadLength),
+                                Para4       :=  DINT_TO_STRING(SIZEOF(Telegram.PlcToRob.Sequence[_seqIdx].Header)));
       END_IF
       
       FOR _fragIdx := 0 TO AxesGroup.State.FragmentCountSend[_seqIdx]
@@ -720,25 +769,26 @@ END_VAR
         IF ( Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadLength > 0 )
         THEN
           // Create log entry
-          CreateLogMessagePara5 ( Timestamp   := SystemTime,
+          CreateLogMessagePara6 ( Timestamp   := SystemTime,
                                   MessageType := MessageType.CMD,
                                   Severity    := Severity.DEBUG,
                                   MessageCode := 0,
-                                  MessageText := 'SendData: added Fragment [{1}] with PayloadLength = {2}, CmdID <{3}>, Cmd <{4}> Fragment-Action Bits:{5}' ,
+                                  MessageText := 'SendData: added Fragment [{1}] with PayloadLength = {2}, HeaderLength = {3}, CmdID <{4}>, Cmd <{5}> Fragment-Action Bits:{6}' ,
                                   Para1       := DINT_TO_STRING(_fragIdx),
                                   Para2       := UINT_TO_STRING            (Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadLength),
-                                  Para3       := UINT_TO_STRING            (Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.CmdID),
-                                  Para4       := CMD_TYPE_TO_STRING        (Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.CmdType),
-                                  Para5       := FRAGMENT_ACTION_TO_STRING (Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.FragmentAction)); 
+                                  Para3       := DINT_TO_STRING(SIZEOF     (Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header)),                                
+                                  Para4       := UINT_TO_STRING            (Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.CmdID),
+                                  Para5       := CMD_TYPE_TO_STRING        (Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.CmdType),
+                                  Para6       := FRAGMENT_ACTION_TO_STRING (Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.FragmentAction)); 
   
           // Create log entry
-          CreateLogMessagePara1 ( Timestamp   := SystemTime,
+          CreateLogMessagePara2 ( Timestamp   := SystemTime,
                                   MessageType := MessageType.CMD,
                                   Severity    := Severity.DEBUG,
                                   MessageCode := 0,
-                                  MessageText := 'ExecMode = [{1}]' ,
-                                  Para1       := EXECUTION_MODE_TO_STRING(Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.ExecMode));
-  
+                                  MessageText := 'SendData: added Fragment [{1}] will be executed with ExecMode = [{2}]' ,
+                                  Para1       := DINT_TO_STRING(_fragIdx),
+                                  Para2       := EXECUTION_MODE_TO_STRING(Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Header.ExecMode));
   
         END_IF
       END_FOR
@@ -781,7 +831,7 @@ VAR
 END_VAR
 
   // Check 2nd sequence active ? 
-  IF ( RobotLibraryParameter.TWO_SEQUENCES )
+  IF ( _parCfg.Com.TwoSequences )
   THEN
     // inc sequence counter
    _seqCount := _seqCount + 1;
@@ -833,7 +883,7 @@ END_VAR
               
               
             Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.CmdID          := AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].UniqueID;
-            Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.Reserve        := 
+            Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.Reserve        := 0;
             Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.FragmentAction := 0; // will be set below
             Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadPointer := AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr; 
             
@@ -1201,7 +1251,7 @@ END_VAR
   _cyclicDataLength := CalculateCyclicDataLength(AxesGroup := AxesGroup, Direction := ComDirection.PLC_TO_ROB); 
   
   
-  IF ( RobotLibraryParameter.TWO_SEQUENCES )
+  IF ( _parCfg.Com.TwoSequences )
   THEN
     CalculateTelegramLengthPlcToRob := _cyclicDataLength
                                       + SIZEOF(Telegram.PlcToRob.Sequence[  PRIMARY_SEQUENCE].Header)
@@ -2104,50 +2154,62 @@ VAR
  _fragIdx                   : DINT;
 END_VAR
 
-  //WHILE(SendData.PayloadPtr + FOOTER_SIZE < Telegram.PlcToRob.Header.TelegramLengthPlcToRob )
-  //DO         
-    FOR _seqIdx := 0 TO AxesGroup.State.SequenceCountSend
-    DO
-      // Telegram.PlcToRob.Sequence[x].Header {{{
-      SendData.AddUint(Telegram.PlcToRob.Sequence[_seqIdx].Header.SEQ_ACK);
-      SendData.AddUint(Telegram.PlcToRob.Sequence[_seqIdx].Header.PayloadLength);
-      // }}}
-    
-      // check limit reachted ?
-      IF ( SendData.PayloadPtr + FOOTER_SIZE = Telegram.PlcToRob.Header.TelegramLengthPlcToRob)
-      THEN
-        EXIT;
-      END_IF
-      
-      // PlcToRob.Sequence[x].Fragment[x] {{{
-      FOR _fragIdx := 0 TO AxesGroup.State.FragmentCountSend[_seqIdx]  
-      DO
-   
-        IF (Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadLength > 0)
-        THEN  
-          // PlcToRob.Sequence[x].Fragment[x].Header {{{        
-          SendData.AddUint                     (Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.CmdID);
-          SendData.AddByte                     (Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.Reserve);
-          SendData.AddByte                     (Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.FragmentAction);
-          SendData.AddUint                     (Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadPointer);
-          SendData.AddUint                     (Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadLength);
-          // }}}
-          
-          // PlcToRob.Sequence[x].Fragment[x].Command {{{
-          
-          // Hint: the command header is part of the fragment payload  
-          IF (Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadLength > 0)
-          THEN
-            SendData.AddDataBlock( pValue :=  ADR(Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Payload           ) + Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadPointer,
-                                     Size :=     (Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadLength      ) - Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadPointer);
-          END_IF
-        END_IF
-        // }}}
-      END_FOR
-      // }}}
-    END_FOR  
+  FOR _seqIdx := 0 TO AxesGroup.State.SequenceCountSend
+  DO
+    // Check 2nd sequence ? -> goto 2nd sequence payload address  
+    IF ( _seqIdx = SECONDARY_SEQUENCE )
+    THEN
+      SendData.PayloadPtr := CalculateSequencePayloadStartAdr(AxesGroup := AxesGroup, 
+                                                              Direction := ComDirection.PLC_TO_ROB,
+                                                              Sequence  := SequenceFlag.SECONDARY_SEQUENCE);
+    END_IF
   
-  //END_WHILE
+    // Telegram.PlcToRob.Sequence[x].Header {{{
+    SendData.AddUint(Telegram.PlcToRob.Sequence[_seqIdx].Header.SEQ_ACK);
+    SendData.AddUint(Telegram.PlcToRob.Sequence[_seqIdx].Header.PayloadLength);
+    // }}}
+  
+    // check limit reachted ?
+    IF ( SendData.PayloadPtr + FOOTER_SIZE >= Telegram.PlcToRob.Header.TelegramLengthPlcToRob)
+    THEN
+      EXIT;
+    END_IF
+    
+    // PlcToRob.Sequence[x].Fragment[x] {{{
+    FOR _fragIdx := 0 TO AxesGroup.State.FragmentCountSend[_seqIdx]  
+    DO
+  
+      IF (Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadLength > 0)
+      THEN  
+        // PlcToRob.Sequence[x].Fragment[x].Header {{{        
+        SendData.AddUint(Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.CmdID);
+        SendData.AddByte(Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.Reserve);
+        SendData.AddByte(Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.FragmentAction);
+        SendData.AddUint(Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadPointer);
+        SendData.AddUint(Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadLength);
+        // }}}
+        
+        // PlcToRob.Sequence[x].Fragment[x].Command {{{
+        
+        // Hint: the command header is part of the fragment payload  
+        IF (Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadLength > 0)
+        THEN
+          SendData.AddDataBlock( pValue :=  ADR(Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Command.Payload           ) + Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadPointer,
+                                   Size :=     (Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadLength      ));
+  
+        END_IF
+        
+        
+        IF (SendData.PayloadLen = 232)
+        THEN
+          SendData.PayloadLen := SendData.PayloadLen;
+  			END_IF
+        
+      END_IF
+      // }}}
+    END_FOR
+    // }}}
+  END_FOR
 
 END_METHOD
 
@@ -2672,7 +2734,7 @@ VAR
 END_VAR
 
   HandleSyncToolData              ( AxesGroup := AxesGroup, ToolData          := ToolData);
-  RETURN; {warning 'ToDo: Enable Sync again'}
+  //RETURN; {warning 'ToDo: Enable Sync again'}
   
   HandleSyncFrameData             ( AxesGroup := AxesGroup, FrameData         := FrameData);
   HandleSyncLoadData              ( AxesGroup := AxesGroup, LoadData          := LoadData);
@@ -7708,10 +7770,10 @@ END_VAR
   UserData.CollisionDetectionEnabled         := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.CollisionDetectedEnabled;
   UserData.CollisionDetected                 := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.CollisionDetected;
   UserData.RestartRequested                  := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.RestartRequested;
-  UserData.ActualOverride                    := AxesGroup.Cyclic.RobToPlc.Override;
   UserData.Accelerating                      := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.Accelerating;
   UserData.Decelerating                      := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.Decelerating;
   UserData.ConstantVelocity                  := AxesGroup.Cyclic.RobToPlc.StatusRobotArm.ConstantVelocity;
+  UserData.ActualOverride                    := PERCENT_UINT_TO_REAL( Value := AxesGroup.Cyclic.RobToPlc.Override, IsOptional := FALSE);
   
   // Cyclic optional data
   UserData.CartesianPosition                 := AxesGroup.CyclicOptional.RobToPlc.CartesianPosition;
@@ -7728,13 +7790,12 @@ END_VAR
   UserData.DefaultDynamicsSynchronizing      := AxesGroup.State.Synchronizing.DefaultDynamics;
   UserData.ReferenceDynamicsSynchronizing    := AxesGroup.State.Synchronizing.ReferenceDynamics;
   
-  {warning 'ToDo: Check where to get the missing informations'}
   
-  UserData.ActivateTwoSequences           := FALSE;
-  UserData.ReadingCartesianPosition       := FALSE;
-  UserData.ReadingExtCartesianPosition    := FALSE;
-  UserData.ReadingJointPosition           := FALSE;
-  UserData.ReadingExtJointPosition        := FALSE;
+  UserData.ActivateTwoSequences              := _parCfg.Com.TwoSequences;
+  UserData.ReadingCartesianPosition          :=  AxesGroup.State.ReadingCartesianPosition;
+  UserData.ReadingExtCartesianPosition       :=  AxesGroup.State.ReadingCartesianPositionExt;
+  UserData.ReadingJointPosition              :=  AxesGroup.State.ReadingJointPosition;
+  UserData.ReadingExtJointPosition           :=  AxesGroup.State.ReadingJointPositionExt;
 
 END_METHOD
 
@@ -8422,7 +8483,7 @@ VAR
 END_VAR
 
   // Check 2nd sequence active ? 
-  IF ( RobotLibraryParameter.TWO_SEQUENCES )
+  IF ( _parCfg.Com.TwoSequences )
   THEN
    _seqCount := _seqCount + 1;
   END_IF

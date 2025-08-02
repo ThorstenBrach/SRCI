@@ -29,7 +29,7 @@ STRUCT
   WorkAreaNo         : USINT;
   /// Data specific to the work area requested by Index.
   WorkAreaData       : RobotWorkAreaData;
-  /// Data changed 
+  /// The status bit "DataChanged" represents the modification state 
   DataChanged        : BOOL;
 END_STRUCT
 END_TYPE

@@ -28,7 +28,7 @@ STRUCT
   FrameNoReturn : USINT;
   /// Frame data (see chapter 5.5.6.2)
   FrameData     : FrameData;
-  /// ToDo
+  /// The status bit "DataChanged" represents the modification state 
   DataChanged   : BOOL;
 END_STRUCT
 END_TYPE

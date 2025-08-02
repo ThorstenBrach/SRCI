@@ -30,7 +30,9 @@ STRUCT
   /// Number of Bytes of the frame to be used for the telegram of the given Axisgroup. Direction client to server
   TelegramLengthPlcToRob : UINT := 256;
   /// Number of Bytes of the frame to be used for the telegram of the given Axisgroup. Direction server to client
-  TelegramLengthRobToPlc : UINT := 256;  
+  TelegramLengthRobToPlc : UINT := 256;
+  /// Use two sequences in telegram ?
+  TwoSequences           : BOOL := FALSE; 
 END_STRUCT
 END_TYPE
 

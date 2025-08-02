@@ -25,7 +25,7 @@ STRUCT
   /// Header
   Header  : TelegramRobToPlcCommandHeader;
   /// Payload
-  Payload : ARRAY[0..255] OF BYTE; // ToDo
+  Payload : ARRAY[0..RobotLibraryParameter.RESPONSE_PAYLOAD_MAX] OF BYTE; 
 END_STRUCT
 END_TYPE
 

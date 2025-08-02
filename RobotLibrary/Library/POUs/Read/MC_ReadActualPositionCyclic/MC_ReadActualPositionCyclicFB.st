@@ -312,6 +312,27 @@ END_VAR
 
 END_METHOD
 
+METHOD PROTECTED OnCall
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+VAR
+  /// internal return value
+ _retVal : DINT;
+END_VAR
+
+  SUPER^.OnCall(AxesGroup := AxesGroup);
+  
+  // update status flags
+  AxesGroup.State.ReadingCartesianPosition    := Enabled AND _parCmd.ReadCartesianPosition;
+  AxesGroup.State.ReadingCartesianPositionExt := Enabled AND _parCmd.ReadCartesianPositionExt;
+  AxesGroup.State.ReadingJointPosition        := Enabled AND _parCmd.ReadJointPosition;
+  AxesGroup.State.ReadingJointPositionExt     := Enabled AND _parCmd.ReadJointPositionExt;
+
+END_METHOD
+
 METHOD PROTECTED OnExecErrorClear : DINT
 VAR_IN_OUT
   /// Robot assignment of function

@@ -34,7 +34,7 @@ END_VAR
     RETURN;
   END_IF
   
-  PERCENT_INT_TO_REAL := INT_TO_REAL(Value) / RobotLibraryConstants.REAL_CONVERSION_FACTOR; {warning 'ToDo: check conversation is correct ?'}
+  PERCENT_INT_TO_REAL := INT_TO_REAL(Value) / RobotLibraryConstants.REAL_CONVERSION_FACTOR;
 
 END_FUNCTION
 

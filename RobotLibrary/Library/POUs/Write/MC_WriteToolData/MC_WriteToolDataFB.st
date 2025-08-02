@@ -413,29 +413,36 @@ END_VAR
 // Byte 06 : TIME_OF_DAY ToolData.Time
 // Byte 07 : 
 // Byte 08 : 
-// Byte 09 : REAL ToolData.X
-// Byte 10 : 
+// Byte 09 : 
+// Byte 10 : REAL ToolData.X
 // Byte 11 : 
-// Byte 12 : REAL ToolData.Y
+// Byte 12 : 
 // Byte 13 : 
-// Byte 14 : 
-// Byte 15 : REAL ToolData.Z
+// Byte 14 : REAL ToolData.Y
+// Byte 15 : 
 // Byte 16 : 
-// Byte 17 : 
-// Byte 18 : REAL ToolData.RX
+// Byte 17 :
+// Byte 18 : REAL ToolData.Z
 // Byte 19 : 
 // Byte 20 : 
-// Byte 21 : REAL ToolData.RY
-// Byte 22 : 
+// Byte 21 : 
+// Byte 22 : REAL ToolData.RX
 // Byte 23 : 
-// Byte 24 : REAL ToolData.RZ
+// Byte 24 :
 // Byte 25 : 
-// Byte 26 : 
-// Byte 27 : USINT ToolData.ID
-// Byte 28 : USINT ToolData.LoadNo
-// Byte 29 : BOOL ToolData.ExternalTCP
-// Byte 30 : BYTE Reserved
-// Byte 31 : USINT ToolNo
+// Byte 26 : REAL ToolData.RY
+// Byte 27 : 
+// Byte 28 :
+// Byte 29 : 
+// Byte 30 : REAL ToolData.RZ
+// Byte 31 : 
+// Byte 32 :
+// Byte 33 : 
+// Byte 34 : USINT ToolData.ID
+// Byte 35 : USINT ToolData.LoadNo
+// Byte 36 : BOOL ToolData.ExternalTCP
+// Byte 37 : BYTE Reserved
+// Byte 38 : USINT ToolNo
 // --------------------------
 
   // set command parameter 

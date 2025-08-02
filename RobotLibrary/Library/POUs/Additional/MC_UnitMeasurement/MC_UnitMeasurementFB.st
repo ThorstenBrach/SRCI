@@ -238,10 +238,10 @@ END_VAR
   _command.ExecMode        :=  ExecMode;
   _command.ParSeq          := _command.ParSeq;
   _command.Priority        :=  Priority;
-  _command.EmitterID[0]    :=  0; {warning 'ToDo'}
-  _command.EmitterID[1]    :=  0; {warning 'ToDo'}
-  _command.EmitterID[2]    :=  0; {warning 'ToDo'}
-  _command.EmitterID[3]    :=  0; {warning 'ToDo'}
+  _command.EmitterID[0]    :=  0; 
+  _command.EmitterID[1]    :=  0; 
+  _command.EmitterID[2]    :=  0; 
+  _command.EmitterID[3]    :=  0; 
   _command.ListenerID      :=  _parCmd.ListenerID;
   _command.Reserve         :=  0;
   _command.TriggerMode     :=  _parCmd.TriggerMode;
@@ -445,6 +445,96 @@ END_VAR
 
 END_METHOD
 
+METHOD Protected OnExecCancel : DINT
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+VAR
+  /// internal return value 
+ _retVal    : DINT;
+END_VAR
+
+  OnExecCancel := RobotLibraryConstants.RUNNING;
+  
+  CASE _stepCancel OF
+    
+    0: // set busy flag
+       Busy := TRUE;
+      
+       // Create log entry
+       CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
+                               MessageType := MessageType.CMD,
+                               Severity    := Severity.DEBUG,
+                               MessageCode := 0,
+                               MessageText := 'Execution of {1} cancled ',
+                               Para1       := MyType);                 
+      
+       // try to remove cmd
+      _retVal := AxesGroup.Acyclic.ActiveCommandRegister.RemoveCmd(_uniqueID);
+    
+       // check result of removement       
+       IF ( _retVal = RobotLibraryConstants.OK )
+       THEN
+         // Reset step counter
+        _stepCancel := 0;
+         // finished okay
+         OnExecCancel := RobotLibraryConstants.OK;
+       
+         // Create log entry
+         CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
+                                 MessageType := MessageType.CMD,
+                                 Severity    := Severity.DEBUG,
+                                 MessageCode := 0,
+                                 MessageText := '{1} successfully removed from ARC',
+                                 Para1       := MyType);                 
+       ELSE
+         // set timeout
+         SetTimeout(PT := _timeoutCancel, rTimer := _timerCancel);
+         // inc step counter
+        _stepCancel := _stepCancel + 1; 
+       
+         // Create log entry
+         CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
+                                 MessageType := MessageType.CMD,
+                                 Severity    := Severity.DEBUG,
+                                 MessageCode := 0,
+                                 MessageText := '{1} was not removed from ARC because execution was already in progress',
+                                 Para1       := MyType);                 
+       END_IF       
+    
+       
+   1:  // call clear error 
+       OnExecCancel := OnExecErrorClear(AxesGroup := AxesGroup);  
+   
+       IF ( OnExecCancel = RobotLibraryConstants.OK)
+       THEN
+         // Reset busy flag
+         Busy := FALSE;
+         // Reset step counter
+        _stepCancel := 0;
+         // finished okay
+         OnExecCancel := RobotLibraryConstants.OK;
+       END_IF  
+    
+  ELSE
+    // invalid step
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
+  END_CASE  
+  
+  
+                          
+  // reset step counter
+  IF (OnExecCancel <> RobotLibraryConstants.RUNNING)
+  THEN
+    // Reset FB variables
+    Reset();
+    // Reset step counter
+   _stepCancel := 0;
+  END_IF
+
+END_METHOD
+
 METHOD PROTECTED OnExecErrorClear : DINT
 VAR_IN_OUT
   /// Robot assignment of function
@@ -455,11 +545,11 @@ END_VAR
   
   CASE _stepClearError OF
     
-    0:  // Reset 
-        Reset();
+    0:  // set busy flag
+        Busy := TRUE;
         // trigger parameter update to disable FB
        _parameterUpdateInternal := TRUE;
-        // call Check Parameter changed method to trigger the parameter update to deactivate jogging mode
+        // call Check Parameter changed method to trigger the parameter update to disable the function
         CheckParameterChanged(AxesGroup := AxesGroup);
         // set timeout
         SetTimeout(PT := _timeoutClearError, rTimer := _timerClearError);
@@ -467,7 +557,7 @@ END_VAR
        _stepClearError := _stepClearError + 1; 
         
     1: IF ( _responseReceived )
-       THEN     
+       THEN
          // reset response received flag
         _responseReceived := FALSE;
          // reset step counter
@@ -481,13 +571,18 @@ END_VAR
            OnExecErrorClear := RobotLibraryConstants.HAS_ERROR;
          END_IF
   	   END_IF
-    
+  ELSE
+    // invalid step
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
   END_CASE
   
   
   // reset step counter
   IF (OnExecErrorClear <> RobotLibraryConstants.RUNNING)
   THEN
+    // Reset 
+    Reset();     
+    // reset step counter
    _stepClearError := 0;
   END_IF
 

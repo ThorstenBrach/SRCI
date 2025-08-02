@@ -40,7 +40,7 @@ STRUCT
   /// • <0: (default) - Do not change values
   /// • ≥0: Change values according to input value
   JerkReference        : UINT;  
-  /// ToDo
+  /// The status bit "DataChanged" represents the modification state 
   DataChanged          : BOOL;
 END_STRUCT
 END_TYPE

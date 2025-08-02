@@ -517,7 +517,18 @@ END_VAR
   IF ( ResponseData.IsPayloadRemaining)
   THEN  
     // Get _response.RCInterpreterVersion
-    ResponseData.GetDataBlock(pData := ADR(_response.RCInterpreterVersion), SIZEOF(_response.RCInterpreterVersion), IsString := TRUE );
+    // ResponseData.GetDataBlock(pData := ADR(_response.RCInterpreterVersion), SIZEOF(_response.RCInterpreterVersion), IsString := TRUE );
+  
+    // This adaption was made because of Stäubli - check with other robot brands...
+    
+    // Get _response.RCInterpreterVersion
+   _response.RCInterpreterVersion := '';
+   _response.RCInterpreterVersion := CONCAT(_response.RCInterpreterVersion, BYTE_TO_STRING(ResponseData.GetByte()));
+   _response.RCInterpreterVersion := CONCAT(_response.RCInterpreterVersion, '.');
+   _response.RCInterpreterVersion := CONCAT(_response.RCInterpreterVersion, BYTE_TO_STRING(ResponseData.GetByte()));
+   _response.RCInterpreterVersion := CONCAT(_response.RCInterpreterVersion, '.');
+   _response.RCInterpreterVersion := CONCAT(_response.RCInterpreterVersion, BYTE_TO_STRING(ResponseData.GetByte()));
+  
     // inc parameter counter
    _parameterCnt := _parameterCnt + 1;
   END_IF

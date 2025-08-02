@@ -54,10 +54,13 @@ END_VAR
 
 VAR
   /// Rising edge for error
+  {attribute 'hide'}
  _error_R                  : R_TRIG;
   /// Rising edge for warning
+  {attribute 'hide'}
  _warning_R                : R_TRIG;
   /// Rising edge for information
+  {attribute 'hide'}
  _info_R                   : R_TRIG;
   /// clear error active
  _clearError               : BOOL;
@@ -70,15 +73,29 @@ VAR
   /// internal step counter
  _stepCmd                  : DINT;
   /// internal timer  
+  {attribute 'hide'}
  _timerCmd                 : TON;
   /// internal timeout 
+  {attribute 'hide'}
  _timeoutCmd               : TIME := T#5S;
-  /// internal step counter
+  /// internal step counter for ClearError
  _stepClearError           : DINT;
-  /// internal timer  
+  /// internal timer for ClearError
+  {attribute 'hide'}
  _timerClearError          : TON;
-  /// internal timeout 
+  /// internal timeout for ClearError 
+  {attribute 'hide'}
  _timeoutClearError        : TIME := T#5S;
+
+  /// internal step counter for Cancel
+ _stepCancel               : DINT;
+  /// internal timer for Cancel  
+  {attribute 'hide'}
+ _timerCancel              : TON;
+  /// internal timeout for Cancel 
+  {attribute 'hide'}
+ _timeoutCancel            : TIME := T#5S;
+
   /// internal command header
  _cmdHeader                : CmdHeader;  
   /// internal response header
@@ -112,12 +129,16 @@ VAR_INPUT
 END_VAR
 
   // Create log entry
-  CreateLogMessage ( Timestamp   := Timestamp,
-                     MessageType := MessageType.CMD,
-                     Severity    := Severity.DEBUG,
-                     MessageCode := 0,
-                     MessageText := CONCAT('Callback reveiced in FB ', MyType));
+  CreateLogMessagePara2 ( Timestamp   := Timestamp,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Callback reveiced in FB {1} <{2}>',
+                          Para1       := MyType,
+                          Para2       := Name);
   
+                     
+                     
   ResponseData.Reset();
   ResponseData.Payload    := RspData.Payload; 
   ResponseData.PayloadLen := RspData.PayloadLen;
@@ -134,8 +155,11 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
-  Error   := TRUE;
-  ErrorID := RobotLibraryErrorIdEnum.ERR_FUNCTION_NOT_SUPPORTED;
+  Error       := TRUE;
+  ErrorID     := RobotLibraryErrorIdEnum.ERR_FUNCTION_NOT_SUPPORTED;
+  ErrorAddTxt := CONCAT(THIS^._myType, ' ');
+  ErrorAddTxt := CONCAT(ErrorAddTxt , THIS^.Name);
+  
   
   // Create log entry
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,

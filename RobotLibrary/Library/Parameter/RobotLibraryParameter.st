@@ -55,8 +55,6 @@ VAR_GLOBAL CONSTANT
   MESSAGE_CODES_MAX                   : DINT := 15;
   /// Maximal amount of fragments
   FRAGMENT_MAX                        : DINT := 9;
-  /// Use two sequences in telegram ?
-  TWO_SEQUENCES                       : BOOL := FALSE; 
   /// Flag to indicate that the byte order must be changed
   SWAP_BYTE_ORDER                     : BOOL := TRUE; 
   /// Timeout for checking for invalid frames

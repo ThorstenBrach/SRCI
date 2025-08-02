@@ -23,7 +23,7 @@
 TYPE TelegramPlcToRobSequenceHeader :
 STRUCT
   /// Telegram Sequence and Acknowledgement number
-  SEQ_ACK      : UINT;
+  SEQ_ACK       : UINT;
   /// Length of the Telegram Sequence excluding this Telegram Sequence Header
   PayloadLength : UINT;
 END_STRUCT

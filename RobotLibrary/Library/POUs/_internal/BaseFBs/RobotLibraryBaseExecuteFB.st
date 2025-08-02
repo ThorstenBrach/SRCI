@@ -36,8 +36,10 @@ END_VAR
 
 VAR
   /// Rising edge for execute
+  {attribute 'hide'}
  _execute_R       : R_TRIG;
   /// Falling edge for execute
+  {attribute 'hide'}
  _execute_F       : F_TRIG;
 END_VAR
 
@@ -131,19 +133,44 @@ VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup; 
 END_VAR
+VAR
+  /// internal return value 
+ _retVal    : DINT;
+END_VAR
 
-  OnExecCancel := Reset();
-  
-  // try to remove cmd
-  AxesGroup.Acyclic.ActiveCommandRegister.RemoveCmd(_uniqueID);
-  
   // Create log entry
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Execution of FB {1} cancled ',
-                          Para1       := MyType);
+                          MessageText := 'Execution of {1} cancled ',
+                          Para1       := MyType);                 
+  
+  // try to remove cmd
+  _retVal := AxesGroup.Acyclic.ActiveCommandRegister.RemoveCmd(_uniqueID);
+  
+  
+  IF (_retVal = RobotLibraryConstants.OK)
+  THEN
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := '{1} successfully removed from ARC',
+                            Para1       := MyType);                 
+  ELSE
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := '{1} was not removed from ARC because execution was already in progress',
+                            Para1       := MyType);                 
+  END_IF
+  
+  
+  OnExecCancel := Reset();
 
 END_METHOD
 

@@ -24,7 +24,7 @@ TYPE UserData :
 STRUCT
   /// state of the synchronizationrelated comparison mechanism 
   EnableSync                     : DataEnableSync;
-  /// Set TRUE to define two sequences in one Telegram.
+  /// TRUE if two sequences in one Telegram are active
   ActivateTwoSequences           : BOOL;
   /// Synchronisation modes  
   SynchronizationModes           : SynchronizationModes;  

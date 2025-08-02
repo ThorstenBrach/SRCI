@@ -94,7 +94,6 @@ END_VAR
     IF ( Register[_regIdx].State = ActiveCommandRegisterState.IS_FREE )
     THEN
       Register[_regIdx].State      := ActiveCommandRegisterState.IS_PROCESSING;
-    //Register[_regIdx].UniqueID   := CreateUniqueID();
       Register[_regIdx].UniqueID   := DINT_TO_UINT(_regIdx);
       Register[_regIdx].pCommandFB := pCommandFB;
   
@@ -122,12 +121,13 @@ END_VAR
       SysDepMemCpy( pDest := ADR(_cmdType), pSrc := ADR(pCommandFB^.CommandData.Payload), DataLen := SIZEOF(_cmdType));
       
       // Create log entry
-      CreateLogMessagePara1 ( Timestamp   := SystemTime,
+      CreateLogMessagePara2 ( Timestamp   := SystemTime,
                               MessageType := MessageType.CMD,
                               Severity    := Severity.DEBUG,
                               MessageCode := 0,
-                              MessageText := 'Added Cmd <{1}> to ACR',
-                              Para1       :=  CMD_TYPE_TO_STRING(SwapUint(_cmdType)));
+                              MessageText := 'Added Cmd <{1}> to ACR <{2}>',
+                              Para1       :=  CMD_TYPE_TO_STRING(SwapUint(_cmdType)),
+                              Para2       :=  DINT_TO_STRING(_regIdx));
       EXIT;
     END_IF
   END_FOR
@@ -271,21 +271,6 @@ END_VAR
                             Para1       :=  UINT_TO_STRING(Rsp.Header.CmdID),
                             Para2       :=  CMD_MESSAGE_STATE_TO_STRING(_cmdMessageState));
   END_IF
-
-END_METHOD
-
-METHOD PRIVATE CreateUniqueID : UINT
-VAR
-  /// internal index for loops
- _idx : DINT;
-  /// length of the ARC
- _arcLenght : DINT;
-END_VAR
-
-  // inc last unique ID 
-  LastUniqueID := LastUniqueID + 1;
-  // return unique ID
-  CreateUniqueID := LastUniqueID;
 
 END_METHOD
 
@@ -497,7 +482,7 @@ END_VAR
 
 END_METHOD
 
-METHOD PUBLIC RemoveCmd
+METHOD PUBLIC RemoveCmd : DINT
 VAR_INPUT
  /// unique ID
  UniqueID : UDINT;  
@@ -506,18 +491,42 @@ END_VAR
 VAR
   /// internal index
  _regIdx : DINT;
+  /// internal command type 
+ _cmdType : CmdType;
 END_VAR
 
+  RemoveCmd := RobotLibraryConstants.HAS_ERROR;
+  
+  
+  IF (UniqueID = 0)
+  THEN
+    UniqueID := UniqueID;
+  END_IF
+  
   FOR _regIdx := 1 TO RegisterSize
   DO
     // check unique ID found and not yet sended ?
-    IF (( Register[_regIdx].UniqueID         = UniqueID               ) AND
-        ( Register[_regIdx].Command[1].State < BufferStateCmd.SENDING ))       
-    THEN  
+    IF (( Register[_regIdx].UniqueID                  = UniqueID                        ) AND
+        ( Register[_regIdx].Command[ACTIVE_CMD].State < BufferStateCmd.UPDATE_AVAILABLE ))       
+    THEN
+      // Get CmdType from payload
+      SysDepMemCpy( pDest := ADR(_cmdType), pSrc := ADR(Register[_regIdx].Command[ACTIVE_CMD].Payload), DataLen := SIZEOF(_cmdType));
       // delete register entry
       SysDepMemSet(pDest := ADR(Register[_regIdx]), Value := 0 , DataLen := SIZEOF(Register[_regIdx]));
       // decrement current used register counter
       CurrentArcUsageCount := CurrentArcUsageCount - 1;
+      // Command successfull removed
+      RemoveCmd := RobotLibraryConstants.OK;    
+      
+      
+      // Create log entry
+      CreateLogMessagePara2 (  Timestamp   := SystemTime,
+                               MessageType := MessageType.CMD,
+                               Severity    := Severity.DEBUG,
+                               MessageCode := 0,
+                               MessageText := 'Removed Cmd <{1}> from ARC <{2}>',
+                               Para1       :=  CMD_TYPE_TO_STRING(SwapUint(_cmdType)),
+                               Para2       :=  DINT_TO_STRING(_regIdx));                 
       EXIT;
     END_IF
   END_FOR

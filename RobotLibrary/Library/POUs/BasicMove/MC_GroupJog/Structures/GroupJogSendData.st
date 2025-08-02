@@ -22,8 +22,9 @@
 // -------------------------------------------------------------------------
 TYPE GroupJogSendData EXTENDS CmdHeader:   
 STRUCT
-  Enable : BOOL;
-
+  Enable                 : BOOL;
+  /// Reserve
+  Reserve                : BYTE;
   /// Relates to Mode 0 (JogFrame) and 1 (JogTool) Index of tool
   /// •      0: Flange (default):
   /// • 1..254: Tool frames
@@ -34,6 +35,8 @@ STRUCT
   FrameNo                : USINT;
   /// Specifies in which mode the robot is jogged
   Mode                   : JogMode;
+  /// Reserve
+  Reserve2               : BYTE;
   /// Increments for jogging translational axes for defined distance
   /// •  0: Incremental mode OFF (default) - Movement is active until "Control" is reset, or error occurs.
   /// • >0: Incremental mode ON            - Movement is active until distance defined by input value is reached without changes to "Control", "Control" is reset, or error occurs

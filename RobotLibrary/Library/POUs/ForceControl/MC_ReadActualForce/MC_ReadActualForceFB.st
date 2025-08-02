@@ -322,10 +322,10 @@ END_VAR
   _command.ExecMode        :=  ExecMode;
   _command.ParSeq          := _command.ParSeq;
   _command.Priority        :=  Priority;
-  _command.EmitterID[0]    := 0; {warning 'ToDo'}
-  _command.EmitterID[1]    := 0; {warning 'ToDo'}
-  _command.EmitterID[2]    := 0; {warning 'ToDo'}
-  _command.EmitterID[3]    := 0; {warning 'ToDo'}
+  _command.EmitterID[0]    := 0;
+  _command.EmitterID[1]    := 0;
+  _command.EmitterID[2]    := 0;
+  _command.EmitterID[3]    := 0;
   _command.ListenerID      := _parCmd.ListenerID;
   _command.Reserve         := 0;
   _command.ToolNo          := _parCmd.ToolNo;

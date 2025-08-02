@@ -24,7 +24,7 @@ TYPE ReadRobotSWLimitsRecvData EXTENDS RspHeader :
 STRUCT
   /// DLimits for joints and external axes according to Table 6-173.
   LimitValues        : SWLimits;
-  /// ToDo
+  /// The status bit "DataChanged" represents the modification state 
   DataChanged : BOOL;
 END_STRUCT
 END_TYPE

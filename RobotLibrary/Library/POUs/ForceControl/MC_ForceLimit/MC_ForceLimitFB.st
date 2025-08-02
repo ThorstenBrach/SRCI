@@ -659,13 +659,11 @@ END_VAR
                             MessageType := MessageType.CMD,
                             Severity    := Severity.DEBUG,
                             MessageCode := 0,
-                            MessageText := 'Command.EmitterID[{2}] = {1}',
-                            Para1       :=  SINT_TO_STRING(_command.EmitterID[_idx]),
-                            Para2       :=  DINT_TO_STRING(_idx));
+                            MessageText := 'Command.EmitterID[{1}] = {2}',
+                            Para1       :=  DINT_TO_STRING(_idx),
+                            Para2       :=  SINT_TO_STRING(_command.EmitterID[_idx]));
   END_FOR
   
-  
-  {warning 'ToDo: Use a loop for the array elements'}
   
   // Return if no parameter is remaining...
   IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
@@ -745,82 +743,21 @@ END_VAR
                           Para1       :=  BYTE_TO_STRING(_command.FixedSensor));
   
   
-  // Return if no parameter is remaining...
-  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
-  // dec remaining parameter(s)                        
-  ParameterCnt := ParameterCnt - 1;
-  // Create log entry for SensorFrame[0]
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
-                          MessageType := MessageType.CMD,
-                          Severity    := Severity.DEBUG,
-                          MessageCode := 0,
-                          MessageText := 'Command.SensorFrame[0] = {1}',
-                          Para1       :=  REAL_TO_STRING(_command.SensorFrame[0]));
-  
-  
-  // Return if no parameter is remaining...
-  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
-  // dec remaining parameter(s)                        
-  ParameterCnt := ParameterCnt - 1;
-  // Create log entry for SensorFrame[1]
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
-                          MessageType := MessageType.CMD,
-                          Severity    := Severity.DEBUG,
-                          MessageCode := 0,
-                          MessageText := 'Command.SensorFrame[1] = {1}',
-                          Para1       :=  REAL_TO_STRING(_command.SensorFrame[1]));
-  
-  
-  // Return if no parameter is remaining...
-  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
-  // dec remaining parameter(s)                        
-  ParameterCnt := ParameterCnt - 1;
-  // Create log entry for SensorFrame[2]
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
-                          MessageType := MessageType.CMD,
-                          Severity    := Severity.DEBUG,
-                          MessageCode := 0,
-                          MessageText := 'Command.SensorFrame[2] = {1}',
-                          Para1       :=  REAL_TO_STRING(_command.SensorFrame[2]));
-  
-  
-  // Return if no parameter is remaining...
-  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
-  // dec remaining parameter(s)                        
-  ParameterCnt := ParameterCnt - 1;
-  // Create log entry for SensorFrame[3]
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
-                          MessageType := MessageType.CMD,
-                          Severity    := Severity.DEBUG,
-                          MessageCode := 0,
-                          MessageText := 'Command.SensorFrame[3] = {1}',
-                          Para1       :=  REAL_TO_STRING(_command.SensorFrame[3]));
-                                                  
-  
-  // Return if no parameter is remaining...
-  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
-  // dec remaining parameter(s)                        
-  ParameterCnt := ParameterCnt - 1;
-  // Create log entry for SensorFrame[4]
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
-                          MessageType := MessageType.CMD,
-                          Severity    := Severity.DEBUG,
-                          MessageCode := 0,
-                          MessageText := 'Command.SensorFrame[4] = {1}',
-                          Para1       :=  REAL_TO_STRING(_command.SensorFrame[4]));
-                                                  
-  
-  // Return if no parameter is remaining...
-  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
-  // dec remaining parameter(s)                        
-  ParameterCnt := ParameterCnt - 1;
-  // Create log entry for SensorFrame[5]
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
-                          MessageType := MessageType.CMD,
-                          Severity    := Severity.DEBUG,
-                          MessageCode := 0,
-                          MessageText := 'Command.SensorFrame[5] = {1}',
-                          Para1       :=  REAL_TO_STRING(_command.SensorFrame[5]));
+  FOR _idx := 0 TO 5
+  DO
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
+    // Create log entry for ForceLimit[0]
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.SensorFrame[{1}] = {2}',
+                            Para1       :=  DINT_TO_STRING(_idx),
+                            Para2       :=  REAL_TO_STRING(_command.SensorFrame[_idx]));
+  END_FOR     
   
   
   // Return if no parameter is remaining...
@@ -849,160 +786,39 @@ END_VAR
                           Para1       :=  REFERENCE_TYPE_TO_STRING(_command.ReferenceType));                        
                                                   
   
-  // Return if no parameter is remaining...
-  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
-  // dec remaining parameter(s)                        
-  ParameterCnt := ParameterCnt - 1;
-  // Create log entry for SensorValue[0]
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
-                          MessageType := MessageType.CMD,
-                          Severity    := Severity.DEBUG,
-                          MessageCode := 0,
-                          MessageText := 'Command.SensorValue[0] = {1}',
-                          Para1       :=  REAL_TO_STRING(_command.SensorValue[0]));
+  
+  FOR _idx := 0 TO 5
+  DO
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
+    // Create log entry for ForceLimit[0]
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.SensorValue[{1}] = {2}',
+                            Para1       :=  DINT_TO_STRING(_idx),
+                            Para2       :=  REAL_TO_STRING(_command.SensorValue[_idx]));
+  END_FOR     
   
   
-  // Return if no parameter is remaining...
-  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
-  // dec remaining parameter(s)                        
-  ParameterCnt := ParameterCnt - 1;
-  // Create log entry for SensorValue[1]
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
-                          MessageType := MessageType.CMD,
-                          Severity    := Severity.DEBUG,
-                          MessageCode := 0,
-                          MessageText := 'Command.SensorValue[1] = {1}',
-                          Para1       :=  REAL_TO_STRING(_command.SensorValue[1]));
-  
-  
-  // Return if no parameter is remaining...
-  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
-  // dec remaining parameter(s)                        
-  ParameterCnt := ParameterCnt - 1;
-  // Create log entry for SensorValue[2]
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
-                          MessageType := MessageType.CMD,
-                          Severity    := Severity.DEBUG,
-                          MessageCode := 0,
-                          MessageText := 'Command.SensorValue[2] = {1}',
-                          Para1       :=  REAL_TO_STRING(_command.SensorValue[2]));
-  
-  
-  // Return if no parameter is remaining...
-  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
-  // dec remaining parameter(s)                        
-  ParameterCnt := ParameterCnt - 1;
-  // Create log entry for SensorValue[3]
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
-                          MessageType := MessageType.CMD,
-                          Severity    := Severity.DEBUG,
-                          MessageCode := 0,
-                          MessageText := 'Command.SensorValue[3] = {1}',
-                          Para1       :=  REAL_TO_STRING(_command.SensorValue[3]));
-                                                  
-  
-  // Return if no parameter is remaining...
-  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
-  // dec remaining parameter(s)                        
-  ParameterCnt := ParameterCnt - 1;
-  // Create log entry for SensorValue[4]
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
-                          MessageType := MessageType.CMD,
-                          Severity    := Severity.DEBUG,
-                          MessageCode := 0,
-                          MessageText := 'Command.SensorValue[4] = {1}',
-                          Para1       :=  REAL_TO_STRING(_command.SensorValue[4]));
-                                                  
-  
-  // Return if no parameter is remaining...
-  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
-  // dec remaining parameter(s)                        
-  ParameterCnt := ParameterCnt - 1;
-  // Create log entry for SensorValue[5]
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
-                          MessageType := MessageType.CMD,
-                          Severity    := Severity.DEBUG,
-                          MessageCode := 0,
-                          MessageText := 'Command.SensorValue[5] = {1}',
-                          Para1       :=  REAL_TO_STRING(_command.SensorValue[5]));
-                                                  
-  
-  // Return if no parameter is remaining...
-  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
-  // dec remaining parameter(s)                        
-  ParameterCnt := ParameterCnt - 1;
-  // Create log entry for ForceLimit[0]
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
-                          MessageType := MessageType.CMD,
-                          Severity    := Severity.DEBUG,
-                          MessageCode := 0,
-                          MessageText := 'Command.ForceLimit[0] = {1}',
-                          Para1       :=  REAL_TO_STRING(_command.ForceLimit[0]));
-  
-  
-  // Return if no parameter is remaining...
-  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
-  // dec remaining parameter(s)                        
-  ParameterCnt := ParameterCnt - 1;
-  // Create log entry for ForceLimit[1]
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
-                          MessageType := MessageType.CMD,
-                          Severity    := Severity.DEBUG,
-                          MessageCode := 0,
-                          MessageText := 'Command.ForceLimit[1] = {1}',
-                          Para1       :=  REAL_TO_STRING(_command.ForceLimit[1]));
-  
-  
-  // Return if no parameter is remaining...
-  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
-  // dec remaining parameter(s)                        
-  ParameterCnt := ParameterCnt - 1;
-  // Create log entry for ForceLimit[2]
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
-                          MessageType := MessageType.CMD,
-                          Severity    := Severity.DEBUG,
-                          MessageCode := 0,
-                          MessageText := 'Command.ForceLimit[2] = {1}',
-                          Para1       :=  REAL_TO_STRING(_command.ForceLimit[2]));
-  
-  
-  // Return if no parameter is remaining...
-  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
-  // dec remaining parameter(s)                        
-  ParameterCnt := ParameterCnt - 1;
-  // Create log entry for ForceLimit[3]
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
-                          MessageType := MessageType.CMD,
-                          Severity    := Severity.DEBUG,
-                          MessageCode := 0,
-                          MessageText := 'Command.ForceLimit[3] = {1}',
-                          Para1       :=  REAL_TO_STRING(_command.ForceLimit[3]));
-                                                  
-  
-  // Return if no parameter is remaining...
-  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
-  // dec remaining parameter(s)                        
-  ParameterCnt := ParameterCnt - 1;
-  // Create log entry for ForceLimit[4]
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
-                          MessageType := MessageType.CMD,
-                          Severity    := Severity.DEBUG,
-                          MessageCode := 0,
-                          MessageText := 'Command.ForceLimit[4] = {1}',
-                          Para1       :=  REAL_TO_STRING(_command.ForceLimit[4]));
-                                                  
-  
-  // Return if no parameter is remaining...
-  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
-  // dec remaining parameter(s)                        
-  ParameterCnt := ParameterCnt - 1;
-  // Create log entry for ForceLimit[5]
-  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
-                          MessageType := MessageType.CMD,
-                          Severity    := Severity.DEBUG,
-                          MessageCode := 0,
-                          MessageText := 'Command.ForceLimit[5] = {1}',
-                          Para1       :=  REAL_TO_STRING(_command.ForceLimit[5]));
+  FOR _idx := 0 TO 5
+  DO
+    // Return if no parameter is remaining...
+    IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+    // dec remaining parameter(s)                        
+    ParameterCnt := ParameterCnt - 1;
+    // Create log entry for ForceLimit[0]
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'Command.ForceLimit[{1}] = {2}',
+                            Para1       :=  DINT_TO_STRING(_idx),
+                            Para2       :=  REAL_TO_STRING(_command.ForceLimit[_idx]));
+  END_FOR
 
 END_METHOD
 
@@ -1021,6 +837,96 @@ END_VAR
 
 END_METHOD
 
+METHOD Protected OnExecCancel : DINT
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+VAR
+  /// internal return value 
+ _retVal    : DINT;
+END_VAR
+
+  OnExecCancel := RobotLibraryConstants.RUNNING;
+  
+  CASE _stepCancel OF
+    
+    0: // set busy flag
+       Busy := TRUE;
+      
+       // Create log entry
+       CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
+                               MessageType := MessageType.CMD,
+                               Severity    := Severity.DEBUG,
+                               MessageCode := 0,
+                               MessageText := 'Execution of {1} cancled ',
+                               Para1       := MyType);                 
+      
+       // try to remove cmd
+      _retVal := AxesGroup.Acyclic.ActiveCommandRegister.RemoveCmd(_uniqueID);
+    
+       // check result of removement       
+       IF ( _retVal = RobotLibraryConstants.OK )
+       THEN
+         // Reset step counter
+        _stepCancel := 0;
+         // finished okay
+         OnExecCancel := RobotLibraryConstants.OK;
+       
+         // Create log entry
+         CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
+                                 MessageType := MessageType.CMD,
+                                 Severity    := Severity.DEBUG,
+                                 MessageCode := 0,
+                                 MessageText := '{1} successfully removed from ARC',
+                                 Para1       := MyType);                 
+       ELSE
+         // set timeout
+         SetTimeout(PT := _timeoutCancel, rTimer := _timerCancel);
+         // inc step counter
+        _stepCancel := _stepCancel + 1; 
+       
+         // Create log entry
+         CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
+                                 MessageType := MessageType.CMD,
+                                 Severity    := Severity.DEBUG,
+                                 MessageCode := 0,
+                                 MessageText := '{1} was not removed from ARC because execution was already in progress',
+                                 Para1       := MyType);                 
+       END_IF       
+    
+       
+   1:  // call clear error 
+       OnExecCancel := OnExecErrorClear(AxesGroup := AxesGroup);  
+   
+       IF ( OnExecCancel = RobotLibraryConstants.OK)
+       THEN
+         // Reset busy flag
+         Busy := FALSE;
+         // Reset step counter
+        _stepCancel := 0;
+         // finished okay
+         OnExecCancel := RobotLibraryConstants.OK;
+       END_IF  
+    
+  ELSE
+    // invalid step
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
+  END_CASE  
+  
+  
+                          
+  // reset step counter
+  IF (OnExecCancel <> RobotLibraryConstants.RUNNING)
+  THEN
+    // Reset FB variables
+    Reset();
+    // Reset step counter
+   _stepCancel := 0;
+  END_IF
+
+END_METHOD
+
 METHOD PROTECTED OnExecErrorClear : DINT
 VAR_IN_OUT
   /// Robot assignment of function
@@ -1031,11 +937,11 @@ END_VAR
   
   CASE _stepClearError OF
     
-    0:  // Reset 
-        Reset();
+    0:  // set busy flag
+        Busy := TRUE;
         // trigger parameter update to disable FB
        _parameterUpdateInternal := TRUE;
-        // call Check Parameter changed method to trigger the parameter update to deactivate jogging mode
+        // call Check Parameter changed method to trigger the parameter update to disable the function
         CheckParameterChanged(AxesGroup := AxesGroup);
         // set timeout
         SetTimeout(PT := _timeoutClearError, rTimer := _timerClearError);
@@ -1043,7 +949,7 @@ END_VAR
        _stepClearError := _stepClearError + 1; 
         
     1: IF ( _responseReceived )
-       THEN     
+       THEN
          // reset response received flag
         _responseReceived := FALSE;
          // reset step counter
@@ -1057,13 +963,18 @@ END_VAR
            OnExecErrorClear := RobotLibraryConstants.HAS_ERROR;
          END_IF
   	   END_IF
-    
+  ELSE
+    // invalid step
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
   END_CASE
   
   
   // reset step counter
   IF (OnExecErrorClear <> RobotLibraryConstants.RUNNING)
   THEN
+    // Reset 
+    Reset();     
+    // reset step counter
    _stepClearError := 0;
   END_IF
 

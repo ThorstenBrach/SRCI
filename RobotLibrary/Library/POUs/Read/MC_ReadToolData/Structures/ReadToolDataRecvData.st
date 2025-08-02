@@ -28,7 +28,7 @@ STRUCT
   ToolNoReturn  : USINT;
   /// Tool data (see chapter 5.5.6.3)
   ToolData      : ToolData;
-  /// ToDo
+  /// The status bit "DataChanged" represents the modification state 
   DataChanged   : BOOL;
 END_STRUCT
 END_TYPE

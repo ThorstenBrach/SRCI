@@ -1538,11 +1538,17 @@ END_VAR
            
            CASE  _response.State 
            OF
-             CmdMessageState.BUFFERED : CommandBuffered   := TRUE;
-             CmdMessageState.ACTIVE   : Active            := TRUE;
-             CmdMessageState.DONE     : Done              := TRUE;
-                                        ParameterAccepted := TRUE;
-             CmdMessageState.ERROR    : Error             := TRUE;
+             CmdMessageState.BUFFERED : CommandBuffered          := TRUE;
+             CmdMessageState.ACTIVE   : Active                   := TRUE;
+                                        // Update results
+                                        OutCmd.InvocationCounter := _response.InvocationCounter;
+                                        OutCmd.OriginID          := _response.OriginID;
+                                        OutCmd.Progress          :=  PERCENT_UINT_TO_REAL( Value := _response.Progress, IsOptional := FALSE);
+                                        OutCmd.RemainingDistance := _response.RemainingDistance;
+             
+             CmdMessageState.DONE     : Done                     := TRUE;
+                                        ParameterAccepted        := TRUE;
+             CmdMessageState.ERROR    : Error                    := TRUE;
            END_CASE
                   
            // Done, Aborted or Error ?

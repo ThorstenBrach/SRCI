@@ -302,19 +302,20 @@ END_VAR
 // Byte 06 : USINT      - ToolNo
 // Byte 07 : USINT      - FrameNo
 // Byte 08 : USINT      - Mode
-// Byte 09 : REAL       - IncrementalTranslation HW HB
-// Byte 10 :            - IncrementalTranslation HW LB
-// Byte 11 :            - IncrementalTranslation LW HB
-// Byte 12 :            - IncrementalTranslation LW LB
-// Byte 13 : REAL       - IncrementalRotation HW HB
-// Byte 14 :            - IncrementalRotation HW LB
-// Byte 15 :            - IncrementalRotation LW HB
-// Byte 16 :            - IncrementalRotation LW LB
-// Byte 17 : UINT       - Override
+// Byte 09 : BYTE       - Reserve
+// Byte 10 : REAL       - IncrementalTranslation HW HB
+// Byte 11 :            - IncrementalTranslation HW LB
+// Byte 12 :            - IncrementalTranslation LW HB
+// Byte 13 :            - IncrementalTranslation LW LB
+// Byte 14 : REAL       - IncrementalRotation HW HB
+// Byte 15 :            - IncrementalRotation HW LB
+// Byte 16 :            - IncrementalRotation LW HB
+// Byte 17 :            - IncrementalRotation LW LB
 // Byte 18 : UINT       - Override
-// Byte 19 : BYTE       - JogControl[0]
-// Byte 20 : BYTE       - JogControl[1]
-// Byte 21 : BYTE       - JogControl[2]
+// Byte 19 : UINT       - Override
+// Byte 20 : BYTE       - JogControl[0]
+// Byte 21 : BYTE       - JogControl[1]
+// Byte 22 : BYTE       - JogControl[2]
 // --------------------------
 
   // set command parameter 
@@ -324,9 +325,11 @@ END_VAR
   _command.Priority               :=  Priority;
                            
   _command.Enable                 :=  Enable;
+  _command.Reserve                :=  0;
   _command.ToolNo                 := _parCmd.ToolNo; 
   _command.FrameNo                := _parCmd.FrameNo;
   _command.Mode                   := _parCmd.Mode;
+  _command.Reserve2               :=  0;
   _command.IncrementalTranslation := _parCmd.IncrementalTranslation;
   _command.IncrementalRotation    := _parCmd.IncrementalRotation;
   _command.Override               := _parCmd.Override * 100;
@@ -376,7 +379,7 @@ END_VAR
   IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
   THEN
     // add command.Reserve 
-    CreateCommandPayload.AddByte(0); {warning 'ToDo: Not in SRCI Spec V1.3'}
+    CreateCommandPayload.AddByte(_Command.Reserve);
     // inc parameter counter
    _parameterCnt := _parameterCnt + 1;  
   END_IF
@@ -416,7 +419,7 @@ END_VAR
   IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
   THEN
     // add command.Reserve 
-    CreateCommandPayload.AddByte(0); {warning 'ToDo: Not in SRCI Spec V1.3'}
+    CreateCommandPayload.AddByte(_command.Reserve2); 
     // inc parameter counter
    _parameterCnt := _parameterCnt + 1;  
   END_IF
@@ -652,6 +655,96 @@ END_VAR
 
 END_METHOD
 
+METHOD Protected OnExecCancel : DINT
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+VAR
+  /// internal return value 
+ _retVal    : DINT;
+END_VAR
+
+  OnExecCancel := RobotLibraryConstants.RUNNING;
+  
+  CASE _stepCancel OF
+    
+    0: // set busy flag
+       Busy := TRUE;
+      
+       // Create log entry
+       CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
+                               MessageType := MessageType.CMD,
+                               Severity    := Severity.DEBUG,
+                               MessageCode := 0,
+                               MessageText := 'Execution of {1} cancled ',
+                               Para1       := MyType);                 
+      
+       // try to remove cmd
+      _retVal := AxesGroup.Acyclic.ActiveCommandRegister.RemoveCmd(_uniqueID);
+    
+       // check result of removement       
+       IF ( _retVal = RobotLibraryConstants.OK )
+       THEN
+         // Reset step counter
+        _stepCancel := 0;
+         // finished okay
+         OnExecCancel := RobotLibraryConstants.OK;
+       
+         // Create log entry
+         CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
+                                 MessageType := MessageType.CMD,
+                                 Severity    := Severity.DEBUG,
+                                 MessageCode := 0,
+                                 MessageText := '{1} successfully removed from ARC',
+                                 Para1       := MyType);                 
+       ELSE
+         // set timeout
+         SetTimeout(PT := _timeoutCancel, rTimer := _timerCancel);
+         // inc step counter
+        _stepCancel := _stepCancel + 1; 
+       
+         // Create log entry
+         CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
+                                 MessageType := MessageType.CMD,
+                                 Severity    := Severity.DEBUG,
+                                 MessageCode := 0,
+                                 MessageText := '{1} was not removed from ARC because execution was already in progress',
+                                 Para1       := MyType);                 
+       END_IF       
+    
+       
+   1:  // call clear error 
+       OnExecCancel := OnExecErrorClear(AxesGroup := AxesGroup);  
+   
+       IF ( OnExecCancel = RobotLibraryConstants.OK)
+       THEN
+         // Reset busy flag
+         Busy := FALSE;
+         // Reset step counter
+        _stepCancel := 0;
+         // finished okay
+         OnExecCancel := RobotLibraryConstants.OK;
+       END_IF  
+    
+  ELSE
+    // invalid step
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
+  END_CASE  
+  
+  
+                          
+  // reset step counter
+  IF (OnExecCancel <> RobotLibraryConstants.RUNNING)
+  THEN
+    // Reset FB variables
+    Reset();
+    // Reset step counter
+   _stepCancel := 0;
+  END_IF
+
+END_METHOD
+
 METHOD PROTECTED OnExecErrorClear : DINT
 VAR_IN_OUT
   /// Robot assignment of function
@@ -662,11 +755,11 @@ END_VAR
   
   CASE _stepClearError OF
     
-    0:  // Reset 
-        Reset();
+    0:  // set busy flag
+        Busy := TRUE;
         // trigger parameter update to disable FB
        _parameterUpdateInternal := TRUE;
-        // call Check Parameter changed method to trigger the parameter update to deactivate jogging mode
+        // call Check Parameter changed method to trigger the parameter update to disable the function
         CheckParameterChanged(AxesGroup := AxesGroup);
         // set timeout
         SetTimeout(PT := _timeoutClearError, rTimer := _timerClearError);
@@ -674,7 +767,7 @@ END_VAR
        _stepClearError := _stepClearError + 1; 
         
     1: IF ( _responseReceived )
-       THEN     
+       THEN
          // reset response received flag
         _responseReceived := FALSE;
          // reset step counter
@@ -688,13 +781,18 @@ END_VAR
            OnExecErrorClear := RobotLibraryConstants.HAS_ERROR;
          END_IF
   	   END_IF
-    
+  ELSE
+    // invalid step
+    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
   END_CASE
   
   
   // reset step counter
   IF (OnExecErrorClear <> RobotLibraryConstants.RUNNING)
   THEN
+    // Reset 
+    Reset();     
+    // reset step counter
    _stepClearError := 0;
   END_IF
 

@@ -208,7 +208,7 @@ END_VAR
   IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
   THEN
     // add command.ToolNo
-    CreateCommandPayload.AddInt(_command.ToolNo);
+    CreateCommandPayload.AddUsint(_command.ToolNo);
     // inc parameter counter
    _parameterCnt := _parameterCnt + 1;  
   END_IF

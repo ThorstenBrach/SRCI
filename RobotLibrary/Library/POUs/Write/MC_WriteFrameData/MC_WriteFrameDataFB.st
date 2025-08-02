@@ -455,7 +455,7 @@ END_VAR
   // Check parameter must be added ? 
   IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
   THEN
-    // add command.rameData.X
+    // add command.FrameData.X
     CreateCommandPayload.AddReal(_command.FrameData.X);
     // inc parameter counter
    _parameterCnt := _parameterCnt + 1;  
@@ -465,7 +465,7 @@ END_VAR
   // Check parameter must be added ? 
   IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
   THEN
-    // add command.rameData.Y
+    // add command.FrameData.Y
     CreateCommandPayload.AddReal(_command.FrameData.Y);
     // inc parameter counter
    _parameterCnt := _parameterCnt + 1;  
@@ -475,7 +475,7 @@ END_VAR
   // Check parameter must be added ? 
   IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
   THEN
-    // add command.rameData.Z
+    // add command.FrameData.Z
     CreateCommandPayload.AddReal(_command.FrameData.Z);
     // inc parameter counter
    _parameterCnt := _parameterCnt + 1;  
@@ -485,7 +485,7 @@ END_VAR
   // Check parameter must be added ? 
   IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
   THEN
-    // add command.rameData.Rx
+    // add command.FrameData.Rx
     CreateCommandPayload.AddReal(_command.FrameData.Rx);
     // inc parameter counter
    _parameterCnt := _parameterCnt + 1;  
@@ -495,7 +495,7 @@ END_VAR
   // Check parameter must be added ? 
   IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
   THEN
-    // add command.rameData.Ry
+    // add command.FrameData.Ry
     CreateCommandPayload.AddReal(_command.FrameData.Ry);
     // inc parameter counter
    _parameterCnt := _parameterCnt + 1;  
@@ -505,7 +505,7 @@ END_VAR
   // Check parameter must be added ? 
   IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
   THEN
-    // add command.rameData.Rz
+    // add command.FrameData.Rz
     CreateCommandPayload.AddReal(_command.FrameData.Rz);
     // inc parameter counter
    _parameterCnt := _parameterCnt + 1;  

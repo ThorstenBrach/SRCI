@@ -33,7 +33,7 @@ STRUCT
   /// Robot firmware version in manufacturer -specific format
   RCFirmwareVersion    : STRING(12);
   /// 
-  RCInterpreterVersion : STRING(3);
+  RCInterpreterVersion : STRING(5);
   /// TRUE = Axis used in Robot FALSE = Axis NOT used. See Table 6-13 for bit assignment
   AxisJointUsed        : AxisJointUsed;
   /// TRUE = Axis used by Robot FALSE = Axis NOT used. See Table 6-13 for bit assignment.

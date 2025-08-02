@@ -425,7 +425,7 @@ END_VAR
   IF ( ResponseData.IsPayloadRemaining)
   THEN  
     // Get Response.FrameData.Timestamp.IEC_DATE
-   _response.FrameData.Timestamp.IEC_DATE := ResponseData.GetUsint();
+   _response.FrameData.Timestamp.IEC_DATE := ResponseData.GetUint();
     // inc parameter counter
    _parameterCnt := _parameterCnt + 1;
   END_IF
