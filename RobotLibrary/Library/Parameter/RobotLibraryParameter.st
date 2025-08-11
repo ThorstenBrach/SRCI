@@ -59,8 +59,8 @@ VAR_GLOBAL CONSTANT
   SWAP_BYTE_ORDER                     : BOOL := TRUE; 
   /// Timeout for checking for invalid frames
   INVALID_FRAMES_CHECK_TIMEOUT        : TIME := T#60S;
-  /// Warning limit for ARC registers running low
-  ARC_USAGE_WARNING_LIMIT             : REAL := 80.0;  
+  /// Warning limit for ACR registers running low
+  ACR_USAGE_WARNING_LIMIT             : REAL := 80.0;  
 END_VAR
 
 

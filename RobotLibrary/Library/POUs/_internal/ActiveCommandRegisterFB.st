@@ -369,7 +369,7 @@ END_VAR
   END_IF
   
   // build rising edge for arc usage over 80% 
-  WarningArcUsage( CLK := CurrenArcUsagePercent > RobotLibraryParameter.ARC_USAGE_WARNING_LIMIT );
+  WarningArcUsage( CLK := CurrenArcUsagePercent > RobotLibraryParameter.ACR_USAGE_WARNING_LIMIT );
   
   IF ( WarningArcUsage.Q )
   THEN

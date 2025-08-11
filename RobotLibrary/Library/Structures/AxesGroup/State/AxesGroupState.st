@@ -24,6 +24,8 @@ TYPE AxesGroupState :
 STRUCT
   /// Client reports a fatal error 
   FatalErrorClient               : BOOL;
+  /// Invalid frames counter
+  InvalidFrames                  : UDINT;  
   /// PLC and RC are synchronized
   Synchronized                   : BOOL;
   /// Synchronizing is running

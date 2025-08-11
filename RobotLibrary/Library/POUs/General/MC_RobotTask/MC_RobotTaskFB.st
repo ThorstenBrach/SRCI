@@ -36,7 +36,7 @@ VAR_INPUT
   ///
   /// For convenience, an RC with only one RA must assign ID 1 to this RA. 
   /// An RC with multiple RAs must assign numeric values 1-15 to those RAs.
-  AxesGroupID       : BYTE;
+  AxesGroupID       : BYTE := 1;
   /// Configuration parameter
   ParCfg            : RobotTaskParCfg;
 END_VAR
@@ -91,8 +91,6 @@ VAR_OUTPUT
   /// InfoID for info identification reported during execution of command according to Table 7-5
   InfoID            : WORD;    
   InfoIdEnum        : RobotLibraryInfoIdEnum;    
-  /// Invalid frames counter
-  InvalidFrames     : UDINT;
 END_VAR
 
 VAR
@@ -462,6 +460,10 @@ END_VAR
   AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.CoordinateSystem.ToolNo  :=                                      Telegram.RobToPlc.CyclicOptional.CartesianPosition.CurrentlyUsedToolNo;
   AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.CoordinateSystem.FrameNo :=                                      Telegram.RobToPlc.CyclicOptional.CartesianPosition.CurrentlyUsedFrameNo;
   // }}}
+  
+  Telegram.RobToPlc.CyclicOptional.CartesianPosition.ToolNo;
+  Telegram.RobToPlc.CyclicOptional.CartesianPosition.FrameNo;
+  
   
   // Joint position {{{
   AxesGroup.CyclicOptional.RobToPlc.JointPosition.Active := AxesGroup.CyclicOptional.RobToPlc.JointPosition.Active;
@@ -2221,18 +2223,6 @@ END_VAR
 
   MyType := 'MC_RobotTaskFB';
   
-  // if no AxesGroupID is set, then take the current instance counter value ( -> unique value for each instance )
-  IF (AxesGroupID = 0)
-  THEN
-    AxesGroupID := RobotLibraryDefines.AxesGroupInstances;
-  END_IF
-  
-  // inc global instance counter
-  RobotLibraryDefines.AxesGroupInstances 
-    := RobotLibraryDefines.AxesGroupInstances + 1;
-    
-  
-  
   // Create log entry
   CreateLogMessage ( Timestamp   := SystemTime,
                      MessageType := MessageType.CMD,
@@ -2259,7 +2249,6 @@ END_VAR
     // reset first flag
     First := FALSE;
   END_IF
-  
   
   _aliveCheck ( IN  := (_aliveValue = LifeSign) , PT := ParCfg.Com.LifeSignTimeOut + ParCfg.Plc.CycleTime);
   _alive_R    ( CLK := _aliveBit);
@@ -2544,7 +2533,7 @@ END_VAR
   // ----------------------
   IF ( _lifeSignHeader <> _lifeSignFooter )   
   THEN
-    InvalidFrames := InvalidFrames + 1;
+    AxesGroup.State.InvalidFrames := AxesGroup.State.InvalidFrames + 1;
   END_IF
   
   
@@ -2555,17 +2544,17 @@ END_VAR
    _invalidFrameCounterCheck_D( IN := FALSE);
     
     // compare invalid frame(s) counter
-    IF ( InvalidFrames <> _lastInvalidFrames)
+    IF ( AxesGroup.State.InvalidFrames <> _lastInvalidFrames)
     THEN
       // store last invalid frame(s) counter value
-     _lastInvalidFrames := InvalidFrames;
+     _lastInvalidFrames := AxesGroup.State.InvalidFrames;
       // Create log entry
       CreateLogMessagePara1 ( Timestamp   := SystemTime,
                               MessageType := MessageType.CMD,
                               Severity    := Severity.INFO,
                               MessageCode := 0,
                               MessageText := 'Detected invalid frames {1} in total',
-                              Para1       :=  UDINT_TO_STRING(InvalidFrames));
+                              Para1       :=  UDINT_TO_STRING(AxesGroup.State.InvalidFrames));
     END_IF
   END_IF
   
@@ -2573,8 +2562,8 @@ END_VAR
   // Reset invalid frames counter with rising edge of group reset
   IF ( AxesGroup.State.GroupReset_R.Q)
   THEN
-        InvalidFrames := 0;
-   _lastInvalidFrames := 0;
+    AxesGroup.State.InvalidFrames := 0;
+               _lastInvalidFrames := 0;
    
     // Create log entry
     CreateLogMessage ( Timestamp   := SystemTime,
@@ -2620,6 +2609,9 @@ END_VAR
   THEN
     // Reset initialized flag
     Initialized := FALSE;
+    // Reset Synchronized flag
+    Synchronized := FALSE;
+    
     // Set error 
     ErrorID := RobotLibraryErrorIdEnum.ERR_CONNECTION_LOST;  
     // Create log entry
@@ -7813,12 +7805,13 @@ END_VAR
   Error := ErrorID <> RobotLibraryConstants.OK ;
   
   // Check Payload and In/Out data size
-  IF (( RobotLibraryParameter.ROBOT_IN_DATA_MAX     < 64 ) OR
-      ( RobotLibraryParameter.ROBOT_OUT_DATA_MAX    < 64 ))
+  IF (( RobotLibraryParameter.ROBOT_IN_DATA_MAX  < 64 ) OR
+      ( RobotLibraryParameter.ROBOT_OUT_DATA_MAX < 64 ))
   THEN
     ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_LIBRARY_PARA;
     RETURN;
   END_IF
+  
   
   // Check AxesGroupID valid
   IF (( AxesGroupID < RobotLibraryConstants.AXES_GROUP_ID_MIN ) OR
@@ -7828,29 +7821,24 @@ END_VAR
     RETURN;
   END_IF
   
-  // Check AxesGroupID instances
-  IF ( RobotLibraryDefines.AxesGroupInstances > RobotLibraryConstants.AXES_GROUP_ID_MAX)
-  THEN
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_AXES_GROUP_COUNT;
-    RETURN;
-  END_IF
   
-  
-  // Reset flag for initialization
-  IF ( Initialized ) AND ( AxesGroup.Cyclic.RobToPlc.TelegramState <> TelegramState.INITIALIZED)
+  // Reset flag for initialization / Synchronization
+  IF ( Initialized OR Synchronized) AND ( AxesGroup.Cyclic.RobToPlc.TelegramState <> TelegramState.INITIALIZED)
   THEN
     // Reset initialized flag
     Initialized := FALSE;
+    // Reset Synchronized flag
+    Synchronized := FALSE;
     // Set error 
     ErrorID := RobotLibraryErrorIdEnum.ERR_INIT_LOST_UNKNOWN_0x80A2;
   END_IF
   
+  
   // Warning for ARC Registers running low
-  IF ( AxesGroup.Acyclic.ActiveCommandRegister.CurrenArcUsagePercent > RobotLibraryParameter.ARC_USAGE_WARNING_LIMIT )
+  IF ( AxesGroup.Acyclic.ActiveCommandRegister.CurrenArcUsagePercent > RobotLibraryParameter.ACR_USAGE_WARNING_LIMIT )
   THEN
     WarningID := RobotLibraryWarningIdEnum.WARN_ACR_FREE_ENTRIES_LOW;
   END_IF
-  
   
   
   // Check configuration parameter changed ? 
@@ -7912,12 +7900,12 @@ END_VAR
   
            TelegramState.UNDEFINED : ;
            
-           TelegramState.ERROR_161..TelegramState.ERROR_172:
+           TelegramState.ERROR_161_TELEGRAM_CONTROL_MISMATCH_TELEGRAM_STATE..TelegramState.ERROR_172_TELEGRAM_NUMBER_NOT_SUPPORTED:
   
              // clear error
              AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.ACK_ERROR;        
   
-           TelegramState.ERROR_173:
+           TelegramState.ERROR_173_SERVER_CONNECTION_LOST:
   
              // Reset interface including the ARC register on server side
              AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.RESET;        
@@ -7949,7 +7937,6 @@ END_VAR
                ErrorID     := RobotLibraryErrorIdEnum.ERR_SRCI_MAJOR_VERSION_INCOMPATIBLE_0x80A4;
                ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
              END_IF
-             
   
          ELSE
            // TelegrammState in error          
@@ -7960,12 +7947,80 @@ END_VAR
          // timeout exceeded ? 
          IF (CheckTimeout(_timerCmd) = RobotLibraryConstants.OK)
          THEN
-           ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
-           ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
+           // Check Telegram State error ? 
+           IF (( AxesGroup.Cyclic.RobToPlc.TelegramState >= TelegramState.ERROR_161_TELEGRAM_CONTROL_MISMATCH_TELEGRAM_STATE ) OR
+               ( AxesGroup.Cyclic.RobToPlc.TelegramState <= TelegramState.ERROR_173_SERVER_CONNECTION_LOST                   ))
+           THEN
+             ErrorID     := AxesGroup.Cyclic.RobToPlc.TelegramState;
+             ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
+           ELSE
+             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+             ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
+           END_IF
          END_IF
   
          
-    02: IF (( NOT _exchangeConfiguration.Busy  ) AND 
+    02: IF (( NOT _readMessages.Busy  ) AND 
+            ( NOT _readMessages.Error )) 
+        THEN
+          // start function block
+         _readMessages.Enable := TRUE;
+         _readMessages.ParCmd.MsgID := 0;
+         _readMessages.ParCmd.MessageLevel := _parCfg.Rob.Parameter.MessageLevel;
+          
+          // set timeout
+          SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
+          // inc step counter
+         _stepCmd := _stepCmd + 1;       
+        ELSE
+          // check error ? 
+          IF (_readMessages.Error)
+          THEN
+            ErrorID     := _readMessages.ErrorID;
+            ErrorAddTxt := _readMessages.ErrorAddTxt;;
+          END_IF  
+          // timeout exceeded ? 
+          IF (CheckTimeout(_timerCmd) = RobotLibraryConstants.OK)
+          THEN
+            ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+            ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
+          END_IF
+        END_IF
+    
+    03: IF ((     _readMessages.Enabled ) AND
+            ( NOT _readMessages.Busy    ) AND
+            ( NOT _readMessages.Error   ))
+        THEN       
+          // --------------------------------------------------------------- 
+          // !!! ReadMessages must stay active for the Message mechanism !!!
+          // --------------------------------------------------------------- 
+          // ReadMessages.Enable := FALSE;  
+          // Reset busy flag
+          Busy := FALSE;
+          // set initialized flag
+          Initialized := TRUE;       
+          // set timeout
+          SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
+          // inc step counter
+         _stepCmd := _stepCmd + 1;
+        ELSE
+           // check error ? 
+           IF (_readMessages.Error)
+           THEN
+             ErrorID     := _readMessages.ErrorID;
+             ErrorAddTxt := _readMessages.ErrorAddTxt;;
+           END_IF  
+         
+           // timeout exceeded ? 
+           IF (CheckTimeout(_timerCmd) = RobotLibraryConstants.OK)
+           THEN
+             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
+             ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
+           END_IF
+         END_IF       
+         
+         
+    04: IF (( NOT _exchangeConfiguration.Busy  ) AND 
             ( NOT _exchangeConfiguration.Error ))
         THEN
           // set command parameter
@@ -8010,8 +8065,8 @@ END_VAR
         END_IF
     
     
-    03: IF (( NOT _exchangeConfiguration.Busy              ) AND
-            (     _exchangeConfiguration.ParameterAccepted ))
+    05: IF (( NOT _exchangeConfiguration.Busy    ) AND
+            (     _exchangeConfiguration.Enabled ))
         THEN     
           // --------------------------------------------------------------------- 
           // !!! ExchangeConfiguration must stay active for the Sync mechanism !!!
@@ -8038,7 +8093,7 @@ END_VAR
         END_IF
   
          
-    04: IF (( NOT _readRobotData.Busy  ) AND 
+    06: IF (( NOT _readRobotData.Busy  ) AND 
             ( NOT _readRobotData.Error )) 
         THEN
           // start function block
@@ -8063,7 +8118,7 @@ END_VAR
         END_IF
       
     
-    05: IF (( NOT _readRobotData.Busy  ) AND
+    07: IF (( NOT _readRobotData.Busy  ) AND
             (     _readRobotData.Done  ))
         THEN       
           // start function block
@@ -8078,66 +8133,6 @@ END_VAR
            THEN
              ErrorID     := _readRobotData.ErrorID;
              ErrorAddTxt := _readRobotData.ErrorAddTxt;;
-           END_IF  
-         
-           // timeout exceeded ? 
-           IF (CheckTimeout(_timerCmd) = RobotLibraryConstants.OK)
-           THEN
-             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
-             ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
-           END_IF
-         END_IF
-  
-  
-    06: IF (( NOT _readMessages.Busy  ) AND 
-            ( NOT _readMessages.Error )) 
-        THEN
-          // start function block
-         _readMessages.Enable := TRUE;
-         _readMessages.ParCmd.MsgID := 0;
-         _readMessages.ParCmd.MessageLevel := _parCfg.Rob.Parameter.MessageLevel;
-          
-          // set timeout
-          SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
-          // inc step counter
-         _stepCmd := _stepCmd + 1;       
-        ELSE
-          // check error ? 
-          IF (_readMessages.Error)
-          THEN
-            ErrorID     := _readMessages.ErrorID;
-            ErrorAddTxt := _readMessages.ErrorAddTxt;;
-          END_IF  
-          // timeout exceeded ? 
-          IF (CheckTimeout(_timerCmd) = RobotLibraryConstants.OK)
-          THEN
-            ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
-            ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
-          END_IF
-        END_IF
-    
-    07: IF ((     _readMessages.Enabled ) AND
-            ( NOT _readMessages.Busy    ) AND
-            ( NOT _readMessages.Error   ))
-        THEN       
-          // --------------------------------------------------------------- 
-          // !!! ReadMessages must stay active for the Message mechanism !!!
-          // --------------------------------------------------------------- 
-          // ReadMessages.Enable := FALSE;  
-          // Reset busy flag
-          Busy := FALSE;
-          // set initialized flag
-          Initialized := TRUE;       
-          // set timeout
-          SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
-          // inc step counter
-         _stepCmd := _stepCmd + 1;
-        ELSE
-           // check error ? 
-           IF (_readMessages.Error)
-           THEN
-             ErrorID     := _readMessages.ErrorID;
-             ErrorAddTxt := _readMessages.ErrorAddTxt;;
            END_IF  
          
            // timeout exceeded ? 
@@ -8630,6 +8625,7 @@ END_VAR
   Synchronized      := FALSE;
   Error             := FALSE;
   ErrorID           := 0;
+  ErrorAddTxt       := '';
   WarningID         := 0;
   InfoID            := 0;  
   

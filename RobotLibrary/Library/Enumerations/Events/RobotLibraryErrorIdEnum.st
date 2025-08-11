@@ -12,8 +12,7 @@ TYPE RobotLibraryErrorIdEnum :
   ERR_INVALID_LIBRARY_PARA     := 2,
   /// Program fault : Invalid axes groups ID
   ERR_INVALID_AXES_GROUP_ID    := 3,
-  /// Program fault : Invalid amount of axes groups 
-  ERR_INVALID_AXES_GROUP_COUNT := 4,
+
   /// Function is not supported
   ERR_FUNCTION_NOT_SUPPORTED   := 5,
   /// Program fault : Timeout during command execution 

@@ -29,6 +29,11 @@ VAR
   _tmpByte : BYTE;
 END_VAR
 
+  IF ( RobotLibraryParameter.SWAP_BYTE_ORDER)
+  THEN
+    Value := SwapWord(Value);
+  END_IF
+  
   IF (Value.2)
   THEN
     WordToArmConfigWrist := ArmConfigWrist.FLIP;

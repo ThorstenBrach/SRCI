@@ -48,12 +48,29 @@ VAR
   /// temporary Byte
  _tmpByte : BYTE;
 END_VAR
+// Table 6-274: "ConfigMode" on "Command Management Layer"
+// --------------------------
+// --------------------------
+// Byte 00 : Bit 00  - Shoulder
+//         : Bit 01  - Shoulder
+//         : Bit 02  - Shoulder
+//         : Bit 03  - Shoulder
+//         : Bit 04  - Elbow
+//         : Bit 05  - Elbow
+//         : Bit 06  - Elbow
+//         : Bit 07  - Elbow
+// Byte 01 : Bit 00  - Wrist
+//         : Bit 01  - Wrist
+//         : Bit 02  - Wrist
+//         : Bit 03  - Wrist
+//         : Bit 04  - Reserve
+//         : Bit 05  - Reserve
+//         : Bit 06  - Reserve
+//         : Bit 07  - Reserve
 
-  Value := Value;
-  
-  _tmpByte.0 := Value.Shoulder = ArmConfigShoulder.USE_CONFIG;
-  _tmpByte.1 := Value.Elbow    = ArmConfigElbow   .USE_CONFIG;
-  _tmpByte.2 := Value.Wrist    = ArmConfigWrist   .USE_CONFIG;
+  _tmpByte.0 := Value.Shoulder = ArmConfigShoulder.BACK;
+  _tmpByte.1 := Value.Elbow    = ArmConfigElbow.DOWN;
+  _tmpByte.2 := Value.Wrist    = ArmConfigWrist.FLIP;
   
   AddByte(_tmpByte);
   AddByte(0);

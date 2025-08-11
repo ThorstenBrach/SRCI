@@ -700,7 +700,8 @@ END_VAR
                             Severity    := Severity.ERROR,
                             MessageCode := ErrorID,
                             MessageText := 'Invalid Parameter ParCmd.OriMode = {1}',
-                            Para1       := ORI_MODE_TO_STRING(ParCmd.OriMode));                            
+                            Para1       := ORI_MODE_TO_STRING(ParCmd.OriMode));
+                              
     RETURN;
   END_IF
   

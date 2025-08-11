@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.0.0.47] - 2025-08-11
+
+### Changed
+ - Moved `InvalidFrames` counter from `MC_RobotTaskFB` to `AxesGroup.State`.
+ - Removed `AxesGroupInstances` counter from `RobotLibraryDefines`.
+ - Pre-initialized `AxesGroupID` of `MC_RobotTaskFB` with value `1`.
+ - Reset `Synchronized` flag of `MC_RobotTaskFB` on LifeSign timeout or TelegramState error.
+ - Return TelegramState errors as `ErrorID` in `MC_RobotTaskFB`.
+ - Handle Byte-Order-Swap in `WordToArmConfigShoulder` , which was previously missing and led to an incorrectly applied shoulder configuration.
+ - Handle Byte-Order-Swap in `WordToArmConfigElbow` , which was previously missing and led to an incorrectly applied elbow configuration.
+ - Handle Byte-Order-Swap in `WordToArmConfigWrist` , which was previously missing and led to an incorrectly applied wrist configuration.
+ - Fixed bug in `AddArmConfig` method of `RobotLibrarySendDataBaseFB` that could previously lead to an incorrectly applied arm configuration.
+ - Renamed `TelegramState` enum items to more meaningful names.
+ - Modified `TELEGRAM_STATE_TO_STRING` function according to the changes in the `TelegramState` enum items.
+ - Reset `ErrorAddTxt` in the `Reset` method of `MC_RobotTaskFB`.
+ - Changed execution order of commands in the `OnExecRun` method of `MC_RobotTaskFB`.
+ - Corrected a spelling mistake: renamed `ARC_USAGE_WARNING_LIMIT` to `ACR_USAGE_WARNING_LIMIT`.
+ - Fixed a wrong log message text in `CreateCommandPayloadLog` method of `MC_ShiftPositionFB`.
+ - Fixed a wrong log message text in `CreateCommandPayloadLog` method of `MC_MoveDirectAbsoluteFB`.
+
 ## [0.0.0.46] - 2025-08-02
 
 ### Added

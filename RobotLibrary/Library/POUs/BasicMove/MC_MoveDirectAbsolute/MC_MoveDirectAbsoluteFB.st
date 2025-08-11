@@ -1572,7 +1572,7 @@ END_VAR
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Command.Config = {1}',
+                          MessageText := 'Command.Position.Config = {1}',
                           Para1       :=  ARM_CONFIG_TO_STRING(_command.Position.Config));
   
   
