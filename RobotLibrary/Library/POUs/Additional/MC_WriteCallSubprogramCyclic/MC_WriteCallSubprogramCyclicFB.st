@@ -72,7 +72,7 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
-  // Overwrite base implementation, because FB does not send telegrams via ARC
+  // Overwrite base implementation, because FB does not send telegrams via ACR
   OnExecErrorClear := Reset();
 
 END_METHOD

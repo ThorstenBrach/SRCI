@@ -54,6 +54,8 @@ VAR
  _idxFound       : DINT;
   /// lowest Severity
  _lowestSeverity : Severity := Severity.FATAL_ERROR;
+  /// temporary buffer ( must be one element less than the message log !!! )
+ _tmpBuffer      : ARRAY[0..RobotLibraryParameter.MESSAGE_LOG_MAX -1] OF AlarmMessage; 
 END_VAR
 
   // Check entry must be added ? 
@@ -94,13 +96,12 @@ END_VAR
   		END_IF
     END_IF  
   
-  
     // shift all messages one position backwards
-    FOR _idx := RobotLibraryParameter.MESSAGE_LOG_MAX TO 1 BY -1
-    DO
-      Messages[_idx] := Messages[_idx-1]; 
-    END_FOR
-  
+    // shift messages log entries
+    SysDepMemCpy( pDest := ADR(_tmpBuffer[0]), pSrc := ADR(  Messages[0]), DataLen := SIZEOF(_tmpBuffer));
+    SysDepMemCpy( pDest := ADR(  Messages[1]), pSrc := ADR(_tmpBuffer[0]), DataLen := SIZEOF(_tmpBuffer));
+    
+    
     // Add new message 
     Messages[0].Timestamp   := MessageLog.Timestamp;           
     Messages[0].MessageType := MessageLog.MessageType;
@@ -149,20 +150,18 @@ VAR_INPUT
   /// system log message
   SystemLog : STRING(255);
 END_VAR
-
-
 VAR
   /// internal index
- _idx : DINT;
+ _idx       : DINT;
   /// internal log message 
- _message : AlarmMessage;
+ _message   : AlarmMessage;
+  /// temporary buffer ( must be one element less than the system log !!! )
+ _tmpBuffer : ARRAY[0..RobotLibraryParameter.SYSTEM_LOG_MAX -1] OF STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN);
 END_VAR
 
   // shift system log entries
-  FOR _idx := RobotLibraryParameter.SYSTEM_LOG_MAX TO 1 BY -1
-  DO
-    SystemLogs[_idx] := SystemLogs[_idx-1]; 
-  END_FOR
+  SysDepMemCpy( pDest := ADR(_tmpBuffer[0]), pSrc := ADR(SystemLogs[0]), DataLen := SIZEOF(_tmpBuffer));
+  SysDepMemCpy( pDest := ADR(SystemLogs[1]), pSrc := ADR(_tmpBuffer[0]), DataLen := SIZEOF(_tmpBuffer));
   
   // Delete CR from system log message
   SystemLog := StrReplace(SystemLog, '$R', '');

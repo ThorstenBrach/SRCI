@@ -1748,7 +1748,7 @@ END_VAR
                                  MessageType := MessageType.CMD,
                                  Severity    := Severity.DEBUG,
                                  MessageCode := 0,
-                                 MessageText := '{1} successfully removed from ARC',
+                                 MessageText := '{1} successfully removed from ACR',
                                  Para1       := MyType);                 
        ELSE
          // set timeout
@@ -1761,7 +1761,7 @@ END_VAR
                                  MessageType := MessageType.CMD,
                                  Severity    := Severity.DEBUG,
                                  MessageCode := 0,
-                                 MessageText := '{1} was not removed from ARC because execution was already in progress',
+                                 MessageText := '{1} was not removed from ACR because execution was already in progress',
                                  Para1       := MyType);                 
        END_IF       
     

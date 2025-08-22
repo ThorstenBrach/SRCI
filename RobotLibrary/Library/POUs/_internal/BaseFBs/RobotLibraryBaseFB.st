@@ -22,7 +22,7 @@ FUNCTION_BLOCK RobotLibraryBaseFB EXTENDS RobotLibraryLogFB
 // -------------------------------------------------------------------------
 VAR_INPUT
   /// User defined command name
-  Name         : STRING(20);
+  Name         : STRING(80);
   /// Execution Mode
   ExecMode     : ExecutionMode;
   /// Priority

@@ -61,6 +61,16 @@ STRUCT
   LogLevel                       : LogLevel;
   /// Defines up to which level of severity messages will be transmitted to the PLC’s message buffer
   MessageLevel                   : MessageLevel;
+  /// Manufactured ID
+  PLCManufacturedID              : UINT;
+  /// Order ID
+  PLCOrderID                     : STRING(20);
+  /// Serial Number
+  PLCSerialNumber                : STRING(16);
+  /// Firmware Version
+  PLCFirmwareVersion             : STRING(8);
+  /// Client Interface Version
+  PLCInterfaceVersion            : STRING(8);  
   /// Version of client implementation in format (X.X.X)
   PLCLibraryVersion              : VersionStruct;
   /// RC manufacturer name 

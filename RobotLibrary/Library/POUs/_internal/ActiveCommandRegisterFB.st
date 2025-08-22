@@ -33,9 +33,9 @@ VAR_OUTPUT
   /// Execution Order List 
   ExecutionOrderList    : ARRAY [1..RobotLibraryParameter.ACTIVE_CMD_REGISTER_ENTRIES_MAX] OF DINT;
   /// Current amount of used registers
-  CurrentArcUsageCount  : DINT;  
+  CurrentAcrUsageCount  : DINT;  
   /// Current percent of used registers
-  CurrenArcUsagePercent : REAL;    
+  CurrentAcrUsagePercent : REAL;    
 END_VAR
 
 
@@ -44,8 +44,8 @@ VAR
   TmpRegister                 : ARRAY [1..RobotLibraryParameter.ACTIVE_CMD_REGISTER_ENTRIES_MAX] OF AxesGroupAcyclicAcrEntry;
   /// last used unique ID 
   LastUniqueID                : UINT;
-  /// Warning for ARC usage at 80%
-  WarningArcUsage             : R_TRIG;
+  /// Warning for ACR usage at 80%
+  WarningAcrUsage             : R_TRIG;
 END_VAR
 
 VAR CONSTANT
@@ -53,8 +53,8 @@ VAR CONSTANT
   ACTIVE_CMD           : UDINT := 1;
   /// Buffered command
   BUFFER_CMD           : UDINT := 2;
-  /// Empty ARC entry
-  EMPTY_ARC_ENTRY      : AxesGroupAcyclicAcrEntry := (State := ActiveCommandRegisterState.IS_FREE);
+  /// Empty ACR entry
+  EMPTY_ACR_ENTRY      : AxesGroupAcyclicAcrEntry := (State := ActiveCommandRegisterState.IS_FREE);
   /// Empty command entry
   EMPTY_CMD_ENTRY      : AxesGroupAcyclicAcrEntryCmdBuffer := (State := BufferStateCmd.EMPTY);  
   /// constant for byte index of priority in payload 
@@ -84,11 +84,11 @@ VAR
  _messageLog        : AlarmMessage;  
   /// flag for free register found
  _freeRegisterFound : BOOL;
-  /// internal Arc error 
- _errorArcEntry     : WORD := RobotLibraryErrorIdEnum.ERR_NO_FREE_ACR_ENTRY;  
+  /// internal Acr error 
+ _errorAcrEntry     : WORD := RobotLibraryErrorIdEnum.ERR_NO_FREE_ACR_ENTRY;  
 END_VAR
 
-  // calculate the used length of the ARC 
+  // calculate the used length of the ACR 
   FOR _regIdx := 1 TO RegisterSize
   DO
     IF ( Register[_regIdx].State = ActiveCommandRegisterState.IS_FREE )
@@ -112,7 +112,7 @@ END_VAR
      _freeRegisterFound := TRUE;
       
       // Increment Current used register counter
-      CurrentArcUsageCount := CurrentArcUsageCount + 1;
+      CurrentAcrUsageCount := CurrentAcrUsageCount + 1;
       
       // return Unique ID
       AddCmd := Register[_regIdx].UniqueID;
@@ -123,11 +123,11 @@ END_VAR
       // Create log entry
       CreateLogMessagePara2 ( Timestamp   := SystemTime,
                               MessageType := MessageType.CMD,
-                              Severity    := Severity.DEBUG,
+                              Severity    := Severity.INFO,
                               MessageCode := 0,
-                              MessageText := 'Added Cmd <{1}> to ACR <{2}>',
-                              Para1       :=  CMD_TYPE_TO_STRING(SwapUint(_cmdType)),
-                              Para2       :=  DINT_TO_STRING(_regIdx));
+                              MessageText := 'ACR-ID [{1}]: Added  Command-Payload of CmdType <{2}>',
+                              Para1       :=  DINT_TO_STRING(_regIdx),
+                              Para2       :=  CMD_TYPE_TO_STRING(SwapUint(_cmdType)));
       EXIT;
     END_IF
   END_FOR
@@ -139,8 +139,8 @@ END_VAR
     IF ( pCommandFB <> RobotLibraryConstants.NULL_POINTER )
     THEN
       SysDepMemCpy( pDest   := ADR   ( pCommandFB^.ErrorID ), 
-                    pSrc    := ADR   ( _errorArcEntry      ),
-                    DataLen := SIZEOF( _errorArcEntry      )); 
+                    pSrc    := ADR   ( _errorAcrEntry      ),
+                    DataLen := SIZEOF( _errorAcrEntry      )); 
     END_IF
   
   
@@ -149,7 +149,7 @@ END_VAR
                             MessageType := MessageType.CMD,
                             Severity    := Severity.FATAL_ERROR,
                             MessageCode := 0,
-                            MessageText := 'Not possible to add Cmd <{1}> to ACR - NO FREE REGISTER FOUND ! -> STOPPING SRCI INTERFACE...',
+                            MessageText := 'Not possible to add CMD <{1}> to ACR - NO FREE REGISTER FOUND ! -> STOPPING SRCI INTERFACE...',
                             Para1       :=  CMD_TYPE_TO_STRING(SwapUint(_cmdType)));                          
   END_IF
 
@@ -179,7 +179,7 @@ END_VAR
   DO
     IF ( Register[_regIdx].UniqueID = Rsp.Header.CmdID )
     THEN
-      // CmdID was found in the ARC
+      // CmdID was found in the ACR
      _found := TRUE;
       // convert to fragment action 
      _fragmentAction := ByteToFragmentAction(Rsp.Header.FragmentAction);
@@ -208,10 +208,10 @@ END_VAR
       // Create log entry
       CreateLogMessagePara3 ( Timestamp   := SystemTime,
                               MessageType := MessageType.CMD,
-                              Severity    := Severity.DEBUG,
+                              Severity    := Severity.INFO,
                               MessageCode := 0,
-                              MessageText := 'Added Response of CmdID <{1}>, CmdType <{2}> with State = {3} to ACR',
-                              Para1       :=  UINT_TO_STRING(Rsp.Header.CmdID),
+                              MessageText := 'ACR-ID [{1}]: Added Response-Payload of CmdType <{2}> with State = {3}',
+                              Para1       :=  DINT_TO_STRING(_regIdx),
                               Para2       :=  CMD_TYPE_TO_STRING(_cmdType),
                               Para3       :=  CMD_MESSAGE_STATE_TO_STRING(_cmdMessageState));
   
@@ -230,15 +230,14 @@ END_VAR
                                         LoByte := Register[_regIdx].Command[ACTIVE_CMD].Payload[1]);
   
           // Create log entry
-          CreateLogMessagePara4( Timestamp   := SystemTime,
+          CreateLogMessagePara3( Timestamp   := SystemTime,
                                  MessageType := MessageType.CMD,
-                                 Severity    := Severity.DEBUG,
+                                 Severity    := Severity.INFO,
                                  MessageCode := 0,
-                                 MessageText := 'ARC Register [{1}] : Response of CmdID <{2}>, CmdType <{3}> has reached final state <{4}>',
+                                 MessageText := 'ACR-ID [{1}]: Detected Response-Payload of CmdType <{2}> has reached final state <{3}>',
                                  Para1       :=  DINT_TO_STRING(_regIdx),
-                                 Para2       :=  UINT_TO_STRING(Rsp.Header.CmdID),
-                                 Para3       :=  CMD_TYPE_TO_STRING(_cmdType),
-                                 Para4       :=  CMD_MESSAGE_STATE_TO_STRING(_cmdMessageState));
+                                 Para2       :=  CMD_TYPE_TO_STRING(_cmdType),
+                                 Para3       :=  CMD_MESSAGE_STATE_TO_STRING(_cmdMessageState));
                                  
           // Exit the loop
         END_IF      
@@ -259,7 +258,7 @@ END_VAR
   END_FOR
   
   
-  // Check CmdID was found in the ARC ? 
+  // Check CmdID was found in the ACR ? 
   IF ( NOT _found )
   THEN
     // Create log entry
@@ -267,7 +266,7 @@ END_VAR
                             MessageType := MessageType.CMD,
                             Severity    := Severity.WARNING,
                             MessageCode := 0,
-                            MessageText := 'Rsp <{1}> with State = {2} received, but no matching ARC entry found',
+                            MessageText := 'ACR-ID [?]: Response-Payload of CmdID <{1}> with State = {2} received, but no matching ACR entry found',
                             Para1       :=  UINT_TO_STRING(Rsp.Header.CmdID),
                             Para2       :=  CMD_MESSAGE_STATE_TO_STRING(_cmdMessageState));
   END_IF
@@ -287,9 +286,11 @@ END_METHOD
 METHOD PRIVATE ManageRegister
 VAR
   /// internal index
- _regIdx     : DINT;
+ _regIdx          : DINT;
   /// internal command type
- _cmdType    : CmdType;
+ _cmdType         : CmdType;
+  /// internal command message state
+ _cmdMessageState : CmdMessageState; 
 END_VAR
 
   FOR _regIdx := 1 TO RegisterSize
@@ -310,14 +311,13 @@ END_VAR
                                       LoByte := Register[_regIdx].Command[ACTIVE_CMD].Payload[1]);
     
         // Create log entry
-        CreateLogMessagePara3 ( Timestamp   := SystemTime,
+        CreateLogMessagePara2 ( Timestamp   := SystemTime,
                                 MessageType := MessageType.CMD,
-                                Severity    := Severity.DEBUG,
+                                Severity    := Severity.INFO,
                                 MessageCode := 0,
-                                MessageText := 'ARC Register [{1}] : Moved BUFFER_CMD to ACTIVE_CMD, CmdID <{2}> , CmdType <{3}>',
+                                MessageText := 'ACR-ID [{1}]: Moved BUFFER_CMD to ACTIVE_CMD, CmdType <{2}>',
                                 Para1       :=  DINT_TO_STRING(_regIdx),
-                                Para2       :=  UINT_TO_STRING(Register[_regIdx].UniqueID),
-                                Para3       :=  CMD_TYPE_TO_STRING(_cmdType));
+                                Para2       :=  CMD_TYPE_TO_STRING(_cmdType));
     
       END_IF
       
@@ -339,49 +339,54 @@ END_VAR
        _cmdType := CombineBytesToUint(HiByte := Register[_regIdx].Command[ACTIVE_CMD].Payload[0],
                                       LoByte := Register[_regIdx].Command[ACTIVE_CMD].Payload[1]);
     
+        // Get current message state 
+       _cmdMessageState := GetHalfeByteLo(Value := Register[_regIdx].Response[ACTIVE_CMD].Payload[0]);
+  
+    
         // Create log entry
         CreateLogMessagePara3( Timestamp   := SystemTime,
                                MessageType := MessageType.CMD,
-                               Severity    := Severity.DEBUG,
+                               Severity    := Severity.INFO,
                                MessageCode := 0,
-                               MessageText := 'ARC Register [{1}} : Deleted CmdID <{2}> , CmdType <{3}> from ARC, because of Final-State was reached',
+                               MessageText := 'ACR-ID [{1}]: Deleted ACR-Entry of CmdType <{2}> with State = {3}, because of Final-State was reached',
                                Para1       :=  DINT_TO_STRING(_regIdx),
-                               Para2       :=  UINT_TO_STRING(Register[_regIdx].UniqueID),  
-                               Para3       :=  CMD_TYPE_TO_STRING(_cmdType));
+                               Para2       :=  CMD_TYPE_TO_STRING(_cmdType),
+                               Para3       :=  CMD_MESSAGE_STATE_TO_STRING(_cmdMessageState));
     
                                
         // delete register entry                              
-        Register[_regIdx] := EMPTY_ARC_ENTRY;
+        Register[_regIdx] := EMPTY_ACR_ENTRY;
   
         // decrement current used register counter
-        CurrentArcUsageCount := CurrentArcUsageCount - 1;                           
+        CurrentAcrUsageCount := CurrentAcrUsageCount - 1;                           
       END_IF
     END_IF
   END_FOR
   
   
   // Calculate percent of register usage
-  IF ( CurrentArcUsageCount > 0)
+  IF ( CurrentAcrUsageCount > 0)
   THEN
-    CurrenArcUsagePercent :=  (DINT_TO_REAL(CurrentArcUsageCount) / DINT_TO_REAL(RegisterSize)) * 100.0;
+    CurrentAcrUsagePercent :=  (DINT_TO_REAL(CurrentAcrUsageCount) / DINT_TO_REAL(RegisterSize)) * 100.0;
   ELSE
-    CurrenArcUsagePercent := 0.0;
+    CurrentAcrUsagePercent := 0.0;
   END_IF
   
   // build rising edge for arc usage over 80% 
-  WarningArcUsage( CLK := CurrenArcUsagePercent > RobotLibraryParameter.ACR_USAGE_WARNING_LIMIT );
+  WarningAcrUsage( CLK := CurrentAcrUsagePercent > RobotLibraryParameter.ACR_USAGE_WARNING_LIMIT );
   
-  IF ( WarningArcUsage.Q )
+  IF ( WarningAcrUsage.Q )
   THEN
     // Create log entry
-    CreateLogMessagePara3( Timestamp   := SystemTime,
+    CreateLogMessagePara4( Timestamp   := SystemTime,
                            MessageType := MessageType.CMD,
                            Severity    := Severity.WARNING,
                            MessageCode := 0,
-                           MessageText := 'ARC Register usage has reached the warning limit (80%): {1}/{2} = {3}%',
-                           Para1       :=  DINT_TO_STRING(CurrentArcUsageCount),
-                           Para2       :=  DINT_TO_STRING(RegisterSize),
-                           Para3       :=  REAL_TO_STRING(CurrenArcUsagePercent));  
+                           MessageText := 'ACR Register usage has reached the warning limit ({1}): {2}/{3} = {4}%',
+                           Para1       :=  REAL_TO_STRING(RobotLibraryParameter.ACR_USAGE_WARNING_LIMIT),
+                           Para2       :=  DINT_TO_STRING(CurrentAcrUsageCount),
+                           Para3       :=  DINT_TO_STRING(RegisterSize),
+                           Para4       :=  REAL_TO_STRING(CurrentAcrUsagePercent));  
   END_IF
 
 END_METHOD
@@ -392,7 +397,9 @@ PROPERTY PUBLIC NotifyParameterChanged : UDINT
 SET
 VAR
   /// internal register index
- _regIdx : DINT;
+ _regIdx  : DINT;
+  /// internal command type
+ _cmdType : CmdType;
 END_VAR
 
   FOR _regIdx := 1 TO RobotLibraryParameter.ACTIVE_CMD_REGISTER_ENTRIES_MAX
@@ -412,14 +419,18 @@ END_VAR
           Register[_regIdx].Command[ACTIVE_CMD].Payload    := Register[_regIdx].pCommandFB^.CommandData.Payload;
           Register[_regIdx].Command[ACTIVE_CMD].PayloadLen := Register[_regIdx].pCommandFB^.CommandData.PayloadLen;
   
+          // get command type from payload
+         _cmdType := CombineBytesToUint(HiByte := Register[_regIdx].pCommandFB^.CommandData.Payload[0],
+                                        LoByte := Register[_regIdx].pCommandFB^.CommandData.Payload[1]);
+          
           // Create log entry
           CreateLogMessagePara2 ( Timestamp   := SystemTime,
                                   MessageType := MessageType.CMD,
-                                  Severity    := Severity.DEBUG,
+                                  Severity    := Severity.INFO,
                                   MessageCode := 0,
-                                  MessageText := 'Parameter update from {1} with CmdID <{2}> received -> written to ACTIVE_CMD Index',
-                                  Para1       :=  Register[_regIdx].pCommandFB^.MyType,
-                                  Para2       :=  UDINT_TO_STRING(NotifyParameterChanged));
+                                  MessageText := 'ACR-ID [{1}]: Updated Cmd-Parameter of CmdType <{2}> -> written to ACTIVE_CMD Index',
+                                  Para1       :=  DINT_TO_STRING(_regIdx),
+                                  Para2       :=  CMD_TYPE_TO_STRING(_cmdType));
         END_IF
       ELSE
         // Check pointer is valid ? 
@@ -431,14 +442,18 @@ END_VAR
           Register[_regIdx].Command[BUFFER_CMD].Payload    := Register[_regIdx].pCommandFB^.CommandData.Payload;
           Register[_regIdx].Command[BUFFER_CMD].PayloadLen := Register[_regIdx].pCommandFB^.CommandData.PayloadLen;
   
+          // get command type from payload
+         _cmdType := CombineBytesToUint(HiByte := Register[_regIdx].pCommandFB^.CommandData.Payload[0],
+                                        LoByte := Register[_regIdx].pCommandFB^.CommandData.Payload[1]);
+          
           // Create log entry
           CreateLogMessagePara2 ( Timestamp   := SystemTime,
                                   MessageType := MessageType.CMD,
-                                  Severity    := Severity.DEBUG,
+                                  Severity    := Severity.INFO,
                                   MessageCode := 0,
-                                  MessageText := 'Parameter update from {1} with CmdID <{2}> received -> written to BUFFER_CMD Index',
-                                  Para1       :=  Register[_regIdx].pCommandFB^.MyType,
-                                  Para2       :=  UDINT_TO_STRING(NotifyParameterChanged));
+                                  MessageText := 'ACR-ID [{1}]: Updated Cmd-Parameter of CmdType <{2}> -> written to BUFFER_CMD Index',
+                                  Para1       :=  DINT_TO_STRING(_regIdx),
+                                  Para2       :=  CMD_TYPE_TO_STRING(_cmdType));
         END_IF
       END_IF
       
@@ -514,7 +529,7 @@ END_VAR
       // delete register entry
       SysDepMemSet(pDest := ADR(Register[_regIdx]), Value := 0 , DataLen := SIZEOF(Register[_regIdx]));
       // decrement current used register counter
-      CurrentArcUsageCount := CurrentArcUsageCount - 1;
+      CurrentAcrUsageCount := CurrentAcrUsageCount - 1;
       // Command successfull removed
       RemoveCmd := RobotLibraryConstants.OK;    
       
@@ -522,11 +537,11 @@ END_VAR
       // Create log entry
       CreateLogMessagePara2 (  Timestamp   := SystemTime,
                                MessageType := MessageType.CMD,
-                               Severity    := Severity.DEBUG,
+                               Severity    := Severity.INFO,
                                MessageCode := 0,
-                               MessageText := 'Removed Cmd <{1}> from ARC <{2}>',
-                               Para1       :=  CMD_TYPE_TO_STRING(SwapUint(_cmdType)),
-                               Para2       :=  DINT_TO_STRING(_regIdx));                 
+                               MessageText := 'ACR-ID [{1}]: Removed CmdType <{2}>',
+                               Para1       :=  DINT_TO_STRING(_regIdx),                 
+                               Para2       :=  CMD_TYPE_TO_STRING(SwapUint(_cmdType)));
       EXIT;
     END_IF
   END_FOR
@@ -535,7 +550,19 @@ END_METHOD
 
 METHOD PUBLIC Reset
 
-  SysDepMemSet( ADR(Register), 0, SIZEOF(Register));
+  SysDepMemSet( ADR(Register), 0, SIZEOF(Register));              
+  
+  CurrentAcrUsageCount   := 0;
+  CurrentAcrUsagePercent := 0.0;
+  
+  
+  // Create log entry
+  CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.INFO,
+                          MessageCode := 0,
+                          MessageText := 'ACR Registers has been reset and all entries deleted by Reset method call',
+                          Para1       :=  '');
 
 END_METHOD
 
@@ -567,7 +594,7 @@ END_VAR
     THEN
       // copy register entry 
       TmpRegister[j] := Register[i];
-      // store index of the entry from the ARC
+      // store index of the entry from the ACR
       ExecutionOrderList[j] := i;
       // inc temporar register index
       j := j + 1; 

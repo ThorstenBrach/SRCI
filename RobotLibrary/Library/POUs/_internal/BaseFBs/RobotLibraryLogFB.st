@@ -106,14 +106,17 @@ VAR
  _logMessage : AlarmMessage;
 END_VAR
 
-  MessageText := StrReplace(MessageText,'{1}', Para1);
-  
-  CreateLogMessagePara1 
-    := CreateLogMessage( Timestamp   := Timestamp,
-                         MessageType := MessageType,
-                         Severity    := Severity,
-                         MessageCode := MessageCode,
-                         MessageText := MessageText);
+  IF ( LogLevel <= Severity )
+  THEN
+    MessageText := StrReplace(MessageText,'{1}', Para1);
+    
+    CreateLogMessagePara1 
+      := CreateLogMessage( Timestamp   := Timestamp,
+                           MessageType := MessageType,
+                           Severity    := Severity,
+                           MessageCode := MessageCode,
+                           MessageText := MessageText);
+  END_IF
 
 END_METHOD
 
@@ -139,15 +142,18 @@ VAR
  _logMessage : AlarmMessage;
 END_VAR
 
-  MessageText := StrReplace(MessageText,'{2}', Para2);
-  
-  CreateLogMessagePara2 
-    := CreateLogMessagePara1( Timestamp   := Timestamp,
-                              MessageType := MessageType,
-                              Severity    := Severity,
-                              MessageCode := MessageCode,
-                              MessageText := MessageText,
-                              Para1       := Para1);
+  IF ( LogLevel <= Severity )
+  THEN
+    MessageText := StrReplace(MessageText,'{2}', Para2);
+    
+    CreateLogMessagePara2 
+      := CreateLogMessagePara1( Timestamp   := Timestamp,
+                                MessageType := MessageType,
+                                Severity    := Severity,
+                                MessageCode := MessageCode,
+                                MessageText := MessageText,
+                                Para1       := Para1);
+  END_IF
 
 END_METHOD
 
@@ -175,16 +181,19 @@ VAR
  _logMessage : AlarmMessage;
 END_VAR
 
-  MessageText := StrReplace(MessageText,'{3}', Para3);
-  
-  CreateLogMessagePara3
-    := CreateLogMessagePara2( Timestamp   := Timestamp,
-                              MessageType := MessageType,
-                              Severity    := Severity,
-                              MessageCode := MessageCode,
-                              MessageText := MessageText,
-                              Para1       := Para1,
-                              Para2       := Para2);
+  IF ( LogLevel <= Severity )
+  THEN
+    MessageText := StrReplace(MessageText,'{3}', Para3);
+    
+    CreateLogMessagePara3
+      := CreateLogMessagePara2( Timestamp   := Timestamp,
+                                MessageType := MessageType,
+                                Severity    := Severity,
+                                MessageCode := MessageCode,
+                                MessageText := MessageText,
+                                Para1       := Para1,
+                                Para2       := Para2);
+  END_IF
 
 END_METHOD
 
@@ -214,17 +223,20 @@ VAR
  _logMessage : AlarmMessage;
 END_VAR
 
-  MessageText := StrReplace(MessageText,'{4}', Para4);
-  
-  CreateLogMessagePara4
-    := CreateLogMessagePara3( Timestamp   := Timestamp,
-                              MessageType := MessageType,
-                              Severity    := Severity,
-                              MessageCode := MessageCode,
-                              MessageText := MessageText,
-                              Para1       := Para1,
-                              Para2       := Para2,
-                              Para3       := Para3);
+  IF ( LogLevel <= Severity )
+  THEN
+    MessageText := StrReplace(MessageText,'{4}', Para4);
+    
+    CreateLogMessagePara4
+      := CreateLogMessagePara3( Timestamp   := Timestamp,
+                                MessageType := MessageType,
+                                Severity    := Severity,
+                                MessageCode := MessageCode,
+                                MessageText := MessageText,
+                                Para1       := Para1,
+                                Para2       := Para2,
+                                Para3       := Para3);
+  END_IF
 
 END_METHOD
 
@@ -256,18 +268,21 @@ VAR
  _logMessage : AlarmMessage;
 END_VAR
 
-  MessageText := StrReplace(MessageText,'{5}', Para5);
-  
-  CreateLogMessagePara5
-    := CreateLogMessagePara4( Timestamp   := Timestamp,
-                              MessageType := MessageType,
-                              Severity    := Severity,
-                              MessageCode := MessageCode,
-                              MessageText := MessageText,
-                              Para1       := Para1,
-                              Para2       := Para2,
-                              Para3       := Para3,
-                              Para4       := Para4);
+  IF ( LogLevel <= Severity )
+  THEN  
+    MessageText := StrReplace(MessageText,'{5}', Para5);
+    
+    CreateLogMessagePara5
+      := CreateLogMessagePara4( Timestamp   := Timestamp,
+                                MessageType := MessageType,
+                                Severity    := Severity,
+                                MessageCode := MessageCode,
+                                MessageText := MessageText,
+                                Para1       := Para1,
+                                Para2       := Para2,
+                                Para3       := Para3,
+                                Para4       := Para4);
+  END_IF
 
 END_METHOD
 
@@ -301,19 +316,22 @@ VAR
  _logMessage : AlarmMessage;
 END_VAR
 
-  MessageText := StrReplace(MessageText,'{6}', Para6);
-  
-  CreateLogMessagePara6
-    := CreateLogMessagePara5( Timestamp   := Timestamp,
-                              MessageType := MessageType,
-                              Severity    := Severity,
-                              MessageCode := MessageCode,
-                              MessageText := MessageText,
-                              Para1       := Para1,
-                              Para2       := Para2,
-                              Para3       := Para3,
-                              Para4       := Para4,
-                              Para5       := Para5);
+  IF ( LogLevel <= Severity )
+  THEN
+    MessageText := StrReplace(MessageText,'{6}', Para6);
+    
+    CreateLogMessagePara6
+      := CreateLogMessagePara5( Timestamp   := Timestamp,
+                                MessageType := MessageType,
+                                Severity    := Severity,
+                                MessageCode := MessageCode,
+                                MessageText := MessageText,
+                                Para1       := Para1,
+                                Para2       := Para2,
+                                Para3       := Para3,
+                                Para4       := Para4,
+                                Para5       := Para5);
+  END_IF
 
 END_METHOD
 

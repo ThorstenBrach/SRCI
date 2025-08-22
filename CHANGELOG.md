@@ -4,6 +4,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.0.0.48] - 2025-08-22
+
+### Added
+
+ - Added `PLCManufacturedID` to `UserData` and assign value from _parCfg.Plc.Parameter of `MC_RobotTaskFB`
+ - Added `PLCOrderID` to `UserData` and assign value from _parCfg.Plc.Parameter of `MC_RobotTaskFB`
+ - Added `PLCSerialNumber` to `UserData` and assign value from _parCfg.Plc.Parameter of `MC_RobotTaskFB`
+ - Added `PLCFirmwareVersion` to `UserData` and assign value from _parCfg.Plc.Parameter of `MC_RobotTaskFB`
+ - Added `PLCInterfaceVersion` to `UserData` and assign value from _parCfg.Plc.Parameter of `MC_RobotTaskFB`
+
+### Changed
+ - Corrected a spelling mistake: renamed `CurrenArcUsagePercent` to `CurrentAcrUsagePercent`
+ - Corrected some spelling mistakes: changed `ARC` to `ACR` (A)ctive (C)ommand (R)egister 
+ - Reset `CurrentArcUsageCount` in `Reset` method of `ActiveCommandRegisterFB`.
+ - Reset `CurrentArcUsagePercent` in `Reset` method of `ActiveCommandRegisterFB`.
+ - LifeSign counter in `HandleLifeSign` method of `MC_RobotTaskFB` is now reset to 0 in case that the Enable input of `MC_RobotTaskFB` is FALSE.
+ - Pre-initialized `AxesGroupID` of `MC_RobotTaskFB` with value `0` again instead `1` ( 1 looks like a misstake in der SRCI specification ).
+ - In case of `TelegramState` errors `TelegramCtrl.Reset` is used instead of `TelegramCtrl.ACK_ERROR` to acknowledge the error, because with `TelegramCtrl.ACK_ERROR` the ARC is not reset on the robot side. 
+ - Fixed a bug that the `Initialized` Bit of the `MC_RobotTaskFB` was set to early, because of the command order change in the previous `V0.0.0.47` update
+ - Fixed a bug that the `Busy` Bit of the `MC_RobotTaskFB` was reset to early, because of the command order change in the previous `V0.0.0.47` update
+ - Harmonized Logging messages for ACR log messages starting with `ARC-ID [x] :` 
+ - Changed the `Severity` of the ACR log messages from `Severity.DEBUG` to `Severity.INFO`
+ - Check `Severity` at the begin of all `CreateLogMessage` FBs to protect unnecessary sub method calls.
+ - Assigned `InternalLogger` interface to `ActiveCommandRegisterFB` which was previously missing, so that ACR log messages was not displayed in `SystemLog`.
+ - Increased the string length of variable `Name` from `20` to `80` in `RobotLibraryBaseFB` ( it is inherited by all other FBs ) 
+ - Skip HandleSync action if no synchronization is configured (neither at startup nor after). (Temporary solution, not final yet)
+ - Example Beckhoff : Switched from `AdsAndFileLoggerFB` to `FileLoggerFB` and added method `HandleLogger` in `Robot (PRG)`. 
+ - Example Beckhoff : Changed `LogLevel` in `RobotTask` from `LogLevel.DEBUG` to `LogLevel.INFO`
+ - Example Codesys  : Created a codesys based FileLoggerFB and added method `HandleLogger` in `Robot (PRG)`. 
+ - Example Codesys  : Changed `LogLevel` in `RobotTask` from `LogLevel.DEBUG` to `LogLevel.INFO`
+
+
 ## [0.0.0.47] - 2025-08-11
 
 ### Changed

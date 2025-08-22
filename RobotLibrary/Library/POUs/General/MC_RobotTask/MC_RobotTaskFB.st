@@ -36,7 +36,7 @@ VAR_INPUT
   ///
   /// For convenience, an RC with only one RA must assign ID 1 to this RA. 
   /// An RC with multiple RAs must assign numeric values 1-15 to those RAs.
-  AxesGroupID       : BYTE := 1;
+  AxesGroupID       : BYTE := 0; // ToDo: Mistake in specification : ID should start with 1, but must start with 0 !  
   /// Configuration parameter
   ParCfg            : RobotTaskParCfg;
 END_VAR
@@ -460,9 +460,6 @@ END_VAR
   AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.CoordinateSystem.ToolNo  :=                                      Telegram.RobToPlc.CyclicOptional.CartesianPosition.CurrentlyUsedToolNo;
   AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.CoordinateSystem.FrameNo :=                                      Telegram.RobToPlc.CyclicOptional.CartesianPosition.CurrentlyUsedFrameNo;
   // }}}
-  
-  Telegram.RobToPlc.CyclicOptional.CartesianPosition.ToolNo;
-  Telegram.RobToPlc.CyclicOptional.CartesianPosition.FrameNo;
   
   
   // Joint position {{{
@@ -889,11 +886,11 @@ END_VAR
             Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.FragmentAction := 0; // will be set below
             Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadPointer := AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr; 
             
-            // The 1st message resets the ARC entry on the server side  
+            // The 1st message resets the ACR entry on the server side  
            _fragmentAction.Reset := (( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].State      = BufferStateCmd.CREATED ) AND
                                      ( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr = 0                      ));
                                      
-            // Update messages must clear the ARC entry on the server side  
+            // Update messages must clear the ACR entry on the server side  
            _fragmentAction.Clear := (( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].State      = BufferStateCmd.UPDATE_AVAILABLE  ) AND
                                      ( AxesGroup.Acyclic.ActiveCommandRegister.Register[_regIdx].Command[ACTIVE_CMD].PayLoadPtr = 0                                )); 
       
@@ -2311,7 +2308,8 @@ END_VAR
   // Call active command register FB
   AxesGroup.Acyclic.ActiveCommandRegister(SystemTime     := SystemTime,
                                           RegisterSize   := MIN( RobotLibraryParameter.ACTIVE_CMD_REGISTER_ENTRIES_MAX, AxesGroup.Parameter.Rob.Parameter.LengthACR),
-                                          ExternalLogger := AxesGroup.MessageLog.ExternalLogger, 
+                                          InternalLogger := AxesGroup.MessageLog, 
+                                          ExternalLogger := AxesGroup.MessageLog.ExternalLogger,
                                           LogLevel       := AxesGroup.MessageLog.LogLevel);
 
 END_METHOD
@@ -2551,7 +2549,7 @@ END_VAR
       // Create log entry
       CreateLogMessagePara1 ( Timestamp   := SystemTime,
                               MessageType := MessageType.CMD,
-                              Severity    := Severity.INFO,
+                              Severity    := Severity.WARNING,
                               MessageCode := 0,
                               MessageText := 'Detected invalid frames {1} in total',
                               Para1       :=  UDINT_TO_STRING(AxesGroup.State.InvalidFrames));
@@ -2585,7 +2583,7 @@ VAR_INST
  _first : BOOL := TRUE;
 END_VAR
 
-  IF ( _first )
+  IF ( _first ) OR ( NOT Enable ) 
   THEN
     // init LifeSign 
     AxesGroup.Cyclic.PlcToRob.LifeSign := 0;
@@ -2602,7 +2600,6 @@ END_VAR
   THEN
     AxesGroup.Cyclic.PlcToRob.LifeSign := 1; // 0 is only in the very 1st cycle to indicate the system start in logging
   END_IF
-  
   
   
   IF ( Enable ) AND ( _alive_F.Q ) 
@@ -2828,9 +2825,18 @@ END_VAR
   _rTimeout    REF= _timeoutSyncFrameData;
   _rSyncIdx    REF=     _syncIdxFrameData;
   
+  
+  
   CASE _rStep
   OF    
-    0: // wait for initialisation done
+    0: // Check initialisation configured ?
+       IF (( _parCfg.PLC.Parameter.SynchronizationModes.Frame[SyncTime.DURING_START_UP] = SyncMode.NO_SYNCHRONIZATION ) AND
+           ( _parCfg.PLC.Parameter.SynchronizationModes.Frame[SyncTime. AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION ))
+       THEN
+         RETURN;
+       END_IF
+  
+       // wait for initialisation done
        IF  ((     AxesGroup.State.RobotData.RCSupportedFunctions. ReadFrameData ) AND
             (     AxesGroup.State.RobotData.RCSupportedFunctions.WriteFrameData ) AND
             (     AxesGroup.State.Initialized                                   ) AND 
@@ -3571,7 +3577,14 @@ END_VAR
   
   CASE _rStep
   OF    
-    0: // wait for initialisation done
+    0: // Check initialisation configured ?
+       IF (( _parCfg.PLC.Parameter.SynchronizationModes.Load[SyncTime.DURING_START_UP] = SyncMode.NO_SYNCHRONIZATION ) AND
+           ( _parCfg.PLC.Parameter.SynchronizationModes.Load[SyncTime. AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION ))
+       THEN
+         RETURN;
+       END_IF
+  
+       // wait for initialisation done
        IF  ((     AxesGroup.State.RobotData.RCSupportedFunctions. ReadLoadData ) AND
             (     AxesGroup.State.RobotData.RCSupportedFunctions.WriteLoadData ) AND
             (     AxesGroup.State.Initialized                                  ) AND 
@@ -4311,7 +4324,14 @@ END_VAR
   
   CASE _rStep
   OF    
-    0: // wait for initialisation done
+    0: // Check initialisation configured ?
+       IF (( _parCfg.PLC.Parameter.SynchronizationModes.DefaultDynamics[SyncTime.DURING_START_UP] = SyncMode.NO_SYNCHRONIZATION ) AND
+           ( _parCfg.PLC.Parameter.SynchronizationModes.DefaultDynamics[SyncTime. AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION ))
+       THEN
+         RETURN;
+       END_IF
+  
+       // wait for initialisation done
        IF  ((     AxesGroup.State.RobotData.RCSupportedFunctions .ReadRobotDefaultDynamics ) AND
             (     AxesGroup.State.RobotData.RCSupportedFunctions.WriteRobotDefaultDynamics ) AND
             (     AxesGroup.State.Initialized                                              ) AND 
@@ -4941,7 +4961,14 @@ END_VAR
   
   CASE _rStep
   OF    
-    0: // wait for initialisation done
+    0: // Check initialisation configured ?
+       IF (( _parCfg.PLC.Parameter.SynchronizationModes.ReferenceDynamics[SyncTime.DURING_START_UP] = SyncMode.NO_SYNCHRONIZATION ) AND
+           ( _parCfg.PLC.Parameter.SynchronizationModes.ReferenceDynamics[SyncTime. AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION ))
+       THEN
+         RETURN;
+       END_IF
+  
+       // wait for initialisation done
        IF  ((     AxesGroup.State.RobotData.RCSupportedFunctions .ReadRobotReferenceDynamics ) AND
             (     AxesGroup.State.RobotData.RCSupportedFunctions.WriteRobotReferenceDynamics ) AND
             (     AxesGroup.State.Initialized                                              ) AND 
@@ -5567,7 +5594,14 @@ END_VAR
   
   CASE _rStep
   OF    
-    0: // wait for initialisation done
+    0: // Check initialisation configured ?
+       IF (( _parCfg.PLC.Parameter.SynchronizationModes.SWLimits[SyncTime.DURING_START_UP] = SyncMode.NO_SYNCHRONIZATION ) AND
+           ( _parCfg.PLC.Parameter.SynchronizationModes.SWLimits[SyncTime. AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION ))
+       THEN
+         RETURN;
+       END_IF
+  
+       // wait for initialisation done
        IF  ((     AxesGroup.State.RobotData.RCSupportedFunctions .ReadRobotSWLimits ) AND
             (     AxesGroup.State.RobotData.RCSupportedFunctions.WriteRobotSWLimits ) AND
             (     AxesGroup.State.Initialized                                       ) AND 
@@ -6200,7 +6234,14 @@ END_VAR
   
   CASE _rStep
   OF    
-    0: // wait for initialisation done
+    0: // Check initialisation configured ?
+       IF (( _parCfg.PLC.Parameter.SynchronizationModes.SWLimits[SyncTime.DURING_START_UP] = SyncMode.NO_SYNCHRONIZATION ) AND
+           ( _parCfg.PLC.Parameter.SynchronizationModes.SWLimits[SyncTime. AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION ))
+       THEN
+         RETURN;
+       END_IF
+  
+       // wait for initialisation done
        IF  ((     AxesGroup.State.RobotData.RCSupportedFunctions. ReadToolData ) AND
             (     AxesGroup.State.RobotData.RCSupportedFunctions.WriteToolData ) AND
             (     AxesGroup.State.Initialized                                  ) AND 
@@ -6941,7 +6982,14 @@ END_VAR
   
   CASE _rStep
   OF    
-    0: // wait for initialisation done
+    0: // Check initialisation configured ?
+       IF (( _parCfg.PLC.Parameter.SynchronizationModes.WorkAreas[SyncTime.DURING_START_UP] = SyncMode.NO_SYNCHRONIZATION ) AND
+           ( _parCfg.PLC.Parameter.SynchronizationModes.WorkAreas[SyncTime. AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION ))
+       THEN
+         RETURN;
+       END_IF
+  
+       // wait for initialisation done
        IF  ((     AxesGroup.State.RobotData.RCSupportedFunctions. ReadWorkArea ) AND
             (     AxesGroup.State.RobotData.RCSupportedFunctions.WriteWorkArea ) AND
             (     AxesGroup.State.Initialized                                  ) AND 
@@ -7697,7 +7745,13 @@ END_VAR
 
   // Common
   UserData.LogLevel                          := LogLevel;
-  UserData.PLCLibraryVersion                 := RobotLibraryConstants.PLCLibraryVersion;
+  
+  UserData.PLCManufacturedID                 := _parCfg.Plc.Parameter.ManufacturedID;
+  UserData.PLCOrderID                        := _parCfg.Plc.Parameter.OrderID;
+  UserData.PLCSerialNumber                   := _parCfg.Plc.Parameter.SerialNumber;
+  UserData.PLCFirmwareVersion                := _parCfg.Plc.Parameter.FirmwareVersion;
+  UserData.PLCInterfaceVersion               := _parCfg.Plc.Parameter.InterfaceVersion;
+  UserData.PLCLibraryVersion                 :=  RobotLibraryConstants.PLCLibraryVersion;
                                              
   // Communication                           
   UserData.LifeSignTimeOut                   := _parCfg.Com.LifeSignTimeOut;
@@ -7834,12 +7888,11 @@ END_VAR
   END_IF
   
   
-  // Warning for ARC Registers running low
-  IF ( AxesGroup.Acyclic.ActiveCommandRegister.CurrenArcUsagePercent > RobotLibraryParameter.ACR_USAGE_WARNING_LIMIT )
+  // Warning for ACR Registers running low
+  IF ( AxesGroup.Acyclic.ActiveCommandRegister.CurrentAcrUsagePercent > RobotLibraryParameter.ACR_USAGE_WARNING_LIMIT )
   THEN
     WarningID := RobotLibraryWarningIdEnum.WARN_ACR_FREE_ENTRIES_LOW;
   END_IF
-  
   
   // Check configuration parameter changed ? 
   CheckParameterChanged(AxesGroup := AxesGroup);
@@ -7904,10 +7957,11 @@ END_VAR
   
              // clear error
              AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.ACK_ERROR;        
+             AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.RESET; // always a reset, so that on the robot side the ACR is reseted         
   
            TelegramState.ERROR_173_SERVER_CONNECTION_LOST:
   
-             // Reset interface including the ARC register on server side
+             // Reset interface including the ACR register on server side
              AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.RESET;        
              
            TelegramState.READY_TO_RESUME :  
@@ -7995,10 +8049,6 @@ END_VAR
           // !!! ReadMessages must stay active for the Message mechanism !!!
           // --------------------------------------------------------------- 
           // ReadMessages.Enable := FALSE;  
-          // Reset busy flag
-          Busy := FALSE;
-          // set initialized flag
-          Initialized := TRUE;       
           // set timeout
           SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
           // inc step counter
@@ -8121,6 +8171,10 @@ END_VAR
     07: IF (( NOT _readRobotData.Busy  ) AND
             (     _readRobotData.Done  ))
         THEN       
+          // Reset busy flag
+          Busy := FALSE;
+          // set initialized flag
+          Initialized := TRUE;       
           // start function block
          _readRobotData.Execute := FALSE;
           // set timeout
@@ -8649,7 +8703,7 @@ END_VAR
   _writeRobotReferenceDynamics.Execute := FALSE;   
   
   // Set Client error to force server error
-  AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.CLIENT_ERROR;
+  AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.NONE;
   
   // Reset synchronisation state variables
   AxesGroup.State.SyncStatePlc.InSync.Frame             := FALSE;
