@@ -1,0 +1,54 @@
+name: deploy
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+jobs:
+  Deploy:
+    name: Twinpack
+    runs-on: windows-latest
+    steps:
+      - name: Download Release
+        uses: robinraju/release-downloader@v1.8
+        with:
+          latest: true
+          fileName: "Beckhoff-v*.zip"
+      - name: Extract Release
+        shell: pwsh
+        run: |
+          $zipPath = Get-ChildItem -Path $PWD -Filter "Beckhoff-v*.zip" | Select-Object -First 1
+          $tempPath = Join-Path $PWD "BeckhoffTemp"
+          $beckhoffPath = Join-Path $PWD "Beckhoff"
+          $targetPath = Join-Path $beckhoffPath "lib"
+      
+          # Ensure Beckhoff folder exists
+          New-Item -Path $beckhoffPath -ItemType Directory -Force | Out-Null
+      
+          # Extract all to temp folder
+          Expand-Archive -Path $zipPath.FullName -DestinationPath $tempPath -Force
+      
+          # Move only 'lib' folder to target path
+          $libFolder = Get-ChildItem -Path $tempPath -Recurse -Directory | Where-Object { $_.Name -eq "lib" } | Select-Object -First 1
+          if ($libFolder) {
+              Move-Item -Path $libFolder.FullName -Destination $targetPath -Force
+              Write-Host "'lib' folder moved to $targetPath"
+          } else {
+              Write-Host "No 'lib' folder found in ZIP!"
+          }
+      
+          # Clean up temp folder
+          Remove-Item -Path $tempPath -Recurse -Force
+      - name: List contents of Beckhoff
+        shell: pwsh
+        run: |
+          $extractPath = Join-Path $PWD "Beckhoff"
+          Write-Host "Contents of Beckhoff Release:"
+          Get-ChildItem -Path $extractPath -Recurse | ForEach-Object {
+              Write-Host $_.FullName
+          }          
+      - name: Deploy Release
+        uses: Zeugwerk/twinpack-action@v0.4.0
+        with:
+          username: ${{ secrets.ACTIONS_ZGWK_USERNAME }}
+          password: ${{ secrets.ACTIONS_ZGWK_PASSWORD }}
+          path: Beckhoff/lib
