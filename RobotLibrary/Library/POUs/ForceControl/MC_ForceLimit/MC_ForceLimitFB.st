@@ -124,6 +124,8 @@ END_VAR
     CommandData := CreateCommandPayload(AxesGroup := AxesGroup); // ( Access via reference to rCommandFB in ACR )
     // notify active command register 
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
+    // Reset Valid output of the FB 
+    Valid := FALSE;
     // Reset parameter accepted flag
     ParameterAccepted := FALSE;  
   END_IF
@@ -150,7 +152,7 @@ END_VAR
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD, Overwrite := TRUE );
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -170,7 +172,7 @@ END_VAR
       // Parameter not valid
       CheckParameterValid := FALSE;
       // Set error
-      ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+      SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD, Overwrite := TRUE );
       
       // Create log entry
       CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
@@ -190,7 +192,7 @@ END_VAR
   IF (( ParCmd.ToolNo <   0                                                ) OR  
       ( ParCmd.ToolNo > 254                                                ) OR
       ( ParCmd.ToolNo > AxesGroup.State.ConfigurationData.HighestToolIndex ) OR
-      ( ParCmd.ToolNo > RobotLibraryParameter.TOOL_MAX -1                  ))
+      ( ParCmd.ToolNo > AxesGroup.State.UnifiedToolIndex                   ))
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
@@ -198,9 +200,9 @@ END_VAR
     // Check ToolNo available on RC ? 
     IF ( ParCmd.ToolNo > AxesGroup.State.ConfigurationData.HighestToolIndex )
     THEN
-      ErrorID := RobotLibraryErrorIdEnum.ERR_TOOLNO_UNAVAILABLE;
+      SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_TOOLNO_UNAVAILABLE, Overwrite := TRUE );
     ELSE
-      ErrorID := RobotLibraryErrorIdEnum.ERR_TOOLNO_RANGE;
+      SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_TOOLNO_RANGE, Overwrite := TRUE );
   	END_IF  
     
     // Create log entry
@@ -218,7 +220,7 @@ END_VAR
   IF (( ParCmd.FrameNo <   0                                                 ) OR  
       ( ParCmd.FrameNo > 254                                                 ) OR
       ( ParCmd.FrameNo > AxesGroup.State.ConfigurationData.HighestFrameIndex ) OR
-      ( ParCmd.FrameNo > RobotLibraryParameter.FRAME_MAX -1                  ))         
+      ( ParCmd.FrameNo > AxesGroup.State.UnifiedFrameIndex                   ))         
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
@@ -226,9 +228,9 @@ END_VAR
     // Check FrameNo available on RC ? 
     IF ( ParCmd.FrameNo > AxesGroup.State.ConfigurationData.HighestFrameIndex )
     THEN
-      ErrorID := RobotLibraryErrorIdEnum.ERR_FRAMENO_UNAVAILABLE;
+      SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_FRAMENO_UNAVAILABLE, Overwrite := TRUE );
     ELSE
-      ErrorID := RobotLibraryErrorIdEnum.ERR_FRAMENO_RANGE;
+      SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_FRAMENO_RANGE, Overwrite := TRUE );
   	END_IF  
     
     // Create log entry
@@ -250,7 +252,7 @@ END_VAR
       // Parameter not valid
       CheckParameterValid := FALSE;
       // Set error
-      ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+      SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD, Overwrite := TRUE );
       
       // Create log entry
       CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
@@ -273,7 +275,7 @@ END_VAR
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD, Overwrite := TRUE );
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -293,7 +295,7 @@ END_VAR
       // Parameter not valid
       CheckParameterValid := FALSE;
       // Set error
-      ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+      SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD, Overwrite := TRUE );
       
       // Create log entry
       CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
@@ -316,7 +318,7 @@ END_VAR
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD, Overwrite := TRUE );
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -338,7 +340,7 @@ END_VAR
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD, Overwrite := TRUE );
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -467,7 +469,7 @@ END_VAR
   _command.ParSeq          := _command.ParSeq;
   _command.Priority        :=  Priority;
   _command.EmitterID[0]    := _parCmd.EmitterID;
-  _command.ListenerID      :=  0; {warning 'ToDo'} 
+  _command.ListenerID      :=  0; 
   _command.Reserve         :=  0; 
   _command.ToolNo          := _parCmd.ToolNo;
   _command.FrameNo         := _parCmd.FrameNo;
@@ -837,6 +839,35 @@ END_VAR
 
 END_METHOD
 
+METHOD PROTECTED OnApplyOutCmd
+VAR_INPUT
+  /// Command message state
+  State : CmdMessageState;
+END_VAR
+
+  IF ( State = CmdMessageState.EMPTY ) 
+  THEN
+    // Reset command outputs
+    SysDepMemSet(pDest := ADR(OutCmd), Value := 0, DataLen := SIZEOF(OutCmd));         
+  END_IF
+  
+  IF (( State = CmdMessageState.ACTIVE ) OR
+      ( State = CmdMessageState.DONE   ))
+  THEN
+    // Update results
+    OutCmd.ForceStatus.ForceControlEnabled         := _response.ForceStatus.0;
+    OutCmd.ForceStatus.ForceLimitEnabled           := _response.ForceStatus.1;
+    OutCmd.ForceStatus.ApplyingForce               := _response.ForceStatus.2;
+    OutCmd.ForceStatus.MaxDeviationReached         := _response.ForceStatus.3;
+    OutCmd.ForceStatus.SpecifiedForceTorqueReached := _response.ForceStatus.4;
+    OutCmd.ForceStatus.SpecifiedForceLimitReached  := _response.ForceStatus.5;
+    OutCmd.ForceStatus.Bit06                       := _response.ForceStatus.6;
+    OutCmd.ForceStatus.Bit07                       := _response.ForceStatus.7;  
+    OutCmd.FollowID                                := _response.OriginID; {warning 'ToDo'}
+  END_IF
+
+END_METHOD
+
 METHOD Protected OnExecCancel : DINT
 VAR_IN_OUT
   /// Robot assignment of function
@@ -911,7 +942,7 @@ END_VAR
     
   ELSE
     // invalid step
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP, Overwrite := TRUE );
   END_CASE  
   
   
@@ -965,7 +996,7 @@ END_VAR
   	   END_IF
   ELSE
     // invalid step
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP, Overwrite := TRUE );
   END_CASE
   
   
@@ -1027,37 +1058,10 @@ END_VAR
          THEN
            // reset response received flag
           _responseReceived := FALSE;
-  
-           CASE  _response.State 
-           OF
-             CmdMessageState.BUFFERED    : CommandBuffered    := TRUE;
-             CmdMessageState.ACTIVE      : ParameterAccepted  := TRUE;
-                                           Valid              := TRUE;
-             CmdMessageState.ERROR       : Error              := TRUE;
-           END_CASE
-           
-           // Update results
-           OutCmd.ForceStatus.ForceControlEnabled         := _response.ForceStatus.0;
-           OutCmd.ForceStatus.ForceLimitEnabled           := _response.ForceStatus.1;
-           OutCmd.ForceStatus.ApplyingForce               := _response.ForceStatus.2;
-           OutCmd.ForceStatus.MaxDeviationReached         := _response.ForceStatus.3;
-           OutCmd.ForceStatus.SpecifiedForceTorqueReached := _response.ForceStatus.4;
-           OutCmd.ForceStatus.SpecifiedForceLimitReached  := _response.ForceStatus.5;
-           OutCmd.ForceStatus.Bit06                       := _response.ForceStatus.6;
-           OutCmd.ForceStatus.Bit07                       := _response.ForceStatus.7;  
-           OutCmd.FollowID                                := _response.OriginID; {warning 'ToDo'}
-           
-           // Update enable flag
-           Enabled := OutCmd.ForceStatus.ForceLimitEnabled;
-           
-           
-           // Enabled or Error ? -> Reset Busy flag  
-           IF (( Enabled ) OR 
-               ( Error   ))
-           THEN  
-             Busy := FALSE;
-  				 END_IF
-  
+           // update state flags
+           OnUpdateStateFlags(_response.State);
+           // update state flags
+           OnApplyOutCmd(_response.State);
          END_IF
   
          // do not abort directly, so that the ParSeq update can be send
@@ -1086,7 +1090,7 @@ END_VAR
         
   ELSE
     // invalid step
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP, Overwrite := TRUE );
   END_CASE
   
   
@@ -1097,6 +1101,47 @@ END_VAR
   THEN
     Reset();  
   END_IF
+
+END_METHOD
+
+METHOD PROTECTED OnUpdateStateFlags
+VAR_INPUT
+  /// Command message state
+  State : CmdMessageState;
+END_VAR
+
+  // Reset State flags
+  Valid := FALSE;
+  
+  // Update enable flag
+  Enabled := _response.ForceStatus.1;
+  
+  CASE State OF
+  
+    // No operation or process is active
+    CmdMessageState.EMPTY               :;
+    // Created but not yet started
+    CmdMessageState.CREATED             :;
+    // Buffered and awaiting execution
+    CmdMessageState.BUFFERED            : CommandBuffered    := TRUE;
+                                          ParameterAccepted  := TRUE;  
+    // Buffered in planner for future execution
+    CmdMessageState.BUFFERED_IN_PLANNER : CommandBuffered    := TRUE;
+                                          ParameterAccepted  := TRUE;
+    // Currently active and in progress
+    CmdMessageState.ACTIVE              : Valid              := TRUE; 
+    // Interrupted and awaiting continuation
+    CmdMessageState.INTERRUPTED         :;  
+    // Requested for abort
+    CmdMessageState.ABORT_REQUEST       :;
+    // Successfully completed
+    CmdMessageState.DONE                : Busy               := FALSE;
+    // Aborted before completion
+    CmdMessageState.ABORTED             : Busy               := FALSE;
+    // Encountered an error during execution
+    CmdMessageState.ERROR               : Error              := TRUE;
+                                          Busy               := FALSE;
+  END_CASE
 
 END_METHOD
 

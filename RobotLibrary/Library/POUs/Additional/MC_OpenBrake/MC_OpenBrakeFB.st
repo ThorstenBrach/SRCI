@@ -141,7 +141,7 @@ END_VAR
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD, Overwrite := TRUE );
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -159,7 +159,7 @@ END_VAR
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD, Overwrite := TRUE );
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -177,7 +177,7 @@ END_VAR
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD, Overwrite := TRUE );
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -195,7 +195,7 @@ END_VAR
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD, Overwrite := TRUE );
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -213,7 +213,7 @@ END_VAR
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD, Overwrite := TRUE );
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -231,7 +231,7 @@ END_VAR
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD, Overwrite := TRUE );
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -249,7 +249,7 @@ END_VAR
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD, Overwrite := TRUE );
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -267,7 +267,7 @@ END_VAR
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD, Overwrite := TRUE );
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -285,7 +285,7 @@ END_VAR
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD, Overwrite := TRUE );
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -303,7 +303,7 @@ END_VAR
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD, Overwrite := TRUE );
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -321,7 +321,7 @@ END_VAR
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD, Overwrite := TRUE );
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -339,7 +339,7 @@ END_VAR
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD, Overwrite := TRUE );
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -491,6 +491,42 @@ END_VAR
 
 END_METHOD
 
+METHOD PROTECTED OnApplyOutCmd
+VAR_INPUT
+  /// Command message state
+  State : CmdMessageState;
+END_VAR
+
+  IF ( State = CmdMessageState.EMPTY ) 
+  THEN
+    // Reset command outputs
+    SysDepMemSet(pDest := ADR(OutCmd), Value := 0, DataLen := SIZEOF(OutCmd));         
+  END_IF
+  
+  IF ( State = CmdMessageState.DONE ) 
+  THEN
+    // Update results
+    OutCmd.Enabled                          := _response.Enabled.0;
+    OutCmd.RobotAxesBrakeReleased.Bit00     := _response.RobotAxesBrakeReleased.0;
+    OutCmd.RobotAxesBrakeReleased.AxisJ1    := _response.RobotAxesBrakeReleased.1;
+    OutCmd.RobotAxesBrakeReleased.AxisJ2    := _response.RobotAxesBrakeReleased.2;
+    OutCmd.RobotAxesBrakeReleased.AxisJ3    := _response.RobotAxesBrakeReleased.3;
+    OutCmd.RobotAxesBrakeReleased.AxisJ4    := _response.RobotAxesBrakeReleased.4;
+    OutCmd.RobotAxesBrakeReleased.AxisJ5    := _response.RobotAxesBrakeReleased.5;
+    OutCmd.RobotAxesBrakeReleased.AxisJ6    := _response.RobotAxesBrakeReleased.6;
+    OutCmd.RobotAxesBrakeReleased.Bit07     := _response.RobotAxesBrakeReleased.7;
+    OutCmd.ExternalAxesBrakeReleased.Bit00  := _response.ExternalAxesBrakeReleased.0;
+    OutCmd.ExternalAxesBrakeReleased.AxisE1 := _response.ExternalAxesBrakeReleased.1;
+    OutCmd.ExternalAxesBrakeReleased.AxisE2 := _response.ExternalAxesBrakeReleased.2;
+    OutCmd.ExternalAxesBrakeReleased.AxisE3 := _response.ExternalAxesBrakeReleased.3;
+    OutCmd.ExternalAxesBrakeReleased.AxisE4 := _response.ExternalAxesBrakeReleased.4;
+    OutCmd.ExternalAxesBrakeReleased.AxisE5 := _response.ExternalAxesBrakeReleased.5;
+    OutCmd.ExternalAxesBrakeReleased.AxisE6 := _response.ExternalAxesBrakeReleased.6;
+    OutCmd.ExternalAxesBrakeReleased.Bit07  := _response.ExternalAxesBrakeReleased.7;
+  END_IF
+
+END_METHOD
+
 METHOD PROTECTED OnExecRun : DINT
 VAR_IN_OUT
   /// Robot assignment of function
@@ -533,40 +569,14 @@ END_VAR
          THEN
            // reset response received flag
           _responseReceived := FALSE;
-  
-           CASE  _response.State 
-           OF
-             CmdMessageState.BUFFERED    : CommandBuffered    := TRUE;
-             CmdMessageState.ACTIVE      : ParameterAccepted  := TRUE;           
-             CmdMessageState.DONE        : Done               := TRUE;           
-             CmdMessageState.ERROR       : Error              := TRUE;
-           END_CASE
-  
+           // update state flags
+           OnUpdateStateFlags(_response.State);
+           // update state flags
+           OnApplyOutCmd(_response.State);
                   
            // Done, Aborted or Error ?
            IF (_response.State >= CmdMessageState.DONE )
            THEN
-             // Reset Busy flag
-             Busy := FALSE;
-             // Update results
-             OutCmd.Enabled                          := _response.Enabled.0;
-             OutCmd.RobotAxesBrakeReleased.Bit00     := _response.RobotAxesBrakeReleased.0;
-             OutCmd.RobotAxesBrakeReleased.AxisJ1    := _response.RobotAxesBrakeReleased.1;
-             OutCmd.RobotAxesBrakeReleased.AxisJ2    := _response.RobotAxesBrakeReleased.2;
-             OutCmd.RobotAxesBrakeReleased.AxisJ3    := _response.RobotAxesBrakeReleased.3;
-             OutCmd.RobotAxesBrakeReleased.AxisJ4    := _response.RobotAxesBrakeReleased.4;
-             OutCmd.RobotAxesBrakeReleased.AxisJ5    := _response.RobotAxesBrakeReleased.5;
-             OutCmd.RobotAxesBrakeReleased.AxisJ6    := _response.RobotAxesBrakeReleased.6;
-             OutCmd.RobotAxesBrakeReleased.Bit07     := _response.RobotAxesBrakeReleased.7;
-             OutCmd.ExternalAxesBrakeReleased.Bit00  := _response.ExternalAxesBrakeReleased.0;
-             OutCmd.ExternalAxesBrakeReleased.AxisE1 := _response.ExternalAxesBrakeReleased.1;
-             OutCmd.ExternalAxesBrakeReleased.AxisE2 := _response.ExternalAxesBrakeReleased.2;
-             OutCmd.ExternalAxesBrakeReleased.AxisE3 := _response.ExternalAxesBrakeReleased.3;
-             OutCmd.ExternalAxesBrakeReleased.AxisE4 := _response.ExternalAxesBrakeReleased.4;
-             OutCmd.ExternalAxesBrakeReleased.AxisE5 := _response.ExternalAxesBrakeReleased.5;
-             OutCmd.ExternalAxesBrakeReleased.AxisE6 := _response.ExternalAxesBrakeReleased.6;
-             OutCmd.ExternalAxesBrakeReleased.Bit07  := _response.ExternalAxesBrakeReleased.7;
-  
              // set timeout
              SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
              // inc step counter
@@ -580,7 +590,7 @@ END_VAR
         END_IF     
   ELSE
     // invalid step
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP, Overwrite := TRUE );
   END_CASE
   
   
@@ -590,6 +600,45 @@ END_VAR
   THEN
     Reset();  
   END_IF
+
+END_METHOD
+
+METHOD PROTECTED OnUpdateStateFlags
+VAR_INPUT
+  /// Command message state
+  State : CmdMessageState;
+END_VAR
+
+  // Reset State flags
+  Done := FALSE;
+  
+  CASE State OF
+  
+    // No operation or process is active
+    CmdMessageState.EMPTY               :;
+    // Created but not yet started
+    CmdMessageState.CREATED             :;
+    // Buffered and awaiting execution
+    CmdMessageState.BUFFERED            : CommandBuffered    := TRUE;
+                                          ParameterAccepted  := TRUE;
+    // Buffered in planner for future execution
+    CmdMessageState.BUFFERED_IN_PLANNER : CommandBuffered    := TRUE;
+                                          ParameterAccepted  := TRUE;
+    // Currently active and in progress
+    CmdMessageState.ACTIVE              :  
+    // Interrupted and awaiting continuation
+    CmdMessageState.INTERRUPTED         :;
+    // Requested for abort
+    CmdMessageState.ABORT_REQUEST       :;
+    // Successfully completed
+    CmdMessageState.DONE                : Done  := TRUE;
+                                          Busy  := FALSE;
+    // Aborted before completion
+    CmdMessageState.ABORTED             : Busy  := FALSE;
+    // Encountered an error during execution
+    CmdMessageState.ERROR               : Error := TRUE;
+                                          Busy  := FALSE;
+  END_CASE
 
 END_METHOD
 

@@ -23,7 +23,9 @@ FUNCTION_BLOCK RobotLibrarySendDataFB extends RobotLibrarySendDataBaseFB
 // -------------------------------------------------------------------------
 VAR_INPUT
   /// Payload
-  Payload : ARRAY [0.. RobotLibraryParameter.ROBOT_OUT_DATA_MAX] OF BYTE;
+  Payload     : POINTER TO BYTE;
+  /// Size of the Payload array
+  PayLoadSize : UDINT;
 END_VAR
 
 
@@ -34,9 +36,27 @@ METHOD Reset
 VAR_INPUT
 END_VAR
 
-  SysDepMemSet(pDest := ADR(Payload), Value := 0 , DataLen := SIZEOF(Payload));
-  PayloadLen := 0;
-  PayloadPtr := 0;
+  SUPER^.Reset();
+  
+  // Reset payload buffer
+  SysDepMemSet(pDest := Payload, Value := 0 , DataLen := PayLoadSize);
+
+END_METHOD
+
+METHOD SetLifeSignFooter
+VAR_INPUT
+  /// Life sign value
+  LifeSign : BYTE;
+END_VAR
+
+VAR
+  /// temporary 
+  pLifeSign : POINTER TO BYTE;
+END_VAR
+
+  pLifeSign := Payload + PayLoadSize -1;
+  
+  pLifeSign^ := LifeSign;
 
 END_METHOD
 
@@ -44,7 +64,7 @@ METHOD UpdatePointer
 VAR_INPUT
 END_VAR
 
-  pPayload := ADR(Payload);
+  pPayload := Payload;
 
 END_METHOD
 

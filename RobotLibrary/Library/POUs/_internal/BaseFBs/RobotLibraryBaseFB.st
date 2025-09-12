@@ -211,6 +211,48 @@ END_VAR
 
 END_METHOD
 
+PROPERTY PUBLIC HasError : Bool
+
+
+GET
+VAR
+END_VAR
+
+  HasError := ErrorID <> RobotLibraryErrorIdEnum.NO_ERROR;
+
+END_GET
+
+PROPERTY PUBLIC HasInfo : BOOL
+
+
+GET
+VAR
+END_VAR
+
+  HasInfo := InfoID <> RobotLibraryInfoIdEnum.NO_INFO;
+
+END_GET
+
+PROPERTY PUBLIC HasWarning : BOOL
+
+
+GET
+VAR
+END_VAR
+
+  HasWarning := WarningID <> RobotLibraryWarningIdEnum.NO_WARNING;
+
+END_GET
+
+METHOD PROTECTED OnApplyOutCmd
+VAR_INPUT
+  /// Command message state
+  State : CmdMessageState;
+END_VAR
+
+
+END_METHOD
+
 METHOD PROTECTED OnCall
 VAR_IN_OUT
   /// Robot assignment of function
@@ -308,6 +350,15 @@ END_VAR
 
 END_METHOD
 
+METHOD PROTECTED OnUpdateStateFlags
+VAR_INPUT
+  /// Command message state
+  State : CmdMessageState;
+END_VAR
+
+
+END_METHOD
+
 METHOD INTERNAL ParseResponsePayload : DINT
 VAR_INPUT
   /// Response data
@@ -335,16 +386,15 @@ END_VAR
   CASE _rspHeader.AlarmMessageSeverity OF
   
     // Informative message
-    Severity.INFO        : InfoID    := _rspHeader.AlarmMessageCode;
+    Severity.INFO        : SetInfo   ( InfoID    := _rspHeader.AlarmMessageCode, Overwrite := TRUE );
     // Warning message
-    Severity.WARNING     : WarningID := _rspHeader.AlarmMessageCode;
+    Severity.WARNING     : SetWarning( WarningID := _rspHeader.AlarmMessageCode, Overwrite := TRUE );
     // Error message
-    Severity.ERROR       : ErrorID   := _rspHeader.AlarmMessageCode; 
+    Severity.ERROR       : SetError  ( ErrorID   := _rspHeader.AlarmMessageCode, Overwrite := TRUE ); 
     // Fataö error message
-    Severity.FATAL_ERROR : ErrorID   := _rspHeader.AlarmMessageCode;
+    Severity.FATAL_ERROR : SetError  ( ErrorID   := _rspHeader.AlarmMessageCode, Overwrite := TRUE );
   
   END_CASE
-  
   
   ParseResponsePayload := ResponseData.PayloadPtr;
 
@@ -365,6 +415,51 @@ END_VAR
   InfoID    := 0;  
   
   Reset := RobotLibraryConstants.OK;
+
+END_METHOD
+
+METHOD PUBLIC SetError
+VAR_INPUT
+  /// ErrorID reported by RC for error identification according to Table 7-1
+  ErrorID   : WORD;
+  /// TRUE = overwrite an existing error 
+  Overwrite : BOOL;
+END_VAR
+
+  IF ( NOT HasError ) OR ( Overwrite )
+  THEN
+    THIS^.ErrorID := ErrorID;
+  END_IF
+
+END_METHOD
+
+METHOD PUBLIC SetInfo
+VAR_INPUT
+  /// InfoID for info identification reported during execution of command according to Table 7-5
+  InfoID    : WORD;
+  /// TRUE = overwrite an existing info 
+  Overwrite : BOOL;
+END_VAR
+
+  IF ( NOT HasInfo ) OR ( Overwrite )
+  THEN
+    THIS^.InfoID := InfoID;
+  END_IF
+
+END_METHOD
+
+METHOD PUBLIC SetWarning
+VAR_INPUT
+  /// WarningID for warning identification reported during execution of command according to Table 7-3
+  WarningID : WORD;
+  /// TRUE = overwrite an existing warning 
+  Overwrite : BOOL;
+END_VAR
+
+  IF ( NOT HasWarning ) OR ( Overwrite )
+  THEN
+    THIS^.WarningID := WarningID;
+  END_IF
 
 END_METHOD
 

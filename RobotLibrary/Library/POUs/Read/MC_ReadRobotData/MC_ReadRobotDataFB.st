@@ -197,6 +197,44 @@ END_VAR
 
 END_METHOD
 
+METHOD PROTECTED OnApplyOutCmd
+VAR_INPUT
+  /// Command message state
+  State : CmdMessageState;
+END_VAR
+
+  IF ( State = CmdMessageState.EMPTY ) 
+  THEN
+    // Reset command outputs
+    SysDepMemSet(pDest := ADR(OutCmd), Value := 0, DataLen := SIZEOF(OutCmd));         
+  END_IF
+  
+  IF (( State = CmdMessageState.ACTIVE ) OR
+      ( State = CmdMessageState.DONE   ))
+  THEN
+    // Update results
+    OutCmd.RCManufacturer       :=                              _response.RCManufacturer;
+    OutCmd.RCOrderID            :=                              _response.RCOrderID;
+    OutCmd.RCSerialNumber       :=                              _response.RCSerialNumber;
+    OutCmd.RASerialNumber       :=                              _response.RASerialNumber;
+    OutCmd.RCFirmwareVersion    :=                              _response.RCFirmwareVersion;
+    OutCmd.RCInterpreterVersion :=                              _response.RCInterpreterVersion;
+    OutCmd.AxisJointUsed        :=  ByteToAxisJointUsed        (_response.AxisJointUsed);           
+    OutCmd.AxisExternalUsed     :=  ByteToAxisExternalUsed     (_response.AxisExternalUsed);
+    OutCmd.AxisJointUnit        :=  ByteToAxisJointUnit        (_response.AxisJointUnit);
+    OutCmd.AxisExternalUnit     :=  ByteToAxisExternalUnit     (_response.AxisExternalUnit);
+    OutCmd.RCSupportedFunctions :=  BytesToRCSupportedFunctions(_response.RCSupportedFunctions);
+    OutCmd.RobotID              :=                              _response.RobotID;  
+    OutCmd.InterpreterCycleTime :=                              _response.InterpreterCycleTime;
+    
+    // must be always true, because this command is part of the interface initialization
+    OutCmd.RCSupportedFunctions.ExchangeConfiguration := TRUE;
+    OutCmd.RCSupportedFunctions.ReadRobotData         := TRUE;
+    OutCmd.RCSupportedFunctions.ReadMessages          := TRUE;
+  END_IF
+
+END_METHOD
+
 METHOD PROTECTED OnExecRun : DINT
 VAR_IN_OUT
   /// Robot assignment of function
@@ -239,39 +277,14 @@ END_VAR
          THEN
            // reset response received flag
           _responseReceived := FALSE;
+           // update state flags
+           OnUpdateStateFlags(_response.State);
+           // update state flags
+           OnApplyOutCmd(_response.State);
   
-           CASE  _response.State 
-           OF
-             CmdMessageState.BUFFERED    : CommandBuffered    := TRUE;
-             CmdMessageState.DONE        : Done               := TRUE;
-             CmdMessageState.ERROR       : Error              := TRUE;
-           END_CASE
-                  
            // Done, Aborted or Error ?
            IF (_response.State >= CmdMessageState.DONE )
            THEN
-             // reset Busy Flag
-             Busy := FALSE;
-             // Update results
-             OutCmd.RCManufacturer       :=                              _response.RCManufacturer;
-             OutCmd.RCOrderID            :=                              _response.RCOrderID;
-             OutCmd.RCSerialNumber       :=                              _response.RCSerialNumber;
-             OutCmd.RASerialNumber       :=                              _response.RASerialNumber;
-             OutCmd.RCFirmwareVersion    :=                              _response.RCFirmwareVersion;
-             OutCmd.RCInterpreterVersion :=                              _response.RCInterpreterVersion;
-             OutCmd.AxisJointUsed        :=  ByteToAxisJointUsed        (_response.AxisJointUsed);           
-             OutCmd.AxisExternalUsed     :=  ByteToAxisExternalUsed     (_response.AxisExternalUsed);
-             OutCmd.AxisJointUnit        :=  ByteToAxisJointUnit        (_response.AxisJointUnit);
-             OutCmd.AxisExternalUnit     :=  ByteToAxisExternalUnit     (_response.AxisExternalUnit);
-             OutCmd.RCSupportedFunctions :=  BytesToRCSupportedFunctions(_response.RCSupportedFunctions);
-             OutCmd.RobotID              :=                              _response.RobotID;  
-             OutCmd.InterpreterCycleTime :=                              _response.InterpreterCycleTime;
-             
-             // must be always true, because this command is part of the interface initialization
-             OutCmd.RCSupportedFunctions.ExchangeConfiguration := TRUE;
-             OutCmd.RCSupportedFunctions.ReadRobotData         := TRUE;
-             OutCmd.RCSupportedFunctions.ReadMessages          := TRUE;
-                        
              // set timeout
              SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
              // inc step counter
@@ -287,7 +300,7 @@ END_VAR
   
   ELSE
     // invalid step
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP, Overwrite := TRUE );
   END_CASE
   
   
@@ -296,6 +309,43 @@ END_VAR
   THEN
     Reset(); 
   END_IF
+
+END_METHOD
+
+METHOD PROTECTED OnUpdateStateFlags
+VAR_INPUT
+  /// Command message state
+  State : CmdMessageState;
+END_VAR
+
+  // Reset State flags
+  Done := FALSE;
+  
+  CASE State OF
+  
+    // No operation or process is active
+    CmdMessageState.EMPTY               :;
+    // Created but not yet started
+    CmdMessageState.CREATED             :;
+    // Buffered and awaiting execution
+    CmdMessageState.BUFFERED            : CommandBuffered    := TRUE;
+    // Buffered in planner for future execution
+    CmdMessageState.BUFFERED_IN_PLANNER : CommandBuffered    := TRUE;
+    // Currently active and in progress
+    CmdMessageState.ACTIVE              :;                                     
+    // Interrupted and awaiting continuation
+    CmdMessageState.INTERRUPTED         :;    
+    // Requested for abort
+    CmdMessageState.ABORT_REQUEST       :;
+    // Successfully completed
+    CmdMessageState.DONE                : Done               := TRUE; 
+                                          Busy               := FALSE;
+    // Aborted before completion
+    CmdMessageState.ABORTED             : Busy               := FALSE;
+    // Encountered an error during execution
+    CmdMessageState.ERROR               : Error              := TRUE;
+                                          Busy               := FALSE;
+  END_CASE
 
 END_METHOD
 

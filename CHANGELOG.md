@@ -4,6 +4,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.0.0.49] - 2025-09-12
+
+### Added
+
+ - Added feature : Allowing data packet to be configured individually per robot instance by using ARRAY[*]. #14
+ - Added feature : Allowing data sizes for Tool, Load, Frame and WorkAreas to be configured individually per robot instance by using ARRAY[*]. Related to #14
+ - Added property `HasError` which returns `TRUE` if an error is set.
+ - Added property `HasWarning` which returns `TRUE` if a warning is set.
+ - Added property `HasInfo` which returns `TRUE` if an info is set.
+ - Added new method `SetError` that allows setting an internal FB error.
+   Includes parameter `Overwrite` to control whether an existing error should be replaced. All affected code locations have been updated accordingly.
+ - Added new method `SetWarning` that allows setting an internal FB warning. 
+   Includes parameter `Overwrite` to control whether an existing warning should be replaced. All affected code locations have been updated accordingly.
+ - Added new method `SetInfo` that allows setting an internal FB info. 
+   Includes parameter `Overwrite` to control whether an existing info should be replaced. All affected code locations have been updated accordingly.
+ - Added new FB `SystemDataFB` to `AxesGroup` providing array sizes and pointers of system data to the corresponding Read/Write FBs. 
+   This allows to automatically update system data storage for Tool, Load, Frame, WorkAreas, which is a requirement of the SRCI specification.
+ - Added error handling for error 'ERR_PROCESSINGMODE_NOT_DEFINED' to all FBs that use the `ProcessingMode`parameter.
+
+### Changed
+ - Refactored all command FBs by moving the update of FB `StatusFlags` into a dedicated method `OnUpdateStateFlags` to keep to code `OnExecRun` of cleaner.
+ - Refactored all command FBs by moving the update of FB `OutCmd` into a dedicated method `OnUpdateOutCmd` to keep to code `OnExecRun` of cleaner.
+ - Modified behavior of StatusFlag `Busy` in all `Enable` FBs. 
+   Previously, `Busy` was reset on the rising edge of `Enabled` - Now it remains `TRUE` for the entire duration the FB is enabled.
+ - Modified behavior of StatusFlag `ParameterAccepted`. 
+   Previously, it was only set to `TRUE` once the command entered the Active state - Now switches to `TRUE` when a command is buffered.
+
+### Removed
+ - Removed library constant `ROBOT_IN_DATA_MAX` as it is no longer needed due to the use of `ARRAY[*]`. Related to #14
+ - Removed library constant `ROBOT_OUT_DATA_MAX` as it is no longer needed due to the use of `ARRAY[*]`. Related to #14
+
 ## [0.0.0.48] - 2025-08-22
 
 ### Added

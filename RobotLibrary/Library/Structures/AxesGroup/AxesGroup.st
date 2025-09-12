@@ -34,6 +34,8 @@ STRUCT
   CyclicOptional : AxesGroupCyclicOptionalData;
   /// Execution order list and ACR entries (see chapter 5.6.4.2) 
   Acyclic        : AxesGroupAcyclic;
+  /// System data like ToolData, FrameData, LoadData etc.
+  SystemData     : AxesGroupSystemDataFB;
 END_STRUCT
 END_TYPE
 

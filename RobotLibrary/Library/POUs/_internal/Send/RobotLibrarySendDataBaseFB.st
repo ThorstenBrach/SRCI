@@ -598,6 +598,8 @@ METHOD Reset
 VAR_INPUT
 END_VAR
 
+  PayloadLen := 0;
+  PayloadPtr := 0;
 
 END_METHOD
 

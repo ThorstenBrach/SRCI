@@ -22,15 +22,6 @@
 // -------------------------------------------------------------------------
 TYPE WriteFrameDataOutCmd :
 STRUCT
-  /// Unique system-generated ID of the "Action" when the function is triggered.
-  /// • >0: The "Action" is started by the trigger function with identical FollowID.
-  /// • <0: The "Action" is stopped by the trigger function with identical FollowID.
-  /// For more information see chapter 5.5.12.4.
-  OriginID           : INT;
-  /// Relates to ListenerID >0 
-  /// Number of successful trigger -based command invocations
-  /// For more information refer to chapter 5.5.12.4.
-  InvocationCounter  : USINT;
 END_STRUCT
 END_TYPE
 

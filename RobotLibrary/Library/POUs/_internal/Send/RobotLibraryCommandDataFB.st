@@ -35,9 +35,10 @@ METHOD Reset
 VAR_INPUT
 END_VAR
 
+  SUPER^.Reset();
+  
+  // Reset payload buffer
   SysDepMemSet(pDest := ADR(Payload), Value := 0 , DataLen := SIZEOF(Payload));
-  PayloadLen := 0;
-  PayloadPtr := 0;
 
 END_METHOD
 

@@ -149,7 +149,7 @@ END_VAR
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_SEQFLAG_NOT_ALLOWED;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_SEQFLAG_NOT_ALLOWED, Overwrite := TRUE );
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -168,7 +168,7 @@ END_VAR
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_ABORTINGMODE_INVALID;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_ABORTINGMODE_INVALID, Overwrite := TRUE );
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -191,7 +191,7 @@ END_VAR
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD, Overwrite := TRUE );
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -214,7 +214,7 @@ END_VAR
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD, Overwrite := TRUE );
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -366,6 +366,60 @@ END_VAR
 
 END_METHOD
 
+METHOD PROTECTED OnApplyOutCmd
+VAR_INPUT
+  /// Command message state
+  State : CmdMessageState;
+END_VAR
+
+  IF ( State = CmdMessageState.EMPTY ) 
+  THEN
+    // Reset command outputs
+    SysDepMemSet(pDest := ADR(OutCmd), Value := 0, DataLen := SIZEOF(OutCmd));         
+  END_IF
+  
+  IF ( State = CmdMessageState.DONE )
+  THEN
+    // Update results
+    OutCmd.RobotAxesStatus.Bit00     := _response.RobotAxesStatus.0;
+    OutCmd.RobotAxesStatus.AxisJ1    := _response.RobotAxesStatus.1;
+    OutCmd.RobotAxesStatus.AxisJ2    := _response.RobotAxesStatus.2;
+    OutCmd.RobotAxesStatus.AxisJ3    := _response.RobotAxesStatus.3;
+    OutCmd.RobotAxesStatus.AxisJ4    := _response.RobotAxesStatus.4;
+    OutCmd.RobotAxesStatus.AxisJ5    := _response.RobotAxesStatus.5;
+    OutCmd.RobotAxesStatus.AxisJ6    := _response.RobotAxesStatus.6;
+    OutCmd.RobotAxesStatus.Bit07     := _response.RobotAxesStatus.7;
+    
+    OutCmd.RobotAxesWarning.Bit00     := _response.RobotAxesWarning.0;
+    OutCmd.RobotAxesWarning.AxisJ1    := _response.RobotAxesWarning.1;
+    OutCmd.RobotAxesWarning.AxisJ2    := _response.RobotAxesWarning.2;
+    OutCmd.RobotAxesWarning.AxisJ3    := _response.RobotAxesWarning.3;
+    OutCmd.RobotAxesWarning.AxisJ4    := _response.RobotAxesWarning.4;
+    OutCmd.RobotAxesWarning.AxisJ5    := _response.RobotAxesWarning.5;
+    OutCmd.RobotAxesWarning.AxisJ6    := _response.RobotAxesWarning.6;
+    OutCmd.RobotAxesWarning.Bit07     := _response.RobotAxesWarning.7;
+    
+    OutCmd.ExternalAxesStatus.Bit00   := _response.ExternalAxesStatus.0;
+    OutCmd.ExternalAxesStatus.AxisE1  := _response.ExternalAxesStatus.1;
+    OutCmd.ExternalAxesStatus.AxisE2  := _response.ExternalAxesStatus.2;
+    OutCmd.ExternalAxesStatus.AxisE3  := _response.ExternalAxesStatus.3;
+    OutCmd.ExternalAxesStatus.AxisE4  := _response.ExternalAxesStatus.4;
+    OutCmd.ExternalAxesStatus.AxisE5  := _response.ExternalAxesStatus.5;
+    OutCmd.ExternalAxesStatus.AxisE6  := _response.ExternalAxesStatus.6;
+    OutCmd.ExternalAxesStatus.Bit07   := _response.ExternalAxesStatus.7;
+    
+    OutCmd.ExternalAxesWarning.Bit00  := _response.ExternalAxesWarning.0;
+    OutCmd.ExternalAxesWarning.AxisE1 := _response.ExternalAxesWarning.1;
+    OutCmd.ExternalAxesWarning.AxisE2 := _response.ExternalAxesWarning.2;
+    OutCmd.ExternalAxesWarning.AxisE3 := _response.ExternalAxesWarning.3;
+    OutCmd.ExternalAxesWarning.AxisE4 := _response.ExternalAxesWarning.4;
+    OutCmd.ExternalAxesWarning.AxisE5 := _response.ExternalAxesWarning.5;
+    OutCmd.ExternalAxesWarning.AxisE6 := _response.ExternalAxesWarning.6;
+    OutCmd.ExternalAxesWarning.Bit07  := _response.ExternalAxesWarning.7;
+  END_IF
+
+END_METHOD
+
 METHOD PROTECTED OnExecRun : DINT
 VAR_IN_OUT
   /// Robot assignment of function
@@ -408,61 +462,14 @@ END_VAR
          THEN
            // reset response received flag
           _responseReceived := FALSE;
-           // reset Active flag
-           Active := FALSE;
-           
-           CASE  _response.State 
-           OF
-             CmdMessageState.BUFFERED    : CommandBuffered    := TRUE;
-             CmdMessageState.ACTIVE      : Active             := TRUE;
-             CmdMessageState.INTERRUPTED : CommandInterrupted := TRUE;
-             CmdMessageState.DONE        : Done               := TRUE;
-             CmdMessageState.ABORTED     : CommandAborted     := TRUE;
-             CmdMessageState.ERROR       : Error              := TRUE;
-           END_CASE
+           // update state flags
+           OnUpdateStateFlags(_response.State);
+           // update state flags
+           OnApplyOutCmd(_response.State);
                   
            // Done, Aborted or Error ?
            IF (_response.State >= CmdMessageState.DONE )
            THEN 
-             // reset busy flag          
-             Busy := FALSE;
-             // Update results
-             OutCmd.RobotAxesStatus.Bit00     := _response.RobotAxesStatus.0;
-             OutCmd.RobotAxesStatus.AxisJ1    := _response.RobotAxesStatus.1;
-             OutCmd.RobotAxesStatus.AxisJ2    := _response.RobotAxesStatus.2;
-             OutCmd.RobotAxesStatus.AxisJ3    := _response.RobotAxesStatus.3;
-             OutCmd.RobotAxesStatus.AxisJ4    := _response.RobotAxesStatus.4;
-             OutCmd.RobotAxesStatus.AxisJ5    := _response.RobotAxesStatus.5;
-             OutCmd.RobotAxesStatus.AxisJ6    := _response.RobotAxesStatus.6;
-             OutCmd.RobotAxesStatus.Bit07     := _response.RobotAxesStatus.7;
-             
-             OutCmd.RobotAxesWarning.Bit00     := _response.RobotAxesWarning.0;
-             OutCmd.RobotAxesWarning.AxisJ1    := _response.RobotAxesWarning.1;
-             OutCmd.RobotAxesWarning.AxisJ2    := _response.RobotAxesWarning.2;
-             OutCmd.RobotAxesWarning.AxisJ3    := _response.RobotAxesWarning.3;
-             OutCmd.RobotAxesWarning.AxisJ4    := _response.RobotAxesWarning.4;
-             OutCmd.RobotAxesWarning.AxisJ5    := _response.RobotAxesWarning.5;
-             OutCmd.RobotAxesWarning.AxisJ6    := _response.RobotAxesWarning.6;
-             OutCmd.RobotAxesWarning.Bit07     := _response.RobotAxesWarning.7;
-  
-             OutCmd.ExternalAxesStatus.Bit00   := _response.ExternalAxesStatus.0;
-             OutCmd.ExternalAxesStatus.AxisE1  := _response.ExternalAxesStatus.1;
-             OutCmd.ExternalAxesStatus.AxisE2  := _response.ExternalAxesStatus.2;
-             OutCmd.ExternalAxesStatus.AxisE3  := _response.ExternalAxesStatus.3;
-             OutCmd.ExternalAxesStatus.AxisE4  := _response.ExternalAxesStatus.4;
-             OutCmd.ExternalAxesStatus.AxisE5  := _response.ExternalAxesStatus.5;
-             OutCmd.ExternalAxesStatus.AxisE6  := _response.ExternalAxesStatus.6;
-             OutCmd.ExternalAxesStatus.Bit07   := _response.ExternalAxesStatus.7;
-  
-             OutCmd.ExternalAxesWarning.Bit00  := _response.ExternalAxesWarning.0;
-             OutCmd.ExternalAxesWarning.AxisE1 := _response.ExternalAxesWarning.1;
-             OutCmd.ExternalAxesWarning.AxisE2 := _response.ExternalAxesWarning.2;
-             OutCmd.ExternalAxesWarning.AxisE3 := _response.ExternalAxesWarning.3;
-             OutCmd.ExternalAxesWarning.AxisE4 := _response.ExternalAxesWarning.4;
-             OutCmd.ExternalAxesWarning.AxisE5 := _response.ExternalAxesWarning.5;
-             OutCmd.ExternalAxesWarning.AxisE6 := _response.ExternalAxesWarning.6;
-             OutCmd.ExternalAxesWarning.Bit07  := _response.ExternalAxesWarning.7;
-             
              // set timeout
              SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
              // inc step counter
@@ -476,7 +483,7 @@ END_VAR
         END_IF     
   ELSE
     // invalid step
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP, Overwrite := TRUE );
   END_CASE
   
   
@@ -485,6 +492,47 @@ END_VAR
   THEN
     Reset();  
   END_IF
+
+END_METHOD
+
+METHOD PROTECTED OnUpdateStateFlags
+VAR_INPUT
+  /// Command message state
+  State : CmdMessageState;
+END_VAR
+
+  // Reset State flags
+  Active             := FALSE;
+  CommandAborted     := FALSE;
+  CommandInterrupted := FALSE;
+  Done               := FALSE;
+  
+  CASE State OF
+  
+    // No operation or process is active
+    CmdMessageState.EMPTY               :;
+    // Created but not yet started
+    CmdMessageState.CREATED             :;
+    // Buffered and awaiting execution
+    CmdMessageState.BUFFERED            : CommandBuffered    := TRUE;
+    // Buffered in planner for future execution
+    CmdMessageState.BUFFERED_IN_PLANNER : CommandBuffered    := TRUE;
+    // Currently active and in progress
+    CmdMessageState.ACTIVE              : Active             := TRUE;
+    // Interrupted and awaiting continuation
+    CmdMessageState.INTERRUPTED         : CommandInterrupted := TRUE;
+    // Requested for abort
+    CmdMessageState.ABORT_REQUEST       :;
+    // Successfully completed
+    CmdMessageState.DONE                : Done               := TRUE;
+                                          Busy               := FALSE;
+    // Aborted before completion
+    CmdMessageState.ABORTED             : CommandAborted     := TRUE;
+                                          Busy               := FALSE;
+    // Encountered an error during execution
+    CmdMessageState.ERROR               : Error              := TRUE;
+                                          Busy               := FALSE;
+  END_CASE
 
 END_METHOD
 

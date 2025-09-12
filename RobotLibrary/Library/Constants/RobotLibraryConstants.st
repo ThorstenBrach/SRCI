@@ -26,7 +26,7 @@ VAR_GLOBAL CONSTANT
   /// Bit 5-7 : Major version = Breaking change (0..07)
   SRCIVersion             : VersionStruct := ( MajorVersion := 1, MinorVersion := 3, PatchVersion := 0);
   /// Version of the PLC library
-  PLCLibraryVersion       : VersionStruct := ( MajorVersion := 0, MinorVersion := 0, PatchVersion := 48);
+  PLCLibraryVersion       : VersionStruct := ( MajorVersion := 0, MinorVersion := 0, PatchVersion := 49);
   /// Minimal axes group ID
   AXES_GROUP_ID_MIN       : BYTE := 0;  
   /// Maximal axes groups ID
@@ -49,15 +49,6 @@ VAR_GLOBAL CONSTANT
   BUFFER_CMD              : UDINT := 2;
   /// Maximal length of additional text 
   MAX_ADD_TEXT_LENGTH     : DINT := 40;
-  
-  /// Minimal amount of tools
-  TOOL_MIN                : DINT := 1;
-  /// Minimal amount of frames
-  FRAME_MIN               : DINT := 1;
-  /// Minimal amount of loads
-  LOAD_MIN                : DINT := 1;  
-  /// Minimal amount of work areas
-  WORK_AREAS_MIN          : DINT := 1;
  END_VAR
 
 

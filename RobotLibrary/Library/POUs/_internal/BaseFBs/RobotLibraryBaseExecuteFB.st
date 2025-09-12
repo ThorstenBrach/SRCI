@@ -73,7 +73,7 @@ END_VAR
       (     MyType <> 'MC_ReadMessagesFB'          ) AND // is part of init sequence
       (     MyType <> 'MC_ReadRobotDataFB'         ))    // is part of init sequence
   THEN
-    ErrorID := RobotLibraryErrorIdEnum.ERR_COMMANDS_NOT_ENABLED;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_COMMANDS_NOT_ENABLED, Overwrite := TRUE );
     Error   := TRUE;
     Busy    := FALSE;
   END_IF
@@ -199,6 +199,43 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
+
+END_METHOD
+
+METHOD PROTECTED OnUpdateStateFlags
+VAR_INPUT
+  /// Command message state
+  State : CmdMessageState;
+END_VAR
+
+  // Reset State flags
+  Done := FALSE;
+  
+  CASE State OF
+  
+    // No operation or process is active
+    CmdMessageState.EMPTY               :;
+    // Created but not yet started
+    CmdMessageState.CREATED             :;
+    // Buffered and awaiting execution
+    CmdMessageState.BUFFERED            :;
+    // Buffered in planner for future execution
+    CmdMessageState.BUFFERED_IN_PLANNER :;
+    // Currently active and in progress
+    CmdMessageState.ACTIVE              :;
+    // Interrupted and awaiting continuation
+    CmdMessageState.INTERRUPTED         :;
+    // Requested for abort
+    CmdMessageState.ABORT_REQUEST       :;
+    // Successfully completed
+    CmdMessageState.DONE                : Done := TRUE;
+                                          Busy := FALSE;
+    // Aborted before completion
+    CmdMessageState.ABORTED             : Busy := FALSE;
+    // Encountered an error during execution
+    CmdMessageState.ERROR               : Error := TRUE;
+                                          Busy  := FALSE;
+  END_CASE
 
 END_METHOD
 

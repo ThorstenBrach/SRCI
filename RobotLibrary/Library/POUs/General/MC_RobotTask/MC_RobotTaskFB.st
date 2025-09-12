@@ -43,19 +43,19 @@ END_VAR
 
 VAR_IN_OUT
   /// Inputs of PLC for communication from RC
-  RobotInData       : ARRAY[0..RobotLibraryParameter.ROBOT_IN_DATA_MAX ] OF BYTE;
+  RobotInData       : ARRAY[*] OF BYTE;
   /// Outputs of PLC for communication to RC
-  RobotOutData      : ARRAY[0..RobotLibraryParameter.ROBOT_OUT_DATA_MAX] OF BYTE;
+  RobotOutData      : ARRAY[*] OF BYTE;
   ///  User data stored on the PLC according to Table 6-10
   UserData          : UserData;
   /// ToolData stored on PLC. For more information refer to 5.5.6.3
-  ToolData          : ARRAY[0..RobotLibraryParameter.TOOL_MAX -1      ] OF Tool;
+  ToolData          : ARRAY[*] OF Tool;
   /// LoadData stored on PLC.For more information refer to 5.5.6.4
-  FrameData         : ARRAY[0..RobotLibraryParameter.FRAME_MAX -1     ] OF Frame;
+  FrameData         : ARRAY[*] OF Frame;
   /// LoadData stored on PLC.For more information refer to 5.5.6.4 
-  LoadData          : ARRAY[0..RobotLibraryParameter.LOAD_MAX -1      ] OF Load;
+  LoadData          : ARRAY[*] OF Load;
   /// Work areas stored on PLC. For more information refer to 5.5.8
-  WorkAreas         : ARRAY[0..RobotLibraryParameter.WORK_AREAS_MAX -1] OF RobotWorkArea;
+  WorkAreas         : ARRAY[*] OF RobotWorkArea;
   /// Software limits stored on PLC
   SWLimits          : SWLimits;
   /// Default dynamics stored on PLC. For more information refer to 5.5.7
@@ -98,11 +98,11 @@ VAR
  _parCfg                       : RobotTaskParCfg;
 
   /// internal ToolData for comparation to user ToolData
- _toolData                     : ARRAY[0..RobotLibraryParameter.TOOL_MAX -1      ] OF Tool;
+ _toolData                     : ARRAY[0..RobotLibraryParameter.TOOL_MAX       -1] OF Tool;
   /// internal FrameData for comparation to user FrameData
- _frameData                    : ARRAY[0..RobotLibraryParameter.FRAME_MAX -1     ] OF Frame;
+ _frameData                    : ARRAY[0..RobotLibraryParameter.FRAME_MAX      -1] OF Frame;
   /// internal LoadData for comparation to user LoadData
- _loadData                     : ARRAY[0..RobotLibraryParameter.LOAD_MAX -1      ] OF Load;
+ _loadData                     : ARRAY[0..RobotLibraryParameter.LOAD_MAX       -1] OF Load;
   /// internal WorkAreas for comparation to user WorkAreas
  _workAreas                    : ARRAY[0..RobotLibraryParameter.WORK_AREAS_MAX -1] OF RobotWorkArea;
   /// internal Software limits for comparation to user Software limit
@@ -153,10 +153,6 @@ VAR
   RecvData                     : RobotLibraryRecvDataFB;
   /// Telegram 
   Telegram                     : Telegram; 
-
-  /// Telegram 
-  TelegramDebugArray           : ARRAY[1..10] OF Telegram; 
-  
   
   /// internal step counter for command
  _stepCmd                      : DINT;
@@ -272,17 +268,24 @@ VAR
  _lastTelegramState           : TelegramState   := TelegramState.UNDEFINED;
    /// last telegram control
  _lastTelegramControl         : ControlHalfByte := ControlHalfByte.NONE;
-  /// array lower boundary
-  {attribute 'hide'}
- _lowerBound                  : DINT;
-  /// array upper boundary
-  {attribute 'hide'}
- _upperBound                  : DINT;
 END_VAR
 
+VAR // CONSTANT
+  /// Lower array dimension of RobotInData
+  ROBOT_IN_DATA_MIN   : DINT;
+  /// Upper array dimension of RobotInData
+  ROBOT_IN_DATA_MAX   : DINT;
+  /// Size of RobotInData
+  ROBOT_IN_DATA_SIZE  : UDINT;
+  /// Lower array dimension of RobotOutData
+  ROBOT_OUT_DATA_MIN  : DINT;
+  /// Upper array dimension of RobotOutData
+  ROBOT_OUT_DATA_MAX  : DINT;
+  /// Size of RobotOutData
+  ROBOT_OUT_DATA_SIZE : UDINT;
+END_VAR
 
 VAR CONSTANT
-  /// Size of the fragment header
   {attribute 'hide'}
   FRAGMENT_HEADER_SIZE : UDINT := SIZEOF(TelegramPlcToRobFragmentHeader);
   /// Size of the comand header
@@ -317,34 +320,26 @@ VAR CONSTANT
   EMPTY_EOL_ENTRY      : DINT := 0;
 END_VAR
 
-  // Check ToolData boundary
-  (*
-  IF ( LOWER_BOUND(ToolData,1) <> 0 ) AND ( WarningID = 0 )  
-  THEN
-    WarningID := RobotLibraryWarningIdEnum.WARN_TOOL_DATA_ARRAY_NOT_START_AT_ZERO;
-  END_IF
+  // Get array dimension of RobotInData
+  ROBOT_IN_DATA_MIN  := LOWER_BOUND  ( RobotInData,1);
+  ROBOT_IN_DATA_MAX  := UPPER_BOUND  ( RobotInData,1);
+  ROBOT_IN_DATA_SIZE := DINT_TO_UDINT( ROBOT_IN_DATA_MAX - ROBOT_IN_DATA_MIN + 1);
   
-  // Check LoadData boundary
-  IF ( LOWER_BOUND(LoadData,1) <> 0 ) AND ( WarningID = 0 )  
-  THEN
-    WarningID := RobotLibraryWarningIdEnum.WARN_TOOL_DATA_ARRAY_NOT_START_AT_ZERO;
-  END_IF
-  
-  // Check FrameData boundary
-  IF ( LOWER_BOUND(FrameData,1) <> 0 ) AND ( WarningID = 0 )  
-  THEN
-    WarningID := RobotLibraryWarningIdEnum.WARN_FRAME_DATA_ARRAY_NOT_START_AT_ZERO;
-  END_IF
-  
-  // Check WorkAreas boundary
-  IF ( LOWER_BOUND(WorkAreas,1) <> 0 ) AND ( WarningID = 0 )  
-  THEN
-    WarningID := RobotLibraryWarningIdEnum.WARN_FRAME_DATA_ARRAY_NOT_START_AT_ZERO;
-  END_IF
-  *)
+  // Get array dimension of RobotInData
+  ROBOT_OUT_DATA_MIN  := LOWER_BOUND  ( RobotOutData,1);
+  ROBOT_OUT_DATA_MAX  := UPPER_BOUND  ( RobotOutData,1);
+  ROBOT_OUT_DATA_SIZE := DINT_TO_UDINT( ROBOT_OUT_DATA_MAX - ROBOT_OUT_DATA_MIN + 1);
   
   
-  HandleAxesGroup              ( AxesGroup         := AxesGroup);
+  HandleAxesGroup              ( AxesGroup         := AxesGroup,
+  	                             ToolData          := ToolData, 
+  	                             FrameData         := FrameData, 
+  	                             LoadData          := LoadData, 
+  	                             WorkAreas         := WorkAreas, 
+  	                             SWLimits          := SWLimits, 
+  	                             DefaultDynamics   := DefaultDynamics, 
+  	                             ReferenceDynamics := ReferenceDynamics);
+                                 
   HandleLifeSign               ( AxesGroup         := AxesGroup);
   HandleLogMessagesAck         ( AxesGroup         := AxesGroup);
   HandleInvalidFrames          ( AxesGroup         := AxesGroup, RobotInData := RobotInData);
@@ -572,18 +567,6 @@ END_VAR
   AxesGroupToTelegramSequence      (AxesGroup := AxesGroup);
   AxesGroupToTelegramFooter        (AxesGroup := AxesGroup);
   AxesGroupToTelegramLogging       (AxesGroup := AxesGroup);
-  
-  
-  IF ( AxesGroup.State.NewSEQ[0] AND Telegram.PlcToRob.Sequence[0].Header.PayloadLength > 0)
-  THEN
-   // move entries in Debug array
-   FOR _idx := 10  TO 2 BY -1
-   DO
-     TelegramDebugArray[_idx] := TelegramDebugArray[_idx -1];
-   END_FOR
-   // add new entry
-   TelegramDebugArray[1] := Telegram;
-  END_IF
 
 END_METHOD
 
@@ -1294,7 +1277,7 @@ END_VAR
     IF ( _parCfg.Plc.Parameter.SynchronizationModes.Tool[_idx] <> ParCfg.Plc.Parameter.SynchronizationModes.Tool[_idx] )
     THEN
       // Set info
-      InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_TOOL_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED;
+      SetInfo( InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_TOOL_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED, Overwrite := TRUE);
        
       // Create log entry
       CreateLogMessagePara3( Timestamp   := SystemTime,
@@ -1312,7 +1295,7 @@ END_VAR
     IF ( _parCfg.Plc.Parameter.SynchronizationModes.Frame[_idx] <> ParCfg.Plc.Parameter.SynchronizationModes.Frame[_idx] )
     THEN
       // Set info
-      InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_FRAME_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED;
+      SetInfo( InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_FRAME_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED, Overwrite :=  TRUE);
        
       // Create log entry
       CreateLogMessagePara3( Timestamp   := SystemTime,
@@ -1330,7 +1313,7 @@ END_VAR
     IF ( _parCfg.Plc.Parameter.SynchronizationModes.Load[_idx] <> ParCfg.Plc.Parameter.SynchronizationModes.Load[_idx] )
     THEN
       // Set info
-      InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_LOAD_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED;
+      SetInfo( InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_LOAD_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED, Overwrite := TRUE);
        
       // Create log entry
       CreateLogMessagePara3( Timestamp   := SystemTime,
@@ -1348,7 +1331,7 @@ END_VAR
     IF ( _parCfg.Plc.Parameter.SynchronizationModes.WorkAreas[_idx] <> ParCfg.Plc.Parameter.SynchronizationModes.WorkAreas[_idx] )
     THEN
       // Set info
-      InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_WORK_AREA_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED;
+      SetInfo( InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_WORK_AREA_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED, Overwrite := TRUE);
        
       // Create log entry
       CreateLogMessagePara3( Timestamp   := SystemTime,
@@ -1365,7 +1348,7 @@ END_VAR
     IF ( _parCfg.Plc.Parameter.SynchronizationModes.SWLimits[_idx] <> ParCfg.Plc.Parameter.SynchronizationModes.SWLimits[_idx] )
     THEN
       // Set info
-      InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_SWLIMITS_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED;
+      SetInfo( InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_SWLIMITS_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED, Overwrite := TRUE);
        
       // Create log entry
       CreateLogMessagePara3( Timestamp   := SystemTime,
@@ -1383,7 +1366,7 @@ END_VAR
     IF ( _parCfg.Plc.Parameter.SynchronizationModes.DefaultDynamics[_idx] <> ParCfg.Plc.Parameter.SynchronizationModes.DefaultDynamics[_idx] )
     THEN
       // Set info
-      InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_DEFAULT_DYNAMIVS_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED;
+      SetInfo( InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_DEFAULT_DYNAMIVS_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED, Overwrite := TRUE);
        
       // Create log entry
       CreateLogMessagePara3( Timestamp   := SystemTime,
@@ -1421,7 +1404,7 @@ END_VAR
   IF ( PlcOptionalCyclicToUint(_parCfg.Plc.OptionalCyclic) <> PlcOptionalCyclicToUint(ParCfg.Plc.OptionalCyclic ))
   THEN
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_TELEGRAM_NUMBER_CHANGED_AFTER_INIT;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_TELEGRAM_NUMBER_CHANGED_AFTER_INIT, Overwrite := TRUE );
      
     // Create log entry
     CreateLogMessagePara2( Timestamp   := SystemTime,
@@ -1438,7 +1421,7 @@ END_VAR
   IF ( RobOptionalCyclicToUint(_parCfg.Rob.OptionalCyclic) <> RobOptionalCyclicToUint(ParCfg.Rob.OptionalCyclic ))
   THEN
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_TELEGRAM_NUMBER_CHANGED_AFTER_INIT;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_TELEGRAM_NUMBER_CHANGED_AFTER_INIT, Overwrite := TRUE );
      
     // Create log entry
     CreateLogMessagePara2( Timestamp   := SystemTime,
@@ -1466,14 +1449,14 @@ END_VAR
   IF ( ParCfg.Com.TelegramLengthPlcToRob < 128 )
   THEN
     // Set Warning
-    WarningID := RobotLibraryWarningIdEnum.WARN_ACYCLIC_RANGE_PLC_TO_ROB_VERY_SMALL;
+    SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_ACYCLIC_RANGE_PLC_TO_ROB_VERY_SMALL, Overwrite := TRUE );
   END_IF
   
   // Check ParCfg.Com.TelegramLengthRobToPlc
   IF ( ParCfg.Com.TelegramLengthRobToPlc < 128 )
   THEN
     // Set Warning
-    WarningID := RobotLibraryWarningIdEnum.WARN_ACYCLIC_RANGE_ROB_TO_PLC_VERY_SMALL;
+    SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_ACYCLIC_RANGE_ROB_TO_PLC_VERY_SMALL, Overwrite := TRUE );
   END_IF
   
   
@@ -1487,7 +1470,7 @@ END_VAR
     ParCfg.Com.LifeSignTimeOut := T#10MS;
    
     // Set info
-    InfoID := RobotLibraryInfoIdEnum.INFO_LIFESIGN_TIMEOUT_TO_SMALL_AND_SET_TO_10MS;
+    SetInfo( InfoID := RobotLibraryInfoIdEnum.INFO_LIFESIGN_TIMEOUT_TO_SMALL_AND_SET_TO_10MS, Overwrite := TRUE);
      
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := SystemTime,
@@ -1500,14 +1483,14 @@ END_VAR
   
   
   // Check ParCfg.Com.TelegramLengthPlcToRob
-  IF (( ParCfg.Com.TelegramLengthPlcToRob < 64                                           ) OR
-      ( ParCfg.Com.TelegramLengthPlcToRob > RobotLibraryParameter.ROBOT_OUT_DATA_MAX + 1 ))
+  IF (( ParCfg.Com.TelegramLengthPlcToRob < 64                  ) OR
+      ( ParCfg.Com.TelegramLengthPlcToRob > ROBOT_OUT_DATA_SIZE ))
   THEN
     // parameter(s) not valid
     CheckParameterValid := FALSE;
   
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_TELEGRAM_LENGTH_MISMATCH_0x80A3;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_TELEGRAM_LENGTH_MISMATCH_0x80A3, Overwrite := TRUE );
      
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := SystemTime,
@@ -1521,14 +1504,14 @@ END_VAR
   END_IF
   
   // Check ParCfg.Com.TelegramLengthRobToPlc
-  IF (( ParCfg.Com.TelegramLengthRobToPlc < 64                                          ) OR
-      ( ParCfg.Com.TelegramLengthRobToPlc > RobotLibraryParameter.ROBOT_IN_DATA_MAX + 1 ))
+  IF (( ParCfg.Com.TelegramLengthRobToPlc < 64                 ) OR
+      ( ParCfg.Com.TelegramLengthRobToPlc > ROBOT_IN_DATA_SIZE ))
   THEN
     // parameter(s) not valid
     CheckParameterValid := FALSE;
   
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_TELEGRAM_LENGTH_MISMATCH_0x80A3;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_TELEGRAM_LENGTH_MISMATCH_0x80A3, Overwrite := TRUE );
      
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := SystemTime,
@@ -1552,7 +1535,7 @@ END_VAR
     ParCfg.Rob.OptionalCyclic.UseCartesianPositionExt := FALSE;
    
     // Set info
-    InfoID := RobotLibraryInfoIdEnum.INFO_RECV_EXT_CART_POS_NOT_USABLE_WITH_RECV_CART_POS;
+    SetInfo( InfoID := RobotLibraryInfoIdEnum.INFO_RECV_EXT_CART_POS_NOT_USABLE_WITH_RECV_CART_POS, Overwrite := TRUE);
      
     // Create log entry
     CreateLogMessage( Timestamp   := SystemTime,
@@ -1571,7 +1554,7 @@ END_VAR
     ParCfg.Rob.OptionalCyclic.UseJointPositionExt := FALSE;
    
     // Set info
-    InfoID := RobotLibraryInfoIdEnum.INFO_RECV_EXT_JOINT_POS_NOT_USABLE_WITH_RECV_JOINT_POS;
+    SetInfo( InfoID := RobotLibraryInfoIdEnum.INFO_RECV_EXT_JOINT_POS_NOT_USABLE_WITH_RECV_JOINT_POS, Overwrite := TRUE);
      
     // Create log entry
     CreateLogMessage( Timestamp   := SystemTime,
@@ -1592,9 +1575,9 @@ END_VAR
     CheckParameterValid := FALSE;
    
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID; // own defined error - not in specification
+    SetError  ( ErrorID   := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID             , Overwrite := TRUE ); // own defined error - not in specification
     // Set warning
-    WarningID := RobotLibraryWarningIdEnum.WARN_TOOL_DATA_SYNC_MODE_INVALID;
+    SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_TOOL_DATA_SYNC_MODE_INVALID, Overwrite := TRUE );
      
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := SystemTime,
@@ -1615,9 +1598,9 @@ END_VAR
     CheckParameterValid := FALSE;
    
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID; // own defined error - not in specification
+    SetError  ( ErrorID   := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID             , Overwrite := TRUE); // own defined error - not in specification
     // Set warning
-    WarningID := RobotLibraryWarningIdEnum.WARN_TOOL_DATA_SYNC_MODE_INVALID;
+    SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_TOOL_DATA_SYNC_MODE_INVALID, Overwrite := TRUE);
      
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := SystemTime,
@@ -1639,9 +1622,9 @@ END_VAR
     CheckParameterValid := FALSE;
    
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;// own defined error - not in specification
+    SetError  ( ErrorID   := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID              , Overwrite := TRUE);// own defined error - not in specification
     // Set warning
-    WarningID := RobotLibraryWarningIdEnum.WARN_FRAME_DATA_SYNC_MODE_INVALID;
+    SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_FRAME_DATA_SYNC_MODE_INVALID, Overwrite := FALSE);
      
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := SystemTime,
@@ -1663,9 +1646,9 @@ END_VAR
     CheckParameterValid := FALSE;
    
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;// own defined error - not in specification
+    SetError  ( ErrorID   := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID              , Overwrite := TRUE);// own defined error - not in specification
     // Set warning
-    WarningID := RobotLibraryWarningIdEnum.WARN_FRAME_DATA_SYNC_MODE_INVALID;
+    SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_FRAME_DATA_SYNC_MODE_INVALID, Overwrite := TRUE);
      
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := SystemTime,
@@ -1687,9 +1670,9 @@ END_VAR
     CheckParameterValid := FALSE;
    
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;// own defined error - not in specification
+    SetError   ( ErrorID   := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID             , Overwrite := TRUE);// own defined error - not in specification
     // Set warning
-    WarningID := RobotLibraryWarningIdEnum.WARN_LOAD_DATA_SYNC_MODE_INVALID;
+    SetWarning ( WarningID := RobotLibraryWarningIdEnum.WARN_LOAD_DATA_SYNC_MODE_INVALID, Overwrite := TRUE);
      
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := SystemTime,
@@ -1711,9 +1694,9 @@ END_VAR
     CheckParameterValid := FALSE;
    
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;// own defined error - not in specification
+    SetError  ( ErrorID   := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID,              Overwrite := TRUE);// own defined error - not in specification
     // Set warning
-    WarningID := RobotLibraryWarningIdEnum.WARN_LOAD_DATA_SYNC_MODE_INVALID;
+    SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_LOAD_DATA_SYNC_MODE_INVALID, Overwrite := TRUE);
      
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := SystemTime,
@@ -1735,9 +1718,9 @@ END_VAR
     CheckParameterValid := FALSE;
    
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;// own defined error - not in specification
+    SetError  ( ErrorID   := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID,              Overwrite := TRUE);// own defined error - not in specification
     // Set warning
-    WarningID := RobotLibraryWarningIdEnum.WARN_WORK_AREA_SYNC_MODE_INVALID;
+    SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_WORK_AREA_SYNC_MODE_INVALID, Overwrite := TRUE);
      
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := SystemTime,
@@ -1759,9 +1742,9 @@ END_VAR
     CheckParameterValid := FALSE;
    
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;// own defined error - not in specification
+    SetError  ( ErrorID   := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID,              Overwrite := TRUE);// own defined error - not in specification
     // Set warning
-    WarningID := RobotLibraryWarningIdEnum.WARN_WORK_AREA_SYNC_MODE_INVALID;
+    SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_WORK_AREA_SYNC_MODE_INVALID, Overwrite := TRUE);
      
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := SystemTime,
@@ -1783,9 +1766,9 @@ END_VAR
     CheckParameterValid := FALSE;
    
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;// own defined error - not in specification
+    SetError  ( ErrorID   := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID,              Overwrite := TRUE);// own defined error - not in specification
     // Set warning
-    WarningID := RobotLibraryWarningIdEnum.WARN_SW_LIMITS_SYNC_MODE_INVALID;
+    SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_SW_LIMITS_SYNC_MODE_INVALID, Overwrite := TRUE);
      
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := SystemTime,
@@ -1807,9 +1790,9 @@ END_VAR
     CheckParameterValid := FALSE;
    
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;// own defined error - not in specification
+    SetError  ( ErrorID   := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID,              Overwrite := TRUE);// own defined error - not in specification
     // Set warning
-    WarningID := RobotLibraryWarningIdEnum.WARN_SW_LIMITS_SYNC_MODE_INVALID;
+    SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_SW_LIMITS_SYNC_MODE_INVALID, Overwrite := TRUE);
      
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := SystemTime,
@@ -1831,9 +1814,9 @@ END_VAR
     CheckParameterValid := FALSE;
    
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;// own defined error - not in specification
+    SetError  ( ErrorID   := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID,                     Overwrite := TRUE);// own defined error - not in specification
     // Set warning
-    WarningID := RobotLibraryWarningIdEnum.WARN_DEFAULT_DYNAMICS_SYNC_MODE_INVALID;
+    SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_DEFAULT_DYNAMICS_SYNC_MODE_INVALID, Overwrite := TRUE);
      
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := SystemTime,
@@ -1855,9 +1838,9 @@ END_VAR
     CheckParameterValid := FALSE;
    
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;// own defined error - not in specification
+    SetError  ( ErrorID   := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID,                     Overwrite := TRUE);// own defined error - not in specification
     // Set warning
-    WarningID := RobotLibraryWarningIdEnum.WARN_DEFAULT_DYNAMICS_SYNC_MODE_INVALID;
+    SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_DEFAULT_DYNAMICS_SYNC_MODE_INVALID, Overwrite := TRUE);
      
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := SystemTime,
@@ -1879,9 +1862,9 @@ END_VAR
     CheckParameterValid := FALSE;
    
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;// own defined error - not in specification
+    SetError  ( ErrorID   := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID,                       Overwrite := TRUE);// own defined error - not in specification
     // Set warning
-    WarningID := RobotLibraryWarningIdEnum.WARN_REFERENCE_DYNAMICS_SYNC_MODE_INVALID;
+    SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_REFERENCE_DYNAMICS_SYNC_MODE_INVALID, Overwrite := TRUE);
      
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := SystemTime,
@@ -1903,9 +1886,9 @@ END_VAR
     CheckParameterValid := FALSE;
    
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;// own defined error - not in specification
+    SetError  ( ErrorID   := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID,                       Overwrite := TRUE);// own defined error - not in specification
     // Set warning
-    WarningID := RobotLibraryWarningIdEnum.WARN_REFERENCE_DYNAMICS_SYNC_MODE_INVALID;
+    SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_REFERENCE_DYNAMICS_SYNC_MODE_INVALID, Overwrite := TRUE);
      
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := SystemTime,
@@ -1924,25 +1907,16 @@ END_METHOD
 METHOD PRIVATE CreateSendPayload : DINT
 VAR_IN_OUT
   /// Robot assignment of function
-  AxesGroup                 : AxesGroup;
+  AxesGroup    : AxesGroup;
   /// Outputs of PLC for communication to RC
-  RobotOutData              : ARRAY[0..RobotLibraryParameter.ROBOT_OUT_DATA_MAX] OF BYTE;
-END_VAR
-
-VAR 
-  /// internal index
- _idx                       : DINT;
-  /// temporary byte
- _tmpByte                   : BYTE;
-  /// internal sequence index
- _seqIdx                    : DINT;
-  /// internal fragment index
- _fragIdx                   : DINT;
+  RobotOutData : ARRAY[*] OF BYTE;
 END_VAR
 
   // ------------------------------------
   // Fill SendData
   // ------------------------------------
+  // Call SendData FB, update payload and size 
+  SendData( Payload := RobotOutData, PayLoadSize := ROBOT_OUT_DATA_SIZE);
   // reset all variables and payload
   SendData.Reset();
   
@@ -1952,10 +1926,6 @@ END_VAR
   CreateSendPayloadSequence      ( AxesGroup := AxesGroup );
   CreateSendPayloadFooter        ( AxesGroup := AxesGroup );
   CreateSendPayloadLogging       ( AxesGroup := AxesGroup );
-  
-  // Copy payload to outputs  
-  SysDepMemCpy( pDest := ADR(RobotOutData), pSrc := ADR(SendData.Payload), DataLen := RobotLibraryParameter.ROBOT_OUT_DATA_MAX+1);
-  
   
   // reset NewSEQ flag
   AxesGroup.State.NewSEQ[0] := FALSE; {warning 'Test'}
@@ -2086,18 +2056,9 @@ VAR_IN_OUT
   AxesGroup : AxesGroup;
 END_VAR
 VAR
-  /// index of lifesign in footer
-  _lifeSignIdxFooter : DINT;
 END_VAR
 
-  IF (( _parCfg.Com.TelegramLengthPlcToRob    >= 1                                           ) AND 
-      ( _parCfg.Com.TelegramLengthPlcToRob    <= RobotLibraryParameter.ROBOT_OUT_DATA_MAX +1 ))
-  THEN
-    // set index of life sign byte
-   _lifeSignIdxFooter := _parCfg.Com.TelegramLengthPlcToRob -1;
-   
-    SendData.Payload[_lifeSignIdxFooter] := AxesGroup.Cyclic.PlcToRob.LifeSign;
-  END_IF
+  SendData.SetLifeSignFooter( LifeSign :=  AxesGroup.Cyclic.PlcToRob.LifeSign);
 
 END_METHOD
 
@@ -2287,15 +2248,37 @@ END_METHOD
 METHOD PRIVATE HandleAxesGroup
 VAR_IN_OUT
   /// Robot assignment of function
-  AxesGroup : AxesGroup;
+  AxesGroup         : AxesGroup;
+  /// ToolData stored on PLC. For more information refer to 5.5.6.3
+  ToolData          : ARRAY[*] OF Tool;
+  /// LoadData stored on PLC.For more information refer to 5.5.6.4
+  FrameData         : ARRAY[*] OF Frame;
+  /// LoadData stored on PLC.For more information refer to 5.5.6.4 
+  LoadData          : ARRAY[*] OF Load;
+  /// Work areas stored on PLC. For more information refer to 5.5.8
+  WorkAreas         : ARRAY[*] OF RobotWorkArea;
+  /// Software limits stored on PLC
+  SWLimits          : SWLimits;
+  /// Default dynamics stored on PLC. For more information refer to 5.5.7
+  DefaultDynamics   : DefaultDynamics;
+  /// Reference dynamics stored on PLC. For more information refer to 5.5.7
+  ReferenceDynamics : ReferenceDynamics;  
 END_VAR
 
-  HandleAxesGroupAcyclic       ( AxesGroup    := AxesGroup);
-  HandleAxesGroupCyclic        ( AxesGroup    := AxesGroup);
-  HandleAxesGroupCyclicOptional( AxesGroup    := AxesGroup);
-  HandleAxesGroupMessageLog    ( AxesGroup    := AxesGroup);
-  HandleAxesGroupParameter     ( AxesGroup    := AxesGroup);
-  HandleAxesGroupState         ( AxesGroup    := AxesGroup);
+  HandleAxesGroupAcyclic       ( AxesGroup         := AxesGroup );
+  HandleAxesGroupCyclic        ( AxesGroup         := AxesGroup );
+  HandleAxesGroupCyclicOptional( AxesGroup         := AxesGroup );
+  HandleAxesGroupMessageLog    ( AxesGroup         := AxesGroup );
+  HandleAxesGroupParameter     ( AxesGroup         := AxesGroup );
+  HandleAxesGroupState         ( AxesGroup         := AxesGroup );
+  HandleAxesGroupSystemData    ( AxesGroup         := AxesGroup, 
+  	                             ToolData          := ToolData, 
+  	                             FrameData         := FrameData, 
+  	                             LoadData          := LoadData, 
+  	                             WorkAreas         := WorkAreas, 
+  	                             SWLimits          := SWLimits, 
+  	                             DefaultDynamics   := DefaultDynamics, 
+  	                             ReferenceDynamics := ReferenceDynamics);
 
 END_METHOD
 
@@ -2444,10 +2427,10 @@ END_VAR
   
   AxesGroup.State.ConfigExchanged := _exchangeConfiguration.Enabled;
   
-  AxesGroup.State.UnifiedFrameIndex                    := DINT_TO_USINT( MIN( RobotLibraryParameter.FRAME_MAX -1    , _exchangeConfiguration.OutCmd.HighestFrameIndex   ));
-  AxesGroup.State.UnifiedToolIndex                     := DINT_TO_USINT( MIN( RobotLibraryParameter.TOOL_MAX -1     , _exchangeConfiguration.OutCmd.HighestToolIndex    ));
-  AxesGroup.State.UnifiedLoadIndex                     := DINT_TO_USINT( MIN( RobotLibraryParameter.LOAD_MAX-1      , _exchangeConfiguration.OutCmd.HighestLoadIndex    ));
-  AxesGroup.State.UnifiedWorkAreaIndex                 := DINT_TO_USINT( MIN( RobotLibraryParameter.WORK_AREAS_MAX-1, _exchangeConfiguration.OutCmd.HighestWorkAreaIndex));
+  AxesGroup.State.UnifiedFrameIndex                    := DINT_TO_USINT( MIN( MIN(AxesGroup.SystemData.FrameDataMax, RobotLibraryParameter.FRAME_MAX     ), _exchangeConfiguration.OutCmd.HighestFrameIndex   ));
+  AxesGroup.State.UnifiedToolIndex                     := DINT_TO_USINT( MIN( MIN(AxesGroup.SystemData.ToolDataMax , RobotLibraryParameter.TOOL_MAX      ), _exchangeConfiguration.OutCmd.HighestToolIndex    ));
+  AxesGroup.State.UnifiedLoadIndex                     := DINT_TO_USINT( MIN( MIN(AxesGroup.SystemData.LoadDataMax , RobotLibraryParameter.LOAD_MAX      ), _exchangeConfiguration.OutCmd.HighestLoadIndex    ));
+  AxesGroup.State.UnifiedWorkAreaIndex                 := DINT_TO_USINT( MIN( MIN(AxesGroup.SystemData.WorkAreasMax, RobotLibraryParameter.WORK_AREAS_MAX), _exchangeConfiguration.OutCmd.HighestWorkAreaIndex));
   
   AxesGroup.State.DataEnableSync                       := _exchangeConfiguration.ParCmd.DataEnableSync;
   AxesGroup.State.SyncStateRc.InSync.Frame             := _exchangeConfiguration.OutCmd.DataInSync.FramesInSync;
@@ -2482,20 +2465,69 @@ END_VAR
 
 END_METHOD
 
+METHOD PRIVATE HandleAxesGroupSystemData
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup         : AxesGroup;
+  /// ToolData stored on PLC. For more information refer to 5.5.6.3
+  ToolData          : ARRAY[*] OF Tool;
+  /// LoadData stored on PLC.For more information refer to 5.5.6.4
+  FrameData         : ARRAY[*] OF Frame;
+  /// LoadData stored on PLC.For more information refer to 5.5.6.4 
+  LoadData          : ARRAY[*] OF Load;
+  /// Work areas stored on PLC. For more information refer to 5.5.8
+  WorkAreas         : ARRAY[*] OF RobotWorkArea;
+  /// Software limits stored on PLC
+  SWLimits          : SWLimits;
+  /// Default dynamics stored on PLC. For more information refer to 5.5.7
+  DefaultDynamics   : DefaultDynamics;
+  /// Reference dynamics stored on PLC. For more information refer to 5.5.7
+  ReferenceDynamics : ReferenceDynamics;  
+END_VAR
+
+  // Update ToolData                    
+  AxesGroup.SystemData.ToolDataPtr       := ToolData;
+  AxesGroup.SystemData.ToolDataMin       := LOWER_BOUND  (ToolData,1);
+  AxesGroup.SystemData.ToolDataMax       := UPPER_BOUND  (ToolData,1);
+  AxesGroup.SystemData.ToolDataCount     := DINT_TO_UDINT(1 + AxesGroup.SystemData.ToolDataMax - AxesGroup.SystemData.ToolDataMin);
+                                         
+  // Update LoadData                    
+  AxesGroup.SystemData.LoadDataPtr       := LoadData;
+  AxesGroup.SystemData.LoadDataMin       := LOWER_BOUND  (LoadData,1);                                                    
+  AxesGroup.SystemData.LoadDataMax       := UPPER_BOUND  (LoadData,1);                                                    
+  AxesGroup.SystemData.LoadDataCount     := DINT_TO_UDINT(1 + AxesGroup.SystemData.LoadDataMax - AxesGroup.SystemData.LoadDataMin);
+                                         
+  // Update FrameData       
+  AxesGroup.SystemData.FrameDataPtr      := LoadData;                                                                       
+  AxesGroup.SystemData.FrameDataMin      := LOWER_BOUND  (LoadData,1);                                                     
+  AxesGroup.SystemData.FrameDataMax      := UPPER_BOUND  (LoadData,1);                                                     
+  AxesGroup.SystemData.FrameDataCount    := DINT_TO_UDINT(1 + AxesGroup.SystemData.FrameDataMax - AxesGroup.SystemData.FrameDataMin);
+  
+  // Update WorkAreas 
+  AxesGroup.SystemData.WorkAreasPtr      := LoadData;                                                                      
+  AxesGroup.SystemData.WorkAreasMin      := LOWER_BOUND  (LoadData,1);                                                     
+  AxesGroup.SystemData.WorkAreasMax      := UPPER_BOUND  (LoadData,1);                                                     
+  AxesGroup.SystemData.WorkAreasCount    := DINT_TO_UDINT(1 + AxesGroup.SystemData.WorkAreasMax - AxesGroup.SystemData.WorkAreasMin);
+  
+  // Update SoftwareLimits 
+  AxesGroup.SystemData.SWLimits          REF= SWLimits;
+  // Update DefaultDynamics 
+  AxesGroup.SystemData.DefaultDynamics   REF= DefaultDynamics;
+  // Update ReferenceDynamics 
+  AxesGroup.SystemData.ReferenceDynamics REF= ReferenceDynamics;
+
+END_METHOD
+
 METHOD PRIVATE HandleInvalidFrames
 VAR_IN_OUT
    /// Robot assignment of function
   AxesGroup   : AxesGroup;
     /// Inputs of PLC for communication from RC
-  RobotInData : ARRAY[0..RobotLibraryParameter.ROBOT_IN_DATA_MAX ] OF BYTE;
+  RobotInData : ARRAY[*] OF BYTE;
 END_VAR 
 VAR
-  /// index of lifesign in header
- _lifeSignIdxHeader : DINT;
   /// Value of lifesign in header
  _lifeSignHeader    : BYTE;
-  /// index of lifesign in footer
- _lifeSignIdxFooter : DINT;
   /// Value of lifesign in footer
  _lifeSignFooter    : BYTE;
 END_VAR
@@ -2506,22 +2538,11 @@ VAR_INST
  _lastInvalidFrames          : UDINT;
 END_VAR
 
-  IF (( _parCfg.Com.TelegramLengthRobToPlc     < 1                                       ) AND 
-      ( _parCfg.Com.TelegramLengthRobToPlc - 1 > RobotLibraryParameter.ROBOT_IN_DATA_MAX ))
-  THEN
-    // no valid telegram length settings 
-    RETURN;
-  END_IF
-  
-  // set index of last byte
-  _lifeSignIdxHeader := 1;
-  _lifeSignIdxFooter := _parCfg.Com.TelegramLengthRobToPlc -1;
-  
   IF ( AxesGroup.Cyclic.RobToPlc.TelegramState = TelegramState.INITIALIZED ) 
   THEN
     // Get lifesign values
-   _lifeSignHeader := GetHalfeByteHi( RobotInData[_lifeSignIdxHeader]);
-   _lifeSignFooter := GetHalfeByteHi( RobotInData[_lifeSignIdxFooter]);
+   _lifeSignHeader := GetHalfeByteHi( RobotInData[ROBOT_IN_DATA_MIN + 1]);
+   _lifeSignFooter := GetHalfeByteHi( RobotInData[ROBOT_IN_DATA_MAX + 0]);
   END_IF
   
   // Timer for invalid frame(s) message
@@ -2610,7 +2631,7 @@ END_VAR
     Synchronized := FALSE;
     
     // Set error 
-    ErrorID := RobotLibraryErrorIdEnum.ERR_CONNECTION_LOST;  
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_CONNECTION_LOST, Overwrite := TRUE );  
     // Create log entry
     CreateLogMessage ( Timestamp   := SystemTime,
                        MessageType := MessageType.CMD,
@@ -2688,13 +2709,13 @@ VAR_IN_OUT
    /// Robot assignment of function
   AxesGroup : AxesGroup;
   /// ToolData stored on PLC.For more information refer to 5.5.6.4
-  ToolData          : ARRAY[0..RobotLibraryParameter.TOOL_MAX -1      ] OF Tool;
+  ToolData          : ARRAY[*] OF Tool;
   /// LoadData stored on PLC.For more information refer to 5.5.6.4
-  FrameData         : ARRAY[0..RobotLibraryParameter.FRAME_MAX -1     ] OF Frame;
+  FrameData         : ARRAY[*] OF Frame;
   /// LoadData stored on PLC.For more information refer to 5.5.6.4
-  LoadData          : ARRAY[0..RobotLibraryParameter.LOAD_MAX -1      ] OF Load;
+  LoadData          : ARRAY[*] OF Load;
   /// Work areas stored on PLC. For more information refer to 5.5.8
-  WorkAreas         : ARRAY[0..RobotLibraryParameter.WORK_AREAS_MAX -1] OF RobotWorkArea;
+  WorkAreas         : ARRAY[*] OF RobotWorkArea;
   /// Software limits stored on PLC
   SWLimits          : SWLimits;
   /// Default dynamics stored on PLC. For more information refer to 5.5.7
@@ -2723,8 +2744,6 @@ VAR
 END_VAR
 
   HandleSyncToolData              ( AxesGroup := AxesGroup, ToolData          := ToolData);
-  //RETURN; {warning 'ToDo: Enable Sync again'}
-  
   HandleSyncFrameData             ( AxesGroup := AxesGroup, FrameData         := FrameData);
   HandleSyncLoadData              ( AxesGroup := AxesGroup, LoadData          := LoadData);
   HandleSyncRobotDefaultDynamics  ( AxesGroup := AxesGroup, DefaultDynamics   := DefaultDynamics);
@@ -2798,7 +2817,7 @@ VAR_IN_OUT
    /// Robot assignment of function
   AxesGroup : AxesGroup;
   /// FrameData stored on PLC.For more information refer to 5.5.6.4
-  FrameData : ARRAY[0..RobotLibraryParameter.FRAME_MAX -1] OF Frame;
+  FrameData : ARRAY[*] OF Frame;
 END_VAR 
 
 VAR
@@ -2816,6 +2835,8 @@ VAR
  _found           : BOOL;
   /// empty data set to reset all DataChanged bits
  _dataChangedNone : AxesGroupStateDataChanged;
+  /// internal index for loops
+ _idx             : DINT;
 END_VAR
 
   // Set internal references 
@@ -2843,10 +2864,10 @@ END_VAR
             ( NOT Error                                                         ))  
        THEN
          // Check PLC frames < RC frames and SyncFrame enabled ?    
-         IF (( AxesGroup.State.DataEnableSync.EnableSyncFrame      = TRUE                              )  AND
-             ( AxesGroup.Parameter.Rob.Parameter.HighestFrameIndex > RobotLibraryParameter.FRAME_MAX -1 ))        
+         IF (( AxesGroup.State.DataEnableSync.EnableSyncFrame      = TRUE                                )  AND
+             ( AxesGroup.Parameter.Rob.Parameter.HighestFrameIndex > AxesGroup.SystemData.FrameDataCount ))        
          THEN
-           WarningID := RobotLibraryWarningIdEnum.WARN_FRAME_DATA_ARRAY_TOO_SHORT;
+           SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_FRAME_DATA_ARRAY_TOO_SHORT, Overwrite := TRUE);
          END_IF
   
          // Create log entry
@@ -2858,7 +2879,7 @@ END_VAR
                                  Para1       :=  '');
          
          // init frame number
-        _rSyncIdx := 0;
+        _rSyncIdx := DINT_TO_USINT(AxesGroup.SystemData.FrameDataMin);
          // init count of unsynchronized elements
          AxesGroup.State.SyncStatePlc.UnSyncNo.Frame := 0;
          // set timeout
@@ -2882,9 +2903,9 @@ END_VAR
         _rStep := _rStep + 1;
        ELSE
          // check error ? 
-         IF ( _readFrameData.Error ) AND ( WarningID = RobotLibraryWarningIdEnum.NO_WARNING )
+         IF ( _readFrameData.Error )
          THEN
-           WarningID := RobotLibraryWarningIdEnum.WARN_FRAME_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;           
+           SetWarning ( WarningID := RobotLibraryWarningIdEnum.WARN_FRAME_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD, Overwrite := FALSE);           
          END_IF  
          
          // timeout exceeded ? 
@@ -2929,15 +2950,15 @@ END_VAR
           
           
            // Check synchronisation is enabled ? 
-           IF ( NOT AxesGroup.State.DataEnableSync.EnableSyncFrame ) AND (InfoID = RobotLibraryInfoIdEnum.NO_INFO )
+           IF ( NOT AxesGroup.State.DataEnableSync.EnableSyncFrame )
            THEN
-             InfoID := RobotLibraryInfoIdEnum.INFO_SYNC_FRAME_DATA_DISABLED;
+             SetInfo( InfoID := RobotLibraryInfoIdEnum.INFO_SYNC_FRAME_DATA_DISABLED, Overwrite := FALSE);
   				 END_IF
            
            // Check user interaction needed ?  
-           IF ( AxesGroup.Parameter.PLC.Parameter.SyncUserInteraction.Frame ) AND ( WarningID = RobotLibraryWarningIdEnum.NO_WARNING )
+           IF ( AxesGroup.Parameter.PLC.Parameter.SyncUserInteraction.Frame )
            THEN
-             WarningID := RobotLibraryWarningIdEnum.WARN_FRAME_NUMBER_SYNC_ERROR;                    
+             SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_FRAME_NUMBER_SYNC_ERROR, Overwrite := FALSE );                    
   				 END_IF
   			 END_IF
                
@@ -2961,7 +2982,7 @@ END_VAR
          IF (_readFrameData.Error)
          THEN
            // Set warning
-           WarningID := RobotLibraryWarningIdEnum.WARN_FRAME_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;                    
+           SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_FRAME_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD, Overwrite := TRUE);                    
            // reset available bit
            FrameData[_rSyncIdx].Available := FALSE;
           _frameData[_rSyncIdx].Available := FALSE;
@@ -3002,8 +3023,12 @@ END_VAR
   
              SyncMode.SERVER_TO_CLIENT : 
   
-               // Overwrite PLC data with RC data
-               FrameData := _frameData;            
+               FOR _idx := AxesGroup.SystemData.FrameDataMin TO AxesGroup.SystemData.FrameDataMax
+               DO
+                 // Overwrite PLC data with RC data
+                 FrameData[_idx] := _frameData[_idx];            
+  						 END_FOR
+        
                // Reset data changed flags
                AxesGroup.State.DataChanged.Frame := _dataChangedNone.Frame;
                // Reset Synchronizing flag
@@ -3081,7 +3106,7 @@ END_VAR
   				     END_IF
            ELSE
              // invalid sync mode for startup
-             ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+             SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID, Overwrite := TRUE );
    	       END_CASE
          END_IF
        END_IF  
@@ -3138,7 +3163,7 @@ END_VAR
          // check error ? 
          IF (_writeFrameData.Error)
          THEN
-           WarningID := RobotLibraryWarningIdEnum.WARN_FRAME_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;           
+           SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_FRAME_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD, Overwrite := TRUE);           
          END_IF  
          
          // timeout exceeded ? 
@@ -3223,7 +3248,7 @@ END_VAR
            IF (( NOT AxesGroup.State.SyncStatePlc.InSync.Frame ) AND  
                ( NOT AxesGroup.State.SyncStateRc .InSync.Frame ))
            THEN
-             WarningID := RobotLibraryWarningIdEnum.WARN_FRAME_SYNC_BOTH_SIDES_CHANGED;
+             SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_FRAME_SYNC_BOTH_SIDES_CHANGED, Overwrite := TRUE);
            END_IF
          END_IF
   
@@ -3521,7 +3546,7 @@ END_VAR
            // check error ? 
            IF (_writeFrameData.Error)
            THEN
-             WarningID := RobotLibraryWarningIdEnum.WARN_FRAME_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;    
+             SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_FRAME_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD, Overwrite := TRUE);    
              // reset available bit
              FrameData[_rSyncIdx].Available := FALSE;
             _frameData[_rSyncIdx].Available := FALSE;
@@ -3548,7 +3573,7 @@ VAR_IN_OUT
    /// Robot assignment of function
   AxesGroup : AxesGroup;
   /// LoadData stored on PLC.For more information refer to 5.5.6.4
-  LoadData  : ARRAY[0..RobotLibraryParameter.LOAD_MAX -1] OF Load;
+  LoadData  : ARRAY[*] OF Load;
 END_VAR 
 
 VAR
@@ -3566,6 +3591,10 @@ VAR
  _found           : BOOL;
   /// empty data set to reset all DataChanged bits
  _dataChangedNone : AxesGroupStateDataChanged;
+  /// internal index for loops
+ _idx             : DINT;
+  /// internal Start index for loops
+ _idxStart        : USINT;
 END_VAR
 
   // Set internal references 
@@ -3591,10 +3620,10 @@ END_VAR
             ( NOT Error                                                        ))  
        THEN
          // Check PLC loads < RC Loads and SyncLoad enabled ?    
-         IF (( AxesGroup.State.DataEnableSync.EnableSyncLoad      = TRUE                              )  AND
-             ( AxesGroup.Parameter.Rob.Parameter.HighestLoadIndex > RobotLibraryParameter.Load_MAX -1 ))        
+         IF (( AxesGroup.State.DataEnableSync.EnableSyncLoad      = TRUE                               )  AND
+             ( AxesGroup.Parameter.Rob.Parameter.HighestLoadIndex > AxesGroup.SystemData.LoadDataCount ))        
          THEN
-           WarningID := RobotLibraryWarningIdEnum.WARN_LOAD_DATA_ARRAY_TOO_SHORT;
+           SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_LOAD_DATA_ARRAY_TOO_SHORT, Overwrite := TRUE);
          END_IF
   
          // Create log entry
@@ -3604,9 +3633,9 @@ END_VAR
                                  MessageCode := 0,
                                  MessageText := 'SyncLoadData: Start initial reading of LoadData from RC',
                                  Para1       :=  '');
-         
-         // init load number
-        _rSyncIdx := 1; //  !!! Attention : 0 is not allowed - LoadData starts with 1 !!!  
+                                 
+         //  calculate start index !!! Attention : 0 is not allowed - LoadData starts with 1 !!!
+        _rSyncIdx := LIMIT(1 , DINT_TO_USINT(AxesGroup.SystemData.LoadDataMin), AxesGroup.State.UnifiedLoadIndex);
          // init count of unsynchronized elements
          AxesGroup.State.SyncStatePlc.UnSyncNo.Load := 0;
          // set timeout
@@ -3630,9 +3659,9 @@ END_VAR
         _rStep := _rStep + 1;
        ELSE
          // check error ? 
-         IF ( _readLoadData.Error ) AND ( WarningID = RobotLibraryWarningIdEnum.NO_WARNING )
+         IF ( _readLoadData.Error )
          THEN
-           WarningID := RobotLibraryWarningIdEnum.WARN_LOAD_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;           
+           SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_LOAD_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD, Overwrite := FALSE );           
          END_IF  
          
          // timeout exceeded ? 
@@ -3677,15 +3706,15 @@ END_VAR
           
           
            // Check synchronisation is enabled ? 
-           IF ( NOT AxesGroup.State.DataEnableSync.EnableSyncLoad ) AND (InfoID = RobotLibraryInfoIdEnum.NO_INFO )
+           IF ( NOT AxesGroup.State.DataEnableSync.EnableSyncLoad )
            THEN
-             InfoID := RobotLibraryInfoIdEnum.INFO_SYNC_LOAD_DATA_DISABLED;
+             SetInfo( InfoID := RobotLibraryInfoIdEnum.INFO_SYNC_LOAD_DATA_DISABLED, Overwrite := FALSE);
   				 END_IF
            
            // Check user interaction needed ?  
-           IF ( AxesGroup.Parameter.PLC.Parameter.SyncUserInteraction.Load ) AND ( WarningID = RobotLibraryWarningIdEnum.NO_WARNING )
+           IF ( AxesGroup.Parameter.PLC.Parameter.SyncUserInteraction.Load )
            THEN
-             WarningID := RobotLibraryWarningIdEnum.WARN_LOAD_NUMBER_SYNC_ERROR;                    
+             SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_LOAD_NUMBER_SYNC_ERROR, Overwrite := FALSE);                    
   				 END_IF
   			 END_IF
                
@@ -3709,7 +3738,7 @@ END_VAR
          IF (_readLoadData.Error)
          THEN
            // Set warning
-           WarningID := RobotLibraryWarningIdEnum.WARN_LOAD_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;                    
+           SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_LOAD_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD, Overwrite := TRUE);                    
            // reset available bit
            LoadData[_rSyncIdx].Available := FALSE;
           _loadData[_rSyncIdx].Available := FALSE;
@@ -3751,7 +3780,12 @@ END_VAR
              SyncMode.SERVER_TO_CLIENT : 
   
                // Overwrite PLC data with RC data
-               LoadData := _loadData;            
+               FOR _idx := AxesGroup.SystemData.LoadDataMin TO AxesGroup.SystemData.LoadDataMax
+               DO
+                 // Overwrite PLC data with RC data
+                 LoadData[_idx] := _loadData[_idx];            
+  						 END_FOR
+          
                // Reset data changed flags
                AxesGroup.State.DataChanged.Load := _dataChangedNone.Load;
                // Reset Synchronizing flag
@@ -3784,8 +3818,11 @@ END_VAR
   
   				   SyncMode.CLIENT_TO_SERVER : ;
   
+               //  calculate start index 
+              _idxStart := LIMIT(1 , DINT_TO_USINT(AxesGroup.SystemData.LoadDataMin), AxesGroup.State.UnifiedLoadIndex);
+        
                // Check conflicts to solve ? 
-               FOR _rSyncIdx := 1 TO AxesGroup.State.UnifiedLoadIndex //  !!! Attention : 0 is not allowed - LoadData starts with 1 !!!  
+               FOR _rSyncIdx := _idxStart TO AxesGroup.State.UnifiedLoadIndex  // !!! Attention : 0 is not allowed - LoadData starts with 1 !!!
                DO
                  IF ( AxesGroup.State.DataChanged.Load[_rSyncIdx] )
                  THEN
@@ -3829,7 +3866,7 @@ END_VAR
   				     END_IF
            ELSE
              // invalid sync mode for startup
-             ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+             SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID, Overwrite := TRUE );
    	       END_CASE
          END_IF
        END_IF  
@@ -3886,7 +3923,7 @@ END_VAR
          // check error ? 
          IF (_writeLoadData.Error)
          THEN
-           WarningID := RobotLibraryWarningIdEnum.WARN_LOAD_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;           
+           SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_LOAD_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD, Overwrite := TRUE);           
          END_IF  
          
          // timeout exceeded ? 
@@ -3911,8 +3948,11 @@ END_VAR
          // reset count of unsynchronised Loads
          AxesGroup.State.SyncStatePlc.UnSyncNo.Load := 0;
   
+         //  calculate start index 
+        _idxStart := LIMIT(1 , DINT_TO_USINT(AxesGroup.SystemData.LoadDataMin), AxesGroup.State.UnifiedLoadIndex);
+         
          // Check all Load datas
-         FOR _rSyncIdx := 1 TO AxesGroup.State.UnifiedLoadIndex //  !!! Attention : 0 is not allowed - LoadData starts with 1 !!!  
+         FOR _rSyncIdx := _idxStart TO AxesGroup.State.UnifiedLoadIndex // !!! Attention : 0 is not allowed - LoadData starts with 1 !!!  
          DO
            // compare Load data
            AxesGroup.State.DataChanged.Load[_rSyncIdx] := NOT IsLoadDataEqual( Data1 := LoadData[_rSyncIdx].Data, Data2 := _loadData[_rSyncIdx].Data, IgnoreTimestamp := FALSE);
@@ -3971,7 +4011,7 @@ END_VAR
            IF (( NOT AxesGroup.State.SyncStatePlc.InSync.Load ) AND  
                ( NOT AxesGroup.State.SyncStateRc .InSync.Load ))
            THEN
-             WarningID := RobotLibraryWarningIdEnum.WARN_LOAD_SYNC_BOTH_SIDES_CHANGED;
+             SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_LOAD_SYNC_BOTH_SIDES_CHANGED, Overwrite :=  TRUE);
            END_IF
          END_IF
   
@@ -3982,8 +4022,11 @@ END_VAR
     11 : // Conflict triggerd by PLC ?  
          IF ( NOT AxesGroup.State.SyncStatePlc.InSync.Load )
          THEN
+           //  calculate start index 
+          _idxStart := LIMIT(1 , DINT_TO_USINT(AxesGroup.SystemData.LoadDataMin), AxesGroup.State.UnifiedLoadIndex);
+         
            // search for changed index  
-           FOR _rSyncIdx := 1 TO AxesGroup.State.UnifiedLoadIndex //  !!! Attention : 0 is not allowed - LoadData starts with 1 !!!  
+           FOR _rSyncIdx := _idxStart TO AxesGroup.State.UnifiedLoadIndex // !!! Attention : 0 is not allowed - LoadData starts with 1 !!!  
            DO
              IF ( AxesGroup.State.DataChanged.Load[_rSyncIdx] )
              THEN
@@ -4011,7 +4054,7 @@ END_VAR
          IF ( NOT AxesGroup.State.SyncStateRc.InSync.Load )
          THEN
            // get changed index 
-          _rSyncIdx :=  LIMIT(1, AxesGroup.State.SyncStateRc.UnSyncNo.Load, AxesGroup.State.UnifiedLoadIndex); //  !!! Attention : 0 is not allowed - LoadData starts with 1 !!!  
+          _rSyncIdx :=  LIMIT(1 , AxesGroup.State.SyncStateRc.UnSyncNo.Load, AxesGroup.State.UnifiedLoadIndex); //  !!! Attention : 0 is not allowed - LoadData starts with 1 !!!  
            // set timeout
            SetTimeout(PT := _rTimeout, rTimer := _rTimer);
            // inc step counter
@@ -4041,8 +4084,12 @@ END_VAR
     12 : // Conflict triggerd by PLC ?  
          IF ( NOT AxesGroup.State.SyncStatePlc.InSync.Load )
          THEN
+  
+           //  calculate start index 
+          _idxStart := LIMIT(1 , DINT_TO_USINT(AxesGroup.SystemData.LoadDataMin), AxesGroup.State.UnifiedLoadIndex);
+         
            // search for changed index  
-           FOR _rSyncIdx := 1 TO AxesGroup.State.UnifiedLoadIndex //  !!! Attention : 0 is not allowed - LoadData starts with 1 !!!  
+           FOR _rSyncIdx := _idxStart TO AxesGroup.State.UnifiedLoadIndex // !!! Attention : 0 is not allowed - LoadData starts with 1 !!!  
            DO
              IF ( AxesGroup.State.DataChanged.Load[_rSyncIdx] )
              THEN
@@ -4070,7 +4117,7 @@ END_VAR
          IF ( NOT AxesGroup.State.SyncStateRc.InSync.Load )
          THEN
            // get changed index 
-          _rSyncIdx := LIMIT(1, AxesGroup.State.SyncStateRc.UnSyncNo.Load, AxesGroup.State.UnifiedLoadIndex); //  !!! Attention : 0 is not allowed - LoadData starts with 1 !!!  
+          _rSyncIdx := LIMIT(1 , AxesGroup.State.SyncStateRc.UnSyncNo.Load, AxesGroup.State.UnifiedLoadIndex); //  !!! Attention : 0 is not allowed - LoadData starts with 1 !!!  
            // set timeout
            SetTimeout(PT := _rTimeout, rTimer := _rTimer);
            // inc step counter
@@ -4100,8 +4147,12 @@ END_VAR
     13 : // Conflict triggerd by PLC ?  
          IF ( NOT AxesGroup.State.SyncStatePlc.InSync.Load )
          THEN
+         
+           //  calculate start index 
+          _idxStart := LIMIT(1 , DINT_TO_USINT(AxesGroup.SystemData.LoadDataMin), AxesGroup.State.UnifiedLoadIndex);
+  
            // search for changed index  
-           FOR _rSyncIdx := 1 TO AxesGroup.State.UnifiedLoadIndex //  !!! Attention : 0 is not allowed - LoadData starts with 1 !!!  
+           FOR _rSyncIdx := _idxStart TO AxesGroup.State.UnifiedLoadIndex // !!! Attention : 0 is not allowed - LoadData starts with 1 !!!  
            DO
              IF ( AxesGroup.State.DataChanged.Load[_rSyncIdx] )
              THEN
@@ -4129,7 +4180,7 @@ END_VAR
          IF ( NOT AxesGroup.State.SyncStateRc.InSync.Load )
          THEN
            // get changed index 
-          _rSyncIdx := LIMIT(1, AxesGroup.State.SyncStateRc.UnSyncNo.Load, AxesGroup.State.UnifiedLoadIndex); //  !!! Attention : 0 is not allowed - LoadData starts with 1 !!!  
+          _rSyncIdx := LIMIT(1 , AxesGroup.State.SyncStateRc.UnSyncNo.Load, AxesGroup.State.UnifiedLoadIndex); //  !!! Attention : 0 is not allowed - LoadData starts with 1 !!!  
            // set timeout
            SetTimeout(PT := _rTimeout, rTimer := _rTimer);
            // inc step counter
@@ -4269,7 +4320,7 @@ END_VAR
            // check error ? 
            IF (_writeLoadData.Error)
            THEN
-             WarningID := RobotLibraryWarningIdEnum.WARN_LOAD_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;    
+             SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_LOAD_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD, Overwrite := TRUE);    
              // reset available bit
              LoadData[_rSyncIdx].Available := FALSE;
             _loadData[_rSyncIdx].Available := FALSE;
@@ -4364,9 +4415,9 @@ END_VAR
         _rStep := _rStep + 1;
        ELSE
          // check error ? 
-         IF ( _readRobotDefaultDynamics.Error ) AND ( WarningID = RobotLibraryWarningIdEnum.NO_WARNING )
+         IF ( _readRobotDefaultDynamics.Error )
          THEN
-           WarningID := RobotLibraryWarningIdEnum.WARN_DEFAULT_DYNAMICS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;           
+           SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_DEFAULT_DYNAMICS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD, Overwrite := FALSE );           
          END_IF  
          
          // timeout exceeded ? 
@@ -4389,6 +4440,8 @@ END_VAR
         _defaultDynamics := _readRobotDefaultDynamics.OutCmd.DynamicValues;
          // Set plc in sync flag
          AxesGroup.State.SyncStatePlc.InSync.DefaultDynamics := TRUE;
+         // inc step counter
+        _rStep := _rStep + 1;           
   
          // Check DefaultDynamics data is equal ? 
          IF ( NOT IsDefaultDynamicsEqual( Data1 := _defaultDynamics, Data2 := DefaultDynamics, IgnoreTimestamp := TRUE))
@@ -4399,8 +4452,6 @@ END_VAR
            AxesGroup.State.DataChanged.DefaultDynamics := TRUE;
            // set timeout
            SetTimeout(PT := _rTimeout, rTimer := _rTimer);
-           // inc step counter
-          _rStep := _rStep + 1;           
           
            // Create log entry
            CreateLogMessagePara1 ( Timestamp   := SystemTime,
@@ -4412,15 +4463,15 @@ END_VAR
           
           
            // Check synchronisation is enabled ? 
-           IF ( NOT  AxesGroup.State.DataEnableSync.EnableSyncDefaultDynamics ) AND (InfoID = RobotLibraryInfoIdEnum.NO_INFO )
+           IF ( NOT  AxesGroup.State.DataEnableSync.EnableSyncDefaultDynamics )
            THEN
-             InfoID := RobotLibraryInfoIdEnum.INFO_SYNC_DEFAULT_DYNAMICS_DISABLED;
+             SetInfo( InfoID := RobotLibraryInfoIdEnum.INFO_SYNC_DEFAULT_DYNAMICS_DISABLED, Overwrite := FALSE);
   				 END_IF
            
            // Check user interaction needed ?  
-           IF ( AxesGroup.Parameter.Plc.Parameter.SyncUserInteraction.DefaultDynamics ) AND ( WarningID = RobotLibraryWarningIdEnum.NO_WARNING )
+           IF ( AxesGroup.Parameter.Plc.Parameter.SyncUserInteraction.DefaultDynamics )
            THEN
-             WarningID := RobotLibraryWarningIdEnum.WARN_DEFAULT_DYNAMICS_SYNC_ERROR;                    
+             SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_DEFAULT_DYNAMICS_SYNC_ERROR, Overwrite := FALSE);                    
   				 END_IF
   			 END_IF             
        ELSE
@@ -4428,7 +4479,7 @@ END_VAR
          IF (_readRobotDefaultDynamics.Error)
          THEN
            // Set warning
-           WarningID := RobotLibraryWarningIdEnum.WARN_DEFAULT_DYNAMICS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;                    
+           SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_DEFAULT_DYNAMICS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD, Overwrite := TRUE);                    
          END_IF  
          
          // timeout exceeded ? 
@@ -4529,7 +4580,7 @@ END_VAR
   				     END_IF
            ELSE
              // invalid sync mode for startup
-             ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+             SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID, Overwrite := TRUE );
    	       END_CASE
          END_IF
        END_IF  
@@ -4583,7 +4634,7 @@ END_VAR
          // check error ? 
          IF (_writeRobotDefaultDynamics.Error)
          THEN
-           WarningID := RobotLibraryWarningIdEnum.WARN_DEFAULT_DYNAMICS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;           
+           SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_DEFAULT_DYNAMICS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD, Overwrite := TRUE);           
          END_IF  
          
          // timeout exceeded ? 
@@ -4659,7 +4710,7 @@ END_VAR
            IF (( NOT AxesGroup.State.SyncStatePlc.InSync.DefaultDynamics ) AND  
                ( NOT AxesGroup.State.SyncStateRc .InSync.DefaultDynamics ))
            THEN
-             WarningID := RobotLibraryWarningIdEnum.WARN_DEFAULT_DYNAMICS_SYNC_BOTH_SIDES_CHANGED;
+             SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_DEFAULT_DYNAMICS_SYNC_BOTH_SIDES_CHANGED, Overwrite := TRUE);
            END_IF
          END_IF
   
@@ -4909,7 +4960,7 @@ END_VAR
            // check error ? 
            IF (_writeRobotDefaultDynamics.Error)
            THEN
-             WarningID := RobotLibraryWarningIdEnum.WARN_DEFAULT_DYNAMICS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;    
+             SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_DEFAULT_DYNAMICS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD, Overwrite := TRUE);    
            END_IF  
          
            // timeout exceeded ? 
@@ -5001,9 +5052,9 @@ END_VAR
         _rStep := _rStep + 1;
        ELSE
          // check error ? 
-         IF ( _readRobotReferenceDynamics.Error ) AND ( WarningID = RobotLibraryWarningIdEnum.NO_WARNING )
+         IF ( _readRobotReferenceDynamics.Error )
          THEN
-           WarningID := RobotLibraryWarningIdEnum.WARN_REFERENCE_DYNAMICS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;           
+           SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_REFERENCE_DYNAMICS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD, Overwrite := FALSE);           
          END_IF  
          
          // timeout exceeded ? 
@@ -5026,6 +5077,8 @@ END_VAR
         _referenceDynamics := _readRobotReferenceDynamics.OutCmd.DynamicValues;
          // Set plc in sync flag
          AxesGroup.State.SyncStatePlc.InSync.ReferenceDynamics := TRUE;
+         // inc step counter
+        _rStep := _rStep + 1;           
   
          // Check ReferenceDynamics data is equal ? 
          IF ( NOT IsReferenceDynamicsEqual( Data1 := _referenceDynamics, Data2 := ReferenceDynamics, IgnoreTimestamp := TRUE))
@@ -5036,8 +5089,6 @@ END_VAR
            AxesGroup.State.DataChanged.ReferenceDynamics := TRUE;
            // set timeout
            SetTimeout(PT := _rTimeout, rTimer := _rTimer);
-           // inc step counter
-          _rStep := _rStep + 1;           
           
            // Create log entry
            CreateLogMessagePara1 ( Timestamp   := SystemTime,
@@ -5049,15 +5100,15 @@ END_VAR
           
           
            // Check synchronisation is enabled ? 
-           IF ( NOT  AxesGroup.State.DataEnableSync.EnableSyncReferenceDynamics ) AND (InfoID = RobotLibraryInfoIdEnum.NO_INFO )
+           IF ( NOT  AxesGroup.State.DataEnableSync.EnableSyncReferenceDynamics )
            THEN
-             InfoID := RobotLibraryInfoIdEnum.INFO_SYNC_REFERENCE_DYNAMICS_DISABLED;
+             SetInfo ( InfoID := RobotLibraryInfoIdEnum.INFO_SYNC_REFERENCE_DYNAMICS_DISABLED, Overwrite := FALSE );
   				 END_IF
            
            // Check user interaction needed ?  
-           IF ( AxesGroup.Parameter.Plc.Parameter.SyncUserInteraction.ReferenceDynamics ) AND ( WarningID = RobotLibraryWarningIdEnum.NO_WARNING )
+           IF ( AxesGroup.Parameter.Plc.Parameter.SyncUserInteraction.ReferenceDynamics )
            THEN
-             WarningID := RobotLibraryWarningIdEnum.WARN_REFERENCE_DYNAMICS_SYNC_ERROR;                    
+             SetWarning ( WarningID := RobotLibraryWarningIdEnum.WARN_REFERENCE_DYNAMICS_SYNC_ERROR, Overwrite := FALSE );                    
   				 END_IF
   			 END_IF             
        ELSE
@@ -5065,7 +5116,7 @@ END_VAR
          IF (_readRobotReferenceDynamics.Error)
          THEN
            // Set warning
-           WarningID := RobotLibraryWarningIdEnum.WARN_REFERENCE_DYNAMICS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;                    
+           SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_REFERENCE_DYNAMICS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD, Overwrite := TRUE);                    
          END_IF  
          
          // timeout exceeded ? 
@@ -5166,7 +5217,7 @@ END_VAR
   				     END_IF
            ELSE
              // invalid sync mode for startup
-             ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+             SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID, Overwrite := TRUE );
    	       END_CASE
          END_IF
        END_IF  
@@ -5220,7 +5271,7 @@ END_VAR
          // check error ? 
          IF (_writeRobotReferenceDynamics.Error)
          THEN
-           WarningID := RobotLibraryWarningIdEnum.WARN_REFERENCE_DYNAMICS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;           
+           SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_REFERENCE_DYNAMICS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD, Overwrite := TRUE);           
          END_IF  
          
          // timeout exceeded ? 
@@ -5296,7 +5347,7 @@ END_VAR
            IF (( NOT AxesGroup.State.SyncStatePlc.InSync.ReferenceDynamics ) AND  
                ( NOT AxesGroup.State.SyncStateRc .InSync.ReferenceDynamics ))
            THEN
-             WarningID := RobotLibraryWarningIdEnum.WARN_REFERENCE_DYNAMICS_SYNC_BOTH_SIDES_CHANGED;
+             SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_REFERENCE_DYNAMICS_SYNC_BOTH_SIDES_CHANGED, Overwrite := TRUE);
            END_IF
          END_IF
   
@@ -5546,7 +5597,7 @@ END_VAR
            // check error ? 
            IF (_writeRobotReferenceDynamics.Error)
            THEN
-             WarningID := RobotLibraryWarningIdEnum.WARN_REFERENCE_DYNAMICS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;    
+             SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_REFERENCE_DYNAMICS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD, Overwrite := TRUE);    
            END_IF  
          
            // timeout exceeded ? 
@@ -5634,9 +5685,9 @@ END_VAR
         _rStep := _rStep + 1;
        ELSE
          // check error ? 
-         IF ( _readRobotSWLimits.Error ) AND ( WarningID = RobotLibraryWarningIdEnum.NO_WARNING )
+         IF ( _readRobotSWLimits.Error )
          THEN
-           WarningID := RobotLibraryWarningIdEnum.WARN_SW_LIMITS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;           
+           SetWarning ( WarningID := RobotLibraryWarningIdEnum.WARN_SW_LIMITS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD, Overwrite := FALSE );           
          END_IF  
          
          // timeout exceeded ? 
@@ -5659,6 +5710,8 @@ END_VAR
         _swLimits := _readRobotSWLimits.OutCmd.LimitValues;
          // Set plc in sync flag
          AxesGroup.State.SyncStatePlc.InSync.SwLimits := TRUE;
+         // inc step counter
+        _rStep := _rStep + 1;           
   
          // Check SwLimits data is equal ? 
          IF ( NOT IsSwLimitsEqual( Data1 := _swLimits, Data2 := SwLimits, IgnoreTimestamp := TRUE))
@@ -5669,8 +5722,6 @@ END_VAR
            AxesGroup.State.DataChanged.SwLimits := TRUE;
            // set timeout
            SetTimeout(PT := _rTimeout, rTimer := _rTimer);
-           // inc step counter
-          _rStep := _rStep + 1;           
           
            // Create log entry
            CreateLogMessagePara1 ( Timestamp   := SystemTime,
@@ -5682,15 +5733,15 @@ END_VAR
           
           
            // Check synchronisation is enabled ? 
-           IF ( NOT  AxesGroup.State.DataEnableSync.EnableSyncSWLimits ) AND (InfoID = RobotLibraryInfoIdEnum.NO_INFO )
+           IF ( NOT  AxesGroup.State.DataEnableSync.EnableSyncSWLimits )
            THEN
-             InfoID := RobotLibraryInfoIdEnum.INFO_SYNC_SWLIMIT_DISABLED;
+             SetInfo( InfoID := RobotLibraryInfoIdEnum.INFO_SYNC_SWLIMIT_DISABLED, Overwrite := FALSE );
   				 END_IF
            
            // Check user interaction needed ?  
-           IF ( AxesGroup.Parameter.Plc.Parameter.SyncUserInteraction.SWLimits ) AND ( WarningID = RobotLibraryWarningIdEnum.NO_WARNING )
+           IF ( AxesGroup.Parameter.Plc.Parameter.SyncUserInteraction.SWLimits )
            THEN
-             WarningID := RobotLibraryWarningIdEnum.WARN_SW_LIMITS_SYNC_ERROR;                    
+             SetWarning ( WarningID := RobotLibraryWarningIdEnum.WARN_SW_LIMITS_SYNC_ERROR, Overwrite := FALSE );                    
   				 END_IF
   			 END_IF             
        ELSE
@@ -5698,7 +5749,7 @@ END_VAR
          IF (_readRobotSWLimits.Error)
          THEN
            // Set warning
-           WarningID := RobotLibraryWarningIdEnum.WARN_SW_LIMITS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;                    
+           SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_SW_LIMITS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD, Overwrite := TRUE);                    
          END_IF  
          
          // timeout exceeded ? 
@@ -5799,7 +5850,7 @@ END_VAR
   				     END_IF
            ELSE
              // invalid sync mode for startup
-             ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+             SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID, Overwrite := TRUE );
    	       END_CASE
          END_IF
        END_IF  
@@ -5854,7 +5905,7 @@ END_VAR
          // check error ? 
          IF (_writeRobotSWLimits.Error)
          THEN
-           WarningID := RobotLibraryWarningIdEnum.WARN_SW_LIMITS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;           
+           SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_SW_LIMITS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD, Overwrite := TRUE);           
          END_IF  
          
          // timeout exceeded ? 
@@ -5930,7 +5981,7 @@ END_VAR
            IF (( NOT AxesGroup.State.SyncStatePlc.InSync.SwLimits ) AND  
                ( NOT AxesGroup.State.SyncStateRc .InSync.SwLimits ))
            THEN
-             WarningID := RobotLibraryWarningIdEnum.WARN_SW_LIMITS_SYNC_BOTH_SIDES_CHANGED;
+             SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_SW_LIMITS_SYNC_BOTH_SIDES_CHANGED, Overwrite := TRUE);
            END_IF
          END_IF
   
@@ -6181,7 +6232,7 @@ END_VAR
            // check error ? 
            IF (_writeRobotSWLimits.Error)
            THEN
-             WarningID := RobotLibraryWarningIdEnum.WARN_SW_LIMITS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;    
+             SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_SW_LIMITS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD, Overwrite := TRUE);    
            END_IF  
          
            // timeout exceeded ? 
@@ -6205,7 +6256,7 @@ VAR_IN_OUT
    /// Robot assignment of function
   AxesGroup : AxesGroup;
   /// ToolData stored on PLC.For more information refer to 5.5.6.4
-  ToolData  : ARRAY[0..RobotLibraryParameter.TOOL_MAX -1] OF Tool;
+  ToolData  : ARRAY[*] OF Tool;
 END_VAR 
 
 VAR
@@ -6223,6 +6274,8 @@ VAR
  _found           : BOOL;
   /// empty data set to reset all DataChanged bits
  _dataChangedNone : AxesGroupStateDataChanged; 
+  /// internal index for loops
+ _idx             : DINT;
 END_VAR
 
   // Set internal references 
@@ -6248,10 +6301,10 @@ END_VAR
             ( NOT Error                                                        ))  
        THEN
          // Check PLC tools < RC tools and SyncTool enabled ?    
-         IF (( AxesGroup.State.DataEnableSync.EnableSyncTool      = TRUE                              )  AND
-             ( AxesGroup.Parameter.Rob.Parameter.HighestToolIndex > RobotLibraryParameter.Tool_MAX -1 ))        
+         IF (( AxesGroup.State.DataEnableSync.EnableSyncTool      = TRUE                               )  AND
+             ( AxesGroup.Parameter.Rob.Parameter.HighestToolIndex > AxesGroup.SystemData.ToolDataCount ))        
          THEN
-           WarningID := RobotLibraryWarningIdEnum.WARN_TOOL_DATA_ARRAY_TOO_SHORT;
+           SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_TOOL_DATA_ARRAY_TOO_SHORT, Overwrite := TRUE);
          END_IF
   
          // Create log entry
@@ -6263,7 +6316,7 @@ END_VAR
                                  Para1       :=  '');
          
          // init tool number
-        _rSyncIdx := 0;
+        _rSyncIdx := DINT_TO_USINT(AxesGroup.SystemData.ToolDataMin); 
          // init count of unsynchronized elements
          AxesGroup.State.SyncStatePlc.UnSyncNo.Tool := 0;
          // set timeout
@@ -6289,7 +6342,7 @@ END_VAR
          // check error ? 
          IF ( _readToolData.Error ) AND ( WarningID = RobotLibraryWarningIdEnum.NO_WARNING )
          THEN
-           WarningID := RobotLibraryWarningIdEnum.WARN_TOOL_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;           
+           SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_TOOL_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD, Overwrite := TRUE);           
          END_IF  
          
          // timeout exceeded ? 
@@ -6336,13 +6389,13 @@ END_VAR
            // Check synchronisation is enabled ? 
            IF ( NOT AxesGroup.State.DataEnableSync.EnableSyncTool ) AND (InfoID = RobotLibraryInfoIdEnum.NO_INFO )
            THEN
-             InfoID := RobotLibraryInfoIdEnum.INFO_SYNC_TOOL_DATA_DISABLED;
+             SetInfo( InfoID := RobotLibraryInfoIdEnum.INFO_SYNC_TOOL_DATA_DISABLED, Overwrite := TRUE);
   				 END_IF
            
            // Check user interaction needed ?  
            IF ( AxesGroup.Parameter.PLC.Parameter.SyncUserInteraction.Tool ) AND ( WarningID = RobotLibraryWarningIdEnum.NO_WARNING )
            THEN
-             WarningID := RobotLibraryWarningIdEnum.WARN_TOOL_NUMBER_SYNC_ERROR;                    
+             SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_TOOL_NUMBER_SYNC_ERROR, Overwrite :=  TRUE);                    
   				 END_IF
   			 END_IF
                
@@ -6366,7 +6419,7 @@ END_VAR
          IF (_readToolData.Error)
          THEN
            // Set warning
-           WarningID := RobotLibraryWarningIdEnum.WARN_TOOL_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;                    
+           SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_TOOL_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD, Overwrite := TRUE);                    
            // reset available bit
            ToolData[_rSyncIdx].Available := FALSE;
           _toolData[_rSyncIdx].Available := FALSE;
@@ -6407,8 +6460,12 @@ END_VAR
   
              SyncMode.SERVER_TO_CLIENT : 
   
-               // Overwrite PLC data with RC data
-               ToolData := _toolData;            
+             
+               FOR _idx := AxesGroup.SystemData.ToolDataMin TO AxesGroup.SystemData.ToolDataMax
+               DO
+                 // Overwrite PLC data with RC data
+                 ToolData[_idx] := _toolData[_idx];            
+  						 END_FOR
                // Reset data changed flags
                AxesGroup.State.DataChanged.Tool := _dataChangedNone.Tool;
                // Reset Synchronizing flag
@@ -6486,7 +6543,7 @@ END_VAR
   				     END_IF
            ELSE
              // invalid sync mode for startup
-             ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+             SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID, Overwrite := TRUE );
    	       END_CASE
          END_IF
        END_IF  
@@ -6543,7 +6600,7 @@ END_VAR
          // check error ? 
          IF (_writeToolData.Error)
          THEN
-           WarningID := RobotLibraryWarningIdEnum.WARN_TOOL_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;           
+           SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_TOOL_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD, Overwrite := TRUE);           
          END_IF  
          
          // timeout exceeded ? 
@@ -6628,7 +6685,7 @@ END_VAR
            IF (( NOT AxesGroup.State.SyncStatePlc.InSync.Tool ) AND  
                ( NOT AxesGroup.State.SyncStateRc .InSync.Tool ))
            THEN
-             WarningID := RobotLibraryWarningIdEnum.WARN_TOOL_SYNC_BOTH_SIDES_CHANGED;
+             SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_TOOL_SYNC_BOTH_SIDES_CHANGED, Overwrite := TRUE);
            END_IF
          END_IF
   
@@ -6926,7 +6983,7 @@ END_VAR
            // check error ? 
            IF (_writeToolData.Error)
            THEN
-             WarningID := RobotLibraryWarningIdEnum.WARN_TOOL_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;    
+             SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_TOOL_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD, Overwrite := TRUE);    
              // reset available bit
              ToolData[_rSyncIdx].Available := FALSE;
             _toolData[_rSyncIdx].Available := FALSE;
@@ -6953,7 +7010,7 @@ VAR_IN_OUT
    /// Robot assignment of function
   AxesGroup : AxesGroup;
   /// Work areas stored on PLC. For more information refer to 5.5.8
-  WorkAreas : ARRAY[0..RobotLibraryParameter.WORK_AREAS_MAX -1] OF RobotWorkArea;
+  WorkAreas : ARRAY[*] OF RobotWorkArea;
 END_VAR 
 
 VAR
@@ -6971,6 +7028,8 @@ VAR
  _found           : BOOL;
   /// empty data set to reset all DataChanged bits
  _dataChangedNone : AxesGroupStateDataChanged;
+  /// internal index for loops
+ _idx             : DINT;
 END_VAR
 
   // Set internal references 
@@ -6996,10 +7055,10 @@ END_VAR
             ( NOT Error                                                        ))  
        THEN
          // Check PLC WorkAreas < RC WorkAreas and SyncWorkArea enabled ?    
-         IF (( AxesGroup.State.DataEnableSync.EnableSyncWorkArea      = TRUE                                    )  AND
-             ( AxesGroup.Parameter.Rob.Parameter.HighestWorkAreaIndex > RobotLibraryParameter.WORK_AREAS_MAX -1 ))        
+         IF (( AxesGroup.State.DataEnableSync.EnableSyncWorkArea      = TRUE                                )  AND
+             ( AxesGroup.Parameter.Rob.Parameter.HighestWorkAreaIndex > AxesGroup.SystemData.WorkAreasCount ))        
          THEN
-           WarningID := RobotLibraryWarningIdEnum.WARN_WORK_AREA_ARRAY_TOO_SHORT;
+           SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_WORK_AREA_ARRAY_TOO_SHORT, Overwrite := TRUE);
          END_IF
   
          // Create log entry
@@ -7011,7 +7070,7 @@ END_VAR
                                  Para1       :=  '');
          
          // init WorkArea number
-        _rSyncIdx := 0;
+        _rSyncIdx := DINT_TO_USINT(AxesGroup.SystemData.WorkAreasMin); 
          // init count of unsynchronized elements
          AxesGroup.State.SyncStatePlc.UnSyncNo.WorkArea := 0;
          // set timeout
@@ -7035,9 +7094,9 @@ END_VAR
         _rStep := _rStep + 1;
        ELSE
          // check error ? 
-         IF ( _readWorkArea.Error ) AND ( WarningID = RobotLibraryWarningIdEnum.NO_WARNING )
+         IF ( _readWorkArea.Error ) 
          THEN
-           WarningID := RobotLibraryWarningIdEnum.WARN_WORK_AREA_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;           
+           SetWarning ( WarningID := RobotLibraryWarningIdEnum.WARN_WORK_AREA_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD, Overwrite := FALSE );           
          END_IF  
          
          // timeout exceeded ? 
@@ -7082,15 +7141,15 @@ END_VAR
           
           
            // Check synchronisation is enabled ? 
-           IF ( NOT AxesGroup.State.DataEnableSync.EnableSyncWorkArea ) AND (InfoID = RobotLibraryInfoIdEnum.NO_INFO )
+           IF ( NOT AxesGroup.State.DataEnableSync.EnableSyncWorkArea )
            THEN
-             InfoID := RobotLibraryInfoIdEnum.INFO_SYNC_WORK_AREA_DISABLED;
+             SetInfo ( InfoID := RobotLibraryInfoIdEnum.INFO_SYNC_WORK_AREA_DISABLED, Overwrite := FALSE );
   				 END_IF
            
            // Check user interaction needed ?  
-           IF ( AxesGroup.Parameter.PLC.Parameter.SyncUserInteraction.WorkAreas ) AND ( WarningID = RobotLibraryWarningIdEnum.NO_WARNING )
+           IF ( AxesGroup.Parameter.PLC.Parameter.SyncUserInteraction.WorkAreas )
            THEN
-             WarningID := RobotLibraryWarningIdEnum.WARN_WORK_AREA_NUMBER_SYNC_ERROR;                    
+             SetWarning ( WarningID := RobotLibraryWarningIdEnum.WARN_WORK_AREA_NUMBER_SYNC_ERROR, Overwrite := FALSE );                    
   				 END_IF
   			 END_IF
                
@@ -7114,7 +7173,7 @@ END_VAR
          IF (_readWorkArea.Error)
          THEN
            // Set warning
-           WarningID := RobotLibraryWarningIdEnum.WARN_WORK_AREA_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;                    
+           SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_WORK_AREA_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD, Overwrite := TRUE);                    
            // reset available bit
            WorkAreas[_rSyncIdx].Available := FALSE;
           _workAreas[_rSyncIdx].Available := FALSE;
@@ -7156,7 +7215,12 @@ END_VAR
              SyncMode.SERVER_TO_CLIENT : 
   
                // Overwrite PLC data with RC data
-               WorkAreas := _workAreas;            
+               FOR _idx := AxesGroup.SystemData.WorkAreasMin TO AxesGroup.SystemData.WorkAreasMax
+               DO
+                 // Overwrite PLC data with RC data
+                 WorkAreas[_idx] := WorkAreas[_idx];            
+  						 END_FOR
+    
                // Reset data changed flags
                AxesGroup.State.DataChanged.WorkArea := _dataChangedNone.WorkArea;
                // Reset Synchronizing flag
@@ -7234,7 +7298,7 @@ END_VAR
   				     END_IF
            ELSE
              // invalid sync mode for startup
-             ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID;
+             SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID, Overwrite := TRUE );
    	       END_CASE
          END_IF
        END_IF  
@@ -7291,7 +7355,7 @@ END_VAR
          // check error ? 
          IF (_writeWorkArea.Error)
          THEN
-           WarningID := RobotLibraryWarningIdEnum.WARN_WORK_AREA_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;           
+           SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_WORK_AREA_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD, Overwrite := TRUE);           
          END_IF  
          
          // timeout exceeded ? 
@@ -7376,7 +7440,7 @@ END_VAR
            IF (( NOT AxesGroup.State.SyncStatePlc.InSync.WorkArea ) AND  
                ( NOT AxesGroup.State.SyncStateRc .InSync.WorkArea ))
            THEN
-             WarningID := RobotLibraryWarningIdEnum.WARN_WORK_AREA_SYNC_BOTH_SIDES_CHANGED;
+             SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_WORK_AREA_SYNC_BOTH_SIDES_CHANGED, Overwrite := TRUE);
            END_IF
          END_IF
   
@@ -7674,7 +7738,7 @@ END_VAR
            // check error ? 
            IF (_writeWorkArea.Error)
            THEN
-             WarningID := RobotLibraryWarningIdEnum.WARN_WORK_AREA_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD;    
+             SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_WORK_AREA_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD, Overwrite :=  TRUE);    
              // reset available bit
              WorkAreas[_rSyncIdx].Available := FALSE;
             _workAreas[_rSyncIdx].Available := FALSE;
@@ -7730,7 +7794,20 @@ END_VAR
                             Para1       := TELEGRAM_STATE_TO_STRING(_lastTelegramState),
                             Para2       := TELEGRAM_STATE_TO_STRING(Telegram.RobToPlc.Header.TelegramState));
   
-    _lastTelegramState := Telegram.RobToPlc.Header.TelegramState;
+  
+    // Check Interface changed after being initialized ?  
+    IF ((  Initialized OR Synchronized                                                     ) AND 
+        ( _lastTelegramState                      = TelegramState.INITIALIZED              ) AND  
+       ((  Telegram.RobToPlc.Header.TelegramState = TelegramState.READY_FOR_INITIALIZATION ) OR
+        (  Telegram.RobToPlc.Header.TelegramState = TelegramState.READY_TO_RESUME          ))) 
+    THEN
+      {warning 'ToDo'}
+      //SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INTERFACE_WAS_RESET_AFTER_INIT_0x80A7  , Overwrite := TRUE );
+      ;    
+  	END_IF
+  
+    // apply new telegram state
+   _lastTelegramState := Telegram.RobToPlc.Header.TelegramState;
   END_IF
 
 END_METHOD
@@ -7845,6 +7922,39 @@ END_VAR
 
 END_METHOD
 
+PROPERTY PROTECTED HasError : Bool
+
+
+GET
+VAR
+END_VAR
+
+  HasError := ErrorID <> RobotLibraryErrorIdEnum.NO_ERROR;
+
+END_GET
+
+PROPERTY PROTECTED HasInfo : BOOL
+
+
+GET
+VAR
+END_VAR
+
+  HasInfo := InfoID <> RobotLibraryInfoIdEnum.NO_INFO;
+
+END_GET
+
+PROPERTY PROTECTED HasWarning : BOOL
+
+
+GET
+VAR
+END_VAR
+
+  HasWarning := WarningID <> RobotLibraryWarningIdEnum.NO_WARNING;
+
+END_GET
+
 METHOD PRIVATE OnCall
 VAR_IN_OUT
    /// Robot assignment of function
@@ -7856,13 +7966,13 @@ END_VAR
   WarningIdEnum := WarningId;
   InfoIdEnum    := InfoId;
   
-  Error := ErrorID <> RobotLibraryConstants.OK ;
+  Error := HasError;
   
   // Check Payload and In/Out data size
-  IF (( RobotLibraryParameter.ROBOT_IN_DATA_MAX  < 64 ) OR
-      ( RobotLibraryParameter.ROBOT_OUT_DATA_MAX < 64 ))
+  IF (( ROBOT_IN_DATA_SIZE  < 64 ) OR
+      ( ROBOT_OUT_DATA_SIZE < 64 ))
   THEN
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_LIBRARY_PARA;
+    SetError(ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_LIBRARY_PARA, Overwrite := TRUE );
     RETURN;
   END_IF
   
@@ -7871,7 +7981,7 @@ END_VAR
   IF (( AxesGroupID < RobotLibraryConstants.AXES_GROUP_ID_MIN ) OR
       ( AxesGroupID > RobotLibraryConstants.AXES_GROUP_ID_MAX ))
   THEN
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_AXES_GROUP_ID;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_AXES_GROUP_ID, Overwrite := TRUE );
     RETURN;
   END_IF
   
@@ -7884,15 +7994,34 @@ END_VAR
     // Reset Synchronized flag
     Synchronized := FALSE;
     // Set error 
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INIT_LOST_UNKNOWN_0x80A2;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INIT_LOST_UNKNOWN_0x80A2, Overwrite := TRUE );
   END_IF
   
   
   // Warning for ACR Registers running low
   IF ( AxesGroup.Acyclic.ActiveCommandRegister.CurrentAcrUsagePercent > RobotLibraryParameter.ACR_USAGE_WARNING_LIMIT )
   THEN
-    WarningID := RobotLibraryWarningIdEnum.WARN_ACR_FREE_ENTRIES_LOW;
+    SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_ACR_FREE_ENTRIES_LOW, Overwrite := TRUE);  
   END_IF
+  
+  // Check ToolData boundary
+  IF ( AxesGroup.SystemData.ToolDataMin  <> 0 )  
+  THEN
+    SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_TOOL_DATA_ARRAY_NOT_START_AT_ZERO, Overwrite := FALSE );
+  END_IF
+  
+  // Check FrameData boundary
+  IF ( AxesGroup.SystemData.FrameDataMin <> 0 ) AND ( NOT HasWarning )  
+  THEN
+    SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_FRAME_DATA_ARRAY_NOT_START_AT_ZERO, Overwrite := FALSE );
+  END_IF
+  
+  // Check WorkAreas boundary
+  IF ( AxesGroup.SystemData.WorkAreasMin <> 0 ) AND ( NOT HasWarning )  
+  THEN
+    SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_FRAME_DATA_ARRAY_NOT_START_AT_ZERO, Overwrite := FALSE);
+  END_IF
+  
   
   // Check configuration parameter changed ? 
   CheckParameterChanged(AxesGroup := AxesGroup);
@@ -7988,14 +8117,16 @@ END_VAR
               _stepCmd := _stepCmd + 1; 
              ELSE
                // set error 
-               ErrorID     := RobotLibraryErrorIdEnum.ERR_SRCI_MAJOR_VERSION_INCOMPATIBLE_0x80A4;
+               SetError(ErrorID := RobotLibraryErrorIdEnum.ERR_SRCI_MAJOR_VERSION_INCOMPATIBLE_0x80A4, Overwrite := TRUE);
                ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
+               RETURN;
              END_IF
   
          ELSE
            // TelegrammState in error          
-           ErrorID := RobotLibraryErrorIdEnum.ERR_INIT_LOST_UNKNOWN_0xA2;
+           SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INIT_LOST_UNKNOWN_0xA2, Overwrite := TRUE );
            ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
+           RETURN;
          END_CASE
   
          // timeout exceeded ? 
@@ -8042,7 +8173,6 @@ END_VAR
         END_IF
     
     03: IF ((     _readMessages.Enabled ) AND
-            ( NOT _readMessages.Busy    ) AND
             ( NOT _readMessages.Error   ))
         THEN       
           // --------------------------------------------------------------- 
@@ -8115,8 +8245,8 @@ END_VAR
         END_IF
     
     
-    05: IF (( NOT _exchangeConfiguration.Busy    ) AND
-            (     _exchangeConfiguration.Enabled ))
+    05: IF ((     _exchangeConfiguration.Enabled ) AND
+            ( NOT _exchangeConfiguration.Error   ))
         THEN     
           // --------------------------------------------------------------------- 
           // !!! ExchangeConfiguration must stay active for the Sync mechanism !!!
@@ -8168,11 +8298,10 @@ END_VAR
         END_IF
       
     
-    07: IF (( NOT _readRobotData.Busy  ) AND
-            (     _readRobotData.Done  ))
+    07: IF ((     _readRobotData.Done  ) AND
+            ( NOT _readRobotData.Busy  ) AND
+            ( NOT _readRobotData.Error ))          
         THEN       
-          // Reset busy flag
-          Busy := FALSE;
           // set initialized flag
           Initialized := TRUE;       
           // start function block
@@ -8226,30 +8355,15 @@ END_METHOD
 METHOD PRIVATE ParseRecvPayload
 VAR_IN_OUT
   /// Robot assignment of function
-  AxesGroup    : AxesGroup;
+  AxesGroup   : AxesGroup;
   /// Inputs of PLC for communication from RC
-  RobotInData  : ARRAY[0..RobotLibraryParameter.ROBOT_IN_DATA_MAX ] OF BYTE;
+  RobotInData : ARRAY[*] OF BYTE;
 END_VAR
 
-VAR
-  /// internal index
- _idx             : DINT;
-  /// temporary DWORD
- _tmpDword        : DWORD;
-  /// length of data block
- _dataBlockLength : UINT;
-  /// internal payload length
- _payLoadLen      : DWORD;  
-  /// internal payload pointer
- _payLoadPtr      : DWORD;  
-  /// sequence counter
- _seqCount        : DINT;
-END_VAR
-
-  // Reset payload
+  // reset all variables and payload
   RecvData.Reset();
-  // Copy inputs to payload  
-  SysDepMemCpy( pDest := ADR(RecvData.Payload) , pSrc  := ADR(RobotInData), DataLen := RobotLibraryParameter.ROBOT_IN_DATA_MAX +1);
+  // Call RecvData FB, update payload and size 
+  RecvData(Payload := RobotInData, PayloadSize := ROBOT_IN_DATA_SIZE);
   
   // check new data to receive ? 
   IF ( Telegram.RobToPlc.Sequence[0].Header.SEQ_ACK <> AxesGroup.State.LastACK[0]) {warning 'ToDo: handle 2nd sequence'} 
@@ -8417,20 +8531,7 @@ VAR_IN_OUT
   AxesGroup : AxesGroup;
 END_VAR
 
-VAR
-  /// index of lifesign in footer
-  _lifeSignIdxFooter : DINT;
-END_VAR
-
-  IF (( _parCfg.Com.TelegramLengthRobToPlc >= 1                                           ) AND 
-      ( _parCfg.Com.TelegramLengthRobToPlc <= RobotLibraryParameter.ROBOT_IN_DATA_MAX + 1 ))
-  THEN
-    // set index of last byte
-   _lifeSignIdxFooter := _parCfg.Com.TelegramLengthRobToPlc -1;
-   
-  
-    Telegram.RobToPlc.Footer.LifeSign := GetHalfeByteHi(RecvData.Payload[_lifeSignIdxFooter]); 
-  END_IF
+  Telegram.RobToPlc.Footer.LifeSign := RecvData.GetLifeSignFooter();
 
 END_METHOD
 
@@ -8744,6 +8845,51 @@ END_VAR
   _stepSyncSWLimits          := 0;
   _stepSyncToolData          := 0;
   _stepSyncWorkArea          := 0;
+
+END_METHOD
+
+METHOD PUBLIC SetError
+VAR_INPUT
+  /// ErrorID reported by RC for error identification according to Table 7-1
+  ErrorID   : WORD;
+  /// TRUE = overwrite an existing error 
+  Overwrite : BOOL;
+END_VAR
+
+  IF ( NOT HasError ) OR ( Overwrite )
+  THEN
+    THIS^.ErrorID := ErrorID;
+  END_IF
+
+END_METHOD
+
+METHOD PUBLIC SetInfo
+VAR_INPUT
+  /// InfoID for info identification reported during execution of command according to Table 7-5
+  InfoID    : WORD;
+  /// TRUE = overwrite an existing info 
+  Overwrite : BOOL;
+END_VAR
+
+  IF ( NOT HasInfo ) OR ( Overwrite )
+  THEN
+    THIS^.InfoID := InfoID;
+  END_IF
+
+END_METHOD
+
+METHOD PUBLIC SetWarning
+VAR_INPUT
+  /// WarningID for warning identification reported during execution of command according to Table 7-3
+  WarningID : WORD;
+  /// TRUE = overwrite an existing warning 
+  Overwrite : BOOL;
+END_VAR
+
+  IF ( NOT HasWarning ) OR ( Overwrite )
+  THEN
+    THIS^.WarningID := WarningID;
+  END_IF
 
 END_METHOD
 

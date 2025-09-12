@@ -149,7 +149,7 @@ END_VAR
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD, Overwrite := TRUE );
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -175,7 +175,7 @@ END_VAR
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD, Overwrite := TRUE );
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -193,7 +193,7 @@ END_VAR
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD , Overwrite :=  TRUE );
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -211,7 +211,7 @@ END_VAR
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD, Overwrite := TRUE );
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -229,7 +229,7 @@ END_VAR
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD; 
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD, Overwrite := TRUE ); 
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -250,7 +250,7 @@ END_VAR
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD; 
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD, Overwrite := TRUE ); 
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -680,6 +680,46 @@ END_VAR
 
 END_METHOD
 
+METHOD PROTECTED OnApplyOutCmd
+VAR_INPUT
+  /// Command message state
+  State : CmdMessageState;
+END_VAR
+
+  IF ( State = CmdMessageState.EMPTY ) 
+  THEN
+    // Reset command outputs
+    SysDepMemSet(pDest := ADR(OutCmd), Value := 0, DataLen := SIZEOF(OutCmd));         
+  END_IF
+  
+  IF ( State = CmdMessageState.ACTIVE ) OR ( TRUE )
+  THEN  
+    // Update command outputs
+    OutCmd.LengthACR                 := _response.LengthACR;
+    OutCmd.HighestToolIndex          := _response.HighestToolIndex;
+    OutCmd.HighestFrameIndex         := _response.HighestFrameIndex;
+    OutCmd.HighestLoadIndex          := _response.HighestLoadIndex;
+    OutCmd.HighestWorkAreaIndex      := _response.HighestWorkAreaIndex;
+    OutCmd.DataInSync                := _response.DataInSync;
+    OutCmd.ChangeIndexTool           := _response.ChangeIndexTool;
+    OutCmd.ChangeIndexFrame          := _response.ChangeIndexFrame;
+    OutCmd.ChangeIndexLoad           := _response.ChangeIndexLoad;
+    OutCmd.ChangeIndexWorkArea       := _response.ChangeIndexWorkArea;
+    OutCmd.RAWorkingHours            := _response.RAWorkingHours;
+    OutCmd.BrakeTestRequired         := _response.StatusByte.0;
+    OutCmd.StepModeExactStopActive   := _response.StatusByte.1;
+    OutCmd.StepModeBlendingActive    := _response.StatusByte.2;
+    OutCmd.PathAccuracyMode          := _response.StatusByte.3;
+    OutCmd.AvoidSingularity          := _response.StatusByte.4;
+    OutCmd.CollisionDetectionEnabled := _response.StatusByte.5;
+    OutCmd.AcceleratingSupported     := _response.StatusByte.6;
+    OutCmd.DecceleratingSupported    := _response.StatusByte.7;
+    OutCmd.ConstantVelocitySupported := _response.ConstantVelocitySupported;
+    OutCmd.RCWorkingHours            := _response.RCWorkingHours;      
+  END_IF
+
+END_METHOD
+
 METHOD Protected OnExecCancel : DINT
 VAR_IN_OUT
   /// Robot assignment of function
@@ -754,7 +794,7 @@ END_VAR
     
   ELSE
     // invalid step
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP, Overwrite := TRUE );
   END_CASE  
   
   
@@ -808,7 +848,7 @@ END_VAR
   	   END_IF
   ELSE
     // invalid step
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP, Overwrite := TRUE );
   END_CASE
   
   
@@ -871,46 +911,10 @@ END_VAR
          THEN
            // reset response received flag
           _responseReceived := FALSE;
-  
-           CASE  _response.State 
-           OF
-             CmdMessageState.BUFFERED    : CommandBuffered    := TRUE;
-             CmdMessageState.ACTIVE      : ParameterAccepted  := TRUE;  
-             CmdMessageState.ERROR       : Error              := TRUE;
-           END_CASE
-  
-           // Update Enabled flag
-           Enabled :=  _response.Enabled OR ParameterAccepted; {warning 'ToDo: Stäubli send Enabled = FALSE instead of true'}
-           
-           // Update command outputs
-           OutCmd.LengthACR                 := _response.LengthACR;
-           OutCmd.HighestToolIndex          := _response.HighestToolIndex;
-           OutCmd.HighestFrameIndex         := _response.HighestFrameIndex;
-           OutCmd.HighestLoadIndex          := _response.HighestLoadIndex;
-           OutCmd.HighestWorkAreaIndex      := _response.HighestWorkAreaIndex;
-           OutCmd.DataInSync                := _response.DataInSync;
-           OutCmd.ChangeIndexTool           := _response.ChangeIndexTool;
-           OutCmd.ChangeIndexFrame          := _response.ChangeIndexFrame;
-           OutCmd.ChangeIndexLoad           := _response.ChangeIndexLoad;
-           OutCmd.ChangeIndexWorkArea       := _response.ChangeIndexWorkArea;
-           OutCmd.RAWorkingHours            := _response.RAWorkingHours;
-           OutCmd.BrakeTestRequired         := _response.StatusByte.0;
-           OutCmd.StepModeExactStopActive   := _response.StatusByte.1;
-           OutCmd.StepModeBlendingActive    := _response.StatusByte.2;
-           OutCmd.PathAccuracyMode          := _response.StatusByte.3;
-           OutCmd.AvoidSingularity          := _response.StatusByte.4;
-           OutCmd.CollisionDetectionEnabled := _response.StatusByte.5;
-           OutCmd.AcceleratingSupported     := _response.StatusByte.6;
-           OutCmd.DecceleratingSupported    := _response.StatusByte.7;
-           OutCmd.ConstantVelocitySupported := _response.ConstantVelocitySupported;
-           OutCmd.RCWorkingHours            := _response.RCWorkingHours;      
-  
-           // Enabled or Error ? -> Reset Busy flag  
-           IF (( Enabled ) OR 
-               ( Error   )) 
-           THEN  
-             Busy := FALSE;
-  				 END_IF
+           // update state flags
+           OnUpdateStateFlags(_response.State);
+           // update state flags
+           OnApplyOutCmd(_response.State);
          END_IF
   
          // do not abort directly, so that the ParSeq update can be send
@@ -940,7 +944,7 @@ END_VAR
         
   ELSE
     // invalid step
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP, Overwrite := TRUE );
   END_CASE
   
   
@@ -951,6 +955,47 @@ END_VAR
   THEN
     Reset();
   END_IF
+
+END_METHOD
+
+METHOD PROTECTED OnUpdateStateFlags
+VAR_INPUT
+  /// Command message state
+  State : CmdMessageState;
+END_VAR
+
+  // Reset State flags
+  ;
+  
+  // Update Enabled flag
+  Enabled := _response.Enabled OR State = CmdMessageState.ACTIVE; {warning 'ToDo: Stäubli send Enabled = FALSE instead of true'}
+  
+  CASE State OF
+  
+    // No operation or process is active
+    CmdMessageState.EMPTY               :;
+    // Created but not yet started
+    CmdMessageState.CREATED             :;
+    // Buffered and awaiting execution
+    CmdMessageState.BUFFERED            : CommandBuffered    := TRUE;
+                                          ParameterAccepted  := TRUE;
+    // Buffered in planner for future execution
+    CmdMessageState.BUFFERED_IN_PLANNER : CommandBuffered    := TRUE;
+                                          ParameterAccepted  := TRUE;
+    // Currently active and in progress
+    CmdMessageState.ACTIVE              : 
+    // Interrupted and awaiting continuation
+    CmdMessageState.INTERRUPTED         :;
+    // Requested for abort
+    CmdMessageState.ABORT_REQUEST       :;
+    // Successfully completed
+    CmdMessageState.DONE                : Busy  := FALSE;
+    // Aborted before completion
+    CmdMessageState.ABORTED             : Busy  := FALSE;
+    // Encountered an error during execution
+    CmdMessageState.ERROR               : Error := TRUE;
+                                          Busy  := FALSE;
+  END_CASE
 
 END_METHOD
 

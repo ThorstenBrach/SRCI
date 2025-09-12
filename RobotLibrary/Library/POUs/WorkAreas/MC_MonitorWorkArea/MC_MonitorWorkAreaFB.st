@@ -132,6 +132,8 @@ END_VAR
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
     // Reset parameter accepted flag
     ParameterAccepted := FALSE;  
+    // Reset Valid output of the FB 
+    Valid := FALSE;
   END_IF
 
 END_METHOD
@@ -153,7 +155,7 @@ END_VAR
   IF (( ParCmd.WorkAreaNo < 0                                                      ) OR
       ( ParCmd.WorkAreaNo > 254                                                    ) OR
       ( ParCmd.WorkAreaNo > AxesGroup.State.ConfigurationData.HighestWorkAreaIndex ) OR
-      ( ParCmd.WorkAreaNo > RobotLibraryParameter.WORK_AREAS_MAX -1                ))     
+      ( ParCmd.WorkAreaNo > AxesGroup.State.UnifiedWorkAreaIndex                   ))         
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
@@ -161,9 +163,9 @@ END_VAR
     // Check LoadNo available on RC ? 
     IF ( ParCmd.WorkAreaNo > AxesGroup.State.ConfigurationData.HighestWorkAreaIndex )
     THEN
-      ErrorID := RobotLibraryErrorIdEnum.ERR_WORKAREANO_UNAVAILABLE;
+      SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_WORKAREANO_UNAVAILABLE, Overwrite := TRUE );
     ELSE
-      ErrorID := RobotLibraryErrorIdEnum.ERR_WORKAREANO_RANGE;
+      SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_WORKAREANO_RANGE, Overwrite := TRUE );
   	END_IF  
     
     // Create log entry
@@ -301,6 +303,28 @@ END_VAR
 
 END_METHOD
 
+METHOD PROTECTED OnApplyOutCmd
+VAR_INPUT
+  /// Command message state
+  State : CmdMessageState;
+END_VAR
+
+  IF ( State = CmdMessageState.EMPTY ) 
+  THEN
+    // Reset command outputs
+    SysDepMemSet(pDest := ADR(OutCmd), Value := 0, DataLen := SIZEOF(OutCmd));         
+  END_IF
+  
+  IF (( State = CmdMessageState.ACTIVE ) OR
+      ( State = CmdMessageState.DONE   ))
+  THEN
+    // Update results
+    OutCmd.ActivationState := _response.ActivationState;
+    OutCmd.MonitoringState := _response.MonitoringState;
+  END_IF
+
+END_METHOD
+
 METHOD PROTECTED OnExecRun : DINT
 VAR_IN_OUT
   /// Robot assignment of function
@@ -352,21 +376,14 @@ END_VAR
          THEN
            // reset response received flag
           _responseReceived := FALSE;
-  
-           CASE  _response.State 
-           OF
-             CmdMessageState.BUFFERED    : CommandBuffered    := TRUE;
-             CmdMessageState.ACTIVE      : ParameterAccepted  := TRUE;           
-             CmdMessageState.ERROR       : Error              := TRUE;
-           END_CASE
-                  
+           // update state flags
+           OnUpdateStateFlags(_response.State);
+           // update state flags
+           OnApplyOutCmd(_response.State);
+                
            // Done, Aborted or Error ?
            IF (_response.State >= CmdMessageState.DONE )
            THEN
-             Valid := TRUE;
-             // Update results
-             OutCmd.ActivationState := _response.ActivationState;
-             OutCmd.MonitoringState := _response.MonitoringState;
              // set timeout
              SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
              // inc step counter
@@ -382,7 +399,7 @@ END_VAR
     
   ELSE
     // invalid step
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP, Overwrite := TRUE );
   END_CASE
   
   
@@ -393,6 +410,44 @@ END_VAR
   THEN
     Reset();
   END_IF
+
+END_METHOD
+
+METHOD PROTECTED OnUpdateStateFlags
+VAR_INPUT
+  /// Command message state
+  State : CmdMessageState;
+END_VAR
+
+  // Reset State flags
+  Valid := FALSE;
+  
+  CASE State OF
+  
+    // No operation or process is active
+    CmdMessageState.EMPTY               :;
+    // Created but not yet started
+    CmdMessageState.CREATED             :;
+    // Buffered and awaiting execution
+    CmdMessageState.BUFFERED            : CommandBuffered    := TRUE;  
+                                          ParameterAccepted  := TRUE;                                         
+    // Buffered in planner for future execution
+    CmdMessageState.BUFFERED_IN_PLANNER : CommandBuffered    := TRUE;  
+                                          ParameterAccepted  := TRUE; 
+    // Currently active and in progress
+    CmdMessageState.ACTIVE              : Valid := TRUE;                                 
+    // Interrupted and awaiting continuation
+    CmdMessageState.INTERRUPTED         :;     
+    // Requested for abort
+    CmdMessageState.ABORT_REQUEST       :;
+    // Successfully completed
+    CmdMessageState.DONE                : Busy               := FALSE;
+    // Aborted before completion
+    CmdMessageState.ABORTED             : Busy               := FALSE;
+    // Encountered an error during execution
+    CmdMessageState.ERROR               : Error              := TRUE;
+                                          Busy               := FALSE;
+  END_CASE
 
 END_METHOD
 

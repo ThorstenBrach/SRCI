@@ -298,7 +298,7 @@ END_VAR
     
   ELSE
     // invalid step
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP, Overwrite := TRUE );
   END_CASE  
   
   
@@ -352,7 +352,7 @@ END_VAR
   	   END_IF
   ELSE
     // invalid step
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP, Overwrite := TRUE );
   END_CASE
   
   
@@ -414,24 +414,10 @@ END_VAR
          THEN
            // reset response received flag
           _responseReceived := FALSE;
-  
-           CASE  _response.State 
-           OF
-             CmdMessageState.BUFFERED    : CommandBuffered    := TRUE;
-             CmdMessageState.ACTIVE      : ParameterAccepted  := TRUE;
-             CmdMessageState.ERROR       : Error              := TRUE;
-           END_CASE
-           
-           // Update Enable flag
-           OutCmd.Enabled := _response.Enabled;
-           
-           // Enabled or Error ? -> Reset Busy flag  
-           IF (( Enabled ) OR 
-               ( Error   ))
-           THEN  
-             Busy := FALSE;
-  				 END_IF
-                  
+           // update state flags
+           OnUpdateStateFlags(_response.State);
+           // update state flags
+           OnApplyOutCmd(_response.State);
          END_IF
          
          // do not abort directly, so that the ParSeq update can be send
@@ -460,7 +446,7 @@ END_VAR
         
   ELSE
     // invalid step
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP, Overwrite := TRUE );
   END_CASE
   
   
@@ -471,6 +457,47 @@ END_VAR
   THEN
     Reset();
   END_IF
+
+END_METHOD
+
+METHOD PROTECTED OnUpdateStateFlags
+VAR_INPUT
+  /// Command message state
+  State : CmdMessageState;
+END_VAR
+
+  // Reset State flags
+  ;
+  
+  // Update Enable flag
+  OutCmd.Enabled := _response.Enabled;
+  
+  CASE State OF
+  
+    // No operation or process is active
+    CmdMessageState.EMPTY               :;
+    // Created but not yet started
+    CmdMessageState.CREATED             :;
+    // Buffered and awaiting execution
+    CmdMessageState.BUFFERED            : CommandBuffered    := TRUE;
+                                          ParameterAccepted  := TRUE;
+    // Buffered in planner for future execution
+    CmdMessageState.BUFFERED_IN_PLANNER : CommandBuffered    := TRUE;
+                                          ParameterAccepted  := TRUE;
+    // Currently active and in progress
+    CmdMessageState.ACTIVE              : 
+    // Interrupted and awaiting continuation
+    CmdMessageState.INTERRUPTED         :;
+    // Requested for abort
+    CmdMessageState.ABORT_REQUEST       :;
+    // Successfully completed
+    CmdMessageState.DONE                : Busy  := FALSE;
+    // Aborted before completion
+    CmdMessageState.ABORTED             : Busy  := FALSE;
+    // Encountered an error during execution
+    CmdMessageState.ERROR               : Error := TRUE;
+                                          Busy  := FALSE;
+  END_CASE
 
 END_METHOD
 

@@ -111,7 +111,7 @@ END_VAR
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD, Overwrite := TRUE );
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -129,7 +129,7 @@ END_VAR
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD, Overwrite := TRUE );
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -145,7 +145,7 @@ END_VAR
   IF (( ParCmd.ToolNo <  -1                                                ) OR  
       ( ParCmd.ToolNo > 254                                                ) OR 
       ( ParCmd.ToolNo > AxesGroup.State.ConfigurationData.HighestToolIndex ) OR
-      ( ParCmd.ToolNo > RobotLibraryParameter.TOOL_MAX -1                  ))
+      ( ParCmd.ToolNo > AxesGroup.State.UnifiedToolIndex                   ))
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
@@ -153,9 +153,9 @@ END_VAR
     // Check ToolNo available on RC ? 
     IF ( ParCmd.ToolNo > AxesGroup.State.ConfigurationData.HighestToolIndex )
     THEN
-      ErrorID := RobotLibraryErrorIdEnum.ERR_TOOLNO_UNAVAILABLE;
+      SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_TOOLNO_UNAVAILABLE, Overwrite := TRUE );
     ELSE
-      ErrorID := RobotLibraryErrorIdEnum.ERR_TOOLNO_RANGE;
+      SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_TOOLNO_RANGE, Overwrite := TRUE );
   	END_IF  
     
     // Create log entry
@@ -173,7 +173,7 @@ END_VAR
   IF (( ParCmd.FrameNo <  -1                                                 ) OR  
       ( ParCmd.FrameNo > 254                                                 ) OR
       ( ParCmd.FrameNo > AxesGroup.State.ConfigurationData.HighestFrameIndex ) OR
-      ( ParCmd.FrameNo > RobotLibraryParameter.FRAME_MAX -1                  ))         
+      ( ParCmd.FrameNo > AxesGroup.State.UnifiedFrameIndex                   ))         
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
@@ -181,9 +181,9 @@ END_VAR
     // Check FrameNo available on RC ? 
     IF ( ParCmd.FrameNo > AxesGroup.State.ConfigurationData.HighestFrameIndex )
     THEN
-      ErrorID := RobotLibraryErrorIdEnum.ERR_FRAMENO_UNAVAILABLE;
+      SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_FRAMENO_UNAVAILABLE, Overwrite := TRUE );
     ELSE
-      ErrorID := RobotLibraryErrorIdEnum.ERR_FRAMENO_RANGE;
+      SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_FRAMENO_RANGE, Overwrite := TRUE );
   	END_IF  
     
     // Create log entry
@@ -203,7 +203,7 @@ END_VAR
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD, Overwrite := TRUE );
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -221,7 +221,7 @@ END_VAR
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD, Overwrite := TRUE );
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -466,7 +466,7 @@ END_VAR
   
   ELSE
     // invalid step
-    ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP, Overwrite := TRUE );
   END_CASE
   
   
