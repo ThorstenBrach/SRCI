@@ -174,6 +174,24 @@ TYPE RobotLibraryErrorIdEnum :
   /// All commands
   ERR_LOADNO_RANGE  := 16#8418,
   
+  /// Invalid parameter value - the requested ExportMode does not exist
+  ERR_EXPORTMODE_NOT_EXIST := 16#8419,
+  
+  /// Invalid parameter value - the requested ExportName does not exist
+  ERR_EXPORTNAME_NOT_EXIST := 16#8420,
+  
+  /// The given ExportName is already exist
+  ERR_EXPORTNAME_ALREADY_EXISTS := 16#8421,
+  
+  /// No memory is left for data log
+  ERR_DATALOG_NO_MEMORY_LEFT := 16#8422,
+  
+  /// An Error occurred during data loging . Message encludes Error ID
+  ERR_DATALOG_ERROR_OCCURRED := 16#8425,
+  
+  /// Internal System Error "Undefined Step"
+  ERR_INTERNAL_UNDEFINED_STEP := 16#8601,
+  
   /// Client Specified ProcessingMode not defined
   /// Commands using the parameter "ProcessingMode"
   ERR_PROCESSINGMODE_NOT_DEFINED  := 16#8602,
@@ -194,6 +212,12 @@ TYPE RobotLibraryErrorIdEnum :
   /// Commands using the parameter "ProcessingMode" or "SequenceFlag"
   ERR_PROCSEQFLAG_CHANGED  := 16#8609,
   
+  /// Specified priority to high
+  ERR_PRIORITY_TOO_LOW := 16#8610,
+
+  /// Specified priority to low
+  ERR_PRIORITY_TOO_HIGH := 16#8611,
+  
   /// Client Commands are not Enabled (First Robot must be initialized)
   /// All commands
   ERR_COMMANDS_NOT_ENABLED  := 16#8612,
@@ -205,7 +229,10 @@ TYPE RobotLibraryErrorIdEnum :
   /// Client AxesGroup changed during execution
   /// All commands
   ERR_AXESGROUP_CHANGED  := 16#8614,
-  
+ 
+  /// Internal System Error "Error without Error ID
+  ERR_INTERNAL_ERROR_WITHOUT_ID := 16#8615,
+
   /// Client Specified SEQ Flag not allowed
   /// Commands using the parameter "SequenceFlag"
   ERR_SEQFLAG_NOT_ALLOWED  := 16#8616,
@@ -401,6 +428,9 @@ TYPE RobotLibraryErrorIdEnum :
   /// Server Setting the limits is not possible while a motion is active.
   /// Command "WriteSWLimits"
   ERR_SWLIMITS_NOT_ALLOWED_DURING_MOVE  := 16#8C54,
+  
+  /// Position not reachable.
+  ERR_POSITION_NOT_REACHABLE := 16#8C55,
 
   /// Server Change of operation mode by the PLC not possible. The RC must be in an "External" operation mode
   /// Command "SetOperationMode"
@@ -445,6 +475,24 @@ TYPE RobotLibraryErrorIdEnum :
   /// Server Number of received positions does not correspond to the required number for the selected mode
   /// Commands: "CalculateTool", "CalculateFrame"
   ERR_POS_INDEX_MISMATCH  := 16#8C66,
+  
+  /// The defined MaximumDistance to the given target JointPosition has been exceeded. Move closer to the target or increase the MaximumDistance.
+  ERR_MAXIMUM_DISTANCE_EXCEEDED := 16#8C67,
+  
+  /// The given JointPosition does not match the RAs safe referencing position.
+  ERR_INVALID_SAFEREFERENCE_POSITION := 16#8C68,
+  
+  /// The safety sensor did not trigger
+  ERR_SAFETY_SENSOR_NOT_TRIGGERED := 16#8C69,
+  
+  /// Restart is only possible if the robot is not moving.
+  ERR_RESTART_WHILE_ROBOT_MOVING := 16#8C70,
+  
+  /// Simultaneous rotational and translational jog is not supported
+  ERR_UNSUPPORTED_COMBINED_JOG := 16#8C71,
+  
+  /// GroupReset not possible, as not all messages were transmitted yet
+  ERR_GROUPRESET_PENDING_MESSAGES := 16#8C72,  
 
   /// Server Invalid parameter value - AccelerationRate
   /// Commands using the parameter "AccelerationRate"
@@ -806,6 +854,9 @@ TYPE RobotLibraryErrorIdEnum :
   /// Command "EnableRobot"
   ERR_OPTIONAL_PARAM_STEP_MODE_BLENDING_NOT_SUPPORTED := 16#8E17,
 
+    /// Only identical config modes for shoulder, elbow and wrist are supported.
+  ERR_CONFIG_MODES_MUST_BE_IDENTICAL := 16#8E19,
+  
   /// Server Optional parameter value not supported - ModifiedConvention
   /// Command "ReadDHParameter"
   ERR_OPTIONAL_PARAM_MODIFIED_CONVENTION_NOT_SUPPORTED := 16#8E20,
@@ -845,6 +896,33 @@ TYPE RobotLibraryErrorIdEnum :
   /// Server Optional parameter not supported - RelativePosition
   /// Commands using the parameter "RelativePosition"
   ERR_OPTIONAL_PARAM_RELATIVE_POS_NOT_SUPPORTED := 16#8E30,
+  
+  /// Optional parameter not supported - Maximum Distance
+  ERR_OPTIONAL_PARAM_MAXIMUM_DISTANCE_NOT_SUPPORTED := 16#8E31,
+  
+  /// Optional parameter value not supported - CircMode
+  ERR_OPTIONAL_PARAM_CIRCMODE_VALUE_NOT_SUPPORTED := 16#8E32,
+
+  /// Optional parameter not supported - IX
+  ERR_OPTIONAL_PARAM_IX_NOT_SUPPORTED := 16#8E33,
+
+  /// Optional parameter not supported - IY
+  ERR_OPTIONAL_PARAM_IY_NOT_SUPPORTED := 16#8E34,
+
+  /// Optional parameter not supported - IZ
+  ERR_OPTIONAL_PARAM_IZ_NOT_SUPPORTED := 16#8E35,
+
+  /// Optional parameter not supported - RX
+  ERR_OPTIONAL_PARAM_RX_NOT_SUPPORTED := 16#8E36,
+
+  /// Optional parameter not supported - RY
+  ERR_OPTIONAL_PARAM_RY_NOT_SUPPORTED := 16#8E37,
+
+  /// Optional parameter not supported - RZ
+  ERR_OPTIONAL_PARAM_RZ_NOT_SUPPORTED := 16#8E38,
+
+  /// Optional parameter not supported - IncrementalJog
+  ERR_OPTIONAL_PARAM_INCREMENTAL_JOG_NOT_SUPPORTED := 16#8E39,
 
   /// Server Specified Emitter ID must not be 0
   /// Commands using the parameter "EmitterID"

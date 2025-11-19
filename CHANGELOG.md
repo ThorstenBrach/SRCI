@@ -4,6 +4,75 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [0.0.0.50] - 2025-10-01
+
+### Added
+ - Added `NotifyParameterChanged` log message in all `CheckParameterChanged` methods
+ - Added new error ID `ERR_MAXIMUM_DISTANCE_EXCEEDED`
+ - Added new error ID `ERR_INVALID_SAFEREFERENCE_POSITION`
+ - Added new error ID `ERR_SAFETY_SENSOR_NOT_TRIGGERED`
+ - Added new error ID `ERR_RESTART_WHILE_ROBOT_MOVING`
+ - Added new error ID `ERR_UNSUPPORTED_COMBINED_JOG`
+ - Added new error ID `ERR_GROUPRESET_PENDING_MESSAGES`
+ - Added new error ID `ERR_EXPORTMODE_NOT_EXIST`
+ - Added new error ID `ERR_EXPORTNAME_NOT_EXIST`
+ - Added new error ID `ERR_EXPORTNAME_ALREADY_EXISTS`
+ - Added new error ID `ERR_DATALOG_NO_MEMORY_LEFT`
+ - Added new error ID `ERR_DATALOG_ERROR_OCCURRED`
+ - Added new error ID `ERR_INTERNAL_UNDEFINED_STEP`
+ - Added new error ID `ERR_PRIORITY_TOO_LOW`
+ - Added new error ID `ERR_PRIORITY_TOO_HIGH`
+ - Added new error ID `ERR_INTERNAL_ERROR_WITHOUT_ID`
+ - Added new error ID `ERR_POSITION_NOT_REACHABLE`
+ - Added new error ID `ERR_CONFIG_MODES_MUST_BE_IDENTICAL`
+ - Added new error ID `ERR_OPTIONAL_PARAM_MAXIMUM_DISTANCE_NOT_SUPPORTED`
+ - Added new error ID `ERR_OPTIONAL_PARAM_CIRCMODE_VALUE_NOT_SUPPORTED`
+ - Added new error ID `ERR_OPTIONAL_PARAM_IX_NOT_SUPPORTED`
+ - Added new error ID `ERR_OPTIONAL_PARAM_IY_NOT_SUPPORTED`
+ - Added new error ID `ERR_OPTIONAL_PARAM_IZ_NOT_SUPPORTED`
+ - Added new error ID `ERR_OPTIONAL_PARAM_RX_NOT_SUPPORTED`
+ - Added new error ID `ERR_OPTIONAL_PARAM_RY_NOT_SUPPORTED`
+ - Added new error ID `ERR_OPTIONAL_PARAM_RZ_NOT_SUPPORTED`
+ - Added new error ID `ERR_OPTIONAL_PARAM_INCREMENTAL_JOG_NOT_SUPPORTED`
+ - Added new warning ID `WARN_INVALID_ROBOT_STATE_MULTIPLE_CMDS_ACTIVE`
+ - Added new warning ID `WARN_PARAM_CHANGE_NOT_POSSIBLE_DEACTIVATE_FIRST_CTX`
+ - Added new warning ID `WARN_PARAM_CHANGE_NOT_POSSIBLE_DEACTIVATE_FIRST`
+ - Added new warning ID `WARN_HOLD_TO_RUN_REQUIRES_MOTION_IN_SEQUENCE`
+ - Added new warning ID `WARN_TRIGGER_EVENT_WITHOUT_ASSOCIATED_ACTION`
+ - Added new warning ID `WARN_TRIGGER_MODE2_NOT_SUPPORTED_FOR_ALL_MOVES`
+ - Added new warning ID `WARN_SAFE_REFERENCING_VELOCITY_REDUCED`
+ - Added new warning ID `WARN_SAFE_REFERENCING_ADDITIONAL_STEPS_REQUIRED`  
+ - Added new Info ID `INFO_CONTINUOUS_UPDATE_NOT_POSSIBLE`
+ - Added new Info ID `INFO_CMD_BOUND_TO_INSTANCE_CONTINUOUS_MODE`
+ - Added new Info ID `INFO_CONTINUOUS_UPDATE_NOT_POSSIBLE`
+ - Added new Info ID `INFO_CMD_BOUND_TO_INSTANCE_TRIGGER_MODE`
+ - Added `StatusRobotArm` informations to `AxesGroup.State`
+
+### Changed
+
+ - Changed telegram of `MC_EnableRobotFB` - moved `ManualStep` to `Bit 01` of the same byte as `HoldToRun` and added a reserve byte at the end.
+ - Changed `OnApplyOutCmd` method of `MC_ReadRobotDefaultDynamicsFB`,  to use `PERCENT_UINT_TO_REAL` function instead of `PERCENT_INT_TO_REAL(UINT_TO_INT(...)` function, which returned -0.01 instead of -1.
+ - Changed `OnApplyOutCmd` method of `MC_ReadRobotReferenceDynamicsFB`, to use `PERCENT_UINT_TO_REAL` function instead of `PERCENT_INT_TO_REAL(UINT_TO_INT(...)` function, which returned -0.01 instead of -1.
+ - Changed `OnApplyOutCmd` method of `MC_WriteRobotDefaultDynamicsFB`,  to use `PERCENT_UINT_TO_REAL` function instead of `PERCENT_INT_TO_REAL(UINT_TO_INT(...)` function, which returned -0.01 instead of -1.
+ - `OutCmd.DynamicValues.Timestamp` of `MC_ReadRobotReferenceDynamicsFB` was not updated in `OnApplyOutCmd` method.
+ - `OutCmd.ReferenceDynamicValues.Timestamp` of `MC_WriteRobotReferenceDynamicsFB` was not updated in `OnApplyOutCmd` method.
+ - Changed conditions for acknowledge new `MsgID` in `HandleLogMessagesAck` method in `MC_RobotTaskFB`
+ - Reset `Initialized` flag of `RobotTaskFB` in `OnExecRun` method in case of error
+ - Changed `OutCmd.Progress` of all motion commands to `optional`, so that a value of `65535` is interpreted as `-1`
+ - Reset `Busy` flag of `MC_EnableRobotFB` in `UpdateStateFlags` method if target state is reached
+ - Changed condition of `step 1` in `HandleSyncFrameData`, to additionally check the `Done` state
+ - Changed condition of `step 1` in `HandleSyncLoadData`, to additionally check the `Done` state
+ - Changed condition of `step 1` in `HandleSyncRobotDefaultDynamics`, to additionally check the `Done` state
+ - Changed condition of `step 1` in `HandleSyncRobotReferenceDynamics`, to additionally check the `Done` state
+ - Changed condition of `step 1` in `HandleSyncRobotSWLimits`, to additionally check the `Done` state
+ - Changed condition of `step 1` in `HandleSyncToolData`, to additionally check the `Done` state
+ - Changed condition of `step 1` in `HandleSyncWorkArea`, to additionally check the `Done` state
+ - Fixed a bug in `HandleSyncToolData` method of `MC_RobotTaskFB` , that the `SynchronizationModes` of `SWLimits` was used instead of `Tool`
+ - Fixed a bug in `ParseRecvPayloadSequence` method of `MC_RobotTaskFB`, that the payload was not correctly added to a command when the payloadpointer was not zero
+ - Fixed a bug in `GroupJog` FB, that the `Busy` was not reset when the command becomes `Active` - which triggered a `Cancel` if the `Enable` flag was set to `FALSE` again.
+ - Fixed a bug in `GroupJog` FB, that the response parameter was not logged because the parameter count was not incremented during parsing the response message.
+ - Fixed a spelling mistage in some log messages `cancled` instead of `cancelled`
+ 
 ## [0.0.0.49] - 2025-09-12
 
 ### Added
@@ -25,7 +94,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Changed
  - Refactored all command FBs by moving the update of FB `StatusFlags` into a dedicated method `OnUpdateStateFlags` to keep to code `OnExecRun` of cleaner.
- - Refactored all command FBs by moving the update of FB `OutCmd` into a dedicated method `OnUpdateOutCmd` to keep to code `OnExecRun` of cleaner.
+ - Refactored all command FBs by moving the update of FB `OutCmd` into a dedicated method `OnApplyOutCmd` to keep to code `OnExecRun` of cleaner.
  - Modified behavior of StatusFlag `Busy` in all `Enable` FBs. 
    Previously, `Busy` was reset on the rising edge of `Enabled` - Now it remains `TRUE` for the entire duration the FB is enabled.
  - Modified behavior of StatusFlag `ParameterAccepted`. 

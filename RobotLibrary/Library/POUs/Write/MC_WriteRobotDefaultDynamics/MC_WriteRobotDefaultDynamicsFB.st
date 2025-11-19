@@ -112,6 +112,14 @@ END_VAR
       (  _parameterValid          )) OR
       (  _parameterUpdateInternal )  
   THEN  
+    // Create log entry for parameter changed event
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'NotifyParameterChanged Event {1}',
+                            Para1       :=  '' );
+  
     // reset internal flag for send parameter update
    _parameterUpdateInternal := FALSE;
     // update internal copy of parameters 
@@ -354,7 +362,7 @@ END_VAR
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Create command payload with the {1} parameter(s) :',
+                          MessageText := 'Create command payload with {1} parameter(s) :',
                           Para1       := DINT_TO_STRING(ParameterCnt));
     
   
@@ -468,10 +476,10 @@ END_VAR
       ( State = CmdMessageState.DONE   ))
   THEN
     // Update results
-    OutCmd.DefaultDynamicValues.VelocityRate     := PERCENT_INT_TO_REAL(UINT_TO_INT(_response.VelocityRate     ), IsOptional := FALSE); 
-    OutCmd.DefaultDynamicValues.AccelerationRate := PERCENT_INT_TO_REAL(UINT_TO_INT(_response.AccelerationRate ), IsOptional := FALSE);
-    OutCmd.DefaultDynamicValues.DecelerationRate := PERCENT_INT_TO_REAL(UINT_TO_INT(_response.DecelerationRate ), IsOptional := TRUE );
-    OutCmd.DefaultDynamicValues.JerkRate         := PERCENT_INT_TO_REAL(UINT_TO_INT(_response.JerkRate         ), IsOptional := TRUE );
+    OutCmd.DefaultDynamicValues.VelocityRate     := PERCENT_UINT_TO_REAL(_response.VelocityRate     , IsOptional := FALSE); 
+    OutCmd.DefaultDynamicValues.AccelerationRate := PERCENT_UINT_TO_REAL(_response.AccelerationRate , IsOptional := FALSE);
+    OutCmd.DefaultDynamicValues.DecelerationRate := PERCENT_UINT_TO_REAL(_response.DecelerationRate , IsOptional := TRUE );
+    OutCmd.DefaultDynamicValues.JerkRate         := PERCENT_UINT_TO_REAL(_response.JerkRate         , IsOptional := TRUE );
   END_IF
 
 END_METHOD

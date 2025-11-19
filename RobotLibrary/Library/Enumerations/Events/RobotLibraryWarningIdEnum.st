@@ -26,6 +26,12 @@ TYPE RobotLibraryWarningIdEnum :
   /// All commands
   WARN_ACR_FREE_ENTRIES_LOW  := 16#7605,
 
+  /// Change of parameters relevant to the execution context (e.g. ProcessingMode, SequenceFlag) is not possible. Deactivate first.
+  WARN_PARAM_CHANGE_NOT_POSSIBLE_DEACTIVATE_FIRST_CTX := 16#7606,
+  
+  /// Change of parameters is not possible. Deactivate first
+  WARN_PARAM_CHANGE_NOT_POSSIBLE_DEACTIVATE_FIRST := 16#7607,
+  
   /// Server The Frame is currently used in the sequence
   /// Command: "WriteFrameData"
   WARN_FRAME_USED_IN_SEQUENCE  := 16#7C03,
@@ -38,10 +44,25 @@ TYPE RobotLibraryWarningIdEnum :
   /// Command: "WriteLoadData"
   WARN_LOAD_USED_IN_SEQUENCE  := 16#7C06,
 
+  /// HoldToRun not possible. One motion command must be in the sequence when HoldToRun is activated
+  WARN_HOLD_TO_RUN_REQUIRES_MOTION_IN_SEQUENCE := 16#7C08,
+  
+  /// Trigger event was emitted but no associated Action exists for specified EmitterID
+  WARN_TRIGGER_EVENT_WITHOUT_ASSOCIATED_ACTION := 16#7C12,
+  
+  /// Trigger Mode 2 (Distance in mm) is not possible for all move commands (e.g. MoveAxes)
+  WARN_TRIGGER_MODE2_NOT_SUPPORTED_FOR_ALL_MOVES := 16#7C13,
+  
   /// Server The monitoring does not apply to motion CMDs which are already buffered.
   /// Command: "SetTriggerMotion"
   WARN_MONITORING_DOES_NOT_APPLY_TO_BUFFERED_CMDS  := 16#7C14,
 
+  /// Motion velocity is reduced as Safe Referencing is required.
+  WARN_SAFE_REFERENCING_VELOCITY_REDUCED := 16#7C15,
+  
+  /// Additional steps are required to complete the SafeReferencing. Check the MessageLog for further information.
+  WARN_SAFE_REFERENCING_ADDITIONAL_STEPS_REQUIRED := 16#7C16,
+  
   /// 7.4 Table "D" – RI WarningIDs
   /// RI warnings can occur on the PLC as well as on the RC. In the event of an RI warning on the PLC,
   /// the corresponding WarningID is written to the PLC message buffer independent of the function call
@@ -171,12 +192,6 @@ TYPE RobotLibraryWarningIdEnum :
   /// Client Synchronization of load is not possible due to error in the read or write load cmd. See dedicated message log entry for more information.
   WARN_LOAD_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD := 16#7046,
 
-  
-  /// Client Synchronization of workarea is not possible due to error in the read or write load cmd. See dedicated message log entry for more information.
-  WARN_WORK_AREA_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD := 16#7051, {warning 'ToDo: No event for WorkArea defined in specification V1.3 !!!'}
-
-  
-  
   /// Client Synchronization of swLimits is not possible due to error in the read or write swLimits cmd. See dedicated message log entry for more information.
   WARN_SW_LIMITS_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD := 16#7047,
 
@@ -189,6 +204,12 @@ TYPE RobotLibraryWarningIdEnum :
   /// Client Using the legacy SRCI version encoding. It will not be compatible with the newest RC interpreter versions.
   WARN_LEGACY_SRCI_ENCODING  := 16#7050,
 
+  /// Invalid state of the robot (more than 1 CMD active)
+  WARN_INVALID_ROBOT_STATE_MULTIPLE_CMDS_ACTIVE := 16#7051,
+
+  /// Client Synchronization of workarea is not possible due to error in the read or write load cmd. See dedicated message log entry for more information.
+  WARN_WORK_AREA_SYNC_FAILED_BY_ERROR_OF_READ_OR_WRITE_CMD := 16#7052, {warning 'ToDo: No event for WorkArea defined in specification V1.3 !!!'}
+  
   /// Server The ACR is almost full. Filling it completely disables the robot. Make sure to limit the number of commands in the system.
   WARN_ACR_ALMOST_FULL  := 16#7A01
 )WORD;

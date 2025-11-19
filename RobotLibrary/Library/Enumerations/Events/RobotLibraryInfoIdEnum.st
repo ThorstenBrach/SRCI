@@ -154,14 +154,23 @@ TYPE RobotLibraryInfoIdEnum :
   INFO_SYNC_DEFAULT_DYNAMICS_DISABLED := 16#6040,
 
   /// Client Change the Syncmode to Negative only works on Startup with PLC (DEFAULT DYNAMICS)
-  INFO_CHANGE_DEFAULT_DYNAMIVS_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED := 16#6041,
+  INFO_CHANGE_DEFAULT_DYNAMICS_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED := 16#6041,
 
   /// Client Synchronization of reference dynamics data is disabled, and the data is different on the RC.
   INFO_SYNC_REFERENCE_DYNAMICS_DISABLED := 16#6044,
 
   /// Client Change the Syncmode to Negative only works on Startup with PLC (REFERENCE DYNAMICS)
-  INFO_CHANGE_REFERENCE_DYNAMIVS_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED := 16#6045,
+  INFO_CHANGE_REFERENCE_DYNAMICS_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED := 16#6045,
 
+  /// Continuous updating of parameters relevant to the execution context (e.g. ProcessingMode, SequenceFlag) is not possible
+  INFO_CONTINUOUS_UPDATE_NOT_POSSIBLE := 16#6650,
+  
+  /// ommand is bound to instance on RC while executed in continuous processing mode. Reexecution is not possible before deactivating
+  INFO_CMD_BOUND_TO_INSTANCE_CONTINUOUS_MODE := 16#6651,
+  
+  /// Command is bound to instance on RC while executed in trigger-based processing mode. Reexecution is not possible before deactivating
+  INFO_CMD_BOUND_TO_INSTANCE_TRIGGER_MODE := 16#6652,
+  
   /// Server RA disabled due to operation mode change
   INFO_RA_DISABLED_BY_OPMODE_CHANGE  := 16#6A01,
 
@@ -178,7 +187,10 @@ TYPE RobotLibraryInfoIdEnum :
   INFO_EXCESSIVE_LOGGING  := 16#6A13,
 
   /// Server The first motion is executed with reduced velocity.
-  INFO_FIRST_MOTION_REDUCED_VELOCITY  := 16#6C08
+  INFO_FIRST_MOTION_REDUCED_VELOCITY  := 16#6C08,
+  
+  /// Server An RC internal error occurred during execution of this command. Check the message log for additional information
+  INFO_INTERNAL_ERROR_DURING_CMD := 16#8FFF
 )WORD;
 END_TYPE
 

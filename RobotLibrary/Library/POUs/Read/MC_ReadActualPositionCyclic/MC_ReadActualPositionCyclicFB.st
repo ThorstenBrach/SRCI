@@ -78,6 +78,14 @@ END_VAR
       (  _parameterValid          )) OR
       (  _parameterUpdateInternal )  
   THEN  
+    // Create log entry for parameter changed event
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'NotifyParameterChanged Event {1}',
+                            Para1       :=  '' );
+  
     // reset internal flag for send parameter update
    _parameterUpdateInternal := FALSE;
     // Set busy flag

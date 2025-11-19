@@ -1366,7 +1366,7 @@ END_VAR
     IF ( _parCfg.Plc.Parameter.SynchronizationModes.DefaultDynamics[_idx] <> ParCfg.Plc.Parameter.SynchronizationModes.DefaultDynamics[_idx] )
     THEN
       // Set info
-      SetInfo( InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_DEFAULT_DYNAMIVS_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED, Overwrite := TRUE);
+      SetInfo( InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_DEFAULT_DYNAMICS_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED, Overwrite := TRUE);
        
       // Create log entry
       CreateLogMessagePara3( Timestamp   := SystemTime,
@@ -1384,7 +1384,7 @@ END_VAR
     IF ( _parCfg.Plc.Parameter.SynchronizationModes.ReferenceDynamics[_idx] <> ParCfg.Plc.Parameter.SynchronizationModes.ReferenceDynamics[_idx] )
     THEN
       // Set info
-      InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_REFERENCE_DYNAMIVS_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED;
+      SetInfo( InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_REFERENCE_DYNAMICS_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED, Overwrite := TRUE);
        
       // Create log entry
       CreateLogMessagePara3( Timestamp   := SystemTime,
@@ -2424,7 +2424,8 @@ END_VAR
   AxesGroup.State.Synchronized := Synchronized AND AxesGroup.State.AliveOk;
   AxesGroup.State.CMDsEnabled  := AxesGroup.State.Initialized OR 
                                   AxesGroup.State.Synchronized;
-  
+                                  
+  AxesGroup.State.StatusRobotArm  := AxesGroup.Cyclic.RobToPlc.StatusRobotArm;                                
   AxesGroup.State.ConfigExchanged := _exchangeConfiguration.Enabled;
   
   AxesGroup.State.UnifiedFrameIndex                    := DINT_TO_USINT( MIN( MIN(AxesGroup.SystemData.FrameDataMax, RobotLibraryParameter.FRAME_MAX     ), _exchangeConfiguration.OutCmd.HighestFrameIndex   ));
@@ -2654,6 +2655,18 @@ VAR_IN_OUT
   AxesGroup : AxesGroup;
 END_VAR
 
+  IF ( _readMessages.Enabled ) 
+  THEN
+    // Set Message ID as Acknowlege ID  
+   _readMessages.ParCmd.MsgID := _readMessages.OutCmd.MsgId;  
+  ELSE
+    // Reset Acknowlege ID  
+   _readMessages.ParCmd.MsgID := 0;
+  END_IF 
+  
+  
+  (*
+  
   IF (( _readMessages.Enabled           ) AND 
       ( _readMessages.OutCmd.MsgId > 0  ))  
   THEN
@@ -2664,6 +2677,8 @@ END_VAR
      _readMessages.ParCmd.MsgID := _readMessages.OutCmd.MsgId;  
   	END_IF    
   END_IF
+  
+  *)
 
 END_METHOD
 
@@ -2891,7 +2906,8 @@ END_VAR
        
        // Start read FrameData
     1: IF (( NOT _readFrameData.Busy  ) AND 
-           ( NOT _readFrameData.Error ))
+           ( NOT _readFrameData.Error ) AND
+           ( NOT _readFrameData.Done  ))
        THEN
          // set command parameter
         _readFrameData.ParCmd.FrameNo := _rSyncIdx;      
@@ -3647,7 +3663,8 @@ END_VAR
        
        // Start read LoadData
     1: IF (( NOT _readLoadData.Busy  ) AND 
-           ( NOT _readLoadData.Error ))
+           ( NOT _readLoadData.Error ) AND
+           ( NOT _readLoadData.Done  ))
        THEN
          // set command parameter
         _readLoadData.ParCmd.LoadNo := _rSyncIdx;      
@@ -4404,8 +4421,9 @@ END_VAR
   
        
        // Start read DefaultDynamics
-    1: IF (( NOT _readRobotDefaultDynamics .Busy  ) AND 
-           ( NOT _readRobotDefaultDynamics.Error ))
+    1: IF (( NOT _readRobotDefaultDynamics.Busy  ) AND 
+           ( NOT _readRobotDefaultDynamics.Error ) AND
+           ( NOT _readRobotDefaultDynamics.Done  ))
        THEN
          // execute command
         _readRobotDefaultDynamics.Execute := TRUE;
@@ -5041,8 +5059,9 @@ END_VAR
   
        
        // Start read ReferenceDynamics
-    1: IF (( NOT _readRobotReferenceDynamics .Busy  ) AND 
-           ( NOT _readRobotReferenceDynamics.Error ))
+    1: IF (( NOT _readRobotReferenceDynamics.Busy  ) AND 
+           ( NOT _readRobotReferenceDynamics.Error ) AND
+           ( NOT _readRobotReferenceDynamics.Done  ))
        THEN
          // execute command
         _readRobotReferenceDynamics.Execute := TRUE;
@@ -5674,8 +5693,9 @@ END_VAR
   
        
        // Start read SwLimits
-    1: IF (( NOT _readRobotSWLimits .Busy  ) AND 
-           ( NOT _readRobotSWLimits.Error ))
+    1: IF (( NOT _readRobotSWLimits.Busy  ) AND 
+           ( NOT _readRobotSWLimits.Error ) AND
+           ( NOT _readRobotSWLimits.Done  ))
        THEN
          // execute command
         _readRobotSWLimits.Execute := TRUE;
@@ -6288,8 +6308,8 @@ END_VAR
   CASE _rStep
   OF    
     0: // Check initialisation configured ?
-       IF (( _parCfg.PLC.Parameter.SynchronizationModes.SWLimits[SyncTime.DURING_START_UP] = SyncMode.NO_SYNCHRONIZATION ) AND
-           ( _parCfg.PLC.Parameter.SynchronizationModes.SWLimits[SyncTime. AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION ))
+       IF (( _parCfg.PLC.Parameter.SynchronizationModes.Tool[SyncTime.DURING_START_UP] = SyncMode.NO_SYNCHRONIZATION ) AND
+           ( _parCfg.PLC.Parameter.SynchronizationModes.Tool[SyncTime. AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION ))
        THEN
          RETURN;
        END_IF
@@ -6328,7 +6348,8 @@ END_VAR
        
        // Start read ToolData
     1: IF (( NOT _readToolData.Busy  ) AND 
-           ( NOT _readToolData.Error ))
+           ( NOT _readToolData.Error ) AND
+           ( NOT _readToolData.Done  ))
        THEN
          // set command parameter
         _readToolData.ParCmd.ToolNo := _rSyncIdx;      
@@ -7082,7 +7103,8 @@ END_VAR
        
        // Start read WorkArea
     1: IF (( NOT _readWorkArea.Busy  ) AND 
-           ( NOT _readWorkArea.Error ))
+           ( NOT _readWorkArea.Error ) AND
+           ( NOT _readWorkArea.Done  ))
        THEN
          // set command parameter
         _readWorkArea.ParCmd.WorkAreaNo := _rSyncIdx;      
@@ -8328,7 +8350,7 @@ END_VAR
   
          
     08:  // Update Initialized state
-         Initialized := NOT Synchronized;
+         Initialized := NOT ERROR AND NOT Synchronized;
   
          // Wait for task disable
          IF ( NOT Enable)
@@ -8626,6 +8648,8 @@ VAR
  _seqIdx           : DINT;
   /// index for fragment
  _fragIdx          : DINT; 
+  /// current payload pointer for current fragment
+ _payLoadPtr       : DINT;
   /// Amount of sequences
  _seqCount         : DINT;
   /// current payload pointer of the current sequence
@@ -8714,11 +8738,30 @@ END_VAR
             END_IF
           
             // Fill Response payload
-            FOR _idx := Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadPointer TO Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadLength -1
+            FOR _idx := 0 TO Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadLength -1
             DO
-              Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Command.Payload[_idx] := RecvData.GetByte();
-              // inc payload pointer
-             _seqPayloadPtr := _seqPayloadPtr + SIZEOF(BYTE);
+              // calculate payload pointer
+             _payLoadPtr := Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Header.PayloadPointer + _idx;
+            
+              IF (( _payLoadPtr >= 0                                          ) AND
+                  ( _payLoadPtr <= RobotLibraryParameter.RESPONSE_PAYLOAD_MAX ))
+              THEN  
+                Telegram.RobToPlc.Sequence[_seqIdx].Fragment[_fragIdx].Command.Payload[_payLoadPtr] := RecvData.GetByte();
+                // inc payload pointer
+               _seqPayloadPtr := _seqPayloadPtr + SIZEOF(BYTE);
+              ELSE
+                // Create log entry for payload pointer not valid 
+                CreateLogMessagePara3 ( Timestamp   := SystemTime,
+                                        MessageType := MessageType.CMD,
+                                        Severity    := Severity.DEBUG,
+                                        MessageCode := 0,
+                                        MessageText := 'Invalid fragment payload pointer, Sequence = {1}, Fragment = {2}, PayloadPointer = {3} ',
+                                        Para1       :=  DINT_TO_STRING(_seqIdx),
+                                        Para2       :=  DINT_TO_STRING(_fragIdx),
+                                        Para3       :=  DINT_TO_STRING(_payLoadPtr));
+                                        RETURN;
+  					  END_IF
+             
             END_FOR
             
             // Add Response to ACR

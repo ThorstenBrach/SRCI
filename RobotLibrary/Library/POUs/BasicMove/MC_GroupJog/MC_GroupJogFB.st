@@ -115,6 +115,14 @@ END_VAR
       (  _parameterValid          )) OR
       (  _parameterUpdateInternal )  
   THEN  
+    // Create log entry for parameter changed event
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'NotifyParameterChanged Event {1}',
+                            Para1       :=  '' );
+  
     // reset internal flag for send parameter update
    _parameterUpdateInternal := FALSE;
     // update internal copy of parameters 
@@ -506,7 +514,7 @@ END_VAR
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Create command payload with the {1} parameter(s) :',
+                          MessageText := 'Create command payload with {1} parameter(s) :',
                           Para1       := DINT_TO_STRING(ParameterCnt));
     
   
@@ -699,7 +707,7 @@ END_VAR
                                MessageType := MessageType.CMD,
                                Severity    := Severity.DEBUG,
                                MessageCode := 0,
-                               MessageText := 'Execution of {1} cancled ',
+                               MessageText := 'Execution of {1} cancelled',
                                Para1       := MyType);                 
       
        // try to remove cmd
@@ -942,6 +950,7 @@ END_VAR
                                           ParameterAccepted  := TRUE;
     // Currently active and in progress
     CmdMessageState.ACTIVE              : Active             := TRUE; 
+                                          Busy               := FALSE;
     // Interrupted and awaiting continuation
     CmdMessageState.INTERRUPTED         :;  
     // Requested for abort
@@ -992,8 +1001,14 @@ END_VAR
   _response.AlarmMessageSeverity  := _rspHeader.AlarmMessageSeverity;
   _response.AlarmMessageCode      := _rspHeader.AlarmMessageCode;
   
-  // Get Response.Status
-  _response.Status := ResponseData.GetByte();
+  // Check payload remaining ? 
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN  
+    // Get Response.Status
+   _response.Status := ResponseData.GetByte();
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
   
   // Create logging
   ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp, ParameterCnt := _parameterCnt);

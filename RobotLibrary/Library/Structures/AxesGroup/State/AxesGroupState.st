@@ -56,6 +56,8 @@ STRUCT
   SystemTime                     : SystemTime;
   /// Read Robot data 
   RobotData                      : ReadRobotDataOutCmd;
+  /// Status of Robot Arm
+  StatusRobotArm                 : RaStatusWord;
   /// Read configuration data
   ConfigurationData              : ExchangeConfigurationOutCmd;
   /// TRUE, while the CartesianPosition is returned cyclically 

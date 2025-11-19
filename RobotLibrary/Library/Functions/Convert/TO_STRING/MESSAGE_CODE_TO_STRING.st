@@ -171,7 +171,7 @@ END_VAR
   
       MESSAGE_CODE_TO_STRING :=  'Client Synchronization of default dynamics data is disabled, and the data is different on the RC.';
    
-    RobotLibraryInfoIdEnum.INFO_CHANGE_DEFAULT_DYNAMIVS_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED : 
+    RobotLibraryInfoIdEnum.INFO_CHANGE_DEFAULT_DYNAMICS_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED : 
   
       MESSAGE_CODE_TO_STRING :=  'Client Change the Syncmode to Negative only works on Startup with PLC (DEFAULT DYNAMICS)';
     
@@ -179,7 +179,7 @@ END_VAR
   
       MESSAGE_CODE_TO_STRING :=  'Client Synchronization of reference dynamics data is disabled, and the data is different on the RC.';
     
-    RobotLibraryInfoIdEnum.INFO_CHANGE_REFERENCE_DYNAMIVS_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED :
+    RobotLibraryInfoIdEnum.INFO_CHANGE_REFERENCE_DYNAMICS_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED :
    
       MESSAGE_CODE_TO_STRING :=  'Client Change the Syncmode to Negative only works on Startup with PLC (REFERENCE DYNAMICS)';
   

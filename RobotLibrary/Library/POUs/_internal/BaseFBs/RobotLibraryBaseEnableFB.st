@@ -143,7 +143,7 @@ END_VAR
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Execution of {1} cancled ',
+                          MessageText := 'Execution of {1} cancelled',
                           Para1       := MyType);                 
   
   // try to remove cmd

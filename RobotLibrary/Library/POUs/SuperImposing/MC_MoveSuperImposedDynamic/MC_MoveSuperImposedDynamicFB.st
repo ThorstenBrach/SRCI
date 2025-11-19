@@ -123,6 +123,14 @@ END_VAR
       (  _parameterValid          )) OR
       (  _parameterUpdateInternal )  
   THEN  
+    // Create log entry for parameter changed event
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.DEBUG,
+                            MessageCode := 0,
+                            MessageText := 'NotifyParameterChanged Event {1}',
+                            Para1       :=  '' );
+  
     // reset internal flag for send parameter update
    _parameterUpdateInternal := FALSE;
     // update internal copy of parameters 
@@ -974,7 +982,7 @@ END_VAR
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Create command payload with the {1} parameter(s) :',
+                          MessageText := 'Create command payload with {1} parameter(s) :',
                           Para1       := DINT_TO_STRING(ParameterCnt));
     
   
@@ -1352,7 +1360,7 @@ END_VAR
   THEN
     // Update results
     OutCmd.OffsetReached     := _response.OffsetReached;
-    OutCmd.Progress          :=  PERCENT_UINT_TO_REAL( Value := _response.Progress, IsOptional := FALSE);
+    OutCmd.Progress          :=  PERCENT_UINT_TO_REAL( Value := _response.Progress, IsOptional := TRUE);
     OutCmd.RemainingDistance := _response.RemainingDistance;
   END_IF
 
