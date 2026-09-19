@@ -11,7 +11,7 @@
 //   
 //                                                                           
 //  Copyright: 
-//             Licensed under the LGPL-3.0 license.
+//             Licensed under the MIT License.
 //    (C) 2024 Thorsten Brach. All rights reserved                                                                                                                                            
 //                                                                           
 //  Disclaimer:                                                                           

@@ -13,7 +13,7 @@ FUNCTION_BLOCK MC_ExchangeConfigurationFB EXTENDS RobotLibraryBaseEnableFB
 //                                                                           
 //  Copyright: 
 //    (C) 2024 Thorsten Brach. All rights reserved                                                                                                                                            
-//             Licensed under the LGPL-3.0 license.
+//             Licensed under the MIT License.
 //                                                                           
 //  Disclaimer:                                                                           
 //    This project is provided without any guarantee and can be used for   
@@ -365,10 +365,11 @@ END_VAR
 // Byte 12  : UINT       - SyncDelay HB
 // Byte 13  :            - SyncDelay LB
 // Byte 14  : USINT      - SyncReaction
-// Byte 15  : DataInSync - DataInSync 
-// Byte 16  : BYTE       - Reserved
-// Byte 17  : BYTE       - DataEnableSync
-// Byte 18  : BYTE       - Reserved
+// Byte 15  : BYTE       - Reserved
+// Byte 16  : DataInSync - DataInSync 
+// Byte 17  : BYTE       - Reserved
+// Byte 18  : BYTE       - DataEnableSync
+// Byte 19  : BYTE       - Reserved
 
   // set command parameter 
   _command.CmdTyp          :=  CmdType.ExchangeConfiguration;
@@ -385,10 +386,11 @@ END_VAR
   _command.LifeSignTimeOut := _parCmd.LifeSignTimeOut;
   _command.SyncDelay       := _parCmd.SyncDelay;
   _command.SyncReaction    := _parCmd.SyncReaction;
-  _command.DataInSync      := _parCmd.DataInSync;
   _command.Reserve1        := 0;
-  _command.DataEnableSync  := _parCmd.DataEnableSync;  
+  _command.DataInSync      := _parCmd.DataInSync;
   _command.Reserve2        := 0;
+  _command.DataEnableSync  := _parCmd.DataEnableSync;  
+  _command.Reserve3        := 0;
   
   // copy command data to header
   _cmdHeader := _command;
@@ -469,6 +471,16 @@ END_VAR
   // Check parameter must be added ? 
   IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
   THEN
+    // add command.SyncReaction
+    CreateCommandPayload.AddUsint(_command.Reserve1);
+    // inc parameter counter
+   _parameterCnt := _parameterCnt + 1;  
+  END_IF
+  
+  
+  // Check parameter must be added ? 
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  THEN
     // add command.DataInSync
     CreateCommandPayload.AddDataInSync(_command.DataInSync);
     // inc parameter counter
@@ -480,7 +492,7 @@ END_VAR
   IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
   THEN
     // add command.Reserve1
-    CreateCommandPayload.AddByte(_command.Reserve1);
+    CreateCommandPayload.AddByte(_command.Reserve2);
     // inc parameter counter
    _parameterCnt := _parameterCnt + 1;  
   END_IF
@@ -500,7 +512,7 @@ END_VAR
   IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
   THEN
     // add command.Reserve2
-    CreateCommandPayload.AddByte(_command.Reserve2);
+    CreateCommandPayload.AddByte(_command.Reserve3);
     // inc parameter counter
    _parameterCnt := _parameterCnt + 1;  
   END_IF
@@ -625,6 +637,20 @@ END_VAR
   IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
   // dec remaining parameter(s)                        
   ParameterCnt := ParameterCnt - 1;
+  // Create log entry for Reserve1
+  CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
+                          MessageType := MessageType.CMD,
+                          Severity    := Severity.DEBUG,
+                          MessageCode := 0,
+                          MessageText := 'Command.Reserve1 = {1}',
+                          Para1       :=  BYTE_TO_STRING(_command.Reserve1));
+  
+  
+  
+  // Return if no parameter is remaining...
+  IF ( ParameterCnt = 0 ) THEN RETURN; END_IF
+  // dec remaining parameter(s)                        
+  ParameterCnt := ParameterCnt - 1;
   // Create log entry for DataInSync
   CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                           MessageType := MessageType.CMD,
@@ -643,8 +669,8 @@ END_VAR
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Command.Reserve1 = {1}',
-                          Para1       :=  BYTE_TO_STRING(_command.Reserve1));
+                          MessageText := 'Command.Reserve2 = {1}',
+                          Para1       :=  BYTE_TO_STRING(_command.Reserve2));
   
   
   // Return if no parameter is remaining...
@@ -669,8 +695,8 @@ END_VAR
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Command.Reserve2 = {1}',
-                          Para1       :=  BYTE_TO_STRING(_command.Reserve2));
+                          MessageText := 'Command.Reserve3 = {1}',
+                          Para1       :=  BYTE_TO_STRING(_command.Reserve3));
 
 END_METHOD
 

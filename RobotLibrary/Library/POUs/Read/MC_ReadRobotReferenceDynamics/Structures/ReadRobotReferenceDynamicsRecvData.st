@@ -12,7 +12,7 @@
 //                                                                           
 //  Copyright: 
 //    (C) 2024 Thorsten Brach. All rights reserved                                                                                                                                            
-//             Licensed under the LGPL-3.0 license.
+//             Licensed under the MIT License.
 //                                                                           
 //  Disclaimer:                                                                           
 //    This project is provided without any guarantee and can be used for   
@@ -27,19 +27,19 @@ STRUCT
   /// Path velocity [mm/s](tangent) at 100%
   /// • <0: (default) - Do not change values
   /// • ≥0: Change values according to input value
-  VelocityReference     : UINT;
+  VelocityReference     : REAL;
   /// Path acceleration [mm/s2] at 100%
   /// • <0: (default) - Do not change values
   /// • ≥0: Change values according to input value
-  AccelerationReference : UINT;
+  AccelerationReference : REAL;
   /// Path deceleration [mm/s2] at 100%
   /// • <0: (default) - Do not change values
   /// • ≥0: Change values according to input value
-  DecelerationReference : UINT;
+  DecelerationReference : REAL;
   /// Jerk [mm/s3] at 100%
   /// • <0: (default) - Do not change values
   /// • ≥0: Change values according to input value
-  JerkReference        : UINT;  
+  JerkReference        : REAL;  
   /// The status bit "DataChanged" represents the modification state 
   DataChanged          : BOOL;
 END_STRUCT

@@ -12,7 +12,7 @@
 //                                                                           
 //  Copyright: 
 //    (C) 2024 Thorsten Brach. All rights reserved                                                                                                                                            
-//             Licensed under the LGPL-3.0 license.
+//             Licensed under the MIT License.
 //                                                                           
 //  Disclaimer:                                                                           
 //    This project is provided without any guarantee and can be used for   
@@ -40,14 +40,16 @@ STRUCT
   SyncDelay                  : UINT;
   /// Specifies system reaction in case inconsistency of synchronization data is detected according to Table 6-81. For more information refer to chapter 5.6.7.2
   SyncReaction               : SyncReaction;
+  /// Reserve
+  Reserve1                    : BYTE; // bth3ho fanuc
   /// Datas which are synchronized
   DataInSync                 : DataInSync;
   /// Reserve
-  Reserve1                   : BYTE;
+  Reserve2                   : BYTE;
   /// Enable datas to synchronize
   DataEnableSync             : DataEnableSync;  
   /// Reserve
-  Reserve2                   : BYTE;
+  Reserve3                   : BYTE;
 END_STRUCT
 END_TYPE
 

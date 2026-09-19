@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.5.0.0] - 2026-09-19
+
+### Changed
+ - Release of the implementation for the SRCI V1.5 specification (It's been lying around here way too long)
+ - Changed the license from LGPL V3.0 to MIT in order to achieve broader acceptance
+
 ## [0.0.0.50] - 2025-10-01
 
 ### Added

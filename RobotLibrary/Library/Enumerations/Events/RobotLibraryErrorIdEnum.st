@@ -1,4 +1,26 @@
 {attribute 'qualified_only'}
+{attribute 'to_string'}
+// ------------------------------------------------------------------------- 
+//  SRCI Robot Library                                                
+// ------------------------------------------------------------------------- 
+//                                                                           
+//  Object:      RobotLibraryErrorIdEnum                                       
+//  Author:      Thorsten Brach                                                
+//  Date:        2024-06-01
+//
+//  Description:                                              
+//   
+//                                                                           
+//  Copyright: 
+//    (C) 2024 Thorsten Brach. All rights reserved                                                                                                                                            
+//             Licensed under the MIT License.
+//                                                                           
+//  Disclaimer:                                                                           
+//    This project is provided without any guarantee and can be used for   
+//    private and commercial purposes. Any use is at the user’s 
+//    own risk and responsibility.
+//
+// -------------------------------------------------------------------------
 TYPE RobotLibraryErrorIdEnum :
 (
   NO_ERROR := 0,
@@ -43,6 +65,16 @@ TYPE RobotLibraryErrorIdEnum :
   /// Client Specified Frame calculation mode not valid
   /// Commands using the parameter "FrameCalculationMode"
   ERR_FRAMECALCULATIONMODE_INVALID := 15,
+
+  /// RC tool count higher than PLC tool count -> Synchronization not possible 
+  ERR_SYNC_TOOL_COUNT_RC_HIGHER_THAN_PLC := 16,
+  /// RC load count higher than PLC load count -> Synchronization not possible 
+  ERR_SYNC_LOAD_COUNT_RC_HIGHER_THAN_PLC := 17,
+  /// RC frame count higher than PLC frame count -> Synchronization not possible 
+  ERR_SYNC_FRAME_COUNT_RC_HIGHER_THAN_PLC := 18,
+  /// RC workarea count higher than PLC workarea count -> Synchronization not possible 
+  ERR_SYNC_WORKAREA_COUNT_RC_HIGHER_THAN_PLC := 19,
+
   
   /// END
   {warning 'ToDo: This is an internal error ID, which is not defined in SRCI specification'}

@@ -13,7 +13,7 @@ FUNCTION_BLOCK MC_OpenBrakeFB EXTENDS RobotLibraryBaseExecuteFB
 //                                                                           
 //  Copyright: 
 //    (C) 2024 Thorsten Brach. All rights reserved                                                                                                                                            
-//             Licensed under the LGPL-3.0 license.
+//             Licensed under the MIT License.
 //                                                                           
 //  Disclaimer:                                                                           
 //    This project is provided without any guarantee and can be used for   
@@ -131,6 +131,7 @@ END_VAR
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
     // Reset parameter accepted flag
     ParameterAccepted := FALSE;
+    
   END_IF
 
 END_METHOD

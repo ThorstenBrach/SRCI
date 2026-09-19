@@ -13,7 +13,7 @@ FUNCTION_BLOCK MC_WriteLoadDataFB EXTENDS RobotLibraryBaseExecuteFB
 //                                                                           
 //  Copyright: 
 //    (C) 2024 Thorsten Brach. All rights reserved                                                                                                                                            
-//             Licensed under the LGPL-3.0 license.
+//             Licensed under the MIT License.
 //                                                                           
 //  Disclaimer:                                                                           
 //    This project is provided without any guarantee and can be used for   
@@ -511,7 +511,7 @@ END_VAR
   
   
   // Check parameter must be added ? 
-  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))OR TRUE   {warning 'ToDo: Kuka'}
   THEN
     // add command.LoadData.Timestamp.IEC_DATE
     CreateCommandPayload.AddUint(_command.LoadData.Timestamp.IEC_DATE);
@@ -521,7 +521,7 @@ END_VAR
   
   
   // Check parameter must be added ? 
-  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))OR TRUE
   THEN
     // add command.LoadData.Timestamp.IEC_TIME
     CreateCommandPayload.AddTime(_command.LoadData.Timestamp.IEC_TIME);
@@ -531,7 +531,7 @@ END_VAR
   
   
   // Check parameter must be added ? 
-  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))OR TRUE
   THEN
     // add command.LoadData.X
     CreateCommandPayload.AddReal(_command.LoadData.X);
@@ -541,7 +541,7 @@ END_VAR
   
   
   // Check parameter must be added ? 
-  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))OR TRUE
   THEN
     // add command.LoadData.Y
     CreateCommandPayload.AddReal(_command.LoadData.Y);
@@ -551,7 +551,7 @@ END_VAR
   
   
   // Check parameter must be added ? 
-  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))OR TRUE
   THEN
     // add command.LoadData.Z
     CreateCommandPayload.AddReal(_command.LoadData.Z);
@@ -561,7 +561,7 @@ END_VAR
   
   
   // Check parameter must be added ? 
-  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))OR TRUE
   THEN
     // add command.LoadData.Rx
     CreateCommandPayload.AddReal(_command.LoadData.Rx);
@@ -571,7 +571,7 @@ END_VAR
   
   
   // Check parameter must be added ? 
-  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))OR TRUE
   THEN
     // add command.LoadData.Ry
     CreateCommandPayload.AddReal(_command.LoadData.Ry);
@@ -581,7 +581,7 @@ END_VAR
   
   
   // Check parameter must be added ? 
-  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))OR TRUE
   THEN
     // add command.LoadData.Rz
     CreateCommandPayload.AddReal(_command.LoadData.Rz);
@@ -591,7 +591,7 @@ END_VAR
   
   
   // Check parameter must be added ? 
-  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))OR TRUE
   THEN
     // add command.LoadData.Mass
     CreateCommandPayload.AddReal(_command.LoadData.Mass);
@@ -601,7 +601,7 @@ END_VAR
   
   
   // Check parameter must be added ? 
-  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))OR TRUE
   THEN
     // add command.LoadData.Ix
     CreateCommandPayload.AddReal(_command.LoadData.Ix);
@@ -611,7 +611,7 @@ END_VAR
   
   
   // Check parameter must be added ? 
-  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))OR TRUE
   THEN
     // add command.LoadData.Iy
     CreateCommandPayload.AddReal(_command.LoadData.Iy);
@@ -621,7 +621,7 @@ END_VAR
   
   
   // Check parameter must be added ? 
-  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))OR TRUE
   THEN
     // add command.LoadData.Iz
     CreateCommandPayload.AddReal(_command.LoadData.Iz);
@@ -631,7 +631,7 @@ END_VAR
   
   
   // Check parameter must be added ? 
-  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
+  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr)) OR TRUE
   THEN
     // add command.LoadNo
     CreateCommandPayload.AddUsint(_command.LoadNo);

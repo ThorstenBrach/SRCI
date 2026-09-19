@@ -12,7 +12,7 @@ FUNCTION PERCENT_UINT_TO_REAL : REAL
 //                                                                           
 //  Copyright: 
 //    (C) 2025 Thorsten Brach. All rights reserved                                                                                                                                            
-//             Licensed under the LGPL-3.0 license.
+//             Licensed under the MIT License.
 //                                                                           
 //  Disclaimer:                                                                           
 //    This project is provided without any guarantee and can be used for   

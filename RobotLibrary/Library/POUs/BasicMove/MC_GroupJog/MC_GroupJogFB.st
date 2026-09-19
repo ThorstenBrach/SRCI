@@ -13,7 +13,7 @@ FUNCTION_BLOCK MC_GroupJogFB EXTENDS RobotLibraryBaseEnableFB
 //                                                                           
 //  Copyright: 
 //    (C) 2024 Thorsten Brach. All rights reserved                                                                                                                                            
-//             Licensed under the LGPL-3.0 license.
+//             Licensed under the MIT License.
 //                                                                           
 //  Disclaimer:                                                                           
 //    This project is provided without any guarantee and can be used for   
@@ -896,10 +896,10 @@ END_VAR
            // inc step counter
           _stepCmd := _stepCmd + 1; 
          END_IF
-  
-        // Wait for response received or timeout or not Initialized
-    02: IF ((    _responseReceived                                   )  OR 
-            (     CheckTimeout(_timerCmd) = RobotLibraryConstants.OK )) OR 
+         
+    02:  IF ((  _response.State          = CmdMessageState.DONE      )  OR
+             (  _response.State          = CmdMessageState.ERROR     )  OR 
+             (   CheckTimeout(_timerCmd) = RobotLibraryConstants.OK  )) OR 
            (( NOT AxesGroup.State.Initialized                        )  AND
             ( NOT AxesGroup.State.Synchronized                       ))
         THEN
@@ -949,8 +949,8 @@ END_VAR
     CmdMessageState.BUFFERED_IN_PLANNER : CommandBuffered    := TRUE;
                                           ParameterAccepted  := TRUE;
     // Currently active and in progress
-    CmdMessageState.ACTIVE              : Active             := TRUE; 
-                                          Busy               := FALSE;
+    CmdMessageState.ACTIVE              : Active             := TRUE;
+                                          Busy               := FALSE; 
     // Interrupted and awaiting continuation
     CmdMessageState.INTERRUPTED         :;  
     // Requested for abort
@@ -1001,6 +1001,7 @@ END_VAR
   _response.AlarmMessageSeverity  := _rspHeader.AlarmMessageSeverity;
   _response.AlarmMessageCode      := _rspHeader.AlarmMessageCode;
   
+  
   // Check payload remaining ? 
   IF ( ResponseData.IsPayloadRemaining)
   THEN  
@@ -1009,6 +1010,8 @@ END_VAR
     // inc parameter counter
    _parameterCnt := _parameterCnt + 1;
   END_IF
+  
+  
   
   // Create logging
   ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp, ParameterCnt := _parameterCnt);

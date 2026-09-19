@@ -13,7 +13,7 @@ FUNCTION_BLOCK AxesGroupSystemDataFB
 //                                                                           
 //  Copyright: 
 //    (C) 2025 Thorsten Brach. All rights reserved                                                                                                                                            
-//             Licensed under the LGPL-3.0 license.
+//             Licensed under the MIT License.
 //                                                                           
 //  Disclaimer:                                                                           
 //    This project is provided without any guarantee and can be used for   
@@ -280,12 +280,16 @@ END_VAR
     RETURN;
   END_IF
   
+  {warning 'ToDo: Compiler Fehler'}
+  (*
   
   // Calculate pointer address for the index of the ToolData Array
   pToolData := ToolDataPtr + (( ToolNo - DINT_TO_UDINT(ToolDataMin)) * SIZEOF(Tool));
   // copy tool data to Array index
   pToolData^.Available := TRUE;
   pToolData^.Data := ToolData;
+  
+  *)
 
 END_METHOD
 

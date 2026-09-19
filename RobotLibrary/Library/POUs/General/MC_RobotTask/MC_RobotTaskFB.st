@@ -15,7 +15,7 @@ FUNCTION_BLOCK MC_RobotTaskFB EXTENDS RobotLibraryLogFB
 //                                                                           
 //  Copyright: 
 //    (C) 2024 Thorsten Brach. All rights reserved                                                                                                                                            
-//             Licensed under the LGPL-3.0 license.
+//             Licensed under the MIT License.
 //                                                                           
 //  Disclaimer:                                                                           
 //    This project is provided without any guarantee and can be used for   
@@ -1384,7 +1384,7 @@ END_VAR
     IF ( _parCfg.Plc.Parameter.SynchronizationModes.ReferenceDynamics[_idx] <> ParCfg.Plc.Parameter.SynchronizationModes.ReferenceDynamics[_idx] )
     THEN
       // Set info
-      SetInfo( InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_REFERENCE_DYNAMICS_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED, Overwrite := TRUE);
+      SetInfo(InfoID := RobotLibraryInfoIdEnum.INFO_CHANGE_REFERENCE_DYNAMICS_SYNC_MODE_TO_NEGATIVE_ONLY_AT_PLC_START_ALLOWED, Overwrite := TRUE );
        
       // Create log entry
       CreateLogMessagePara3( Timestamp   := SystemTime,
@@ -2424,7 +2424,7 @@ END_VAR
   AxesGroup.State.Synchronized := Synchronized AND AxesGroup.State.AliveOk;
   AxesGroup.State.CMDsEnabled  := AxesGroup.State.Initialized OR 
                                   AxesGroup.State.Synchronized;
-                                  
+  
   AxesGroup.State.StatusRobotArm  := AxesGroup.Cyclic.RobToPlc.StatusRobotArm;                                
   AxesGroup.State.ConfigExchanged := _exchangeConfiguration.Enabled;
   
@@ -2655,7 +2655,7 @@ VAR_IN_OUT
   AxesGroup : AxesGroup;
 END_VAR
 
-  IF ( _readMessages.Enabled ) 
+  IF ( _readMessages.Enabled )  
   THEN
     // Set Message ID as Acknowlege ID  
    _readMessages.ParCmd.MsgID := _readMessages.OutCmd.MsgId;  
@@ -2663,6 +2663,7 @@ END_VAR
     // Reset Acknowlege ID  
    _readMessages.ParCmd.MsgID := 0;
   END_IF 
+  
   
   
   (*
@@ -2817,13 +2818,13 @@ END_VAR
   
   
   // Update exchange configuration parameter
-  _exchangeConfiguration.ParCmd.DataInSync.FramesInSync            := AxesGroup.State.SyncStatePlc.InSync.Frame;
-  _exchangeConfiguration.ParCmd.DataInSync.ToolsInSync             := AxesGroup.State.SyncStatePlc.InSync.Tool;
-  _exchangeConfiguration.ParCmd.DataInSync.LoadsInSync             := AxesGroup.State.SyncStatePlc.InSync.Load;
-  _exchangeConfiguration.ParCmd.DataInSync.WorkAreasInSync         := AxesGroup.State.SyncStatePlc.InSync.WorkArea;
-  _exchangeConfiguration.ParCmd.DataInSync.SoftwareLimitsInSync    := AxesGroup.State.SyncStatePlc.InSync.SwLimits;
-  _exchangeConfiguration.ParCmd.DataInSync.DefaultDynamicsInSync   := AxesGroup.State.SyncStatePlc.InSync.DefaultDynamics;
-  _exchangeConfiguration.ParCmd.DataInSync.ReferenceDynamicsInSync := AxesGroup.State.SyncStatePlc.InSync.ReferenceDynamics;
+  _exchangeConfiguration.ParCmd.DataInSync.FramesInSync            := AxesGroup.State.SyncStatePlc.InSync.Frame;                // OR ( NOT AxesGroup.State.DataEnableSync.EnableSyncFrame            );
+  _exchangeConfiguration.ParCmd.DataInSync.ToolsInSync             := AxesGroup.State.SyncStatePlc.InSync.Tool;                 // OR ( NOT AxesGroup.State.DataEnableSync.EnableSyncTool             );
+  _exchangeConfiguration.ParCmd.DataInSync.LoadsInSync             := AxesGroup.State.SyncStatePlc.InSync.Load;                 // OR ( NOT AxesGroup.State.DataEnableSync.EnableSyncLoad             );
+  _exchangeConfiguration.ParCmd.DataInSync.WorkAreasInSync         := AxesGroup.State.SyncStatePlc.InSync.WorkArea;             // OR ( NOT AxesGroup.State.DataEnableSync.EnableSyncWorkArea         );
+  _exchangeConfiguration.ParCmd.DataInSync.SoftwareLimitsInSync    := AxesGroup.State.SyncStatePlc.InSync.SwLimits;             // OR ( NOT AxesGroup.State.DataEnableSync.EnableSyncSWLimits         );
+  _exchangeConfiguration.ParCmd.DataInSync.DefaultDynamicsInSync   := AxesGroup.State.SyncStatePlc.InSync.DefaultDynamics;      // OR ( NOT AxesGroup.State.DataEnableSync.EnableSyncDefaultDynamics  );
+  _exchangeConfiguration.ParCmd.DataInSync.ReferenceDynamicsInSync := AxesGroup.State.SyncStatePlc.InSync.ReferenceDynamics;    // OR ( NOT AxesGroup.State.DataEnableSync.EnableSyncReferenceDynamics);
 
 END_METHOD
 
@@ -2862,7 +2863,6 @@ END_VAR
   _rSyncIdx    REF=     _syncIdxFrameData;
   
   
-  
   CASE _rStep
   OF    
     0: // Check initialisation configured ?
@@ -2872,6 +2872,13 @@ END_VAR
          RETURN;
        END_IF
   
+       // Check More Data on RC than on PLC -> Synchronization not possible
+       IF (AxesGroup.State.ConfigurationData.HighestFrameIndex > AxesGroup.SystemData.FrameDataCount)
+       THEN
+         SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_FRAME_COUNT_RC_HIGHER_THAN_PLC, Overwrite := FALSE);
+         RETURN;
+  		 END_IF
+       
        // wait for initialisation done
        IF  ((     AxesGroup.State.RobotData.RCSupportedFunctions. ReadFrameData ) AND
             (     AxesGroup.State.RobotData.RCSupportedFunctions.WriteFrameData ) AND
@@ -2879,8 +2886,8 @@ END_VAR
             ( NOT Error                                                         ))  
        THEN
          // Check PLC frames < RC frames and SyncFrame enabled ?    
-         IF (( AxesGroup.State.DataEnableSync.EnableSyncFrame      = TRUE                                )  AND
-             ( AxesGroup.Parameter.Rob.Parameter.HighestFrameIndex > AxesGroup.SystemData.FrameDataCount ))        
+         IF (( AxesGroup.State.DataEnableSync.EnableSyncFrame      = TRUE                              )  AND
+             ( AxesGroup.Parameter.Rob.Parameter.HighestFrameIndex > AxesGroup.SystemData.FrameDataMax ))        
          THEN
            SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_FRAME_DATA_ARRAY_TOO_SHORT, Overwrite := TRUE);
          END_IF
@@ -2927,8 +2934,8 @@ END_VAR
          // timeout exceeded ? 
          IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
          THEN
-           ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
            ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+           SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD, Overwrite := FALSE);
          END_IF
        END_IF
    
@@ -3007,8 +3014,8 @@ END_VAR
          // timeout exceeded ? 
          IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
          THEN
-           ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
            ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+           SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD, Overwrite := FALSE);
          END_IF
        END_IF
        
@@ -3152,8 +3159,8 @@ END_VAR
          // timeout exceeded ? 
          IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
          THEN
-           ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
            ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+           SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD, Overwrite := FALSE);
          END_IF
        END_IF
    
@@ -3185,8 +3192,8 @@ END_VAR
          // timeout exceeded ? 
          IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
          THEN
-           ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
            ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+           SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD, Overwrite := FALSE);
          END_IF
        END_IF
   
@@ -3471,8 +3478,8 @@ END_VAR
            // timeout exceeded ? 
            IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
            THEN
-             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
              ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+             SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD, Overwrite := FALSE);
            END_IF
          END_IF
    
@@ -3506,8 +3513,8 @@ END_VAR
            // timeout exceeded ? 
            IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
            THEN
-             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
              ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+             SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD, Overwrite := FALSE);
            END_IF
          END_IF
   
@@ -3538,8 +3545,8 @@ END_VAR
            // timeout exceeded ? 
            IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
            THEN
-             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
              ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+             SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD, Overwrite := FALSE);
            END_IF
          END_IF
    
@@ -3571,8 +3578,8 @@ END_VAR
            // timeout exceeded ? 
            IF (CheckTimeout(_rTimer) = RobotLibraryConstants.OK)
            THEN
-             ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
              ErrorAddTxt := CONCAT(_stepName, DINT_TO_STRING(_rStep));
+             SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD, Overwrite := FALSE);
            END_IF
          END_IF
          
@@ -3628,6 +3635,13 @@ END_VAR
        THEN
          RETURN;
        END_IF
+       
+       // Check More Data on RC than on PLC -> Synchronization not possible
+       IF (AxesGroup.State.ConfigurationData.HighestToolIndex > AxesGroup.SystemData.LoadDataCount)
+       THEN
+         SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_LOAD_COUNT_RC_HIGHER_THAN_PLC, Overwrite := FALSE);
+         RETURN;
+  		 END_IF
   
        // wait for initialisation done
        IF  ((     AxesGroup.State.RobotData.RCSupportedFunctions. ReadLoadData ) AND
@@ -3636,8 +3650,8 @@ END_VAR
             ( NOT Error                                                        ))  
        THEN
          // Check PLC loads < RC Loads and SyncLoad enabled ?    
-         IF (( AxesGroup.State.DataEnableSync.EnableSyncLoad      = TRUE                               )  AND
-             ( AxesGroup.Parameter.Rob.Parameter.HighestLoadIndex > AxesGroup.SystemData.LoadDataCount ))        
+         IF (( AxesGroup.State.DataEnableSync.EnableSyncLoad      = TRUE                             )  AND
+             ( AxesGroup.Parameter.Rob.Parameter.HighestLoadIndex > AxesGroup.SystemData.LoadDataMax ))        
          THEN
            SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_LOAD_DATA_ARRAY_TOO_SHORT, Overwrite := TRUE);
          END_IF
@@ -5671,9 +5685,27 @@ END_VAR
          RETURN;
        END_IF
   
+       // Check RC function for sync mode is available ?  
+       IF  ((  AxesGroup.State.Initialized                                                  = TRUE                      ) AND  
+            (  AxesGroup.State.RobotData.RCSupportedFunctions.WriteRobotSWLimits            = FALSE                     ) AND
+           (( _parCfg.PLC.Parameter.SynchronizationModes.SWLimits[SyncTime.DURING_START_UP] = SyncMode.CLIENT_TO_SERVER ) OR
+            ( _parCfg.PLC.Parameter.SynchronizationModes.SWLimits[SyncTime. AFTER_START_UP] = SyncMode.CLIENT_TO_SERVER ) OR
+            ( _parCfg.PLC.Parameter.SynchronizationModes.SWLimits[SyncTime. AFTER_START_UP] = SyncMode.AUTOMATIC        )))
+       THEN
+         SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID, Overwrite := FALSE);
+         // Create log entry
+         CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                                 MessageType := MessageType.CMD,
+                                 Severity    := Severity.DEBUG,
+                                 MessageCode := 0,
+                                 MessageText := 'HandleSyncRobotSWLimits: SyncMode needs WriteRobotSWLimits function which is not available on RC',
+                                 Para1       :=  '');
+         RETURN;
+       END_IF
+  
        // wait for initialisation done
-       IF  ((     AxesGroup.State.RobotData.RCSupportedFunctions .ReadRobotSWLimits ) AND
-            (     AxesGroup.State.RobotData.RCSupportedFunctions.WriteRobotSWLimits ) AND
+       IF  ((     AxesGroup.State.RobotData.RCSupportedFunctions .ReadRobotSWLimits ) AND //  ReadRobotSwLimits is mandatory
+       //   (     AxesGroup.State.RobotData.RCSupportedFunctions.WriteRobotSWLimits ) AND // WriteRobotSwLimits is optional
             (     AxesGroup.State.Initialized                                       ) AND 
             ( NOT Error                                                             ))  
        THEN
@@ -6305,6 +6337,7 @@ END_VAR
   _rTimeout    REF= _timeoutSyncToolData;
   _rSyncIdx    REF=     _syncIdxToolData;
   
+  
   CASE _rStep
   OF    
     0: // Check initialisation configured ?
@@ -6313,6 +6346,13 @@ END_VAR
        THEN
          RETURN;
        END_IF
+       
+       // Check More Data on RC than on PLC -> Synchronization not possible
+       IF (AxesGroup.State.ConfigurationData.HighestToolIndex > AxesGroup.SystemData.ToolDataCount)
+       THEN
+         SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_TOOL_COUNT_RC_HIGHER_THAN_PLC, Overwrite := FALSE);
+         RETURN;
+  		 END_IF
   
        // wait for initialisation done
        IF  ((     AxesGroup.State.RobotData.RCSupportedFunctions. ReadToolData ) AND
@@ -6321,8 +6361,8 @@ END_VAR
             ( NOT Error                                                        ))  
        THEN
          // Check PLC tools < RC tools and SyncTool enabled ?    
-         IF (( AxesGroup.State.DataEnableSync.EnableSyncTool      = TRUE                               )  AND
-             ( AxesGroup.Parameter.Rob.Parameter.HighestToolIndex > AxesGroup.SystemData.ToolDataCount ))        
+         IF (( AxesGroup.State.DataEnableSync.EnableSyncTool      = TRUE                             )  AND
+             ( AxesGroup.Parameter.Rob.Parameter.HighestToolIndex > AxesGroup.SystemData.ToolDataMax ))        
          THEN
            SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_TOOL_DATA_ARRAY_TOO_SHORT, Overwrite := TRUE);
          END_IF
@@ -7068,7 +7108,14 @@ END_VAR
        THEN
          RETURN;
        END_IF
-  
+       
+       // Check More Data on RC than on PLC -> Synchronization not possible
+       IF (AxesGroup.State.ConfigurationData.HighestWorkAreaIndex > AxesGroup.SystemData.WorkAreasCount)
+       THEN
+         SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_WORKAREA_COUNT_RC_HIGHER_THAN_PLC, Overwrite := FALSE);
+         RETURN;
+  		 END_IF
+       
        // wait for initialisation done
        IF  ((     AxesGroup.State.RobotData.RCSupportedFunctions. ReadWorkArea ) AND
             (     AxesGroup.State.RobotData.RCSupportedFunctions.WriteWorkArea ) AND
@@ -7076,8 +7123,8 @@ END_VAR
             ( NOT Error                                                        ))  
        THEN
          // Check PLC WorkAreas < RC WorkAreas and SyncWorkArea enabled ?    
-         IF (( AxesGroup.State.DataEnableSync.EnableSyncWorkArea      = TRUE                                )  AND
-             ( AxesGroup.Parameter.Rob.Parameter.HighestWorkAreaIndex > AxesGroup.SystemData.WorkAreasCount ))        
+         IF (( AxesGroup.State.DataEnableSync.EnableSyncWorkArea      = TRUE                              )  AND
+             ( AxesGroup.Parameter.Rob.Parameter.HighestWorkAreaIndex > AxesGroup.SystemData.WorkAreasMax ))        
          THEN
            SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_WORK_AREA_ARRAY_TOO_SHORT, Overwrite := TRUE);
          END_IF
@@ -7818,14 +7865,14 @@ END_VAR
   
   
     // Check Interface changed after being initialized ?  
-    IF ((  Initialized OR Synchronized                                                     ) AND 
+    IF ((  Enable                                                                          ) AND
         ( _lastTelegramState                      = TelegramState.INITIALIZED              ) AND  
        ((  Telegram.RobToPlc.Header.TelegramState = TelegramState.READY_FOR_INITIALIZATION ) OR
-        (  Telegram.RobToPlc.Header.TelegramState = TelegramState.READY_TO_RESUME          ))) 
+        (  Telegram.RobToPlc.Header.TelegramState = TelegramState.READY_TO_RESUME          )))
     THEN
       {warning 'ToDo'}
       //SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INTERFACE_WAS_RESET_AFTER_INIT_0x80A7  , Overwrite := TRUE );
-      ;    
+      ;
   	END_IF
   
     // apply new telegram state
@@ -8139,16 +8186,14 @@ END_VAR
               _stepCmd := _stepCmd + 1; 
              ELSE
                // set error 
-               SetError(ErrorID := RobotLibraryErrorIdEnum.ERR_SRCI_MAJOR_VERSION_INCOMPATIBLE_0x80A4, Overwrite := TRUE);
+               ErrorID     := RobotLibraryErrorIdEnum.ERR_SRCI_MAJOR_VERSION_INCOMPATIBLE_0x80A4;
                ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
-               RETURN;
              END_IF
   
          ELSE
            // TelegrammState in error          
            SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INIT_LOST_UNKNOWN_0xA2, Overwrite := TRUE );
            ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
-           RETURN;
          END_CASE
   
          // timeout exceeded ? 
@@ -8350,7 +8395,8 @@ END_VAR
   
          
     08:  // Update Initialized state
-         Initialized := NOT ERROR AND NOT Synchronized;
+         Initialized := NOT ERROR AND NOT Synchronized; {warning 'ToDo'}
+         Initialized := NOT Synchronized;
   
          // Wait for task disable
          IF ( NOT Enable)

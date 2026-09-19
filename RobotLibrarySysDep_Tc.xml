@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <project xmlns="http://www.plcopen.org/xml/tc6_0200">
-  <fileHeader companyName="Beckhoff Automation GmbH" productName="TwinCAT PLC Control" productVersion="3.5.13.21" creationDateTime="2025-02-26T19:55:30.2627325" />
-  <contentHeader name="RobotLibrarySysDep" modificationDateTime="2025-02-26T19:55:30.2640275">
+  <fileHeader companyName="Beckhoff Automation GmbH" productName="TwinCAT PLC Control" productVersion="3.5.13.21" creationDateTime="2026-09-19T14:25:47.8613257" />
+  <contentHeader name="RobotLibrarySysDep" modificationDateTime="2026-09-19T14:25:47.8644261">
     <coordinateInfo>
       <fbd>
         <scaling x="1" y="1" />
@@ -90,7 +90,7 @@ FUNCTION SysDepMemCmp : DINT
 //                                                                           
 //  Copyright: 
 //    (C) 2024 Thorsten Brach. All rights reserved                                                                                                                                            
-//             Licensed under the LGPL-3.0 license.
+//             Licensed under the MIT License.
 //                                                                           
 //  Disclaimer:                                                                           
 //    This project is provided without any guarantee and can be used for   
@@ -179,7 +179,7 @@ FUNCTION SysDepMemCpy : UDINT
 //                                                                           
 //  Copyright: 
 //    (C) 2024 Thorsten Brach. All rights reserved                                                                                                                                            
-//             Licensed under the LGPL-3.0 license.
+//             Licensed under the MIT License.
 //                                                                           
 //  Disclaimer:                                                                           
 //    This project is provided without any guarantee and can be used for   
@@ -264,7 +264,7 @@ FUNCTION SysDepMemSet : UDINT
 //                                                                           
 //  Copyright: 
 //    (C) 2024 Thorsten Brach. All rights reserved                                                                                                                                            
-//             Licensed under the LGPL-3.0 license.
+//             Licensed under the MIT License.
 //                                                                           
 //  Disclaimer:                                                                           
 //    This project is provided without any guarantee and can be used for   
@@ -287,39 +287,6 @@ END_VAR</xhtml>
           </data>
         </addData>
       </pou>
-      <pou name="SysDepIsValidReal" pouType="function">
-        <interface>
-          <returnType>
-            <BOOL />
-          </returnType>
-          <inputVars>
-            <variable name="Value">
-              <type>
-                <REAL />
-              </type>
-            </variable>
-          </inputVars>
-        </interface>
-        <body>
-          <ST>
-            <xhtml xmlns="http://www.w3.org/1999/xhtml">SysDepIsValidReal := IsFinite(F_REAL(Value));</xhtml>
-          </ST>
-        </body>
-        <addData>
-          <data name="http://www.3s-software.com/plcopenxml/interfaceasplaintext" handleUnknown="implementation">
-            <InterfaceAsPlainText>
-              <xhtml xmlns="http://www.w3.org/1999/xhtml">FUNCTION SysDepIsValidReal : BOOL
-VAR_INPUT
-  Value : REAL;
-END_VAR
-</xhtml>
-            </InterfaceAsPlainText>
-          </data>
-          <data name="http://www.3s-software.com/plcopenxml/objectid" handleUnknown="discard">
-            <ObjectId>1818a807-e7c6-4966-93b6-9d9f7e0db12e</ObjectId>
-          </data>
-        </addData>
-      </pou>
       <pou name="SysDepIsValidLReal" pouType="function">
         <interface>
           <returnType>
@@ -330,6 +297,9 @@ END_VAR
               <type>
                 <LREAL />
               </type>
+              <documentation>
+                <xhtml xmlns="http://www.w3.org/1999/xhtml"> LReal value to check</xhtml>
+              </documentation>
             </variable>
           </inputVars>
         </interface>
@@ -342,7 +312,29 @@ END_VAR
           <data name="http://www.3s-software.com/plcopenxml/interfaceasplaintext" handleUnknown="implementation">
             <InterfaceAsPlainText>
               <xhtml xmlns="http://www.w3.org/1999/xhtml">FUNCTION SysDepIsValidLReal : BOOL
+// ------------------------------------------------------------------------- 
+//  SRCI Robot Library System Dependencies                                               
+// ------------------------------------------------------------------------- 
+//                                                                           
+//  Object:      SysDepIsValidLReal                                       
+//  Author:      Thorsten Brach                                                
+//  Date:        2025-03-04
+//
+//  Description:                                              
+//    System specific implementation of the LREAL validation 
+//                                                                           
+//  Copyright: 
+//    (C) 2025 Thorsten Brach. All rights reserved                                                                                                                                            
+//             Licensed under the MIT License.
+//                                                                           
+//  Disclaimer:                                                                           
+//    This project is provided without any guarantee and can be used for   
+//    private and commercial purposes. Any use is at the user’s 
+//    own risk and responsibility.
+//
+// -------------------------------------------------------------------------
 VAR_INPUT
+  /// LReal value to check
   Value : LREAL;
 END_VAR
 </xhtml>
@@ -350,6 +342,64 @@ END_VAR
           </data>
           <data name="http://www.3s-software.com/plcopenxml/objectid" handleUnknown="discard">
             <ObjectId>fe9b04de-cc71-49e7-acd5-fe4ad376eaf8</ObjectId>
+          </data>
+        </addData>
+      </pou>
+      <pou name="SysDepIsValidReal" pouType="function">
+        <interface>
+          <returnType>
+            <BOOL />
+          </returnType>
+          <inputVars>
+            <variable name="Value">
+              <type>
+                <REAL />
+              </type>
+              <documentation>
+                <xhtml xmlns="http://www.w3.org/1999/xhtml"> Real value to check</xhtml>
+              </documentation>
+            </variable>
+          </inputVars>
+        </interface>
+        <body>
+          <ST>
+            <xhtml xmlns="http://www.w3.org/1999/xhtml">SysDepIsValidReal := IsFinite(F_REAL(Value));</xhtml>
+          </ST>
+        </body>
+        <addData>
+          <data name="http://www.3s-software.com/plcopenxml/interfaceasplaintext" handleUnknown="implementation">
+            <InterfaceAsPlainText>
+              <xhtml xmlns="http://www.w3.org/1999/xhtml">FUNCTION SysDepIsValidReal : BOOL
+// ------------------------------------------------------------------------- 
+//  SRCI Robot Library System Dependencies                                               
+// ------------------------------------------------------------------------- 
+//                                                                           
+//  Object:      SysDepIsValidReal                                       
+//  Author:      Thorsten Brach                                                
+//  Date:        2025-03-04
+//
+//  Description:                                              
+//    System specific implementation of the REAL validation 
+//                                                                           
+//  Copyright: 
+//    (C) 2025 Thorsten Brach. All rights reserved                                                                                                                                            
+//             Licensed under the MIT License.
+//                                                                           
+//  Disclaimer:                                                                           
+//    This project is provided without any guarantee and can be used for   
+//    private and commercial purposes. Any use is at the user’s 
+//    own risk and responsibility.
+//
+// -------------------------------------------------------------------------
+VAR_INPUT
+  /// Real value to check
+  Value : REAL;
+END_VAR
+</xhtml>
+            </InterfaceAsPlainText>
+          </data>
+          <data name="http://www.3s-software.com/plcopenxml/objectid" handleUnknown="discard">
+            <ObjectId>1818a807-e7c6-4966-93b6-9d9f7e0db12e</ObjectId>
           </data>
         </addData>
       </pou>

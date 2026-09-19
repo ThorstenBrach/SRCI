@@ -13,7 +13,7 @@ FUNCTION_BLOCK MC_ReadRobotReferenceDynamicsFB EXTENDS RobotLibraryBaseExecuteFB
 //                                                                           
 //  Copyright: 
 //    (C) 2024 Thorsten Brach. All rights reserved                                                                                                                                            
-//             Licensed under the LGPL-3.0 license.
+//             Licensed under the MIT License.
 //                                                                           
 //  Disclaimer:                                                                           
 //    This project is provided without any guarantee and can be used for   
@@ -35,11 +35,11 @@ END_VAR
 
 VAR
   /// internal copy of command parameter 
- _parCmd             : ReadRobotReferenceDynamicsParCmd;
+ _parCmd          : ReadRobotReferenceDynamicsParCmd;
   /// command data to send
- _command            : ReadRobotReferenceDynamicsSendData;
+ _command         : ReadRobotReferenceDynamicsSendData;
   /// response data received
- _response           : ReadRobotReferenceDynamicsRecvData;      
+ _response        : ReadRobotReferenceDynamicsRecvData;      
 END_VAR
 
   SUPER^(AxesGroup := AxesGroup);
@@ -216,11 +216,16 @@ END_VAR
       ( State = CmdMessageState.DONE   ))
   THEN
     // Update results
-    OutCmd.DynamicValues.Timestamp             := _response.Timestamp;
-    OutCmd.DynamicValues.VelocityReference     := PERCENT_UINT_TO_REAL(_response.VelocityReference    , IsOptional := FALSE );
-    OutCmd.DynamicValues.AccelerationReference := PERCENT_UINT_TO_REAL(_response.AccelerationReference, IsOptional := FALSE );
-    OutCmd.DynamicValues.DecelerationReference := PERCENT_UINT_TO_REAL(_response.DecelerationReference, IsOptional := TRUE  );
-    OutCmd.DynamicValues.JerkReference         := PERCENT_UINT_TO_REAL(_response.JerkReference        , IsOptional := TRUE  );
+    OutCmd.DynamicValues.Timestamp               := _response.Timestamp;
+      OutCmd.DynamicValues.VelocityReference     := _response.VelocityReference    ;
+      OutCmd.DynamicValues.AccelerationReference := _response.AccelerationReference;
+      OutCmd.DynamicValues.DecelerationReference := _response.DecelerationReference;
+      OutCmd.DynamicValues.JerkReference         := _response.JerkReference        ;
+  
+  //  OutCmd.DynamicValues.VelocityReference     := PERCENT_UINT_TO_REAL(_response.VelocityReference    , IsOptional := FALSE );
+  //  OutCmd.DynamicValues.AccelerationReference := PERCENT_UINT_TO_REAL(_response.AccelerationReference ,IsOptional := FALSE );
+  //  OutCmd.DynamicValues.DecelerationReference := PERCENT_UINT_TO_REAL(_response.DecelerationReference, IsOptional := TRUE  );
+  //  OutCmd.DynamicValues.JerkReference         := PERCENT_UINT_TO_REAL(_response.JerkReference        , IsOptional := TRUE  );
   END_IF
 
 END_METHOD
@@ -415,7 +420,7 @@ END_VAR
   IF ( ResponseData.IsPayloadRemaining)
   THEN  
     // Get Response.DynamicValues.VelocityRate
-   _response.VelocityReference := ResponseData.GetUint();
+   _response.VelocityReference := ResponseData.GetReal();
     // inc parameter counter
    _parameterCnt := _parameterCnt + 1;
   END_IF
@@ -425,7 +430,8 @@ END_VAR
   IF ( ResponseData.IsPayloadRemaining)
   THEN  
     // Get Response.DynamicValues.AccelerationRate
-   _response.AccelerationReference := ResponseData.GetUint();
+   _response.AccelerationReference := ResponseData.GetReal();
+   
     // inc parameter counter
    _parameterCnt := _parameterCnt + 1;
   END_IF
@@ -435,7 +441,7 @@ END_VAR
   IF ( ResponseData.IsPayloadRemaining)
   THEN  
     // Get Response.DynamicValues.DecelerationRate
-   _response.DecelerationReference := ResponseData.GetUint();
+   _response.DecelerationReference := ResponseData.GetReal();
     // inc parameter counter
    _parameterCnt := _parameterCnt + 1;
   END_IF
@@ -445,7 +451,7 @@ END_VAR
   IF ( ResponseData.IsPayloadRemaining)
   THEN  
     // Get Response.DynamicValues.JerkRate
-   _response.JerkReference := ResponseData.GetUint();
+   _response.JerkReference := ResponseData.GetReal();
     // inc parameter counter
    _parameterCnt := _parameterCnt + 1;
   END_IF
@@ -521,7 +527,7 @@ END_VAR
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
                           MessageText := 'Response.VelocityReference = {1}',
-                          Para1       :=  UINT_TO_STRING(_response.VelocityReference));
+                          Para1       :=  REAL_TO_STRING(_response.VelocityReference));
   
   
   // Return if no parameter is remaining...
@@ -534,7 +540,7 @@ END_VAR
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
                           MessageText := 'Response.AccelerationReference = {1}',
-                          Para1       :=  UINT_TO_STRING(_response.AccelerationReference));
+                          Para1       :=  REAL_TO_STRING(_response.AccelerationReference));
   
   
   // Return if no parameter is remaining...
@@ -547,7 +553,7 @@ END_VAR
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
                           MessageText := 'Response.DecelerationReference = {1}',
-                          Para1       :=  UINT_TO_STRING(_response.DecelerationReference));
+                          Para1       :=  REAL_TO_STRING(_response.DecelerationReference));
   
   
   // Return if no parameter is remaining...
@@ -560,7 +566,7 @@ END_VAR
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
                           MessageText := 'Response.JerkReference = {1}',
-                          Para1       :=  UINT_TO_STRING(_response.JerkReference));
+                          Para1       :=  REAL_TO_STRING(_response.JerkReference));
   
   
   // Return if no parameter is remaining...

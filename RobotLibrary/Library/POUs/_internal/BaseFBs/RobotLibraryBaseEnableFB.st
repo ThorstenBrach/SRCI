@@ -12,7 +12,7 @@ FUNCTION_BLOCK RobotLibraryBaseEnableFB EXTENDS RobotLibraryBaseFB
 //                                                                           
 //  Copyright: 
 //    (C) 2024 Thorsten Brach. All rights reserved                                                                                                                                            
-//             Licensed under the LGPL-3.0 license.
+//             Licensed under the MIT License.
 //                                                                           
 //  Disclaimer:                                                                           
 //    This project is provided without any guarantee and can be used for   
@@ -143,7 +143,7 @@ END_VAR
                           MessageType := MessageType.CMD,
                           Severity    := Severity.DEBUG,
                           MessageCode := 0,
-                          MessageText := 'Execution of {1} cancelled',
+                          MessageText := 'Execution of {1} cancled ',
                           Para1       := MyType);                 
   
   // try to remove cmd
