@@ -107,15 +107,45 @@ VAR
   /// internal flag for parameter are valid
  _parameterValid           : BOOL;
 END_VAR
+            
+          
+VAR
+  /// ST-FIX F74: message of the command for the message buffer
+  _alarmMessage : AlarmMessage;
+END_VAR
 
   OnCall               (AxesGroup := AxesGroup);
   OnExecRun            (AxesGroup := AxesGroup);
+  // ST-FIX F53: no response of the RC within _timeoutCmd after the command was added
+  // -> error (before: _timerCmd was started but never evaluated, the FB stayed Busy)
+  IF ( _uniqueID <> 0 ) AND ( _rspHeader.State = CmdMessageState.EMPTY ) AND ( NOT Error )
+  THEN
+    IF ( CheckTimeout( rTimer := _timerCmd ) = RobotLibraryConstants.OK )
+    THEN
+      AxesGroup.Acyclic.ActiveCommandRegister.RemoveCmd( UniqueID := _uniqueID );
+      SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD, Overwrite := TRUE );
+      // Create log entry
+      CreateLogMessage ( Timestamp   := AxesGroup.State.SystemTime,
+                         MessageType := MessageType.CMD,
+                         Severity    := Severity.ERROR,
+                         MessageCode := ErrorID,
+                         MessageText := 'No response of the RC within the command timeout');
+      OnUpdateStateFlags( State := CmdMessageState.ERROR );
+    END_IF
+  END_IF
   CheckParameterChanged(AxesGroup := AxesGroup);
   
   
   IF ( AxesGroup.State.OnlineChange_R.Q )
   THEN
     OnOnlineChange(AxesGroup := AxesGroup);
+  END_IF
+  // ST-FIX F61: Error follows ErrorID in the same cycle, and with Error the other state outputs
+  // are reset (Busy/Active/Done/CommandAborted exclusive, spec table 5-45)
+  Error := ErrorID <> RobotLibraryConstants.OK;
+  IF ( Error )
+  THEN
+    OnUpdateStateFlags( State := CmdMessageState.ERROR );
   END_IF
 
 END_FUNCTION_BLOCK
@@ -146,6 +176,13 @@ END_VAR
   
   // set flag for response received
   _responseReceived := TRUE;
+  // ST-FIX F61: Error follows ErrorID in the same cycle, and with Error the other state outputs
+  // are reset (Busy/Active/Done/CommandAborted exclusive, spec table 5-45)
+  Error := ErrorID <> RobotLibraryConstants.OK;
+  IF ( Error )
+  THEN
+    OnUpdateStateFlags( State := CmdMessageState.ERROR );
+  END_IF
 
 END_METHOD
 
@@ -208,6 +245,24 @@ END_VAR
   CreateCommandPayload.AddHalfBytes(  0               , _cmdHeader.ExecMode);
   // Add ParSeq_Priority
   CreateCommandPayload.AddHalfBytes( _cmdHeader.ParSeq, _cmdHeader.Priority);
+  
+  // ST-FIX F48: undefined ExecutionMode (spec table 5-75) -> error, not sent
+  CASE _cmdHeader.ExecMode OF
+    ExecutionMode.SEQUENCE_PRIMARY, ExecutionMode.SEQUENCE_ABORT_OTHERS_PRIMARY,
+    ExecutionMode.PARALLEL, ExecutionMode.CONTINUOUS, ExecutionMode.TRIGGER_MULTIPLE,
+    ExecutionMode.SEQUENCE_SECONDARY, ExecutionMode.SEQUENCE_ABORT_OTHERS_SECONDARY,
+    ExecutionMode.STOP_PARALLEL_CONTINUOUS_TRIGGER: ;
+  ELSE
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PARAM_EXECUTION_MODE, Overwrite := TRUE );
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid ExecutionMode = {1}',
+                            Para1       := EXECUTION_MODE_TO_STRING(_cmdHeader.ExecMode));
+    OnUpdateStateFlags( State := CmdMessageState.ERROR );
+  END_CASE
 
 END_METHOD
 
@@ -276,20 +331,55 @@ END_VAR
   _info_R   ( CLK := InfoID    <> RobotLibraryConstants.OK );
   
   
-  // Log Command events to message log 
-  IF  ( LogLevel < _rspHeader.AlarmMessageSeverity ) AND
-     (( _error_R  .Q                               ) OR 
-      ( _warning_R.Q                               ) OR 
-      ( _info_R   .Q                               ))
+  // ST-FIX F74: every message of the command - also the client-side ones (e.g. parameter errors,
+  // before: only with the severity of the last response of the RC) - goes into the message
+  // buffer, with ACR entry and command type
+  IF ( _error_R.Q ) AND ( LogLevel < Severity.ERROR )
   THEN
-    // Add command message to message buffer       
-    AxesGroup.MessageLog
-      .AddMessageLogByParameter(  Timestamp   :=   AxesGroup.State.SystemTime,
-                                  MessageType :=   MessageType.CMD,
-                                  MessageCode :=  _rspHeader.AlarmMessageCode,
-                                  MessageText :=   CONCAT(MyType, CONCAT(' : ' , MESSAGE_CODE_TO_STRING(_rspHeader.AlarmMessageCode))),
-                                  Severity    :=  _rspHeader.AlarmMessageSeverity ); 
-  END_IF 
+    _alarmMessage.Severity    := Severity.ERROR;
+    IF ( ErrorID = _rspHeader.AlarmMessageCode ) AND ( _rspHeader.AlarmMessageSeverity > Severity.ERROR )
+    THEN
+      _alarmMessage.Severity  := _rspHeader.AlarmMessageSeverity; // e.g. fatal error of the RC
+    END_IF
+    _alarmMessage.Timestamp   := AxesGroup.State.SystemTime;
+    _alarmMessage.MessageType := MessageType.CMD;
+    _alarmMessage.MessageCode := ErrorID;
+    _alarmMessage.AcrID       := UDINT_TO_UINT(_uniqueID);
+    _alarmMessage.CmdType     := _cmdHeader.CmdTyp;
+    _alarmMessage.MessageText := CONCAT(MyType, CONCAT(' : ', MESSAGE_CODE_TO_STRING(ErrorID)));
+    AxesGroup.MessageLog.AddMessageLog( MessageLog := _alarmMessage );
+  END_IF
+  IF ( _warning_R.Q ) AND ( LogLevel < Severity.WARNING )
+  THEN
+    _alarmMessage.Severity    := Severity.WARNING;
+    IF ( WarningID = _rspHeader.AlarmMessageCode ) AND ( _rspHeader.AlarmMessageSeverity > Severity.WARNING )
+    THEN
+      _alarmMessage.Severity  := _rspHeader.AlarmMessageSeverity; // e.g. fatal error of the RC
+    END_IF
+    _alarmMessage.Timestamp   := AxesGroup.State.SystemTime;
+    _alarmMessage.MessageType := MessageType.CMD;
+    _alarmMessage.MessageCode := WarningID;
+    _alarmMessage.AcrID       := UDINT_TO_UINT(_uniqueID);
+    _alarmMessage.CmdType     := _cmdHeader.CmdTyp;
+    _alarmMessage.MessageText := CONCAT(MyType, CONCAT(' : ', MESSAGE_CODE_TO_STRING(WarningID)));
+    AxesGroup.MessageLog.AddMessageLog( MessageLog := _alarmMessage );
+  END_IF
+  IF ( _info_R.Q ) AND ( LogLevel < Severity.INFO )
+  THEN
+    _alarmMessage.Severity    := Severity.INFO;
+    IF ( InfoID = _rspHeader.AlarmMessageCode ) AND ( _rspHeader.AlarmMessageSeverity > Severity.INFO )
+    THEN
+      _alarmMessage.Severity  := _rspHeader.AlarmMessageSeverity; // e.g. fatal error of the RC
+    END_IF
+    _alarmMessage.Timestamp   := AxesGroup.State.SystemTime;
+    _alarmMessage.MessageType := MessageType.CMD;
+    _alarmMessage.MessageCode := InfoID;
+    _alarmMessage.AcrID       := UDINT_TO_UINT(_uniqueID);
+    _alarmMessage.CmdType     := _cmdHeader.CmdTyp;
+    _alarmMessage.MessageText := CONCAT(MyType, CONCAT(' : ', MESSAGE_CODE_TO_STRING(InfoID)));
+    AxesGroup.MessageLog.AddMessageLog( MessageLog := _alarmMessage );
+  END_IF
+   
   
   
   IF ( _error_R.Q)
@@ -368,9 +458,8 @@ VAR_INPUT
 END_VAR
 
   // reset message IDs 
-  InfoID    := 0;
-  WarningID := 0;
-  ErrorID   := 0;
+  // ST-FIX F62: InfoID/WarningID/ErrorID are held until the falling edge of Execute/Enable
+  // (Reset), a response without message must not clear them (spec 5.5.10)
   
   // get State
   _rspHeader.State                := ResponseData.GetHalfeByte1(IncPayloadPtr := FALSE);
@@ -396,6 +485,17 @@ END_VAR
   
   END_CASE
   
+  // ST-FIX F61: state ERROR without error code (or with severity INFO/WARNING) -> 16#8613
+  IF ( _rspHeader.State = CmdMessageState.ERROR ) AND ( ErrorID = RobotLibraryConstants.OK )
+  THEN
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_ROBOT_ERROR_NO_ID, Overwrite := TRUE );
+    // Create log entry
+    CreateLogMessage ( Timestamp   := Timestamp,
+                       MessageType := MessageType.CMD,
+                       Severity    := Severity.ERROR,
+                       MessageCode := ErrorID,
+                       MessageText := 'Response of the RC with state ERROR but without error code');
+  END_IF
   ParseResponsePayload := ResponseData.PayloadPtr;
 
 END_METHOD
@@ -408,6 +508,7 @@ END_VAR
   _responseReceived := FALSE;
   
   _uniqueId := 0;
+  _rspHeader.State := CmdMessageState.EMPTY; // ST-FIX F53: no response yet
   _stepCmd  := 0;
   Error     := FALSE;
   ErrorID   := 0;

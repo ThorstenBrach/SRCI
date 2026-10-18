@@ -751,6 +751,9 @@ END_VAR
     OutCmd.ConstantVelocitySupported := _response.ConstantVelocitySupported;
     OutCmd.RCWorkingHours            := _response.RCWorkingHours;      
   END_IF
+  
+  // ST-FIX F32
+  OutCmd.NumberOfServerLogs := _response.NumberOfServerLogs;
 
 END_METHOD
 
@@ -1085,6 +1088,9 @@ END_VAR
   // call base implementation to parse the header from payload buffer
   ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
   
+  // ST-FIX F100: missing (trailing zero) bytes of the payload are 0, no values of the previous response
+  SysDepMemSet( pDest := ADR(_response), Value := 0, DataLen := SIZEOF(_response));
+  
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;
   _response.State                := _rspHeader.State;
@@ -1260,6 +1266,13 @@ END_VAR
     // inc parameter counter
    _parameterCnt := _parameterCnt + 1;
   END_IF 
+  
+  // ST-FIX F32
+  IF ( ResponseData.IsPayloadRemaining )
+  THEN
+    _response.NumberOfServerLogs := ResponseData.GetUint();
+    _parameterCnt := _parameterCnt + 1;
+  END_IF
   
   // Create logging
   ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp, ParameterCnt := _parameterCnt);

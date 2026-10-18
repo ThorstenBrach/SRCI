@@ -24,7 +24,7 @@ VAR_GLOBAL CONSTANT
   /// Version of SRCI specification
   /// Bit 0-4 : Minor version = Features        (0..31)
   /// Bit 5-7 : Major version = Breaking change (0..07)
-  SRCIVersion             : VersionStruct := ( MajorVersion := 1, MinorVersion := 3, PatchVersion := 0);
+  SRCIVersion             : VersionStruct := ( MajorVersion := 1, MinorVersion := 5, PatchVersion := 0); // ST-FIX PLC library still says 1.3.0, but implements SRCI 1.5 (SDK: SRCI_VERSION 1.5)
   /// Version of the PLC library
   PLCLibraryVersion       : VersionStruct := ( MajorVersion := 0, MinorVersion := 0, PatchVersion := 49);
   /// Minimal axes group ID

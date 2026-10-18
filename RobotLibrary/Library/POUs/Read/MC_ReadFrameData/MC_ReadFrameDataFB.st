@@ -40,6 +40,11 @@ VAR
   /// response data received
  _response        : ReadFrameDataRecvData;      
 END_VAR
+            
+          
+VAR_INPUT
+  UpdateSystemData : BOOL := TRUE; // ST-FIX F16: FALSE for the internal instances of MC_RobotTaskFB (synchronisation)
+END_VAR
 
   SUPER^(AxesGroup := AxesGroup);
 
@@ -152,7 +157,7 @@ END_VAR
     CheckParameterValid := FALSE;
     
     // Check FrameNo available on RC ? 
-    IF ( ParCmd.FrameNo > AxesGroup.State.ConfigurationData.HighestFrameIndex )
+    IF (( ParCmd.FrameNo > AxesGroup.State.ConfigurationData.HighestFrameIndex ) AND ( ParCmd.FrameNo <= 254 )) // ST-FIX F98: outside -1..254 is a range error
     THEN
       SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_FRAMENO_UNAVAILABLE, Overwrite := TRUE );
     ELSE
@@ -349,10 +354,13 @@ END_VAR
            IF (_response.State >= CmdMessageState.DONE )
            THEN
              // Update the FrameData in user defined system data 
-             AxesGroup.SystemData.UpdateFrameData( Caller     := THIS^,
+             IF UpdateSystemData AND ( _response.State = CmdMessageState.DONE ) // ST-FIX F16
+  THEN
+  AxesGroup.SystemData.UpdateFrameData( Caller     := THIS^,
                                                    SystemTime := AxesGroup.State.SystemTime,
                                                    FrameNo    := OutCmd.FrameNoReturn, 
                                                    FrameData  := OutCmd.FrameData);
+  END_IF
              // set timeout
              SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
              // inc step counter
@@ -478,6 +486,9 @@ END_VAR
   // call base implementation to parse the header from payload buffer
   ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
   
+  // ST-FIX F100: missing (trailing zero) bytes of the payload are 0, no values of the previous response
+  SysDepMemSet( pDest := ADR(_response), Value := 0, DataLen := SIZEOF(_response));
+  
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;
   _response.State                := _rspHeader.State;
@@ -590,8 +601,8 @@ END_VAR
   // Check payload remaining ? 
   IF ( ResponseData.IsPayloadRemaining)
   THEN  
-    // Get Response.DataChanged
-   _response.DataChanged := ResponseData.GetBool();
+    // Get Response.FrameNoReturn (ST-FIX F27)
+   _response.FrameNoReturn := ResponseData.GetUsint();
     // inc parameter counter
    _parameterCnt := _parameterCnt + 1;
   END_IF
@@ -600,8 +611,8 @@ END_VAR
   // Check payload remaining ? 
   IF ( ResponseData.IsPayloadRemaining)
   THEN  
-    // Get Response.FrameNoReturn
-   _response.FrameNoReturn := ResponseData.GetUsint();
+    // Get Response.DataChanged (ST-FIX F27)
+   _response.DataChanged := ResponseData.GetBool();
     // inc parameter counter
    _parameterCnt := _parameterCnt + 1;
   END_IF

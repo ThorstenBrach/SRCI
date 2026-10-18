@@ -40,6 +40,11 @@ VAR
   /// response data received
  _response        : ReadLoadDataRecvData;      
 END_VAR
+            
+          
+VAR_INPUT
+  UpdateSystemData : BOOL := TRUE; // ST-FIX F16: FALSE for the internal instances of MC_RobotTaskFB (synchronisation)
+END_VAR
 
   SUPER^(AxesGroup := AxesGroup);
 
@@ -153,7 +158,7 @@ END_VAR
     CheckParameterValid := FALSE;
     
     // Check LoadNo available on RC ? 
-    IF ( ParCmd.LoadNo > AxesGroup.State.ConfigurationData.HighestLoadIndex )
+    IF (( ParCmd.LoadNo > AxesGroup.State.ConfigurationData.HighestLoadIndex ) AND ( ParCmd.LoadNo <= 254 )) // ST-FIX F98: outside -1..254 is a range error
     THEN
       SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_LOADNO_UNAVAILABLE, Overwrite := TRUE );
     ELSE
@@ -349,10 +354,13 @@ END_VAR
            IF (_response.State >= CmdMessageState.DONE )
            THEN
              // Update the LoadData in user defined system datas 
-             AxesGroup.SystemData.UpdateLoadData( Caller     := THIS^,
+             IF UpdateSystemData AND ( _response.State = CmdMessageState.DONE ) // ST-FIX F16
+  THEN
+  AxesGroup.SystemData.UpdateLoadData( Caller     := THIS^,
                                                   SystemTime := AxesGroup.State.SystemTime,
                                                   LoadNo     := OutCmd.LoadNoReturn, 
-                                                  LoadData   := OutCmd.LoadData);                     
+                                                  LoadData   := OutCmd.LoadData);
+  END_IF                     
              // set timeout
              SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
              // inc step counter
@@ -491,6 +499,9 @@ END_VAR
 
   // call base implementation to parse the header from payload buffer
   ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
+  
+  // ST-FIX F100: missing (trailing zero) bytes of the payload are 0, no values of the previous response
+  SysDepMemSet( pDest := ADR(_response), Value := 0, DataLen := SIZEOF(_response));
   
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;

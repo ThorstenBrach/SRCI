@@ -1,5 +1,5 @@
 /// Create and move spline on RC simultaneously
-FUNCTION_BLOCK MC_DynamicSplineFB EXTENDS RobotLibraryBaseFB
+FUNCTION_BLOCK MC_DynamicSplineFB EXTENDS RobotLibraryBaseEnableFB
 // ------------------------------------------------------------------------- 
 //  SRCI Robot Library                                                
 // ------------------------------------------------------------------------- 
@@ -22,8 +22,6 @@ FUNCTION_BLOCK MC_DynamicSplineFB EXTENDS RobotLibraryBaseFB
 //
 // -------------------------------------------------------------------------
 VAR_INPUT
-  /// Start of the command at the rising edge
-  Execute            : BOOL;
   /// Parameter which determines the behavior towards the previously sent and still active or buffered commands
   AbortingMode       : AbortingMode;
   /// Defines the target sequence in which the command will be executed
@@ -32,12 +30,8 @@ VAR_INPUT
   ParCmd             : DynamicSplineParCmd;
 END_VAR
 VAR_OUTPUT
-  /// FB is being processed
-  Busy               : BOOL;
   /// Command is transferred and confirmed by the RC
   CommandBuffered    : BOOL;
-  /// Function is enabled and new input values will be transmitted.
-  Enabled            : BOOL;
   /// The command takes control of the motion of the according axis group
   Active             : BOOL;
   /// The command was aborted by another command.
@@ -57,6 +51,13 @@ VAR
  _command            : DynamicSplineSendData;
   /// response data received
  _response           : DynamicSplineRecvData;      
+END_VAR
+            
+          
+VAR
+  _pointIndex : DINT := 1;
+  _pointCount : DINT;
+  _emptyPoint : SplineData;
 END_VAR
 
   SUPER^(AxesGroup := AxesGroup);
@@ -145,7 +146,7 @@ END_VAR
     // notify active command register 
     AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
     // Reset parameter accepted flag
-    ParameterAccepted := FALSE;  
+    ParameterAccepted := FALSE;
   END_IF
 
 END_METHOD
@@ -268,7 +269,7 @@ END_VAR
     RETURN;                          
   END_IF
   
-  FOR _idx := 0 TO RobotLibraryParameter.SPLINE_DATA_MAX
+  FOR _idx := 1 TO RobotLibraryParameter.SPLINE_DATA_MAX // ST-FIX F54
   DO
     // Check ParCmd.SplineData[x].Position.X valid ? 
     IF ( SysDepIsValidReal(ParCmd.SplineData[_idx].Position.X) = FALSE ) 
@@ -595,8 +596,7 @@ END_VAR
     
     // Check ParCmd.SplineData[x].VelocityRate valid ? 
     IF  (( SysDepIsValidReal(ParCmd.SplineData[_idx].VelocityRate) = FALSE )  OR
-        ((                   ParCmd.SplineData[_idx].VelocityRate  <     0 )  AND 
-         (                   ParCmd.SplineData[_idx].VelocityRate <>    -1 )) OR   
+        (* ST-FIX F96: every value < 0 is the default *)
          (                   ParCmd.SplineData[_idx].VelocityRate  >   100 ))      
     THEN
       // Parameter not valid
@@ -618,8 +618,7 @@ END_VAR
     
     // Check ParCmd.SplineData[x].AccelerationRate valid ? 
     IF  (( SysDepIsValidReal(ParCmd.SplineData[_idx].AccelerationRate) = FALSE )  OR
-        ((                   ParCmd.SplineData[_idx].AccelerationRate  <     0 )  AND 
-         (                   ParCmd.SplineData[_idx].AccelerationRate <>    -1 )) OR   
+        (* ST-FIX F96: every value < 0 is the default *)
          (                   ParCmd.SplineData[_idx].AccelerationRate  >   100 ))      
     THEN
       // Parameter not valid
@@ -641,8 +640,7 @@ END_VAR
     
     // Check ParCmd.SplineData[x].DecelerationRate valid ? 
     IF  (( SysDepIsValidReal(ParCmd.SplineData[_idx].DecelerationRate) = FALSE )  OR
-        ((                   ParCmd.SplineData[_idx].DecelerationRate  <     0 )  AND 
-         (                   ParCmd.SplineData[_idx].DecelerationRate <>    -1 )) OR   
+        (* ST-FIX F96: every value < 0 is the default *)
          (                   ParCmd.SplineData[_idx].DecelerationRate  >   100 ))      
     THEN
       // Parameter not valid
@@ -664,8 +662,7 @@ END_VAR
     
     // Check ParCmd.SplineData[x].JerkRate valid ? 
     IF  (( SysDepIsValidReal(ParCmd.SplineData[_idx].JerkRate) = FALSE )  OR
-        ((                   ParCmd.SplineData[_idx].JerkRate  <     0 )  AND 
-         (                   ParCmd.SplineData[_idx].JerkRate <>    -1 )) OR   
+        (* ST-FIX F96: every value < 0 is the default *)
          (                   ParCmd.SplineData[_idx].JerkRate  >   100 ))      
     THEN
       // Parameter not valid
@@ -765,6 +762,16 @@ END_VAR
                             Para1       := INT_TO_STRING(ParCmd.StartPosition));
     RETURN;
   END_IF
+  
+  // ST-FIX F33: number of spline points = highest index of a point that is not empty
+  _pointCount := 0;
+  FOR _idx := 1 TO RobotLibraryParameter.SPLINE_DATA_MAX
+  DO
+    IF ( SysDepMemCmp(pData1 := ADR(ParCmd.SplineData[_idx]), pData2 := ADR(_emptyPoint), DataLen := SIZEOF(_emptyPoint)) <> RobotLibraryConstants.OK )
+    THEN
+      _pointCount := _idx;
+    END_IF
+  END_FOR
 
 END_METHOD
 
@@ -879,7 +886,23 @@ END_VAR
 
   // set command parameter 
   _command.CmdTyp            :=  CmdType.DynamicSpline;
-  _command.ExecMode          :=  ExecMode;
+  // ST-FIX F51: ExecutionMode from AbortingMode and SequenceFlag (spec table 5-77)
+  IF ( SequenceFlag = SequenceFlagEnum.SECONDARY_SEQUENCE )
+  THEN
+    IF ( AbortingMode = AbortingModeEnum.ABORT )
+    THEN
+      _command.ExecMode := ExecutionMode.SEQUENCE_ABORT_OTHERS_SECONDARY;
+    ELSE
+      _command.ExecMode := ExecutionMode.SEQUENCE_SECONDARY;
+    END_IF
+  ELSE
+    IF ( AbortingMode = AbortingModeEnum.ABORT )
+    THEN
+      _command.ExecMode := ExecutionMode.SEQUENCE_ABORT_OTHERS_PRIMARY;
+    ELSE
+      _command.ExecMode := ExecutionMode.SEQUENCE_PRIMARY;
+    END_IF
+  END_IF
   _command.ParSeq            := _command.ParSeq;
   _command.Priority          :=  Priority;
   _command.Mode              := _parCmd.Mode;
@@ -896,6 +919,7 @@ END_VAR
     _command.SplineData[_idx].JerkRate         := REAL_TO_PERCENT_UINT(_parCmd.SplineData[_idx].JerkRate         , IsOptional := TRUE );
     _command.SplineData[_idx].ToolNo           :=              _parCmd.SplineData[_idx].ToolNo;
     _command.SplineData[_idx].FrameNo          :=              _parCmd.SplineData[_idx].FrameNo;
+    _command.SplineData[_idx].Position         :=              _parCmd.SplineData[_idx].Position; // ST-FIX F55
     _command.SplineData[_idx].MoveTime         := TIME_TO_UINT(_parCmd.SplineData[_idx].MoveTime);
   END_FOR
   
@@ -966,7 +990,7 @@ END_VAR
   END_IF
   
   
-  FOR _idx := 1 TO RobotLibraryParameter.SPLINE_DATA_MAX
+  FOR _idx := _pointIndex TO _pointIndex // ST-FIX F33: one spline point per command
   DO
     // Check parameter must be added ? 
     IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
@@ -1673,6 +1697,149 @@ END_VAR
 
 END_METHOD
 
+METHOD Protected OnExecCancel : DINT
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+VAR
+  /// internal return value 
+ _retVal    : DINT;
+END_VAR
+
+  OnExecCancel := RobotLibraryConstants.RUNNING;
+  
+  CASE _stepCancel OF
+    
+    0: // set busy flag
+       Busy := TRUE;
+      
+       // Create log entry
+       CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
+                               MessageType := MessageType.CMD,
+                               Severity    := Severity.DEBUG,
+                               MessageCode := 0,
+                               MessageText := 'Execution of {1} cancelled',
+                               Para1       := MyType);                 
+      
+       // try to remove cmd
+      _retVal := AxesGroup.Acyclic.ActiveCommandRegister.RemoveCmd(_uniqueID);
+    
+       // check result of removement       
+       IF ( _retVal = RobotLibraryConstants.OK )
+       THEN
+         // Reset step counter
+        _stepCancel := 0;
+         // finished okay
+         OnExecCancel := RobotLibraryConstants.OK;
+       
+         // Create log entry
+         CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
+                                 MessageType := MessageType.CMD,
+                                 Severity    := Severity.DEBUG,
+                                 MessageCode := 0,
+                                 MessageText := '{1} successfully removed from ACR',
+                                 Para1       := MyType);                 
+       ELSE
+         // set timeout
+         SetTimeout(PT := _timeoutCancel, rTimer := _timerCancel);
+         // inc step counter
+        _stepCancel := _stepCancel + 1; 
+       
+         // Create log entry
+         CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
+                                 MessageType := MessageType.CMD,
+                                 Severity    := Severity.DEBUG,
+                                 MessageCode := 0,
+                                 MessageText := '{1} was not removed from ACR because execution was already in progress',
+                                 Para1       := MyType);                 
+       END_IF       
+    
+       
+   1:  // call clear error 
+       OnExecCancel := OnExecErrorClear(AxesGroup := AxesGroup);  
+   
+       IF ( OnExecCancel = RobotLibraryConstants.OK)
+       THEN
+         // Reset busy flag
+         Busy := FALSE;
+         // Reset step counter
+        _stepCancel := 0;
+         // finished okay
+         OnExecCancel := RobotLibraryConstants.OK;
+       END_IF  
+    
+  ELSE
+    // invalid step
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP, Overwrite := TRUE );
+  END_CASE  
+  
+  
+                          
+  // reset step counter
+  IF (OnExecCancel <> RobotLibraryConstants.RUNNING)
+  THEN
+    // Reset FB variables
+    Reset();
+    // Reset step counter
+   _stepCancel := 0;
+  END_IF
+
+END_METHOD
+
+METHOD PROTECTED OnExecErrorClear : DINT
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+  OnExecErrorClear := RobotLibraryConstants.RUNNING;
+  
+  CASE _stepClearError OF
+    
+    0:  // set busy flag
+        Busy := TRUE;
+        // trigger parameter update to disable FB
+       _parameterUpdateInternal := TRUE;
+        // call Check Parameter changed method to trigger the parameter update to disable the function
+        CheckParameterChanged(AxesGroup := AxesGroup);
+        // set timeout
+        SetTimeout(PT := _timeoutClearError, rTimer := _timerClearError);
+        // inc step counter
+       _stepClearError := _stepClearError + 1; 
+        
+    1: IF ( _responseReceived )
+       THEN
+         // reset response received flag
+        _responseReceived := FALSE;
+         // reset step counter
+        _stepClearError := 0;
+         // finished
+         OnExecErrorClear := RobotLibraryConstants.OK;
+       ELSE
+         // timeout exceeded ? 
+         IF (CheckTimeout(_timerClearError) = RobotLibraryConstants.OK)
+         THEN
+           OnExecErrorClear := RobotLibraryConstants.HAS_ERROR;
+         END_IF
+  	   END_IF
+  ELSE
+    // invalid step
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP, Overwrite := TRUE );
+  END_CASE
+  
+  
+  // reset step counter
+  IF (OnExecErrorClear <> RobotLibraryConstants.RUNNING)
+  THEN
+    // Reset 
+    Reset();     
+    // reset step counter
+   _stepClearError := 0;
+  END_IF
+
+END_METHOD
+
 METHOD PROTECTED OnExecRun : DINT
 VAR_IN_OUT
   /// Robot assignment of function
@@ -1684,12 +1851,17 @@ END_VAR
   
   CASE _stepCmd OF
     
-    00:  IF ( Execute ) AND ( NOT Error)  
+    00:  IF ( _enable_R.Q ) AND ( NOT Error) 
          THEN
+           // reset the rising edge
+          _enable_R();       
+   
            // Check function is supported and parameter are valid ?
            IF (( CheckFunctionSupported( AxesGroup := AxesGroup )) AND
-               ( CheckParameterValid   ( AxesGroup := AxesGroup )))
-           THEN      
+               ( CheckParameterValid   ( AxesGroup := AxesGroup )))      
+           THEN
+             // Reset all internal flags
+             Reset();
              // set busy flag
              Busy := TRUE;
              // Reset command outputs
@@ -1698,6 +1870,7 @@ END_VAR
             _parCmd := ParCmd;
              // init parameter sequence
             _command.ParSeq := 1;
+  _pointIndex := 1;
              // create command data
              CommandData := CreateCommandPayload(AxesGroup := AxesGroup);
              // Add command to active command register
@@ -1708,8 +1881,8 @@ END_VAR
             _stepCmd := _stepCmd + 1; 
            END_IF
          END_IF
-       
-  
+   
+      
     01:  // Wait for responce received
          IF ( _responseReceived )
          THEN
@@ -1719,42 +1892,44 @@ END_VAR
            OnUpdateStateFlags(_response.State);
            // update state flags
            OnApplyOutCmd(_response.State);
-  
-           // Done, Aborted or Error ?
-           IF (_response.State >= CmdMessageState.DONE )
-           THEN
-             // set timeout
-             SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
-             // inc step counter
-            _stepCmd := _stepCmd + 1; 
-           END_IF
+         END_IF
+         
+         // do not abort directly, so that the ParSeq update can be send
+         IF ( _enable_F.Q ) 
+         THEN
+           // Set Busy flag
+           Busy := TRUE;
+           // trigger parameter update to disable FB
+          _parameterUpdateInternal := TRUE;
+           // reset the falling edge
+          _enable_F();
+           // set timeout
+           SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
+           // inc step counter
+          _stepCmd := _stepCmd + 1; 
          END_IF
   
-  
-    02: IF ( NOT Execute)
+        // Wait for response received or timeout or not Initialized
+    02: IF ((    _responseReceived                                   )  OR 
+            (     CheckTimeout(_timerCmd) = RobotLibraryConstants.OK )) OR 
+           (( NOT AxesGroup.State.Initialized                        )  AND
+            ( NOT AxesGroup.State.Synchronized                       ))
         THEN
-          Reset();
-        END_IF     
-  
+          Reset();   
+  	    END_IF
+        
   ELSE
     // invalid step
     SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP, Overwrite := TRUE );
   END_CASE
   
   
+  
   // Reset FB
-  IF ( NOT Execute )
+  IF (( _enable_R.Q ) OR
+      ( _enable_F.Q ))
   THEN
-   _uniqueId           := 0;
-   _stepCmd            := 0;
-    Busy               := FALSE;
-    CommandBuffered    := FALSE;  
-    CommandAborted     := FALSE;
-    CommandInterrupted := FALSE;
-    Error              := FALSE;
-    ErrorID            := 0;
-    WarningID          := 0;
-    InfoID             := 0;  
+    Reset();
   END_IF
 
 END_METHOD
@@ -1766,9 +1941,20 @@ VAR_INPUT
 END_VAR
 
   // Reset State flags
-  Active             := FALSE;
-  CommandAborted     := FALSE;
-  CommandInterrupted := FALSE;
+  ;
+  
+  // Update Enable flag
+  // ST-FIX F33/F45: enable block, spline points are sent one by one
+  Enabled := ( State = CmdMessageState.ACTIVE ) OR ( State = CmdMessageState.BUFFERED );
+  Active  := ( State = CmdMessageState.ACTIVE );
+  // next spline point (the point after the last one is empty: end of the trajectory)
+  IF ( _response.ParSeq = _command.ParSeq ) AND ( _pointIndex <= _pointCount ) AND
+     ( _pointIndex < RobotLibraryParameter.SPLINE_DATA_MAX ) AND
+     (( State = CmdMessageState.ACTIVE ) OR ( State = CmdMessageState.BUFFERED ))
+  THEN
+    _pointIndex := _pointIndex + 1;
+    _parameterUpdateInternal := TRUE;
+  END_IF
   
   CASE State OF
   
@@ -1783,20 +1969,18 @@ END_VAR
     CmdMessageState.BUFFERED_IN_PLANNER : CommandBuffered    := TRUE;
                                           ParameterAccepted  := TRUE;
     // Currently active and in progress
-    CmdMessageState.ACTIVE              : Active             := TRUE;
-                                          Enabled            := TRUE;                                                                           
+    CmdMessageState.ACTIVE              : 
     // Interrupted and awaiting continuation
-    CmdMessageState.INTERRUPTED         : CommandInterrupted := TRUE;     
+    CmdMessageState.INTERRUPTED         :;
     // Requested for abort
     CmdMessageState.ABORT_REQUEST       :;
     // Successfully completed
-    CmdMessageState.DONE                : Busy               := FALSE;
+    CmdMessageState.DONE                : Busy  := FALSE;
     // Aborted before completion
-    CmdMessageState.ABORTED             : CommandAborted     := TRUE;
-                                          Busy               := FALSE;
+    CmdMessageState.ABORTED             : Busy  := FALSE;
     // Encountered an error during execution
-    CmdMessageState.ERROR               : Error              := TRUE;
-                                          Busy               := FALSE;
+    CmdMessageState.ERROR               : Error := TRUE;
+                                          Busy  := FALSE;
   END_CASE
 
 END_METHOD
@@ -1833,6 +2017,9 @@ END_VAR
 
   // call base implementation to parse the header from payload buffer
   ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
+  
+  // ST-FIX F100: missing (trailing zero) bytes of the payload are 0, no values of the previous response
+  SysDepMemSet( pDest := ADR(_response), Value := 0, DataLen := SIZEOF(_response));
   
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;
@@ -2011,11 +2198,8 @@ END_VAR
   Reset := SUPER^.Reset();
   
   Busy               := FALSE;
-  Active             := FALSE;
-  Enabled            := FALSE;
   CommandBuffered    := FALSE;
-  CommandAborted     := FALSE;
-  CommandInterrupted := FALSE;
+  ParameterAccepted  := FALSE;
 
 END_METHOD
 

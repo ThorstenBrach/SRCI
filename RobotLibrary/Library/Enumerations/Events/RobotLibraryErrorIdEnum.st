@@ -923,7 +923,7 @@ TYPE RobotLibraryErrorIdEnum :
 
   /// Server Optional parameter not supported - ExternalTCP
   /// Commands: "CalculateTool", "CalculateFrame"
-  ERR_OPTIONAL_PARAM_EXTERNAL_TCP_NOT_SUPPORTED := 16#8E29,
+  ERR_OPTIONAL_PARAM_EXTERNAL_TCP_NOT_SUPPORTED := 16#8E22,
 
   /// Server Optional parameter not supported - RelativePosition
   /// Commands using the parameter "RelativePosition"
@@ -1145,7 +1145,49 @@ TYPE RobotLibraryErrorIdEnum :
   ERR_CMD_PAYLOAD_POINTER_INVALID := 16#9A10,
 
   /// Server Illegal Execution Mode change
-  ERR_EXEC_MODE_CHANGE_ILLEGAL := 16#9A14
+  ERR_EXEC_MODE_CHANGE_ILLEGAL := 16#9A14,
+  /// ST-FIX F75: table 7-1 (missing in the library)
+  ERR_INVALID_PARAM_EMITTERID_EQUALS_LISTENERID := 16#8D52,
+  /// ST-FIX F75: table 7-1 (missing in the library)
+  ERR_INVALID_PARAM_EMITTERID_INCOMPATIBLE_ACTION := 16#8D53,
+  /// ST-FIX F75: table 7-1 (missing in the library)
+  ERR_INVALID_PARAM_TRIGGER_MODE_UNKNOWN := 16#8D54,
+  /// ST-FIX F75: table 7-1 (missing in the library)
+  ERR_INVALID_PARAM_BIT_INDEX_OUT_OF_RANGE := 16#8D55,
+  /// ST-FIX F75: table 7-1 (missing in the library)
+  ERR_INVALID_PARAM_LISTENERID_INCOMPATIBLE_TRIGGER := 16#8D56,
+  /// ST-FIX F75: table 7-1 (missing in the library)
+  ERR_INVALID_PARAM_TRIGGER_PARAMETER_OUT_OF_RANGE := 16#8D57,
+  /// ST-FIX F75: table 7-1 (missing in the library)
+  ERR_INVALID_PARAM_TRIGGER_START_BEHIND_END := 16#8D58,
+  /// ST-FIX F75: table 7-1 (missing in the library)
+  ERR_INVALID_PARAM_TRIGGER_ERROR_MODE_UNKNOWN := 16#8D59,
+  /// ST-FIX F75: table 7-1 (missing in the library)
+  ERR_INVALID_PARAM_REACTION_MODE_UNKNOWN := 16#8D60,
+  /// ST-FIX F75: table 7-1 (missing in the library)
+  ERR_INVALID_PARAM_LOAD_IX_OUT_OF_RANGE := 16#8D89,
+  /// ST-FIX F75: table 7-1 (missing in the library)
+  ERR_INVALID_PARAM_LOAD_IY_OUT_OF_RANGE := 16#8D90,
+  /// ST-FIX F75: table 7-1 (missing in the library)
+  ERR_INVALID_PARAM_LOAD_IZ_OUT_OF_RANGE := 16#8D91,
+  /// ST-FIX F75: table 7-1 (missing in the library)
+  ERR_INVALID_PARAM_LOAD_RX_OUT_OF_RANGE := 16#8D92,
+  /// ST-FIX F75: table 7-1 (missing in the library)
+  ERR_INVALID_PARAM_LOAD_RY_OUT_OF_RANGE := 16#8D93,
+  /// ST-FIX F75: table 7-1 (missing in the library)
+  ERR_INVALID_PARAM_LOAD_RZ_OUT_OF_RANGE := 16#8D94,
+  /// ST-FIX F75: table 7-1 (missing in the library)
+  ERR_INVALID_PARAM_SERVER_LOG_ID_UNKNOWN := 16#8D95,
+  /// ST-FIX F75: table 7-1 (missing in the library)
+  ERR_INVALID_PARAM_SERVER_LOG_START_LINE_UNKNOWN := 16#8D96,
+  /// ST-FIX F75: table 7-1 (missing in the library)
+  ERR_INVALID_PARAM_SERVER_LOG_CONTEXT_FILTER_UNKNOWN := 16#8D97,
+  /// ST-FIX F75: table 7-1 (missing in the library)
+  ERR_INVALID_PARAM_CIRCMODE_UNKNOWN := 16#8D98,
+  /// ST-FIX F75: name with the correct value (alias)
+  ERR_LIFESIGN_TIMEOUT_0x8004 := 16#8004,
+  /// ST-FIX F75: name with the correct value (alias)
+  ERR_TELEGRAM_SEQ_TIMEOUT_0x80A8 := 16#80A8
 
 )WORD;
 END_TYPE

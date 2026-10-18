@@ -30,6 +30,10 @@ STRUCT
   Severity    : Severity;
   /// Code of messages
   MessageCode : DWORD;
+  /// Entry in the ACR of the command from which the message originated (0: no command) (ST-FIX F74: spec 5.5.11 Fig. 5-137)
+  AcrID : UINT;
+  /// Type of the command from which the message originated (0: no command) (ST-FIX F74: spec 5.5.11 Fig. 5-137)
+  CmdType : UINT;
   /// Static text of message
   MessageText : STRING(RobotLibraryParameter.MESSAGE_TEXT_LEN);  
 END_STRUCT

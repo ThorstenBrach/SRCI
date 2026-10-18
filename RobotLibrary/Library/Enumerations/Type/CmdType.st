@@ -109,9 +109,9 @@ TYPE CmdType :
   /// Return to path left during active interrupt
   ReturnToPrimary := 2104,  
   /// Move the TCP to an absolute joint position (linear interpolation)
-  MoveCircularAbsolute := 2109,  
+  MoveCircularAbsolute := 2106,  
   /// Move the TCP relative to the actual cartesian position (circular interpolation)
-  MoveCircularRelative := 2106,  
+  MoveCircularRelative := 2107,  
   /// Move the TCP relative to a reference cartesian position (linear interpolation)
   MoveLinearOffset := 2112,  
   /// Move the TCP relative to a reference cartesian position (PTPT interpolation)
@@ -249,7 +249,9 @@ TYPE CmdType :
   /// Move the robot axes by hand
   FreeDrive := 7002,  
   /// Measure the length of objects in the cartesian space, execution time for specified section of a job or signal output time of a specified signal
-  UnitMeasurement := 7004   
+  UnitMeasurement := 7004,   
+  /// ST-FIX F35: spec 6.3.12 Type 2109 (missing in the library)
+  MoveLinearAbsoluteJ := 2109
 )UINT;
 END_TYPE
 

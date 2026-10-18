@@ -183,7 +183,8 @@ END_VAR
   
   
   // Check ParCmd.Username valid ? 
-  IF ( ParCmd.Username = '' )
+  IF (( ParCmd.Mode     = LogonMode.USERNAME_AND_PASSWORD ) AND // ST-FIX F87: only with user name
+      ( ParCmd.Username = ''                              ))
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
@@ -387,7 +388,8 @@ END_VAR
   IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
   THEN
     // add command.Password
-    CreateCommandPayload.AddString(_command.Password);
+    // ST-FIX F34: Password is a field of 50 characters (spec table 6-69), padded with 0
+  CreateCommandPayload.AddDataBlock(pValue := ADR(_command.Password), Size := 50);
     // inc parameter counter
    _parameterCnt := _parameterCnt + 1;  
   END_IF
@@ -397,7 +399,8 @@ END_VAR
   IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
   THEN
     // add command.Username
-    CreateCommandPayload.AddString(_command.Username);
+    // ST-FIX F34: Username is a field of 50 characters (spec table 6-69), padded with 0
+  CreateCommandPayload.AddDataBlock(pValue := ADR(_command.Username), Size := 50);
     // inc parameter counter
    _parameterCnt := _parameterCnt + 1;  
   END_IF
@@ -633,6 +636,9 @@ END_VAR
 
   // call base implementation to parse the header from payload buffer
   ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
+  
+  // ST-FIX F100: missing (trailing zero) bytes of the payload are 0, no values of the previous response
+  SysDepMemSet( pDest := ADR(_response), Value := 0, DataLen := SIZEOF(_response));
   
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;

@@ -41,6 +41,15 @@ VAR
  _response        : CreateSplineRecvData;      
 END_VAR
 
+
+            
+          
+VAR
+  _pointIndex : DINT := 1;
+  _pointCount : DINT;
+  _emptyPoint : SplineData;
+END_VAR
+
   SUPER^(AxesGroup := AxesGroup);
 
 END_FUNCTION_BLOCK
@@ -164,7 +173,7 @@ END_VAR
     RETURN;                          
   END_IF
   
-  FOR _idx := 0 TO RobotLibraryParameter.SPLINE_DATA_MAX
+  FOR _idx := 1 TO RobotLibraryParameter.SPLINE_DATA_MAX // ST-FIX F54
   DO
     // Check ParCmd.SplineData[x].Position.X valid ? 
     IF ( SysDepIsValidReal(ParCmd.SplineData[_idx].Position.X) = FALSE ) 
@@ -491,8 +500,7 @@ END_VAR
     
     // Check ParCmd.SplineData[x].VelocityRate valid ? 
     IF  (( SysDepIsValidReal(ParCmd.SplineData[_idx].VelocityRate) = FALSE )  OR
-        ((                   ParCmd.SplineData[_idx].VelocityRate  <     0 )  AND 
-         (                   ParCmd.SplineData[_idx].VelocityRate <>    -1 )) OR   
+        (* ST-FIX F96: every value < 0 is the default *)
          (                   ParCmd.SplineData[_idx].VelocityRate  >   100 ))      
     THEN
       // Parameter not valid
@@ -514,8 +522,7 @@ END_VAR
     
     // Check ParCmd.SplineData[x].AccelerationRate valid ? 
     IF  (( SysDepIsValidReal(ParCmd.SplineData[_idx].AccelerationRate) = FALSE )  OR
-        ((                   ParCmd.SplineData[_idx].AccelerationRate  <     0 )  AND 
-         (                   ParCmd.SplineData[_idx].AccelerationRate <>    -1 )) OR   
+        (* ST-FIX F96: every value < 0 is the default *)
          (                   ParCmd.SplineData[_idx].AccelerationRate  >   100 ))      
     THEN
       // Parameter not valid
@@ -537,8 +544,7 @@ END_VAR
     
     // Check ParCmd.SplineData[x].DecelerationRate valid ? 
     IF  (( SysDepIsValidReal(ParCmd.SplineData[_idx].DecelerationRate) = FALSE )  OR
-        ((                   ParCmd.SplineData[_idx].DecelerationRate  <     0 )  AND 
-         (                   ParCmd.SplineData[_idx].DecelerationRate <>    -1 )) OR   
+        (* ST-FIX F96: every value < 0 is the default *)
          (                   ParCmd.SplineData[_idx].DecelerationRate  >   100 ))      
     THEN
       // Parameter not valid
@@ -560,8 +566,7 @@ END_VAR
     
     // Check ParCmd.SplineData[x].JerkRate valid ? 
     IF  (( SysDepIsValidReal(ParCmd.SplineData[_idx].JerkRate) = FALSE )  OR
-        ((                   ParCmd.SplineData[_idx].JerkRate  <     0 )  AND 
-         (                   ParCmd.SplineData[_idx].JerkRate <>    -1 )) OR   
+        (* ST-FIX F96: every value < 0 is the default *)
          (                   ParCmd.SplineData[_idx].JerkRate  >   100 ))      
     THEN
       // Parameter not valid
@@ -642,6 +647,28 @@ END_VAR
       RETURN;
     END_IF  
   END_FOR
+  
+  // ST-FIX F33: number of spline points = highest index of a point that is not empty
+  _pointCount := 0;
+  FOR _idx := 1 TO RobotLibraryParameter.SPLINE_DATA_MAX
+  DO
+    IF ( SysDepMemCmp(pData1 := ADR(ParCmd.SplineData[_idx]), pData2 := ADR(_emptyPoint), DataLen := SIZEOF(_emptyPoint)) <> RobotLibraryConstants.OK )
+    THEN
+      _pointCount := _idx;
+    END_IF
+  END_FOR
+  IF ( _pointCount = 0 )
+  THEN
+    CheckParameterValid := FALSE;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD, Overwrite := TRUE );
+    // Create log entry
+    CreateLogMessage ( Timestamp   := AxesGroup.State.SystemTime,
+                       MessageType := MessageType.CMD,
+                       Severity    := Severity.ERROR,
+                       MessageCode := ErrorID,
+                       MessageText := 'Invalid Parameter ParCmd.SplineData: no spline point defined');
+    RETURN;
+  END_IF
 
 END_METHOD
 
@@ -754,6 +781,7 @@ END_VAR
     _command.SplineData[_idx].JerkRate         := REAL_TO_PERCENT_UINT(_parCmd.SplineData[_idx].JerkRate         , IsOptional := TRUE );
     _command.SplineData[_idx].ToolNo           :=              _parCmd.SplineData[_idx].ToolNo;
     _command.SplineData[_idx].FrameNo          :=              _parCmd.SplineData[_idx].FrameNo;
+    _command.SplineData[_idx].Position         :=              _parCmd.SplineData[_idx].Position; // ST-FIX F55
     _command.SplineData[_idx].MoveTime         := TIME_TO_UINT(_parCmd.SplineData[_idx].MoveTime);
   END_FOR
   
@@ -783,7 +811,7 @@ END_VAR
   END_IF
   
   
-  FOR _idx := 1 TO RobotLibraryParameter.SPLINE_DATA_MAX
+  FOR _idx := _pointIndex TO _pointIndex // ST-FIX F33: one spline point per command
   DO
     // Check parameter must be added ? 
     IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
@@ -1435,6 +1463,8 @@ END_VAR
             _parCmd := ParCmd;
              // init parameter sequence
             _command.ParSeq := 1;
+  // ST-FIX F33: first spline point
+  _pointIndex := 1;
              // create command data
              CommandData := CreateCommandPayload(AxesGroup := AxesGroup);
              // Add command to active command register
@@ -1452,6 +1482,16 @@ END_VAR
          THEN
            // reset response received flag
           _responseReceived := FALSE;
+  // ST-FIX F33: the next spline point is sent when the last one is done
+  IF ( _response.State = CmdMessageState.DONE ) AND ( _pointIndex < _pointCount )
+  THEN
+    _pointIndex := _pointIndex + 1;
+    _rspHeader.State := CmdMessageState.EMPTY;
+    CommandData := CreateCommandPayload(AxesGroup := AxesGroup);
+    _uniqueID := AxesGroup.Acyclic.ActiveCommandRegister.AddCmd( pCommandFB := ADR(THIS^ ));
+    SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
+    RETURN;
+  END_IF
            // update state flags
            OnUpdateStateFlags(_response.State);
            // update state flags
@@ -1546,6 +1586,9 @@ END_VAR
 
   // call base implementation to parse the header from payload buffer
   ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
+  
+  // ST-FIX F100: missing (trailing zero) bytes of the payload are 0, no values of the previous response
+  SysDepMemSet( pDest := ADR(_response), Value := 0, DataLen := SIZEOF(_response));
   
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;

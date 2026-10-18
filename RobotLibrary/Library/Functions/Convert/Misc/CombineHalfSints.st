@@ -27,16 +27,9 @@ VAR_INPUT
   HalfSintLo : SINT;
 END_VAR
 
-  // merage ParSeq and Priority to combined variable
-  CombineHalfSints.0 := HalfSintLo.0;
-  CombineHalfSints.1 := HalfSintLo.1;
-  CombineHalfSints.2 := HalfSintLo.2;
-  CombineHalfSints.3 := HalfSintLo.3;
-  
-  CombineHalfSints.4 := HalfSintHi.0;
-  CombineHalfSints.5 := HalfSintHi.1;
-  CombineHalfSints.6 := HalfSintHi.2;
-  CombineHalfSints.7 := HalfSintHi.3;
+  // ST-FIX F60: sign + magnitude nibbles (bits 0..2 value, bit 3 sign), HalfSintHi in bits 4..7
+  CombineHalfSints := BYTE_TO_USINT( SHL(TURN_TO_SIGN_MAGNITUDE(Turns := HalfSintHi, Bits := 3), 4)
+                                  OR     TURN_TO_SIGN_MAGNITUDE(Turns := HalfSintLo, Bits := 3) );
 
 END_FUNCTION
 

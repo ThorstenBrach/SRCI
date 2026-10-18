@@ -240,7 +240,23 @@ END_VAR
 
   // set command parameter 
   _command.CmdTyp   :=  CmdType.WaitTime;
-  _command.ExecMode :=  ExecMode;
+  // ST-FIX F51: ExecutionMode from AbortingMode and SequenceFlag (spec table 5-77)
+  IF ( SequenceFlag = SequenceFlagEnum.SECONDARY_SEQUENCE )
+  THEN
+    IF ( AbortingMode = AbortingModeEnum.ABORT )
+    THEN
+      _command.ExecMode := ExecutionMode.SEQUENCE_ABORT_OTHERS_SECONDARY;
+    ELSE
+      _command.ExecMode := ExecutionMode.SEQUENCE_SECONDARY;
+    END_IF
+  ELSE
+    IF ( AbortingMode = AbortingModeEnum.ABORT )
+    THEN
+      _command.ExecMode := ExecutionMode.SEQUENCE_ABORT_OTHERS_PRIMARY;
+    ELSE
+      _command.ExecMode := ExecutionMode.SEQUENCE_PRIMARY;
+    END_IF
+  END_IF
   _command.ParSeq   := _command.ParSeq;
   _command.Priority :=  Priority;                  
   _command.WaitTime := _parCmd.WaitTime;
@@ -265,44 +281,16 @@ END_VAR
   END_IF
   
   
-  // Check parameter must be added ? 
-  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
-  THEN
-    // add command.Reserve1
-    CreateCommandPayload.AddByte(_command.Reserve1);
-    // inc parameter counter
-   _parameterCnt := _parameterCnt + 1;  
-  END_IF
+  // ST-FIX F33: Reserve1 removed
   
   
-  // Check parameter must be added ? 
-  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
-  THEN
-    // add command.Reserve2
-    CreateCommandPayload.AddByte(_command.Reserve2);
-    // inc parameter counter
-   _parameterCnt := _parameterCnt + 1;  
-  END_IF
+  // ST-FIX F33: Reserve2 removed
   
   
-  // Check parameter must be added ? 
-  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
-  THEN
-    // add command.Reserve3
-    CreateCommandPayload.AddByte(_command.Reserve3);
-    // inc parameter counter
-   _parameterCnt := _parameterCnt + 1;  
-  END_IF
+  // ST-FIX F33: Reserve3 removed
   
   
-  // Check parameter must be added ? 
-  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
-  THEN
-    // add command.Reserve4
-    CreateCommandPayload.AddByte(_command.Reserve4);
-    // inc parameter counter
-   _parameterCnt := _parameterCnt + 1;  
-  END_IF
+  // ST-FIX F33: Reserve4 removed
   
     
   // Create logging
@@ -580,6 +568,9 @@ END_VAR
   // call base implementation to parse the header from payload buffer
   ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
   
+  // ST-FIX F100: missing (trailing zero) bytes of the payload are 0, no values of the previous response
+  SysDepMemSet( pDest := ADR(_response), Value := 0, DataLen := SIZEOF(_response));
+  
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;
   _response.State                := _rspHeader.State;
@@ -597,44 +588,16 @@ END_VAR
   END_IF
   
   
-  // Check payload remaining ? 
-  IF ( ResponseData.IsPayloadRemaining)
-  THEN  
-    // Get Response.Reserve1
-   _response.Reserve1 := ResponseData.GetByte();
-    // inc parameter counter
-   _parameterCnt := _parameterCnt + 1;
-  END_IF
+  // ST-FIX F33: Reserve1 removed
   
   
-  // Check payload remaining ? 
-  IF ( ResponseData.IsPayloadRemaining)
-  THEN  
-    // Get Response.Reserve2
-   _response.Reserve2 := ResponseData.GetByte();
-    // inc parameter counter
-   _parameterCnt := _parameterCnt + 1;
-  END_IF
+  // ST-FIX F33: Reserve2 removed
   
   
-  // Check payload remaining ? 
-  IF ( ResponseData.IsPayloadRemaining)
-  THEN  
-    // Get Response.Reserve3
-   _response.Reserve3 := ResponseData.GetByte();
-    // inc parameter counter
-   _parameterCnt := _parameterCnt + 1;
-  END_IF
+  // ST-FIX F33: Reserve3 removed
   
   
-  // Check payload remaining ? 
-  IF ( ResponseData.IsPayloadRemaining)
-  THEN  
-    // Get Response.Reserve4
-   _response.Reserve4 := ResponseData.GetByte();
-    // inc parameter counter
-   _parameterCnt := _parameterCnt + 1;
-  END_IF
+  // ST-FIX F33: Reserve4 removed
   
   
   // Create logging

@@ -78,6 +78,9 @@ END_VAR
   DataLen := LIMIT(1, SIZEOF(Payload) - PayloadPtr, SIZEOF(Payload)); 
   // Compare Payload-Array with Null-Byte-Array
   CheckAddParameter := SysDepMemCmp( pData1 := ADR(Payload) + PayloadPtr , pData2 := ADR(Null), DataLen := DataLen) <>  RobotLibraryConstants.OK ;
+  
+  // ST-FIX F28: payload order differs from the structure layout -> always add the parameter
+  CheckAddParameter := TRUE;
 
 END_METHOD
 
@@ -955,7 +958,23 @@ END_VAR
 
   // set command parameter 
   _command.CmdTyp             :=  CmdType.LoadMeasurementAutomatic;
-  _command.ExecMode           :=  ExecMode;
+  // ST-FIX F51: ExecutionMode from AbortingMode and SequenceFlag (spec table 5-77)
+  IF ( SequenceFlag = SequenceFlagEnum.SECONDARY_SEQUENCE )
+  THEN
+    IF ( AbortingMode = AbortingModeEnum.ABORT )
+    THEN
+      _command.ExecMode := ExecutionMode.SEQUENCE_ABORT_OTHERS_SECONDARY;
+    ELSE
+      _command.ExecMode := ExecutionMode.SEQUENCE_SECONDARY;
+    END_IF
+  ELSE
+    IF ( AbortingMode = AbortingModeEnum.ABORT )
+    THEN
+      _command.ExecMode := ExecutionMode.SEQUENCE_ABORT_OTHERS_PRIMARY;
+    ELSE
+      _command.ExecMode := ExecutionMode.SEQUENCE_PRIMARY;
+    END_IF
+  END_IF
   _command.ParSeq             := _command.ParSeq;
   _command.Priority           :=  Priority;
   
@@ -1167,54 +1186,19 @@ END_VAR
   END_IF
   
   
-  // Check parameter must be added ? 
-  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
-  THEN
-    // add command.Position_1.E2
-    CreateCommandPayload.AddReal(_command.Position_1.E2);
-    // inc parameter counter
-   _parameterCnt := _parameterCnt + 1;  
-  END_IF
+  // ST-FIX F33: Position_1.E2 removed
   
   
-  // Check parameter must be added ? 
-  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
-  THEN
-    // add command.Position_1.E3
-    CreateCommandPayload.AddReal(_command.Position_1.E3);
-    // inc parameter counter
-   _parameterCnt := _parameterCnt + 1;  
-  END_IF
+  // ST-FIX F33: Position_1.E3 removed
   
   
-  // Check parameter must be added ? 
-  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
-  THEN
-    // add command.Position_1.E4
-    CreateCommandPayload.AddReal(_command.Position_1.E4);
-    // inc parameter counter
-   _parameterCnt := _parameterCnt + 1;  
-  END_IF
+  // ST-FIX F33: Position_1.E4 removed
   
   
-  // Check parameter must be added ? 
-  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
-  THEN
-    // add command.Position_1.E5
-    CreateCommandPayload.AddReal(_command.Position_1.E5);
-    // inc parameter counter
-   _parameterCnt := _parameterCnt + 1;  
-  END_IF
+  // ST-FIX F33: Position_1.E5 removed
   
   
-  // Check parameter must be added ? 
-  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
-  THEN
-    // add command.Position_1.E6
-    CreateCommandPayload.AddReal(_command.Position_1.E6);
-    // inc parameter counter
-   _parameterCnt := _parameterCnt + 1;  
-  END_IF
+  // ST-FIX F33: Position_1.E6 removed
   
   
   // Check parameter must be added ? 
@@ -1285,6 +1269,17 @@ END_VAR
     // inc parameter counter
    _parameterCnt := _parameterCnt + 1;  
   END_IF
+  // ST-FIX F33
+  CreateCommandPayload.AddReal(_command.Position_1.E2);
+  _parameterCnt := _parameterCnt + 1;
+  CreateCommandPayload.AddReal(_command.Position_1.E3);
+  _parameterCnt := _parameterCnt + 1;
+  CreateCommandPayload.AddReal(_command.Position_1.E4);
+  _parameterCnt := _parameterCnt + 1;
+  CreateCommandPayload.AddReal(_command.Position_1.E5);
+  _parameterCnt := _parameterCnt + 1;
+  CreateCommandPayload.AddReal(_command.Position_1.E6);
+  _parameterCnt := _parameterCnt + 1;
   
   
   // Check parameter must be added ? 
@@ -2059,6 +2054,9 @@ END_VAR
 
   // call base implementation to parse the header from payload buffer
   ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
+  
+  // ST-FIX F100: missing (trailing zero) bytes of the payload are 0, no values of the previous response
+  SysDepMemSet( pDest := ADR(_response), Value := 0, DataLen := SIZEOF(_response));
   
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;

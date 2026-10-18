@@ -259,7 +259,7 @@ END_VAR
   
   
   // Check ParCmd.MoveTime valid ? 
-  IF ( ParCmd.MoveTime <= T#0S ) 
+  IF ( ParCmd.MoveTime < T#0S ) // ST-FIX F44: 0 = not used (default)
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
@@ -313,7 +313,23 @@ END_VAR
 
   // set command parameter 
   _command.CmdTyp            :=  CmdType.MoveSpline;
-  _command.ExecMode          :=  ExecMode;
+  // ST-FIX F51: ExecutionMode from AbortingMode and SequenceFlag (spec table 5-77)
+  IF ( SequenceFlag = SequenceFlagEnum.SECONDARY_SEQUENCE )
+  THEN
+    IF ( AbortingMode = AbortingModeEnum.ABORT )
+    THEN
+      _command.ExecMode := ExecutionMode.SEQUENCE_ABORT_OTHERS_SECONDARY;
+    ELSE
+      _command.ExecMode := ExecutionMode.SEQUENCE_SECONDARY;
+    END_IF
+  ELSE
+    IF ( AbortingMode = AbortingModeEnum.ABORT )
+    THEN
+      _command.ExecMode := ExecutionMode.SEQUENCE_ABORT_OTHERS_PRIMARY;
+    ELSE
+      _command.ExecMode := ExecutionMode.SEQUENCE_PRIMARY;
+    END_IF
+  END_IF
   _command.ParSeq            := _command.ParSeq;
   _command.Priority          :=  Priority;
   _command.SplineID          := _parCmd.SplineID;
@@ -614,7 +630,7 @@ END_VAR
     // Requested for abort
     CmdMessageState.ABORT_REQUEST       :;
     // Successfully completed
-    CmdMessageState.DONE                : Done               := FALSE;
+    CmdMessageState.DONE                : Done               := TRUE; // ST-FIX F64
                                           Busy               := FALSE;
     // Aborted before completion
     CmdMessageState.ABORTED             : CommandAborted     := TRUE;
@@ -657,6 +673,9 @@ END_VAR
 
   // call base implementation to parse the header from payload buffer
   ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
+  
+  // ST-FIX F100: missing (trailing zero) bytes of the payload are 0, no values of the previous response
+  SysDepMemSet( pDest := ADR(_response), Value := 0, DataLen := SIZEOF(_response));
   
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;

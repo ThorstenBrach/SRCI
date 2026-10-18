@@ -22,11 +22,14 @@
 // -------------------------------------------------------------------------
 VAR_GLOBAL CONSTANT
   /// Maximal amount of tools
-  TOOL_MAX                            : DINT := 16;
+  /// SRCI_PLC_TEST: 20 like the SDK simulator (was the parameter of the library reference)
+  TOOL_MAX                            : DINT := 20;
   /// Maximal amount of frames
-  FRAME_MAX                           : DINT := 16;
+  /// SRCI_PLC_TEST: 20 like the SDK simulator (was the parameter of the library reference)
+  FRAME_MAX                           : DINT := 20;
   /// Maximal amount of loads
-  LOAD_MAX                            : DINT := 16;  
+  /// SRCI_PLC_TEST: 20 like the SDK simulator (was the parameter of the library reference)
+  LOAD_MAX                            : DINT := 20;  
   /// Maximal amount of work areas
   WORK_AREAS_MAX                      : DINT := 16;  
   /// Maximal amount of system logs
@@ -50,7 +53,7 @@ VAR_GLOBAL CONSTANT
   /// Maximal amount of message codes
   MESSAGE_CODES_MAX                   : DINT := 15;
   /// Maximal amount of fragments
-  FRAGMENT_MAX                        : DINT := 9;
+  FRAGMENT_MAX                        : DINT := 31; // ST-FIX F52: 10 fragments (0..9) per telegram are too few - a 256 byte telegram holds up to 27 fragme
   /// Flag to indicate that the byte order must be changed
   SWAP_BYTE_ORDER                     : BOOL := TRUE; 
   /// Timeout for checking for invalid frames

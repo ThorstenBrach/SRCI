@@ -82,6 +82,9 @@ END_VAR
   DataLen := LIMIT(1, SIZEOF(Payload) - PayloadPtr, SIZEOF(Payload)); 
   // Compare Payload-Array with Null-Byte-Array
   CheckAddParameter := SysDepMemCmp( pData1 := ADR(Payload) + PayloadPtr , pData2 := ADR(Null), DataLen := DataLen) <>  RobotLibraryConstants.OK ;
+  
+  // ST-FIX F28: payload order differs from the structure layout -> always add the parameter
+  CheckAddParameter := TRUE;
 
 END_METHOD
 
@@ -475,8 +478,7 @@ END_VAR
   
   // Check ParCmd.VelocityDiffRate valid ? 
   IF  (( SysDepIsValidReal(ParCmd.VelocityDiffRate) = FALSE )  OR
-      ((                   ParCmd.VelocityDiffRate  <     0 )  AND 
-       (                   ParCmd.VelocityDiffRate <>    -1 )) OR   
+      (* ST-FIX F96: every value < 0 is the default *)
        (                   ParCmd.VelocityDiffRate  >   100 ))      
   THEN
     // Parameter not valid
@@ -496,8 +498,7 @@ END_VAR
   
   // Check ParCmd.AccelerationDiffRate valid ? 
   IF  (( SysDepIsValidReal(ParCmd.AccelerationDiffRate) = FALSE )  OR
-      ((                   ParCmd.AccelerationDiffRate  <     0 )  AND 
-       (                   ParCmd.AccelerationDiffRate <>    -1 )) OR   
+      (* ST-FIX F96: every value < 0 is the default *)
        (                   ParCmd.AccelerationDiffRate  >   100 ))      
   THEN
     // Parameter not valid
@@ -517,8 +518,7 @@ END_VAR
   
   // Check ParCmd.DecelerationDiffRate valid ? 
   IF  (( SysDepIsValidReal(ParCmd.DecelerationDiffRate) = FALSE )  OR
-      ((                   ParCmd.DecelerationDiffRate  <     0 )  AND 
-       (                   ParCmd.DecelerationDiffRate <>    -1 )) OR   
+      (* ST-FIX F96: every value < 0 is the default *)
        (                   ParCmd.DecelerationDiffRate  >   100 ))      
   THEN
     // Parameter not valid
@@ -538,8 +538,7 @@ END_VAR
   
   // Check ParCmd.JerkDiffRate valid ? 
   IF  (( SysDepIsValidReal(ParCmd.JerkDiffRate) = FALSE )  OR
-      ((                   ParCmd.JerkDiffRate  <     0 )  AND 
-       (                   ParCmd.JerkDiffRate <>    -1 )) OR   
+      (* ST-FIX F96: every value < 0 is the default *)
        (                   ParCmd.JerkDiffRate  >   100 ))      
   THEN
     // Parameter not valid
@@ -567,7 +566,7 @@ END_VAR
     CheckParameterValid := FALSE;
     
     // Check ToolNo available on RC ? 
-    IF ( ParCmd.ToolNo > AxesGroup.State.ConfigurationData.HighestToolIndex )
+    IF (( ParCmd.ToolNo > AxesGroup.State.ConfigurationData.HighestToolIndex ) AND ( ParCmd.ToolNo <= 254 )) // ST-FIX F98: outside -1..254 is a range error
     THEN
       SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_TOOLNO_UNAVAILABLE, Overwrite := TRUE );
     ELSE
@@ -595,7 +594,7 @@ END_VAR
     CheckParameterValid := FALSE;
   
     // Check FrameNo available on RC ? 
-    IF ( ParCmd.FrameNo > AxesGroup.State.ConfigurationData.HighestFrameIndex )
+    IF (( ParCmd.FrameNo > AxesGroup.State.ConfigurationData.HighestFrameIndex ) AND ( ParCmd.FrameNo <= 254 )) // ST-FIX F98: outside -1..254 is a range error
     THEN
       SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_FRAMENO_UNAVAILABLE, Overwrite := TRUE );
     ELSE
@@ -1388,8 +1387,19 @@ END_VAR
            // reset the falling edge
           _enable_F();       
           
+           // ST-FIX F77: commands not enabled (RobotTask not initialized) -> error like the Execute/Enable blocks
+           IF ( NOT AxesGroup.State.CMDsEnabled )
+           THEN
+             SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_COMMANDS_NOT_ENABLED, Overwrite := TRUE );
+             // Create log entry
+             CreateLogMessage ( Timestamp   := AxesGroup.State.SystemTime,
+                                MessageType := MessageType.CMD,
+                                Severity    := Severity.ERROR,
+                                MessageCode := ErrorID,
+                                MessageText := 'Commands not enabled (RobotTask not initialized)');
+             Error := TRUE;
            // Check function is supported and parameter are valid ?
-           IF (( CheckFunctionSupported( AxesGroup := AxesGroup )) AND
+           ELSIF (( CheckFunctionSupported( AxesGroup := AxesGroup )) AND
                ( CheckParameterValid   ( AxesGroup := AxesGroup )))
            THEN      
              // set busy flag
@@ -1525,6 +1535,9 @@ END_VAR
 
   // call base implementation to parse the header from payload buffer
   ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
+  
+  // ST-FIX F100: missing (trailing zero) bytes of the payload are 0, no values of the previous response
+  SysDepMemSet( pDest := ADR(_response), Value := 0, DataLen := SIZEOF(_response));
   
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;

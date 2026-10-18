@@ -48,7 +48,8 @@ METHOD UpdatePointer
 VAR_INPUT
 END_VAR
 
-  pPayload := Payload;
+  pPayload     := Payload;
+  _payloadSize := PayLoadSize; // ST-FIX F22
 
 END_METHOD
 

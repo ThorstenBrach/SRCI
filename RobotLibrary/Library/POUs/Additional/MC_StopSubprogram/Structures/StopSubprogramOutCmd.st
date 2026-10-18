@@ -22,6 +22,7 @@
 // -------------------------------------------------------------------------
 TYPE StopSubprogramOutCmd :
 STRUCT
+  /// OriginID of the stopped subprogram (spec 5.5.12.4 EmitterID, ListenerID, FollowID and OriginID) (ST-FIX F46: comment missing)
   OriginID           : INT;
   /// Relates to ListenerID >0
   /// Number of successful trigger -based command invocations

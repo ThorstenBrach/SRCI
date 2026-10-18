@@ -629,6 +629,9 @@ END_VAR
     CmdMessageState.ERROR               : Error              := TRUE;
                                           Busy               := FALSE;
   END_CASE
+  
+  // ST-FIX F25: output data are valid while the command is active (continuous) or done
+  Valid := ( State = CmdMessageState.ACTIVE ) OR ( State = CmdMessageState.DONE );
 
 END_METHOD
 
@@ -659,6 +662,9 @@ END_VAR
 
   // call base implementation to parse the header from payload buffer
   ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
+  
+  // ST-FIX F100: missing (trailing zero) bytes of the payload are 0, no values of the previous response
+  SysDepMemSet( pDest := ADR(_response), Value := 0, DataLen := SIZEOF(_response));
   
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;

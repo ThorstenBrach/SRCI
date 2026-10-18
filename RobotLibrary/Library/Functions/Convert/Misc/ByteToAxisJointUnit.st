@@ -24,7 +24,7 @@ VAR_INPUT
   AxisJointUnit : BYTE;
 END_VAR
 
-  ByteToAxisJointUnit.J2.0 := AxisJointUnit.1;
+  ByteToAxisJointUnit.J1.0 := AxisJointUnit.1; // ST-FIX F9: bit 1 is J1
   ByteToAxisJointUnit.J2.0 := AxisJointUnit.2;
   ByteToAxisJointUnit.J3.0 := AxisJointUnit.3;
   ByteToAxisJointUnit.J4.0 := AxisJointUnit.4;

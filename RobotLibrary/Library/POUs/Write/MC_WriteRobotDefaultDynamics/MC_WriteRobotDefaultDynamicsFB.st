@@ -148,7 +148,8 @@ END_VAR
   
   
   // Check ParCmd.DynamicValues.VelocityRate ? 
-  IF ( SysDepIsValidReal(ParCmd.DynamicValues.VelocityRate) = FALSE ) 
+  IF (( SysDepIsValidReal(ParCmd.DynamicValues.VelocityRate) = FALSE ) OR
+      ( ParCmd.DynamicValues.VelocityRate > 655.35 )) // ST-FIX F97: UINT with factor 100 in the telegram 
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
@@ -168,7 +169,8 @@ END_VAR
   
   
   // Check ParCmd.DynamicValues.AccelerationRate ? 
-  IF ( SysDepIsValidReal(ParCmd.DynamicValues.AccelerationRate) = FALSE ) 
+  IF (( SysDepIsValidReal(ParCmd.DynamicValues.AccelerationRate) = FALSE ) OR
+      ( ParCmd.DynamicValues.AccelerationRate > 655.35 )) // ST-FIX F97: UINT with factor 100 in the telegram 
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
@@ -188,7 +190,8 @@ END_VAR
   
   
   // Check ParCmd.DynamicValues.DecelerationRate ? 
-  IF ( SysDepIsValidReal(ParCmd.DynamicValues.DecelerationRate) = FALSE ) 
+  IF (( SysDepIsValidReal(ParCmd.DynamicValues.DecelerationRate) = FALSE ) OR
+      ( ParCmd.DynamicValues.DecelerationRate > 655.35 )) // ST-FIX F97: UINT with factor 100 in the telegram 
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
@@ -208,7 +211,8 @@ END_VAR
   
   
   // Check ParCmd.DynamicValues.JerkRate ? 
-  IF ( SysDepIsValidReal(ParCmd.DynamicValues.JerkRate) = FALSE ) 
+  IF (( SysDepIsValidReal(ParCmd.DynamicValues.JerkRate) = FALSE ) OR
+      ( ParCmd.DynamicValues.JerkRate > 655.35 )) // ST-FIX F97: UINT with factor 100 in the telegram 
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
@@ -637,6 +641,9 @@ END_VAR
 
   // call base implementation to parse the header from payload buffer
   ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
+  
+  // ST-FIX F100: missing (trailing zero) bytes of the payload are 0, no values of the previous response
+  SysDepMemSet( pDest := ADR(_response), Value := 0, DataLen := SIZEOF(_response));
   
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;

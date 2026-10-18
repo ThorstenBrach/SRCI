@@ -44,7 +44,7 @@ STRUCT
   /// • <10 ms: Invalid
   /// • 50 ms: default
   /// See also chapter 5.6.6.2.
-  LifeSignTimeOut            : UINT;
+  LifeSignTimeOut            : UINT := 50; // ST-FIX F44: spec 5.6.6: LifeSignTimeOut default 50 ms (min 10 ms); the library had 0 (invalid)
   /// Defines a delay time between detecting an inconsistency of configuration data between server and client and executing the defined SyncReaction. 
   /// Always positive. Default: 0 ms
   SyncDelay                  : UINT;

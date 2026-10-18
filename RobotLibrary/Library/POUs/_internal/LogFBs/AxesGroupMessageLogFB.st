@@ -108,6 +108,8 @@ END_VAR
     Messages[0].Severity    := MessageLog.Severity;
     Messages[0].MessageText := MessageLog.MessageText;
     Messages[0].MessageCode := MessageLog.MessageCode;
+    Messages[0].AcrID       := MessageLog.AcrID;   // ST-FIX F74
+    Messages[0].CmdType     := MessageLog.CmdType; // ST-FIX F74
     
     // inc message counter
     MessagesEntries := DINT_TO_UINT(LIMIT(0, MessagesEntries + 1, RobotLibraryParameter.MESSAGE_LOG_MAX));

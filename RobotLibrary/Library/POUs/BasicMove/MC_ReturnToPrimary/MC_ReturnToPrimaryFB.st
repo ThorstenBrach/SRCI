@@ -180,8 +180,7 @@ END_VAR
   
   // Check ParCmd.VelocityRate valid ? 
   IF  (( SysDepIsValidReal(ParCmd.VelocityRate) = FALSE )  OR
-      ((                   ParCmd.VelocityRate  <     0 )  AND 
-       (                   ParCmd.VelocityRate <>    -1 )) OR   
+      (* ST-FIX F96: every value < 0 is the default *)
        (                   ParCmd.VelocityRate  >   100 ))      
   THEN
     // Parameter not valid
@@ -201,8 +200,7 @@ END_VAR
   
   // Check ParCmd.AccelerationRate valid ? 
   IF  (( SysDepIsValidReal(ParCmd.AccelerationRate) = FALSE )  OR
-      ((                   ParCmd.AccelerationRate  <     0 )  AND 
-       (                   ParCmd.AccelerationRate <>    -1 )) OR   
+      (* ST-FIX F96: every value < 0 is the default *)
        (                   ParCmd.AccelerationRate  >   100 ))      
   THEN
     // Parameter not valid
@@ -222,8 +220,7 @@ END_VAR
   
   // Check ParCmd.DecelerationRate valid ? 
   IF  (( SysDepIsValidReal(ParCmd.DecelerationRate) = FALSE )  OR
-      ((                   ParCmd.DecelerationRate  <     0 )  AND 
-       (                   ParCmd.DecelerationRate <>    -1 )) OR   
+      (* ST-FIX F96: every value < 0 is the default *)
        (                   ParCmd.DecelerationRate  >   100 ))      
   THEN
     // Parameter not valid
@@ -243,8 +240,7 @@ END_VAR
   
   // Check ParCmd.JerkRate valid ? 
   IF  (( SysDepIsValidReal(ParCmd.JerkRate) = FALSE )  OR
-      ((                   ParCmd.JerkRate  <     0 )  AND 
-       (                   ParCmd.JerkRate <>    -1 )) OR   
+      (* ST-FIX F96: every value < 0 is the default *)
        (                   ParCmd.JerkRate  >   100 ))      
   THEN
     // Parameter not valid
@@ -272,7 +268,7 @@ END_VAR
     CheckParameterValid := FALSE;
     
     // Check ToolNo available on RC ? 
-    IF ( ParCmd.ToolNo > AxesGroup.State.ConfigurationData.HighestToolIndex )
+    IF (( ParCmd.ToolNo > AxesGroup.State.ConfigurationData.HighestToolIndex ) AND ( ParCmd.ToolNo <= 254 )) // ST-FIX F98: outside -1..254 is a range error
     THEN
       SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_TOOLNO_UNAVAILABLE, Overwrite := TRUE );
     ELSE
@@ -300,7 +296,7 @@ END_VAR
     CheckParameterValid := FALSE;
     
     // Check FrameNo available on RC ? 
-    IF ( ParCmd.FrameNo > AxesGroup.State.ConfigurationData.HighestFrameIndex )
+    IF (( ParCmd.FrameNo > AxesGroup.State.ConfigurationData.HighestFrameIndex ) AND ( ParCmd.FrameNo <= 254 )) // ST-FIX F98: outside -1..254 is a range error
     THEN
       SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_FRAMENO_UNAVAILABLE, Overwrite := TRUE );
     ELSE
@@ -337,8 +333,7 @@ END_VAR
   
   
   // Check ParCmd.TrajectoryMode valid ? 
-  IF (( ParCmd.TrajectoryMode <> TrajectoryMode.INVALID         ) AND   
-      ( ParCmd.TrajectoryMode <> TrajectoryMode.LINEAR_MOVEMENT ) AND
+  IF ((* ST-FIX F99: INVALID (0) is not allowed *) ( ParCmd.TrajectoryMode <> TrajectoryMode.LINEAR_MOVEMENT ) AND
       ( ParCmd.TrajectoryMode <> TrajectoryMode.PTP_MOVEMENT    ))
   THEN
     // Parameter not valid
@@ -441,6 +436,7 @@ END_VAR
   _command.ReturnMode        :=(_parCmd.ReturnMode = ReturnMode.END_POSITION);
   _command.TrajectoryMode    := _parCmd.TrajectoryMode = TrajectoryMode.PTP_MOVEMENT;
   _command.MoveTime          :=  TIME_TO_UINT(_parCmd.MoveTime);
+  _command.AllowDifferences  :=  _parCmd.AllowDifferences; // ST-FIX F38
   _command.Enable            :=  Enable;
   
   
@@ -761,8 +757,19 @@ END_VAR
            // reset the falling edge
           _enable_F();   
       
+           // ST-FIX F77: commands not enabled (RobotTask not initialized) -> error like the Execute/Enable blocks
+           IF ( NOT AxesGroup.State.CMDsEnabled )
+           THEN
+             SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_COMMANDS_NOT_ENABLED, Overwrite := TRUE );
+             // Create log entry
+             CreateLogMessage ( Timestamp   := AxesGroup.State.SystemTime,
+                                MessageType := MessageType.CMD,
+                                Severity    := Severity.ERROR,
+                                MessageCode := ErrorID,
+                                MessageText := 'Commands not enabled (RobotTask not initialized)');
+             Error := TRUE;
            // Check function is supported and parameter are valid ?
-           IF (( CheckFunctionSupported( AxesGroup := AxesGroup )) AND
+           ELSIF (( CheckFunctionSupported( AxesGroup := AxesGroup )) AND
                ( CheckParameterValid   ( AxesGroup := AxesGroup )))      
            THEN
              // set busy flag
@@ -902,6 +909,9 @@ END_VAR
 
   // call base implementation to parse the header from payload buffer
   ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
+  
+  // ST-FIX F100: missing (trailing zero) bytes of the payload are 0, no values of the previous response
+  SysDepMemSet( pDest := ADR(_response), Value := 0, DataLen := SIZEOF(_response));
   
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;

@@ -73,6 +73,9 @@ END_VAR
   DataLen := LIMIT(1, SIZEOF(Payload) - PayloadPtr, SIZEOF(Payload)); 
   // Compare Payload-Array with Null-Byte-Array
   CheckAddParameter := SysDepMemCmp( pData1 := ADR(Payload) + PayloadPtr , pData2 := ADR(Null), DataLen := DataLen) <>  RobotLibraryConstants.OK ;
+  
+  // ST-FIX F28: payload order differs from the structure layout -> always add the parameter
+  CheckAddParameter := TRUE;
 
 END_METHOD
 
@@ -279,7 +282,7 @@ END_VAR
   IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
   THEN
     // add command.HoldToRun
-    CreateCommandPayload.AddBool(_command.HoldToRun);
+    CreateCommandPayload.AddByte(BOOL_TO_BYTE(_command.HoldToRun) OR SHL(BOOL_TO_BYTE(_command.ManualStep), 1)); // ST-FIX F37
     // inc parameter counter
    _parameterCnt := _parameterCnt + 1;  
   END_IF
@@ -289,7 +292,7 @@ END_VAR
   IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
   THEN
     // add command.ManualStep
-    CreateCommandPayload.AddBool(_command.ManualStep);                      
+    CreateCommandPayload.AddByte(0); // ST-FIX F37: reserved byte, the value is bit 1 of the byte before                      
     // inc parameter counter
    _parameterCnt := _parameterCnt + 1;  
   END_IF
@@ -695,6 +698,9 @@ END_VAR
 
   // call base implementation to parse the header from payload buffer
   ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
+  
+  // ST-FIX F100: missing (trailing zero) bytes of the payload are 0, no values of the previous response
+  SysDepMemSet( pDest := ADR(_response), Value := 0, DataLen := SIZEOF(_response));
   
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;

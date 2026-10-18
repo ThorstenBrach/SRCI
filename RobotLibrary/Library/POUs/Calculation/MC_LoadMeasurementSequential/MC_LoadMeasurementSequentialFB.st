@@ -150,7 +150,7 @@ END_VAR
   CheckParameterValid := TRUE;
   
   // Check ParCmd.ProcessingMode defined ? 
-  IF (( ProcessingMode < ProcessingModeEnum.BUFFERED         ) AND
+  IF (( ProcessingMode < ProcessingModeEnum.BUFFERED         ) OR // ST-FIX F26
       ( ProcessingMode > ProcessingModeEnum.TRIGGER_MULTIPLE ))
   THEN
     // Parameter not valid
@@ -247,6 +247,23 @@ END_VAR
                             Para1       := VALID_REAL_TO_STRING(ParCmd.Mass));
     RETURN;                          
   END_IF
+  
+  // ST-FIX F69: trigger IDs and SequenceFlag (table 7-1, 5.5.12.4, e.g. table 6-496)
+  // ST-FIX F83: not for DEACTIVATE (it is sent with the SequenceFlag of the command it ends)
+  IF ( CheckParameterValid ) AND ( ProcessingMode <> ProcessingModeEnum.DEACTIVATE ) AND ( ( (( ProcessingMode = ProcessingModeEnum.BUFFERED ) OR ( ProcessingMode = ProcessingModeEnum.ABORTING ) OR ( ProcessingMode = ProcessingModeEnum.TRIGGER_BUFFERED ) OR ( ProcessingMode = ProcessingModeEnum.TRIGGER_ABORTING )) ) = ( SequenceFlag = SequenceFlagEnum.NO_SEQUENCE ) )
+  THEN
+    CheckParameterValid := FALSE;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_SEQFLAG_INVALID_IN_PROC_MODE, Overwrite := TRUE );
+    // Create log entry
+    CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter SequenceFlag = {1} with ProcessingMode = {2}',
+                            Para1       := SEQUENCE_FLAG_TO_STRING(SequenceFlag),
+                            Para2       := PROCESSING_MODE_TO_STRING(ProcessingMode));
+    RETURN;
+  END_IF
 
 END_METHOD
 
@@ -278,7 +295,43 @@ END_VAR
 
   // set command parameter 
   _command.CmdTyp   :=  CmdType.LoadMeasurementSequential;
-  _command.ExecMode :=  ExecMode;
+  // ST-FIX F51: ExecutionMode from ProcessingMode (and SequenceFlag), spec table 5-77
+  CASE ProcessingMode OF
+    ProcessingModeEnum.BUFFERED, ProcessingModeEnum.TRIGGER_BUFFERED:
+      IF ( SequenceFlag = SequenceFlagEnum.SECONDARY_SEQUENCE )
+      THEN
+        _command.ExecMode := ExecutionMode.SEQUENCE_SECONDARY;
+      ELSE
+        _command.ExecMode := ExecutionMode.SEQUENCE_PRIMARY;
+      END_IF
+    ProcessingModeEnum.ABORTING, ProcessingModeEnum.TRIGGER_ABORTING:
+      IF ( SequenceFlag = SequenceFlagEnum.SECONDARY_SEQUENCE )
+      THEN
+        _command.ExecMode := ExecutionMode.SEQUENCE_ABORT_OTHERS_SECONDARY;
+      ELSE
+        _command.ExecMode := ExecutionMode.SEQUENCE_ABORT_OTHERS_PRIMARY;
+      END_IF
+    ProcessingModeEnum.PARALLEL, ProcessingModeEnum.TRIGGER_ONCE:
+      _command.ExecMode := ExecutionMode.PARALLEL;
+    ProcessingModeEnum.CONTINUOUS, ProcessingModeEnum.TRIGGER_CONTINUOUS:
+      _command.ExecMode := ExecutionMode.CONTINUOUS;
+    ProcessingModeEnum.TRIGGER_MULTIPLE:
+      _command.ExecMode := ExecutionMode.TRIGGER_MULTIPLE;
+    ProcessingModeEnum.DEACTIVATE:
+      _command.ExecMode := ExecutionMode.STOP_PARALLEL_CONTINUOUS_TRIGGER;
+  ELSE
+    // undefined ProcessingMode -> error, not sent (ST-FIX F49)
+    _command.ExecMode := ExecMode;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_PROCESSINGMODE_NOT_DEFINED, Overwrite := TRUE );
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ProcessingMode = {1}',
+                            Para1       := PROCESSING_MODE_TO_STRING(ProcessingMode));
+    OnUpdateStateFlags( State := CmdMessageState.ERROR );
+  END_CASE
   _command.ParSeq   := _command.ParSeq;
   _command.Priority :=  Priority;                  
   _command.Mass     :=  parCmd.Mass;
@@ -592,6 +645,9 @@ END_VAR
 
   // call base implementation to parse the header from payload buffer
   ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
+  
+  // ST-FIX F100: missing (trailing zero) bytes of the payload are 0, no values of the previous response
+  SysDepMemSet( pDest := ADR(_response), Value := 0, DataLen := SIZEOF(_response));
   
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;
