@@ -2,7 +2,7 @@
 
 # Standard Robot Command Interface (SRCI)
 
-![SRCI](https://raw.githubusercontent.com/wiki/ThorstenBrach/SRCI/Images/SRCI_Logo_small.png)
+![SRCI](https://raw.githubusercontent.com/wiki/ThorstenBrach/SRCI/images/SRCI_Logo_small.png)
 
 **This is an open PLC client implementation of the SRCI interface for IEC61131-3, based on SRCI specification V1.5 (Jan 2025).**
 
