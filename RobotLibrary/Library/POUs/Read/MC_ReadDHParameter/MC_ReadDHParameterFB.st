@@ -41,6 +41,11 @@ VAR
   /// response data received
  _response        : ReadDHParameterRecvData;      
 END_VAR
+            
+          
+VAR
+  _directionBits : BYTE;
+END_VAR
 
   SUPER^(AxesGroup := AxesGroup);
 
@@ -567,6 +572,9 @@ END_VAR// Table 6-52: Received CMD payload (RC to PLC) of "ReadDHParameter"
   // call base implementation to parse the header from payload buffer
   ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
   
+  // ST-FIX F100: missing (trailing zero) bytes of the payload are 0, no values of the previous response
+  SysDepMemSet( pDest := ADR(_response), Value := 0, DataLen := SIZEOF(_response));
+  
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;
   _response.State                := _rspHeader.State;
@@ -634,17 +642,16 @@ END_VAR// Table 6-52: Received CMD payload (RC to PLC) of "ReadDHParameter"
     END_IF
   END_FOR
   
-  FOR _idx := 0 TO 6
-  DO
-    // Check payload remaining ? 
-    IF ( ResponseData.IsPayloadRemaining)
-    THEN  
-      // Get Response.DHParameter.PositiveJointDirection[_idx]
-     _response.DHParameter.PositiveJointDirection[_idx] := ResponseData.GetBool();
-      // inc parameter counter
-     _parameterCnt := _parameterCnt + 1;
-    END_IF
-  END_FOR
+  // ST-FIX F33: PositiveJointDirection[0..6] are the bits 0..6 of one byte (spec table)
+  IF ( ResponseData.IsPayloadRemaining )
+  THEN
+    _directionBits := ResponseData.GetByte();
+    FOR _idx := 0 TO 6
+    DO
+      _response.DHParameter.PositiveJointDirection[_idx] := ( ( SHR(_directionBits, _idx) AND 1 ) = 1 );
+    END_FOR
+    _parameterCnt := _parameterCnt + 1;
+  END_IF
   
   
   // Create logging

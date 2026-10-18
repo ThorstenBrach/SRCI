@@ -49,25 +49,25 @@ STRUCT
   /// •   0%:           - Use internal minimal velocity
   /// • 100%:           - Use maximal reference velocity
   /// See chapter 5.5.7 Robot dynamics
-  VelocityRate       : REAL;
+  VelocityRate       : REAL := -1.0; // ST-FIX F41: spec 5.x robot dynamics parameter: '<0 %: use default' (default); the library had 0.0 = internal minimal value (the RC rejects 0 for DecelerationRate/JerkRate)
   /// Acceleration for movement in % of nominal acceleration
   /// •  <0%: (default) - Use default acceleration
   /// •   0%:           - Use internal minimal acceleration
   /// • 100%:           - Use maximal reference acceleration
   /// See chapter 5.5.7 Robot dynamics
-  AccelerationRate   : REAL;
+  AccelerationRate   : REAL := -1.0; // ST-FIX F41: spec 5.x robot dynamics parameter: '<0 %: use default' (default); the library had 0.0 = internal minimal value (the RC rejects 0 for DecelerationRate/JerkRate)
   /// Deceleration for movement in % of nominal deceleration
   /// •  <0%: (default) - Use default deceleration 
   /// •   0%:           - Use internal minimal deceleration
   /// • 100%:           - Use maximal reference deceleration
   /// See chapter 5.5.7 Robot dynamics
-  DecelerationRate   : REAL;
+  DecelerationRate   : REAL := -1.0; // ST-FIX F41: spec 5.x robot dynamics parameter: '<0 %: use default' (default); the library had 0.0 = internal minimal value (the RC rejects 0 for DecelerationRate/JerkRate)
   /// Jerk of the movement in % of nominal jerk
   /// •  <0%: (default) - Use default jerk
   /// •   0%:           - Use internal minimal jerk
   /// • 100%:           - Use maximal reference jerk
   /// See chapter 5.5.7 Robot dynamics
-  JerkRate           : REAL;
+  JerkRate           : REAL := -1.0; // ST-FIX F41: spec 5.x robot dynamics parameter: '<0 %: use default' (default); the library had 0.0 = internal minimal value (the RC rejects 0 for DecelerationRate/JerkRate)
   /// Index of tool
   /// •      0: Flange (default)
   /// • 1..254: Tool frames

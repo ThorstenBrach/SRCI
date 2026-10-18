@@ -230,7 +230,7 @@ END_VAR
     CheckParameterValid := FALSE;
     
     // Check ToolNo available on RC ? 
-    IF ( ParCmd.ToolNo > AxesGroup.State.ConfigurationData.HighestToolIndex )
+    IF (( ParCmd.ToolNo > AxesGroup.State.ConfigurationData.HighestToolIndex ) AND ( ParCmd.ToolNo <= 254 )) // ST-FIX F98: outside -1..254 is a range error
     THEN
       SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_TOOLNO_UNAVAILABLE, Overwrite := TRUE );
     ELSE
@@ -258,7 +258,7 @@ END_VAR
     CheckParameterValid := FALSE;
     
     // Check FrameNo available on RC ? 
-    IF ( ParCmd.FrameNo > AxesGroup.State.ConfigurationData.HighestFrameIndex )
+    IF (( ParCmd.FrameNo > AxesGroup.State.ConfigurationData.HighestFrameIndex ) AND ( ParCmd.FrameNo <= 254 )) // ST-FIX F98: outside -1..254 is a range error
     THEN
       SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_FRAMENO_UNAVAILABLE, Overwrite := TRUE );
     ELSE
@@ -279,7 +279,7 @@ END_VAR
   // Check ParCmd.ConnectionMode valid ? 
   IF (( ParCmd.ConnectionMode <> SensorConnectionMode. RC_SENSOR_ALGORITHM    ) AND  
       ( ParCmd.ConnectionMode <> SensorConnectionMode.PLC_SENSOR_RC_ALGORITHM ) AND
-      ( ParCmd.ConnectionMode <> SensorConnectionMode.PLC_SENSOR_RC_ALGORITHM ))
+      ( ParCmd.ConnectionMode <> SensorConnectionMode.PLC_SENSOR_ALGORITHM    )) // ST-FIX F86: was PLC_SENSOR_RC_ALGORITHM twice
   THEN
     // Parameter not valid
     CheckParameterValid := FALSE;
@@ -419,7 +419,8 @@ END_VAR
   
   
   // Check ParCmd.ErrorReaction valid ? 
-  IF (( ParCmd.ErrorReaction <> ErrorReaction.ABORT       ) AND  
+  IF (( ParCmd.ErrorReaction <> ErrorReaction.ABORT_AND_MOVE ) AND // ST-FIX F44
+      ( ParCmd.ErrorReaction <> ErrorReaction.ABORT       ) AND  
       ( ParCmd.ErrorReaction <> ErrorReaction.NO_REACTION ))
   THEN
     // Parameter not valid
@@ -825,7 +826,7 @@ END_VAR
   IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
   THEN
     // add command.CalibrationData
-    CreateCommandPayload.AddUInt(_command.ReferenceType);
+    CreateCommandPayload.AddUsint(_command.ReferenceType); // ST-FIX F33: USINT (spec table 6-741)
     // inc parameter counter
    _parameterCnt := _parameterCnt + 1;  
   END_IF
@@ -951,6 +952,9 @@ END_VAR
   END_IF
   
   
+  // ST-FIX F33
+  CreateCommandPayload.AddReal(_parCmd.TargetWindow);
+  _parameterCnt := _parameterCnt + 1;
   // Check parameter must be added ? 
   IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
   THEN
@@ -2058,6 +2062,9 @@ END_VAR
 
   // call base implementation to parse the header from payload buffer
   ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
+  
+  // ST-FIX F100: missing (trailing zero) bytes of the payload are 0, no values of the previous response
+  SysDepMemSet( pDest := ADR(_response), Value := 0, DataLen := SIZEOF(_response));
   
   // copy parsed header to response
   _response.ParSeq                := _rspHeader.ParSeq;

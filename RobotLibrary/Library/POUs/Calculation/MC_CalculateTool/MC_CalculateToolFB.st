@@ -183,7 +183,7 @@ END_VAR
     CheckParameterValid := FALSE;
   
     // Check ToolNo available on RC ? 
-    IF ( ParCmd.ToolNo > AxesGroup.State.ConfigurationData.HighestToolIndex )
+    IF (( ParCmd.ToolNo > AxesGroup.State.ConfigurationData.HighestToolIndex ) AND ( ParCmd.ToolNo <= 254 )) // ST-FIX F98: outside -1..254 is a range error
     THEN
       SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_TOOLNO_UNAVAILABLE, Overwrite := TRUE );
     ELSE
@@ -211,7 +211,7 @@ END_VAR
     CheckParameterValid := FALSE;
   
     // Check FrameNo available on RC ? 
-    IF ( ParCmd.FrameNo > AxesGroup.State.ConfigurationData.HighestFrameIndex )
+    IF (( ParCmd.FrameNo > AxesGroup.State.ConfigurationData.HighestFrameIndex ) AND ( ParCmd.FrameNo <= 254 )) // ST-FIX F98: outside -1..254 is a range error
     THEN
       SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_FRAMENO_UNAVAILABLE, Overwrite := TRUE );
     ELSE
@@ -1466,6 +1466,9 @@ END_VAR
   // call base implementation to parse the header from payload buffer
   ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
   
+  // ST-FIX F100: missing (trailing zero) bytes of the payload are 0, no values of the previous response
+  SysDepMemSet( pDest := ADR(_response), Value := 0, DataLen := SIZEOF(_response));
+  
   // copy parsed header to response
   _response.ParSeq                := _rspHeader.ParSeq;
   _response.State                 := _rspHeader.State;
@@ -1473,14 +1476,7 @@ END_VAR
   _response.AlarmMessageCode      := _rspHeader.AlarmMessageCode;
   
   
-  // Check payload remaining ? 
-  IF ( ResponseData.IsPayloadRemaining)
-  THEN
-    // Get Response.IEC_Date
-   _response.ToolData.Timestamp.IEC_Date := ResponseData.GetIecDate();
-    // inc parameter counter
-   _parameterCnt := _parameterCnt + 1;
-  END_IF
+  // ST-FIX F33: IEC_Date removed
   
   
   // Check payload remaining ? 
@@ -1501,6 +1497,9 @@ END_VAR
     // inc parameter counter
    _parameterCnt := _parameterCnt + 1;
   END_IF
+  // ST-FIX F33
+  _response.ToolData.Timestamp.IEC_Date := ResponseData.GetIecDate();
+  _parameterCnt := _parameterCnt + 1;
   
   
   // Check payload remaining ? 

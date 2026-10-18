@@ -27,7 +27,7 @@ VAR_INPUT
   IsOptional : BOOL;
 END_VAR
 
-  IF ( Value = -1.0)  AND (IsOptional)// 16#FFFF for not supported values 
+  IF ( Value < 0.0 ) // ST-FIX F41/F96: every value < 0 = use the default (also for not optional parameters)
   THEN
     REAL_TO_PERCENT_UINT := 16#FFFF;
     RETURN;

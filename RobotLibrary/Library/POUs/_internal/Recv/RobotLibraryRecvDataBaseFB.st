@@ -31,6 +31,8 @@ END_VAR
 VAR
   /// internal pointer to payload 
   pPayload : POINTER TO BYTE;
+  /// Size of the payload buffer, set in UpdatePointer (ST-FIX F22)
+  _payloadSize : UDINT;
 END_VAR
 
 
@@ -163,8 +165,14 @@ END_VAR
       Size := Size -1;
     END_IF
   
-    // copy data
-    SysDepMemCpy(pDest := pData, pSrc := pPayload + DINT_TO_DWORD(PayloadPtr), DataLen := Size);
+    // copy data (ST-FIX F22: only the bytes that are in the buffer, the rest is 0)
+    SysDepMemSet(pDest := pData, Value := 0, DataLen := Size);
+    IF ( PayloadPtr >= 0 ) AND ( DINT_TO_UDINT(PayloadPtr) < _payloadSize )
+    THEN
+      SysDepMemCpy(pDest   := pData,
+                   pSrc    := pPayload + DINT_TO_DWORD(PayloadPtr),
+                   DataLen := MIN(Size, _payloadSize - DINT_TO_UDINT(PayloadPtr)));
+    END_IF
     
     // inc payload pointer 
     PayloadPtr := PayloadPtr + UDINT_TO_DINT(Size);
@@ -501,16 +509,16 @@ METHOD GetTurnNumbers : TurnNumber
     RETURN;
   END_IF
   
-  GetTurnNumbers.J1Turns := BYTE_TO_SINT(GetHalfeByte1(FALSE));
-  GetTurnNumbers.J2Turns := BYTE_TO_SINT(GetHalfeByte2(TRUE));
+  GetTurnNumbers.J1Turns := SIGN_MAGNITUDE_TO_TURN(Value := GetHalfeByte1(FALSE), Bits := 3); // ST-FIX F3
+  GetTurnNumbers.J2Turns := SIGN_MAGNITUDE_TO_TURN(Value := GetHalfeByte2(TRUE),  Bits := 3); // ST-FIX F3
   
-  GetTurnNumbers.J3Turns := BYTE_TO_SINT(GetHalfeByte1(FALSE));
-  GetTurnNumbers.J4Turns := BYTE_TO_SINT(GetHalfeByte2(TRUE));
+  GetTurnNumbers.J3Turns := SIGN_MAGNITUDE_TO_TURN(Value := GetHalfeByte1(FALSE), Bits := 3); // ST-FIX F3
+  GetTurnNumbers.J4Turns := SIGN_MAGNITUDE_TO_TURN(Value := GetHalfeByte2(TRUE),  Bits := 3); // ST-FIX F3
   
-  GetTurnNumbers.J5Turns := BYTE_TO_SINT(GetHalfeByte1(FALSE));
-  GetTurnNumbers.J6Turns := BYTE_TO_SINT(GetHalfeByte2(TRUE));
+  GetTurnNumbers.J5Turns := SIGN_MAGNITUDE_TO_TURN(Value := GetHalfeByte1(FALSE), Bits := 3); // ST-FIX F3
+  GetTurnNumbers.J6Turns := SIGN_MAGNITUDE_TO_TURN(Value := GetHalfeByte2(TRUE),  Bits := 3); // ST-FIX F3
   
-  GetTurnNumbers.E1Turns := BYTE_TO_SINT(GetByte());
+  GetTurnNumbers.E1Turns := SIGN_MAGNITUDE_TO_TURN(Value := GetByte(), Bits := 7); // ST-FIX F3
 
 END_METHOD
 

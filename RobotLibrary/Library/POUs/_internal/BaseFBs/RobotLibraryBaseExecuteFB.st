@@ -42,8 +42,21 @@ VAR
   {attribute 'hide'}
  _execute_F       : F_TRIG;
 END_VAR
+            
+          
+VAR
+  _executeIn : BOOL;
+  _executeHold : BOOL;
+END_VAR
 
+  // ST-FIX F50: a falling edge of Execute must not cancel the command (spec 5.5.x "Output
+  // status"): Execute is held internally while Busy; Done/Error/CommandAborted of a command
+  // whose Execute is already FALSE are shown for one cycle, then the block resets
+  _executeIn := Execute;
+  Execute     := Execute OR _executeHold;
   SUPER^(AxesGroup := AxesGroup);
+  _executeHold := Busy;
+  Execute      := _executeIn;
 
 END_FUNCTION_BLOCK
 
@@ -199,6 +212,28 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
+  // ST-FIX F71: Priority (1 = very high ... 4 = low, table 7-1)
+  IF ( Priority < PriorityLevel.VERY_HIGH )
+  THEN
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_PRIORITY_TOO_HIGH, Overwrite := TRUE );
+    // Create log entry
+    CreateLogMessage ( Timestamp   := AxesGroup.State.SystemTime,
+                       MessageType := MessageType.CMD,
+                       Severity    := Severity.ERROR,
+                       MessageCode := ErrorID,
+                       MessageText := 'Invalid input Priority: higher than VERY_HIGH');
+    Error := TRUE;
+  ELSIF ( Priority > PriorityLevel.LOW )
+  THEN
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_PRIORITY_TOO_LOW, Overwrite := TRUE );
+    // Create log entry
+    CreateLogMessage ( Timestamp   := AxesGroup.State.SystemTime,
+                       MessageType := MessageType.CMD,
+                       Severity    := Severity.ERROR,
+                       MessageCode := ErrorID,
+                       MessageText := 'Invalid input Priority: lower than LOW');
+    Error := TRUE;
+  END_IF
 
 END_METHOD
 

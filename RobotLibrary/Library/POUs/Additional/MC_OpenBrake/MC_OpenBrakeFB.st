@@ -1,10 +1,10 @@
-/// Release robot arm’s brakes.
-FUNCTION_BLOCK MC_OpenBrakeFB EXTENDS RobotLibraryBaseExecuteFB
+/// Release robot arm's brakes (Enable block, ST-FIX F42)
+FUNCTION_BLOCK MC_OpenBrakeFB EXTENDS RobotLibraryBaseEnableFB
 // ------------------------------------------------------------------------- 
 //  SRCI Robot Library                                                
 // ------------------------------------------------------------------------- 
 //                                                                           
-//  Object:      OpenBrakeFB                                       
+//  Object:      FreeDriveFB                                       
 //  Author:      Thorsten Brach                                                
 //  Date:        2024-06-01
 //
@@ -23,7 +23,7 @@ FUNCTION_BLOCK MC_OpenBrakeFB EXTENDS RobotLibraryBaseExecuteFB
 // -------------------------------------------------------------------------
 VAR_INPUT
   /// Command parameter 
-  ParCmd             : OpenBrakeParCmd;  
+  ParCmd            : OpenBrakeParCmd;
 END_VAR
 
 VAR_OUTPUT
@@ -31,17 +31,17 @@ VAR_OUTPUT
   CommandBuffered   : BOOL;
   /// Receiving of input parameter values has been acknowledged by RC
   ParameterAccepted : BOOL;
-  /// Command output 
-  OutCmd            : OpenBrakeOutCmd;  
+  /// command results
+  OutCmd            : OpenBrakeOutCmd;
 END_VAR
 
 VAR
   /// internal copy of command parameter 
- _parCmd             : OpenBrakeParCmd;
+ _parCmd            : OpenBrakeParCmd;
   /// command data to send
- _command            : OpenBrakeSendData;
+ _command           : OpenBrakeSendData;
   /// response data received
- _response           : OpenBrakeRecvData;      
+ _response          : OpenBrakeRecvData;
 END_VAR
 
   SUPER^(AxesGroup := AxesGroup);
@@ -412,6 +412,9 @@ END_VAR
   _cmdHeader := _command;
   // call base implementation to copy header to payload buffer
   CreateCommandPayload := SUPER^.CreateCommandPayload(AxesGroup := AxesGroup);
+  // ST-FIX F42: byte 4 Enable (spec table of OpenBrake)
+  CreateCommandPayload.AddBool(Enable);
+  _parameterCnt := _parameterCnt + 1;
   
   
   // Check parameter must be added ? 
@@ -512,7 +515,7 @@ END_VAR
     SysDepMemSet(pDest := ADR(OutCmd), Value := 0, DataLen := SIZEOF(OutCmd));         
   END_IF
   
-  IF ( State = CmdMessageState.DONE ) 
+  IF ( State = CmdMessageState.ACTIVE ) OR ( State = CmdMessageState.DONE ) // ST-FIX F42
   THEN
     // Update results
     OutCmd.Enabled                          := _response.Enabled.0;
@@ -533,6 +536,152 @@ END_VAR
     OutCmd.ExternalAxesBrakeReleased.AxisE6 := _response.ExternalAxesBrakeReleased.6;
     OutCmd.ExternalAxesBrakeReleased.Bit07  := _response.ExternalAxesBrakeReleased.7;
   END_IF
+  
+  // ST-FIX F42: output Enabled of the enable block
+  Enabled := OutCmd.Enabled;
+
+END_METHOD
+
+METHOD Protected OnExecCancel : DINT
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+VAR
+  /// internal return value 
+ _retVal    : DINT;
+END_VAR
+
+  OnExecCancel := RobotLibraryConstants.RUNNING;
+  
+  CASE _stepCancel OF
+    
+    0: // set busy flag
+       Busy := TRUE;
+      
+       // Create log entry
+       CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
+                               MessageType := MessageType.CMD,
+                               Severity    := Severity.DEBUG,
+                               MessageCode := 0,
+                               MessageText := 'Execution of {1} cancelled',
+                               Para1       := MyType);                 
+      
+       // try to remove cmd
+      _retVal := AxesGroup.Acyclic.ActiveCommandRegister.RemoveCmd(_uniqueID);
+    
+       // check result of removement       
+       IF ( _retVal = RobotLibraryConstants.OK )
+       THEN
+         // Reset step counter
+        _stepCancel := 0;
+         // finished okay
+         OnExecCancel := RobotLibraryConstants.OK;
+       
+         // Create log entry
+         CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
+                                 MessageType := MessageType.CMD,
+                                 Severity    := Severity.DEBUG,
+                                 MessageCode := 0,
+                                 MessageText := '{1} successfully removed from ACR',
+                                 Para1       := MyType);                 
+       ELSE
+         // set timeout
+         SetTimeout(PT := _timeoutCancel, rTimer := _timerCancel);
+         // inc step counter
+        _stepCancel := _stepCancel + 1; 
+       
+         // Create log entry
+         CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
+                                 MessageType := MessageType.CMD,
+                                 Severity    := Severity.DEBUG,
+                                 MessageCode := 0,
+                                 MessageText := '{1} was not removed from ACR because execution was already in progress',
+                                 Para1       := MyType);                 
+       END_IF       
+    
+       
+   1:  // call clear error 
+       OnExecCancel := OnExecErrorClear(AxesGroup := AxesGroup);  
+   
+       IF ( OnExecCancel = RobotLibraryConstants.OK)
+       THEN
+         // Reset busy flag
+         Busy := FALSE;
+         // Reset step counter
+        _stepCancel := 0;
+         // finished okay
+         OnExecCancel := RobotLibraryConstants.OK;
+       END_IF  
+    
+  ELSE
+    // invalid step
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP, Overwrite := TRUE );
+  END_CASE  
+  
+  
+                          
+  // reset step counter
+  IF (OnExecCancel <> RobotLibraryConstants.RUNNING)
+  THEN
+    // Reset FB variables
+    Reset();
+    // Reset step counter
+   _stepCancel := 0;
+  END_IF
+
+END_METHOD
+
+METHOD PROTECTED OnExecErrorClear : DINT
+VAR_IN_OUT
+  /// Robot assignment of function
+  AxesGroup : AxesGroup; 
+END_VAR
+
+  OnExecErrorClear := RobotLibraryConstants.RUNNING;
+  
+  CASE _stepClearError OF
+    
+    0:  // set busy flag
+        Busy := TRUE;
+        // trigger parameter update to disable FB
+       _parameterUpdateInternal := TRUE;
+        // call Check Parameter changed method to trigger the parameter update to disable the function
+        CheckParameterChanged(AxesGroup := AxesGroup);
+        // set timeout
+        SetTimeout(PT := _timeoutClearError, rTimer := _timerClearError);
+        // inc step counter
+       _stepClearError := _stepClearError + 1; 
+        
+    1: IF ( _responseReceived )
+       THEN
+         // reset response received flag
+        _responseReceived := FALSE;
+         // reset step counter
+        _stepClearError := 0;
+         // finished
+         OnExecErrorClear := RobotLibraryConstants.OK;
+       ELSE
+         // timeout exceeded ? 
+         IF (CheckTimeout(_timerClearError) = RobotLibraryConstants.OK)
+         THEN
+           OnExecErrorClear := RobotLibraryConstants.HAS_ERROR;
+         END_IF
+  	   END_IF
+  ELSE
+    // invalid step
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP, Overwrite := TRUE );
+  END_CASE
+  
+  
+  // reset step counter
+  IF (OnExecErrorClear <> RobotLibraryConstants.RUNNING)
+  THEN
+    // Reset 
+    Reset();     
+    // reset step counter
+   _stepClearError := 0;
+  END_IF
 
 END_METHOD
 
@@ -547,12 +696,17 @@ END_VAR
   
   CASE _stepCmd OF
     
-    00:  IF ( _execute_R.Q ) AND ( NOT Error)  
+    00:  IF ( _enable_R.Q ) AND ( NOT Error) 
          THEN
+           // reset the rising edge
+          _enable_R();       
+   
            // Check function is supported and parameter are valid ?
            IF (( CheckFunctionSupported( AxesGroup := AxesGroup )) AND
                ( CheckParameterValid   ( AxesGroup := AxesGroup )))      
            THEN
+             // Reset all internal flags
+             Reset();
              // set busy flag
              Busy := TRUE;
              // Reset command outputs
@@ -568,11 +722,11 @@ END_VAR
              // set timeout
              SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
              // inc step counter
-            _stepCmd := _stepCmd + 1;
-           END_IF 
+            _stepCmd := _stepCmd + 1; 
+           END_IF
          END_IF
-       
-  
+   
+      
     01:  // Wait for responce received
          IF ( _responseReceived )
          THEN
@@ -582,21 +736,32 @@ END_VAR
            OnUpdateStateFlags(_response.State);
            // update state flags
            OnApplyOutCmd(_response.State);
-                  
-           // Done, Aborted or Error ?
-           IF (_response.State >= CmdMessageState.DONE )
-           THEN
-             // set timeout
-             SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
-             // inc step counter
-            _stepCmd := _stepCmd + 1; 
-           END_IF
+         END_IF
+         
+         // do not abort directly, so that the ParSeq update can be send
+         IF ( _enable_F.Q ) 
+         THEN
+           // Set Busy flag
+           Busy := TRUE;
+           // trigger parameter update to disable FB
+          _parameterUpdateInternal := TRUE;
+           // reset the falling edge
+          _enable_F();
+           // set timeout
+           SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
+           // inc step counter
+          _stepCmd := _stepCmd + 1; 
          END_IF
   
-    02: IF ( NOT Execute)
+        // Wait for response received or timeout or not Initialized
+    02: IF ((    _responseReceived                                   )  OR 
+            (     CheckTimeout(_timerCmd) = RobotLibraryConstants.OK )) OR 
+           (( NOT AxesGroup.State.Initialized                        )  AND
+            ( NOT AxesGroup.State.Synchronized                       ))
         THEN
-          Reset();
-        END_IF     
+          Reset();   
+  	    END_IF
+        
   ELSE
     // invalid step
     SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_STEP, Overwrite := TRUE );
@@ -605,9 +770,10 @@ END_VAR
   
   
   // Reset FB
-  IF ( NOT Execute )
+  IF (( _enable_R.Q ) OR
+      ( _enable_F.Q ))
   THEN
-    Reset();  
+    Reset();
   END_IF
 
 END_METHOD
@@ -619,7 +785,10 @@ VAR_INPUT
 END_VAR
 
   // Reset State flags
-  Done := FALSE;
+  ;
+  
+  // Update Enable flag
+  // Enabled: see OnApplyOutCmd (ST-FIX F42)
   
   CASE State OF
   
@@ -634,14 +803,13 @@ END_VAR
     CmdMessageState.BUFFERED_IN_PLANNER : CommandBuffered    := TRUE;
                                           ParameterAccepted  := TRUE;
     // Currently active and in progress
-    CmdMessageState.ACTIVE              :  
+    CmdMessageState.ACTIVE              : 
     // Interrupted and awaiting continuation
     CmdMessageState.INTERRUPTED         :;
     // Requested for abort
     CmdMessageState.ABORT_REQUEST       :;
     // Successfully completed
-    CmdMessageState.DONE                : Done  := TRUE;
-                                          Busy  := FALSE;
+    CmdMessageState.DONE                : Busy  := FALSE;
     // Aborted before completion
     CmdMessageState.ABORTED             : Busy  := FALSE;
     // Encountered an error during execution
@@ -681,11 +849,21 @@ END_VAR
   // call base implementation to parse the header from payload buffer
   ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
   
+  // ST-FIX F100: missing (trailing zero) bytes of the payload are 0, no values of the previous response
+  SysDepMemSet( pDest := ADR(_response), Value := 0, DataLen := SIZEOF(_response));
+  
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;
   _response.State                := _rspHeader.State;
   _response.AlarmMessageSeverity := _rspHeader.AlarmMessageSeverity;
   _response.AlarmMessageCode     := _rspHeader.AlarmMessageCode;
+  
+  // ST-FIX F42: byte 4 Enabled
+  IF ( ResponseData.IsPayloadRemaining)
+  THEN
+   _response.Enabled := ResponseData.GetByte();
+   _parameterCnt := _parameterCnt + 1;
+  END_IF
   
   // Check payload remaining ? 
   IF ( ResponseData.IsPayloadRemaining)
@@ -764,7 +942,6 @@ END_VAR
 
   Reset := SUPER^.Reset();
   
-  Done               := FALSE;
   Busy               := FALSE;
   CommandBuffered    := FALSE;
   ParameterAccepted  := FALSE;

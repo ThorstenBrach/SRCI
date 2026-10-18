@@ -501,10 +501,11 @@ END_VAR
 
   Value := Value;
   
-  AddHalfBytes( HalfByteHi := SINT_TO_BYTE(Value.J2Turns) , HalfByteLo := SINT_TO_BYTE(Value.J1Turns));
-  AddHalfBytes( HalfByteHi := SINT_TO_BYTE(Value.J4Turns) , HalfByteLo := SINT_TO_BYTE(Value.J3Turns));
-  AddHalfBytes( HalfByteHi := SINT_TO_BYTE(Value.J6Turns) , HalfByteLo := SINT_TO_BYTE(Value.J5Turns));
-  AddByte(SINT_TO_BYTE(Value.E1Turns));
+  // ST-FIX F3: sign + magnitude (spec 5.5.4.4)
+  AddHalfBytes( HalfByteHi := TURN_TO_SIGN_MAGNITUDE(Turns := Value.J2Turns, Bits := 3), HalfByteLo := TURN_TO_SIGN_MAGNITUDE(Turns := Value.J1Turns, Bits := 3));
+  AddHalfBytes( HalfByteHi := TURN_TO_SIGN_MAGNITUDE(Turns := Value.J4Turns, Bits := 3), HalfByteLo := TURN_TO_SIGN_MAGNITUDE(Turns := Value.J3Turns, Bits := 3));
+  AddHalfBytes( HalfByteHi := TURN_TO_SIGN_MAGNITUDE(Turns := Value.J6Turns, Bits := 3), HalfByteLo := TURN_TO_SIGN_MAGNITUDE(Turns := Value.J5Turns, Bits := 3));
+  AddByte(TURN_TO_SIGN_MAGNITUDE(Turns := Value.E1Turns, Bits := 7));
   
   AddTurnNumber := PayloadLen;
 

@@ -319,6 +319,35 @@ VAR CONSTANT
   {attribute 'hide'}
   EMPTY_EOL_ENTRY      : DINT := 0;
 END_VAR
+            
+          
+VAR
+  /// ST-FIX F63: telegram sequence that is handled/filled first (lower Seq/Ack number)
+  _seqSendFirst : DINT;
+  /// ST-FIX F63: loop counter over the telegram sequences in Seq order
+  _seqOrderIdx : DINT;
+  /// ST-FIX F63: distance of two Seq numbers
+  _seqDiff : DINT;
+  /// ST-FIX F63: next Seq number
+  _seqNext : UINT;
+END_VAR
+
+VAR
+  /// ST-FIX F65: telegram sequence timeout (4 x LifeSignTimeOut without new Seq number)
+  _seqAckTimeout : TON;
+  /// ST-FIX F66: lifesign of header and footer differ -> frame is not processed
+  _frameInvalid : BOOL;
+  /// ST-FIX F79: last error state of the RC during the initialization (reported at the init timeout)
+  _initErrorState : TelegramState;
+END_VAR
+
+VAR
+  _turns : BYTE; // ST-FIX F60: turn number nibble
+END_VAR
+
+VAR
+  _restartReset : BOOL; // ST-FIX F23: interface reset on the RC requested by a restart
+END_VAR
 
   // Get array dimension of RobotInData
   ROBOT_IN_DATA_MIN  := LOWER_BOUND  ( RobotInData,1);
@@ -363,7 +392,10 @@ END_VAR
   AxesGroupToTelegram          ( AxesGroup         := AxesGroup );
   
   CreateSendPayload            ( AxesGroup         := AxesGroup, RobotOutData := RobotOutData );
-  ParseRecvPayload             ( AxesGroup         := AxesGroup, RobotInData  := RobotInData); 
+  IF ( NOT _frameInvalid ) // ST-FIX F66
+  THEN
+    ParseRecvPayload             ( AxesGroup         := AxesGroup, RobotInData  := RobotInData);
+  END_IF 
   
   AxesGroupFromTelegram        ( AxesGroup         := AxesGroup);
   
@@ -372,13 +404,20 @@ END_VAR
   _exchangeConfiguration      ( Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );
   _readRobotData              ( Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );
   _readMessages               ( Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );
-  _readToolData               ( Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );
-  _readFrameData              ( Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );
-  _readLoadData               ( Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );
-  _readWorkArea               ( Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );  
-  _readRobotSWLimits          ( Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );  
-  _readRobotDefaultDynamics   ( Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );
-  _readRobotReferenceDynamics ( Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );
+  _readToolData               ( UpdateSystemData := FALSE, // ST-FIX F16
+   Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );
+  _readFrameData              ( UpdateSystemData := FALSE, // ST-FIX F16
+   Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );
+  _readLoadData               ( UpdateSystemData := FALSE, // ST-FIX F16
+   Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );
+  _readWorkArea               ( UpdateSystemData := FALSE, // ST-FIX F16
+   Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );  
+  _readRobotSWLimits          ( UpdateSystemData := FALSE, // ST-FIX F16
+   Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );  
+  _readRobotDefaultDynamics   ( UpdateSystemData := FALSE, // ST-FIX F16
+   Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );
+  _readRobotReferenceDynamics ( UpdateSystemData := FALSE, // ST-FIX F16
+   Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );
   _writeToolData              ( Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );  
   _writeFrameData             ( Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );  
   _writeLoadData              ( Name := RobotName, ExecMode := ExecutionMode.PARALLEL, Priority := PriorityLevel.NORMAL, AxesGroup := AxesGroup );  
@@ -444,16 +483,52 @@ END_VAR
   AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.Config.Shoulder          :=              WordToArmConfigShoulder(Telegram.RobToPlc.CyclicOptional.CartesianPosition.Config);
   AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.Config.Elbow             :=              WordToArmConfigElbow   (Telegram.RobToPlc.CyclicOptional.CartesianPosition.Config);
   AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.Config.Wrist             :=              WordToArmConfigWrist   (Telegram.RobToPlc.CyclicOptional.CartesianPosition.Config);
-  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.J1Turns       := BYTE_TO_SINT(GetHalfeByteLo         (Telegram.RobToPlc.CyclicOptional.CartesianPosition.Turns_J2_J1));
-  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.J2Turns       := BYTE_TO_SINT(GetHalfeByteHi         (Telegram.RobToPlc.CyclicOptional.CartesianPosition.Turns_J2_J1));
-  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.J3Turns       := BYTE_TO_SINT(GetHalfeByteLo         (Telegram.RobToPlc.CyclicOptional.CartesianPosition.Turns_J4_J3));
-  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.J4Turns       := BYTE_TO_SINT(GetHalfeByteHi         (Telegram.RobToPlc.CyclicOptional.CartesianPosition.Turns_J4_J3));
-  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.J5Turns       := BYTE_TO_SINT(GetHalfeByteLo         (Telegram.RobToPlc.CyclicOptional.CartesianPosition.Turns_J6_J5));
-  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.J6Turns       := BYTE_TO_SINT(GetHalfeByteHi         (Telegram.RobToPlc.CyclicOptional.CartesianPosition.Turns_J6_J5));
-  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.E1Turns       := BYTE_TO_SINT                        (Telegram.RobToPlc.CyclicOptional.CartesianPosition.Turns_E1);
+  _turns := GetHalfeByteLo(Telegram.RobToPlc.CyclicOptional.CartesianPosition.Turns_J2_J1); // ST-FIX F60: sign + magnitude (spec 5.5.4.4)
+  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.J1Turns := BYTE_TO_SINT(_turns AND 16#07);
+  IF ( ( _turns AND 16#08 ) <> 0 )
+  THEN
+    AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.J1Turns := INT_TO_SINT(-SINT_TO_INT(AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.J1Turns));
+  END_IF
+  _turns := GetHalfeByteHi(Telegram.RobToPlc.CyclicOptional.CartesianPosition.Turns_J2_J1); // ST-FIX F60: sign + magnitude (spec 5.5.4.4)
+  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.J2Turns := BYTE_TO_SINT(_turns AND 16#07);
+  IF ( ( _turns AND 16#08 ) <> 0 )
+  THEN
+    AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.J2Turns := INT_TO_SINT(-SINT_TO_INT(AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.J2Turns));
+  END_IF
+  _turns := GetHalfeByteLo(Telegram.RobToPlc.CyclicOptional.CartesianPosition.Turns_J4_J3); // ST-FIX F60: sign + magnitude (spec 5.5.4.4)
+  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.J3Turns := BYTE_TO_SINT(_turns AND 16#07);
+  IF ( ( _turns AND 16#08 ) <> 0 )
+  THEN
+    AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.J3Turns := INT_TO_SINT(-SINT_TO_INT(AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.J3Turns));
+  END_IF
+  _turns := GetHalfeByteHi(Telegram.RobToPlc.CyclicOptional.CartesianPosition.Turns_J4_J3); // ST-FIX F60: sign + magnitude (spec 5.5.4.4)
+  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.J4Turns := BYTE_TO_SINT(_turns AND 16#07);
+  IF ( ( _turns AND 16#08 ) <> 0 )
+  THEN
+    AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.J4Turns := INT_TO_SINT(-SINT_TO_INT(AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.J4Turns));
+  END_IF
+  _turns := GetHalfeByteLo(Telegram.RobToPlc.CyclicOptional.CartesianPosition.Turns_J6_J5); // ST-FIX F60: sign + magnitude (spec 5.5.4.4)
+  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.J5Turns := BYTE_TO_SINT(_turns AND 16#07);
+  IF ( ( _turns AND 16#08 ) <> 0 )
+  THEN
+    AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.J5Turns := INT_TO_SINT(-SINT_TO_INT(AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.J5Turns));
+  END_IF
+  _turns := GetHalfeByteHi(Telegram.RobToPlc.CyclicOptional.CartesianPosition.Turns_J6_J5); // ST-FIX F60: sign + magnitude (spec 5.5.4.4)
+  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.J6Turns := BYTE_TO_SINT(_turns AND 16#07);
+  IF ( ( _turns AND 16#08 ) <> 0 )
+  THEN
+    AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.J6Turns := INT_TO_SINT(-SINT_TO_INT(AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.J6Turns));
+  END_IF
+  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.E1Turns := BYTE_TO_SINT(Telegram.RobToPlc.CyclicOptional.CartesianPosition.Turns_E1 AND 16#7F); // ST-FIX F60: sign + magnitude (spec 5.5.4.4)
+  IF ( ( Telegram.RobToPlc.CyclicOptional.CartesianPosition.Turns_E1 AND 16#80 ) <> 0 )
+  THEN
+    AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.E1Turns := INT_TO_SINT(-SINT_TO_INT(AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.TurnNumber.E1Turns));
+  END_IF
   AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.E1                       :=                                      Telegram.RobToPlc.CyclicOptional.CartesianPosition.E1;
-  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.CoordinateSystem.ToolNo  :=                                      Telegram.RobToPlc.CyclicOptional.CartesianPosition.CurrentlyUsedToolNo;
-  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.CoordinateSystem.FrameNo :=                                      Telegram.RobToPlc.CyclicOptional.CartesianPosition.CurrentlyUsedFrameNo;
+  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.CoordinateSystem.ToolNo  :=                                      Telegram.RobToPlc.CyclicOptional.CartesianPosition.ToolNo; // ST-FIX F59: tool/frame of the returned position
+  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.CurrentCoordinateSystem.ToolNo  :=                                      Telegram.RobToPlc.CyclicOptional.CartesianPosition.CurrentlyUsedToolNo;
+  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.CoordinateSystem.FrameNo :=                                      Telegram.RobToPlc.CyclicOptional.CartesianPosition.FrameNo; // ST-FIX F59: tool/frame of the returned position
+  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.CurrentCoordinateSystem.FrameNo :=                                      Telegram.RobToPlc.CyclicOptional.CartesianPosition.CurrentlyUsedFrameNo;
   // }}}
   
   
@@ -555,11 +630,8 @@ VAR
   SEQUENCE_MAX_PAYLOAD_SIZE : UDINT;
 END_VAR
 
-  IF ( AxesGroup.State.NewSEQ[0]) {warning 'Handle 2nd sequence'}
-  THEN
-    // delete old telegram data 
-    SysDepMemSet(pDest := ADR(Telegram.PlcToRob), Value := 0 , DataLen := SIZEOF(Telegram.PlcToRob));
-  END_IF
+  // ST-FIX F63: the data of a telegram sequence is cleared in AxesGroupToTelegramSequence only
+  // when it gets a new Seq number; a sequence that is not acknowledged yet is sent unchanged
     
   AxesGroupToTelegramHeader        (AxesGroup := AxesGroup);
   AxesGroupToTelegramCyclic        (AxesGroup := AxesGroup);
@@ -620,7 +692,13 @@ END_VAR
                                                                                        AxesGroup.CyclicOptional.PlcToRob.CartesianPosition.TurnNumber.J3Turns);
     Telegram.PlcToRob.CyclicOptional.CartesianPosition.Turns_J6_J5 := CombineHalfSints(AxesGroup.CyclicOptional.PlcToRob.CartesianPosition.TurnNumber.J6Turns, 
                                                                                        AxesGroup.CyclicOptional.PlcToRob.CartesianPosition.TurnNumber.J5Turns);
-    Telegram.PlcToRob.CyclicOptional.CartesianPosition.Turns_E1    := SINT_TO_BYTE    (AxesGroup.CyclicOptional.PlcToRob.CartesianPosition.TurnNumber.E1Turns);
+    // ST-FIX F60: sign + magnitude (spec 5.5.4.4)
+    IF ( AxesGroup.CyclicOptional.PlcToRob.CartesianPosition.TurnNumber.E1Turns < 0 )
+    THEN
+      Telegram.PlcToRob.CyclicOptional.CartesianPosition.Turns_E1 := (INT_TO_BYTE(-SINT_TO_INT(AxesGroup.CyclicOptional.PlcToRob.CartesianPosition.TurnNumber.E1Turns)) AND 16#7F) OR 16#80;
+    ELSE
+      Telegram.PlcToRob.CyclicOptional.CartesianPosition.Turns_E1 := SINT_TO_BYTE(AxesGroup.CyclicOptional.PlcToRob.CartesianPosition.TurnNumber.E1Turns) AND 16#7F;
+    END_IF
   END_IF  
   // }}}
     
@@ -813,23 +891,48 @@ VAR
 END_VAR
 
   // Check 2nd sequence active ? 
-  IF ( _parCfg.Com.TwoSequences )
+  // ST-FIX F67: remaining space for acyclic data at least 1 byte behind the sequence header
+  IF ( CalculateSequencePayloadMax(AxesGroup := AxesGroup, Direction := ComDirection.PLC_TO_ROB,
+                                   Sequence  := SequenceFlagEnum.PRIMARY_SEQUENCE) < 4 + 1 )
+  THEN
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_ACYCLIC_AREA_TO_SMALL_PLC_TO_ROB, Overwrite := FALSE );
+    // Create log entry
+    CreateLogMessage ( Timestamp   := SystemTime,
+                       MessageType := MessageType.CMD,
+                       Severity    := Severity.ERROR,
+                       MessageCode := ErrorID,
+                       MessageText := 'Telegram PLC -> RC: no space left for acyclic data');
+    RETURN;
+  END_IF
+  IF ( CalculateSequencePayloadMax(AxesGroup := AxesGroup, Direction := ComDirection.ROB_TO_PLC,
+                                   Sequence  := SequenceFlagEnum.PRIMARY_SEQUENCE) < 4 + 1 )
+  THEN
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_ACYCLIC_AREA_TO_SMALL_ROB_TO_PLC, Overwrite := FALSE );
+    // Create log entry
+    CreateLogMessage ( Timestamp   := SystemTime,
+                       MessageType := MessageType.CMD,
+                       Severity    := Severity.ERROR,
+                       MessageCode := ErrorID,
+                       MessageText := 'Telegram RC -> PLC: no space left for acyclic data');
+    RETURN;
+  END_IF
+  
+  IF ( _parCfg.Com.TwoSequences ) // ST-FIX F63: SEQUENCE_MAX_PAYLOAD_SIZE per sequence, see below
   THEN
     // inc sequence counter
    _seqCount := _seqCount + 1;
-    
-    SEQUENCE_MAX_PAYLOAD_SIZE := CalculateSequencePayloadMax(AxesGroup := AxesGroup, 
-                                                             Direction := ComDirection.PLC_TO_ROB, 
-                                                             Sequence  := SequenceFlag.SECONDARY_SEQUENCE ) - FOOTER_SIZE;
-  ELSE
-    SEQUENCE_MAX_PAYLOAD_SIZE := CalculateSequencePayloadMax(AxesGroup := AxesGroup, 
-                                                             Direction := ComDirection.PLC_TO_ROB, 
-                                                             Sequence  := SequenceFlag.PRIMARY_SEQUENCE   ) - FOOTER_SIZE;
   END_IF   
   
   
-  FOR _seqIdx := 0 TO _seqCount
+  FOR _seqOrderIdx := 0 TO _seqCount
   DO
+    // ST-FIX F63: fill the sequence with the lower Seq number first (it is processed first)
+    IF ( _seqOrderIdx = 0 )
+    THEN
+      _seqIdx := _seqSendFirst;
+    ELSE
+      _seqIdx := 1 - _seqSendFirst;
+    END_IF
     // set current SEQ / ACk index
     Telegram.PlcToRob.Sequence[_seqIdx].Header.SEQ_ACK := AxesGroup.State.CurrentSEQ[_seqIdx];
   
@@ -837,14 +940,31 @@ END_VAR
     IF ( AxesGroup.State.NewSEQ[_seqIdx] ) 
     THEN
       // only reset counters in case of new telegram to send  
-      AxesGroup.State.SequenceCountSend := 0;
+      // ST-FIX F63: each telegram sequence has its own data area (Fig. 5-205) and starts empty
+      IF ( _seqIdx = PRIMARY_SEQUENCE )
+      THEN
+        SEQUENCE_MAX_PAYLOAD_SIZE := CalculateSequencePayloadMax(AxesGroup := AxesGroup,
+                                                                 Direction := ComDirection.PLC_TO_ROB,
+                                                                 Sequence  := SequenceFlagEnum.PRIMARY_SEQUENCE);
+      ELSE
+        SEQUENCE_MAX_PAYLOAD_SIZE := CalculateSequencePayloadMax(AxesGroup := AxesGroup,
+                                                                 Direction := ComDirection.PLC_TO_ROB,
+                                                                 Sequence  := SequenceFlagEnum.SECONDARY_SEQUENCE);
+      END_IF
+      Telegram.PlcToRob.Sequence[_seqIdx].Header.PayloadLength := 0;
+      FOR _idx := 0 TO RobotLibraryParameter.FRAGMENT_MAX
+      DO
+        Telegram.PlcToRob.Sequence[_seqIdx].Fragment[_idx].Header.PayloadLength := 0;
+      END_FOR
+     _fragIdx := 0;
+     _listIdx := 1;
       AxesGroup.State.FragmentCountSend[_seqIdx] := 0;
       
       // calc current telegram payload length
-     _telegramLengthCurrent := CalculateTelegramLengthPlcToRob(AxesGroup := AxesGroup);
+     _telegramLengthCurrent := 4 + Telegram.PlcToRob.Sequence[_seqIdx].Header.PayloadLength; // ST-FIX F63: sequence header + payload
       
       // Bedingung anpassen und TWO_SEQUENCES berücksichtigen
-      WHILE (( _parCfg.Com.TelegramLengthPlcToRob - _telegramLengthCurrent ) >= FRAGMENT_HEADER_SIZE + MIN_PAYLOAD_SIZE ) 
+      WHILE ( _telegramLengthCurrent + FRAGMENT_HEADER_SIZE + MIN_PAYLOAD_SIZE <= SEQUENCE_MAX_PAYLOAD_SIZE ) // ST-FIX F63 
       DO
         // Check command in Execution-Order-List available ?
         IF ( AxesGroup.Acyclic.ActiveCommandRegister.ExecutionOrderList[_listIdx] > EMPTY_EOL_ENTRY)
@@ -922,10 +1042,10 @@ END_VAR
               END_IF 
       
               // calc current telegram payload length
-             _telegramLengthCurrent := CalculateTelegramLengthPlcToRob(AxesGroup := AxesGroup);
+             _telegramLengthCurrent := 4 + Telegram.PlcToRob.Sequence[_seqIdx].Header.PayloadLength; // ST-FIX F63: sequence header + payload
         
               // check limit reached ?
-              IF ( _telegramLengthCurrent >= _parCfg.Com.TelegramLengthPlcToRob) 
+              IF ( _telegramLengthCurrent >= SEQUENCE_MAX_PAYLOAD_SIZE (* ST-FIX F63 *)) 
               THEN  
                 EXIT; // -> abort for loop 
               END_IF  
@@ -952,7 +1072,7 @@ END_VAR
        _fragIdx := _fragIdx + 1;
     
         // check abort conditions
-        IF (( _telegramLengthCurrent                                                >= _parCfg.Com.TelegramLengthPlcToRob  ) OR  // Payload limit reached 
+        IF (( _telegramLengthCurrent                                                >= SEQUENCE_MAX_PAYLOAD_SIZE (* ST-FIX F63 *)  ) OR  // Payload limit reached 
             ( _fragIdx                                                              >=  RobotLibraryParameter.FRAGMENT_MAX ) OR  // Max fragment limit reached
             (  AxesGroup.Acyclic.ActiveCommandRegister.ExecutionOrderList[_listIdx]  =  EMPTY_EOL_ENTRY                    ))    // No entry in ExecutionOrderList left
         THEN
@@ -960,7 +1080,7 @@ END_VAR
         END_IF         
       END_WHILE  
       
-      AxesGroup.State.SequenceCountSend          := _seqIdx;
+      AxesGroup.State.SequenceCountSend          := _seqCount; // ST-FIX F63
       AxesGroup.State.FragmentCountSend[_seqIdx] := _fragIdx;
       
     END_IF  
@@ -990,8 +1110,11 @@ END_VAR
   THEN  
     // Add Header size 
     CalculateCyclicDataLength := CalculateCyclicDataLength + SIZEOF(Telegram.PlcToRob.Header);  
-    // Add Cyclic size 
-    CalculateCyclicDataLength := CalculateCyclicDataLength + SIZEOF(Telegram.PlcToRob.Cyclic);
+    // Add Cyclic size (ST-FIX F2: only with Cartesian Position RC -> PLC)
+    IF ( AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.Active )
+    THEN
+      CalculateCyclicDataLength := CalculateCyclicDataLength + SIZEOF(Telegram.PlcToRob.Cyclic);
+    END_IF
     
     // Check SubProgramData active ? 
     IF ( AxesGroup.CyclicOptional.PlcToRob.SubProgramData.Active )
@@ -1133,45 +1256,36 @@ END_VAR
 VAR
   /// Length of the cyclic header
  _cyclicDataLength      : UINT;
+  /// Acyclic area (ST-FIX F63)
+ _area                  : UDINT;
 END_VAR
 
   // calculate cyclic header length
   _cyclicDataLength := CalculateCyclicDataLength(AxesGroup := AxesGroup, Direction := Direction);
   
   
-  CASE (Sequence) 
-  OF
-    SequenceFlag.PRIMARY_SEQUENCE   : 
+  // ST-FIX F63: acyclic area without the footer, halved for two sequences (spec Fig. 5-205)
+  IF ( Direction = ComDirection.PLC_TO_ROB )
+  THEN
+    _area := UINT_TO_UDINT(_parCfg.Com.TelegramLengthPlcToRob) - UINT_TO_UDINT(_cyclicDataLength) - FOOTER_SIZE;
+  ELSE
+    _area := UINT_TO_UDINT(_parCfg.Com.TelegramLengthRobToPlc) - UINT_TO_UDINT(_cyclicDataLength) - FOOTER_SIZE;
+  END_IF
   
-      IF (Direction = ComDirection.PLC_TO_ROB)
-      THEN  
-        // calculate sequence payload length
-        CalculateSequencePayloadMax := ( _parCfg.Com.TelegramLengthPlcToRob - _cyclicDataLength );
-      END_IF
-  
-      IF (Direction = ComDirection.ROB_TO_PLC)
-      THEN  
-        // calculate sequence payload length
-        CalculateSequencePayloadMax := ( _parCfg.Com.TelegramLengthRobToPlc - _cyclicDataLength );
-      END_IF
-      
-  
-    SequenceFlag.SECONDARY_SEQUENCE :
-    
-      IF (Direction = ComDirection.PLC_TO_ROB)
-      THEN  
-        // calculate sequence payload length
-        CalculateSequencePayloadMax := (( _parCfg.Com.TelegramLengthPlcToRob - _cyclicDataLength ) / 2);
-      END_IF
-  
-      IF (Direction = ComDirection.ROB_TO_PLC)
-      THEN  
-        // calculate sequence payload length
-        CalculateSequencePayloadMax := (( _parCfg.Com.TelegramLengthRobToPlc - _cyclicDataLength ) / 2);
-      END_IF
-  
-      
-  END_CASE
+  IF ( NOT _parCfg.Com.TwoSequences )
+  THEN
+    IF ( Sequence = SequenceFlag.PRIMARY_SEQUENCE )
+    THEN
+      CalculateSequencePayloadMax := UDINT_TO_UINT(_area);
+    ELSE
+      CalculateSequencePayloadMax := 0;
+    END_IF
+  ELSIF ( Sequence = SequenceFlag.PRIMARY_SEQUENCE )
+  THEN
+    CalculateSequencePayloadMax := UDINT_TO_UINT(_area / 2);
+  ELSE
+    CalculateSequencePayloadMax := UDINT_TO_UINT(_area - _area / 2);
+  END_IF
 
 END_METHOD
 
@@ -1211,7 +1325,7 @@ END_VAR
      _sequencePayloadLength 
        := CalculateSequencePayloadMax( AxesGroup := AxesGroup, 
                                        Direction := Direction, 
-                                       Sequence  := Sequence );
+                                       Sequence  := SequenceFlag.PRIMARY_SEQUENCE ); // ST-FIX F63: behind the area of the 1st sequence
                                        
       // return start address
       CalculateSequencePayloadStartAdr := _cyclicDataLength + _sequencePayloadLength;
@@ -1220,7 +1334,7 @@ END_VAR
 
 END_METHOD
 
-METHOD PRIVATE CalculateTelegramLengthPlcToRob : UINT
+METHOD PROTECTED CalculateTelegramLengthPlcToRob : UINT
 VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup;
@@ -1404,12 +1518,12 @@ END_VAR
   IF ( PlcOptionalCyclicToUint(_parCfg.Plc.OptionalCyclic) <> PlcOptionalCyclicToUint(ParCfg.Plc.OptionalCyclic ))
   THEN
     // Set error
-    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_TELEGRAM_NUMBER_CHANGED_AFTER_INIT, Overwrite := TRUE );
+    SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_TELEGRAM_NO_CHANGED_DURING_OPERATION, Overwrite := TRUE ); // ST-FIX F68
      
     // Create log entry
     CreateLogMessagePara2( Timestamp   := SystemTime,
                            MessageType := MessageType.CMD,
-                           Severity    := Severity.ERROR,
+                           Severity    := Severity.WARNING,
                            MessageCode := 0,
                            MessageText := 'ParCfg.Plc.OptionalCyclic changed after initialization from {1} to {2} -> Reinitialize by disabling and enabling the RobotTask',
                            Para1       := WORD_TO_STRING_BIN(PlcOptionalCyclicToUint(_parCfg.Plc.OptionalCyclic)),
@@ -1421,12 +1535,12 @@ END_VAR
   IF ( RobOptionalCyclicToUint(_parCfg.Rob.OptionalCyclic) <> RobOptionalCyclicToUint(ParCfg.Rob.OptionalCyclic ))
   THEN
     // Set error
-    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_TELEGRAM_NUMBER_CHANGED_AFTER_INIT, Overwrite := TRUE );
+    SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_TELEGRAM_NO_CHANGED_DURING_OPERATION, Overwrite := TRUE ); // ST-FIX F68
      
     // Create log entry
     CreateLogMessagePara2( Timestamp   := SystemTime,
                            MessageType := MessageType.CMD,
-                           Severity    := Severity.ERROR,
+                           Severity    := Severity.WARNING,
                            MessageCode := 0,
                            MessageText := 'ParCfg.Rob.OptionalCyclic changed after initialization from {1} to {2} -> Reinitialize by disabling and enabling the RobotTask',
                            Para1       := WORD_TO_STRING_BIN(RobOptionalCyclicToUint(_parCfg.Rob.OptionalCyclic)),
@@ -1522,6 +1636,19 @@ END_VAR
                             Para1       := UINT_TO_STRING(ParCfg.Com.TelegramLengthRobToPlc));
     // no further validation                          
     RETURN;                          
+  END_IF
+  // ST-FIX F63: two telegram sequences must be activated in both directions and for the layout
+  IF ( ParCfg.Plc.OptionalCyclic.UseTwoSequences <> ParCfg.Rob.OptionalCyclic.UseTwoSequences ) OR
+     ( ParCfg.Plc.OptionalCyclic.UseTwoSequences <> ParCfg.Com.TwoSequences                  )
+  THEN
+    CheckParameterValid := FALSE;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_TELEGRAM_NUMBER_INVALID_0x80AB, Overwrite := TRUE );
+    CreateLogMessage( Timestamp   := SystemTime,
+                      MessageType := MessageType.CMD,
+                      Severity    := Severity.ERROR,
+                      MessageCode := 0,
+                      MessageText := 'TwoSequences must be set in Com and in Plc/Rob.OptionalCyclic');
+    RETURN;
   END_IF
   // EndRegion }}}
   
@@ -1904,7 +2031,7 @@ END_VAR
 
 END_METHOD
 
-METHOD PRIVATE CreateSendPayload : DINT
+METHOD PROTECTED CreateSendPayload : DINT
 VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup    : AxesGroup;
@@ -1929,21 +2056,26 @@ END_VAR
   
   // reset NewSEQ flag
   AxesGroup.State.NewSEQ[0] := FALSE; {warning 'Test'}
+  AxesGroup.State.NewSEQ[1] := FALSE; // ST-FIX F63: 2nd sequence was rebuilt in every cycle
 
 END_METHOD
 
-METHOD PRIVATE CreateSendPayloadCyclic : DINT
+METHOD PROTECTED CreateSendPayloadCyclic : DINT
 VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup;
 END_VAR
 
-  SendData.AddByte(Telegram.PlcToRob.Cyclic.ToolNo);  
-  SendData.AddByte(Telegram.PlcToRob.Cyclic.FrameNo);
+  // ST-FIX F2: ToolNo/FrameNo only with Cartesian Position RC -> PLC (spec table 5-88 bit 1)
+  IF ( AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.Active )
+  THEN
+    SendData.AddByte(Telegram.PlcToRob.Cyclic.ToolNo);
+    SendData.AddByte(Telegram.PlcToRob.Cyclic.FrameNo);
+  END_IF
 
 END_METHOD
 
-METHOD PRIVATE CreateSendPayloadCyclicOptional : DINT
+METHOD PROTECTED CreateSendPayloadCyclicOptional : DINT
 VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup;
@@ -1977,6 +2109,7 @@ END_VAR
    _tmpByte.2 := Telegram.PlcToRob.CyclicOptional.CartesianPosition.Config.2;
    
     SendData.AddByte(_tmpByte);
+    SendData.AddByte(0); // ST-FIX F1: Config is 2 bytes (spec table 5-97)
             
     SendData.AddByte (Telegram.PlcToRob.CyclicOptional.CartesianPosition.Turns_J2_J1             );
     SendData.AddByte (Telegram.PlcToRob.CyclicOptional.CartesianPosition.Turns_J4_J3             );
@@ -2062,7 +2195,7 @@ END_VAR
 
 END_METHOD
 
-METHOD PRIVATE CreateSendPayloadHeader : DINT
+METHOD PROTECTED CreateSendPayloadHeader : DINT
 VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup : AxesGroup;
@@ -2116,9 +2249,14 @@ END_VAR
 
   FOR _seqIdx := 0 TO AxesGroup.State.SequenceCountSend
   DO
-    // Check 2nd sequence ? -> goto 2nd sequence payload address  
-    IF ( _seqIdx = SECONDARY_SEQUENCE )
+    // ST-FIX F63: every telegram sequence starts at its own address (Fig. 5-205); before, the
+    // 1st sequence ran into the area of the 2nd one and the 2nd header was sent only sometimes
+    IF ( _seqIdx = PRIMARY_SEQUENCE )
     THEN
+      SendData.PayloadPtr := CalculateSequencePayloadStartAdr(AxesGroup := AxesGroup, 
+                                                              Direction := ComDirection.PLC_TO_ROB,
+                                                              Sequence  := SequenceFlag.PRIMARY_SEQUENCE);
+    ELSE
       SendData.PayloadPtr := CalculateSequencePayloadStartAdr(AxesGroup := AxesGroup, 
                                                               Direction := ComDirection.PLC_TO_ROB,
                                                               Sequence  := SequenceFlag.SECONDARY_SEQUENCE);
@@ -2428,10 +2566,10 @@ END_VAR
   AxesGroup.State.StatusRobotArm  := AxesGroup.Cyclic.RobToPlc.StatusRobotArm;                                
   AxesGroup.State.ConfigExchanged := _exchangeConfiguration.Enabled;
   
-  AxesGroup.State.UnifiedFrameIndex                    := DINT_TO_USINT( MIN( MIN(AxesGroup.SystemData.FrameDataMax, RobotLibraryParameter.FRAME_MAX     ), _exchangeConfiguration.OutCmd.HighestFrameIndex   ));
-  AxesGroup.State.UnifiedToolIndex                     := DINT_TO_USINT( MIN( MIN(AxesGroup.SystemData.ToolDataMax , RobotLibraryParameter.TOOL_MAX      ), _exchangeConfiguration.OutCmd.HighestToolIndex    ));
-  AxesGroup.State.UnifiedLoadIndex                     := DINT_TO_USINT( MIN( MIN(AxesGroup.SystemData.LoadDataMax , RobotLibraryParameter.LOAD_MAX      ), _exchangeConfiguration.OutCmd.HighestLoadIndex    ));
-  AxesGroup.State.UnifiedWorkAreaIndex                 := DINT_TO_USINT( MIN( MIN(AxesGroup.SystemData.WorkAreasMax, RobotLibraryParameter.WORK_AREAS_MAX), _exchangeConfiguration.OutCmd.HighestWorkAreaIndex));
+  AxesGroup.State.UnifiedFrameIndex                    := DINT_TO_USINT( MIN( MIN(AxesGroup.SystemData.FrameDataMax, RobotLibraryParameter.FRAME_MAX - 1), _exchangeConfiguration.OutCmd.HighestFrameIndex   ));
+  AxesGroup.State.UnifiedToolIndex                     := DINT_TO_USINT( MIN( MIN(AxesGroup.SystemData.ToolDataMax , RobotLibraryParameter.TOOL_MAX - 1), _exchangeConfiguration.OutCmd.HighestToolIndex    ));
+  AxesGroup.State.UnifiedLoadIndex                     := DINT_TO_USINT( MIN( MIN(AxesGroup.SystemData.LoadDataMax , RobotLibraryParameter.LOAD_MAX - 1), _exchangeConfiguration.OutCmd.HighestLoadIndex    ));
+  AxesGroup.State.UnifiedWorkAreaIndex                 := DINT_TO_USINT( MIN( MIN(AxesGroup.SystemData.WorkAreasMax, RobotLibraryParameter.WORK_AREAS_MAX - 1), _exchangeConfiguration.OutCmd.HighestWorkAreaIndex));
   
   AxesGroup.State.DataEnableSync                       := _exchangeConfiguration.ParCmd.DataEnableSync;
   AxesGroup.State.SyncStateRc.InSync.Frame             := _exchangeConfiguration.OutCmd.DataInSync.FramesInSync;
@@ -2499,15 +2637,15 @@ END_VAR
   AxesGroup.SystemData.LoadDataCount     := DINT_TO_UDINT(1 + AxesGroup.SystemData.LoadDataMax - AxesGroup.SystemData.LoadDataMin);
                                          
   // Update FrameData       
-  AxesGroup.SystemData.FrameDataPtr      := LoadData;                                                                       
-  AxesGroup.SystemData.FrameDataMin      := LOWER_BOUND  (LoadData,1);                                                     
-  AxesGroup.SystemData.FrameDataMax      := UPPER_BOUND  (LoadData,1);                                                     
+  AxesGroup.SystemData.FrameDataPtr      := FrameData;                                                                       
+  AxesGroup.SystemData.FrameDataMin      := LOWER_BOUND  (FrameData,1);                                                     
+  AxesGroup.SystemData.FrameDataMax      := UPPER_BOUND  (FrameData,1);                                                     
   AxesGroup.SystemData.FrameDataCount    := DINT_TO_UDINT(1 + AxesGroup.SystemData.FrameDataMax - AxesGroup.SystemData.FrameDataMin);
   
   // Update WorkAreas 
-  AxesGroup.SystemData.WorkAreasPtr      := LoadData;                                                                      
-  AxesGroup.SystemData.WorkAreasMin      := LOWER_BOUND  (LoadData,1);                                                     
-  AxesGroup.SystemData.WorkAreasMax      := UPPER_BOUND  (LoadData,1);                                                     
+  AxesGroup.SystemData.WorkAreasPtr      := WorkAreas;                                                                      
+  AxesGroup.SystemData.WorkAreasMin      := LOWER_BOUND  (WorkAreas,1);                                                     
+  AxesGroup.SystemData.WorkAreasMax      := UPPER_BOUND  (WorkAreas,1);                                                     
   AxesGroup.SystemData.WorkAreasCount    := DINT_TO_UDINT(1 + AxesGroup.SystemData.WorkAreasMax - AxesGroup.SystemData.WorkAreasMin);
   
   // Update SoftwareLimits 
@@ -2543,7 +2681,8 @@ END_VAR
   THEN
     // Get lifesign values
    _lifeSignHeader := GetHalfeByteHi( RobotInData[ROBOT_IN_DATA_MIN + 1]);
-   _lifeSignFooter := GetHalfeByteHi( RobotInData[ROBOT_IN_DATA_MAX + 0]);
+   _lifeSignFooter := GetHalfeByteHi( RobotInData[MIN(ROBOT_IN_DATA_MIN + _parCfg.Com.TelegramLengthRobToPlc - 1,
+                                                       ROBOT_IN_DATA_MAX)]); // ST-FIX F66: last byte of the telegram
   END_IF
   
   // Timer for invalid frame(s) message
@@ -2551,7 +2690,9 @@ END_VAR
   
   // Check Frame is valid : 
   // ----------------------
-  IF ( _lifeSignHeader <> _lifeSignFooter )   
+  // ST-FIX F66: an invalid frame is counted and not processed (spec 5.6.6.2)
+  _frameInvalid := ( _lifeSignHeader <> _lifeSignFooter );
+  IF ( _frameInvalid )
   THEN
     AxesGroup.State.InvalidFrames := AxesGroup.State.InvalidFrames + 1;
   END_IF
@@ -2632,7 +2773,7 @@ END_VAR
     Synchronized := FALSE;
     
     // Set error 
-    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_CONNECTION_LOST, Overwrite := TRUE );  
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_LIFESIGN_TIMEOUT_0x80A5 (* ST-FIX F65: lifesign timeout, table 7-2 *), Overwrite := TRUE );  
     // Create log entry
     CreateLogMessage ( Timestamp   := SystemTime,
                        MessageType := MessageType.CMD,
@@ -2642,7 +2783,7 @@ END_VAR
   END_IF
   
   // Reset connection lost error
-  IF ( NOT Enable ) AND ( _aliveBit ) AND ( ErrorID = RobotLibraryErrorIdEnum.ERR_CONNECTION_LOST )
+  IF ( NOT Enable ) AND ( _aliveBit ) AND ( ErrorID = RobotLibraryErrorIdEnum.ERR_LIFESIGN_TIMEOUT_0x80A5 (* ST-FIX F65: lifesign timeout, table 7-2 *) )
   THEN
     ErrorID := 0;
   END_IF
@@ -2693,34 +2834,102 @@ VAR
  _idx : DINT;
 END_VAR
 
-  FOR _idx := 0 TO  AxesGroup.State.SequenceCountSend 
+  // ST-FIX F63: Seq/Ack of one or two telegram sequences (spec 5.6.5.3, Fig. 5-206 ... 5-208):
+  //  - two sequences start with the Seq numbers 0 and 1
+  //  - the sequence with the lower Ack is handled first; its next Seq number is the number of the
+  //    other sequence + 1 (one common counter, the sequences alternate)
+  //  - ST-FIX F56: 254 -> 1, 0 only on the first exchange
+  IF ( _parCfg.Com.TwoSequences )
+  THEN
+    AxesGroup.State.SequenceCountSend := 1;
+  ELSE
+    AxesGroup.State.SequenceCountSend := 0;
+  END_IF
+  
+  IF (NOT Enable)
+  THEN
+    AxesGroup.State.CurrentSEQ[0] := 0;
+    AxesGroup.State.CurrentSEQ[1] := DINT_TO_UINT(AxesGroup.State.SequenceCountSend);
+  END_IF
+  
+  FOR _idx := 0 TO AxesGroup.State.SequenceCountSend
   DO
     AxesGroup.State.CurrentAck[_idx] := Telegram.RobToPlc.Sequence[_idx].Header.SEQ_ACK;
-    
-    IF (NOT Enable)
-    THEN
-      AxesGroup.State.CurrentSEQ[0] := 0;
-      AxesGroup.State.CurrentSEQ[1] := 0;
-    END_IF  
-    
-    // Check Seq/Ack : 
-    // ----------------------
-    IF ( AxesGroup.State.CurrentAck[_idx] = AxesGroup.State.CurrentSEQ[_idx] ) 
-    THEN
-      AxesGroup.State.CurrentSEQ[_idx] := MAX(AxesGroup.State.CurrentSEQ[0],AxesGroup.State.CurrentSEQ[1]) +1;
-  
-      IF (AxesGroup.State.CurrentSEQ[_idx] >= 255) {warning 'ToDo: Test for Yaskawa'}
-      THEN
-        AxesGroup.State.CurrentSEQ[_idx] := 0;
-  		END_IF
-      
-      AxesGroup.State.NewSEQ[_idx] := TRUE;
-    END_IF  
   END_FOR
+  
+    // ST-FIX F63: the sequence with the lower number first (Fig. 5-207/5-208), numbers wrap 254 -> 1
+    _seqSendFirst := 0;
+    IF ( AxesGroup.State.SequenceCountSend = 1 )
+    THEN
+      _seqDiff := UINT_TO_DINT(AxesGroup.State.CurrentAck[0]) - UINT_TO_DINT(AxesGroup.State.CurrentAck[1]);
+      IF ( _seqDiff < 0 )
+      THEN
+        _seqDiff := _seqDiff + 254;
+      END_IF
+      IF ( _seqDiff > 0 ) AND ( _seqDiff < 127 )
+      THEN
+        _seqSendFirst := 1;
+      END_IF
+    END_IF
+  
+  FOR _seqOrderIdx := 0 TO AxesGroup.State.SequenceCountSend
+  DO
+    IF ( _seqOrderIdx = 0 )
+    THEN
+      _idx := _seqSendFirst;
+    ELSE
+      _idx := 1 - _seqSendFirst;
+    END_IF
+  
+    // Check Seq/Ack :
+    // ----------------------
+    IF ( AxesGroup.State.CurrentAck[_idx] = AxesGroup.State.CurrentSEQ[_idx] )
+    THEN
+      _seqNext := AxesGroup.State.CurrentSEQ[AxesGroup.State.SequenceCountSend - _idx] + 1;
+      IF ( _seqNext >= 255 )
+      THEN
+        _seqNext := 1;
+      END_IF
+      AxesGroup.State.CurrentSEQ[_idx] := _seqNext;
+      AxesGroup.State.NewSEQ[_idx]     := TRUE;
+    END_IF
+  END_FOR
+  
+  // order in which the sequences are filled: lower Seq number first
+  // ST-FIX F63: the sequence with the lower number first (Fig. 5-207/5-208), numbers wrap 254 -> 1
+  _seqSendFirst := 0;
+  IF ( AxesGroup.State.SequenceCountSend = 1 )
+  THEN
+    _seqDiff := UINT_TO_DINT(AxesGroup.State.CurrentSEQ[0]) - UINT_TO_DINT(AxesGroup.State.CurrentSEQ[1]);
+    IF ( _seqDiff < 0 )
+    THEN
+      _seqDiff := _seqDiff + 254;
+    END_IF
+    IF ( _seqDiff > 0 ) AND ( _seqDiff < 127 )
+    THEN
+      _seqSendFirst := 1;
+    END_IF
+  END_IF
+  
+  // ST-FIX F65: telegram sequence timeout (spec 5.6.5.3/5.6.6.2: no new Seq number for
+  // 4 x LifeSignTimeOut while initialized) -> 16#80A8, reinitialization required
+  _seqAckTimeout( IN := Initialized AND NOT ( AxesGroup.State.NewSEQ[0] OR AxesGroup.State.NewSEQ[1] ),
+                  PT := 4 * ParCfg.Com.LifeSignTimeOut + ParCfg.Plc.CycleTime );
+  IF ( _seqAckTimeout.Q )
+  THEN
+    Initialized  := FALSE;
+    Synchronized := FALSE;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_TELEGRAM_SEQ_TIMEOUT_0x80A8_0x80A8, Overwrite := TRUE );
+    CreateLogMessage ( Timestamp   := SystemTime,
+                       MessageType := MessageType.CMD,
+                       Severity    := Severity.FATAL_ERROR,
+                       MessageCode := 0,
+                       MessageText := 'Telegram sequence timeout -> Reinitialization required !');
+  END_IF
 
 END_METHOD
 
-METHOD PRIVATE HandleSync
+METHOD PROTECTED HandleSync
 VAR_IN_OUT
    /// Robot assignment of function
   AxesGroup : AxesGroup;
@@ -2765,7 +2974,7 @@ END_VAR
   HandleSyncRobotDefaultDynamics  ( AxesGroup := AxesGroup, DefaultDynamics   := DefaultDynamics);
   HandleSyncRobotReferenceDynamics( AxesGroup := AxesGroup, ReferenceDynamics := ReferenceDynamics);
   HandleSyncRobotSWLimits         ( AxesGroup := AxesGroup, SwLimits          := SwLimits);
-  HandleSyncToolData              ( AxesGroup := AxesGroup, ToolData          := ToolData);
+  // ST-FIX F13: HandleSyncToolData was called a second time here
   HandleSyncWorkArea              ( AxesGroup := AxesGroup, WorkAreas         := WorkAreas);
   
   
@@ -2780,31 +2989,38 @@ END_VAR
                          
   _inSyncFrameOk :=            ((     AxesGroup.State.SyncStatePlc     .InSync.Frame             )  AND 
                                 (     AxesGroup.State.SyncStateRc      .InSync.Frame             )) OR
-                                ( NOT AxesGroup.State.DataEnableSync.EnableSyncFrame             );
+                                ( NOT AxesGroup.State.DataEnableSync.EnableSyncFrame ) OR // ST-FIX F24: not supported by the RC
+  ( AxesGroup.State.Initialized AND NOT ( AxesGroup.State.RobotData.RCSupportedFunctions.ReadFrameData AND AxesGroup.State.RobotData.RCSupportedFunctions.WriteFrameData ));
                                                                                          
   _inSyncToolOk :=             ((     AxesGroup.State.SyncStatePlc     .InSync.Tool              )  AND 
                                 (     AxesGroup.State.SyncStateRc      .InSync.Tool              )) OR
-                                ( NOT AxesGroup.State.DataEnableSync.EnableSyncTool              ); 
+                                ( NOT AxesGroup.State.DataEnableSync.EnableSyncTool ) OR // ST-FIX F24: not supported by the RC
+  ( AxesGroup.State.Initialized AND NOT ( AxesGroup.State.RobotData.RCSupportedFunctions.ReadToolData AND AxesGroup.State.RobotData.RCSupportedFunctions.WriteToolData )); 
                                                                                              
   _inSyncLoadOk :=             ((     AxesGroup.State.SyncStatePlc     .InSync.Load              )  AND 
                                 (     AxesGroup.State.SyncStateRc      .InSync.Load              )) OR
-                                ( NOT AxesGroup.State.DataEnableSync.EnableSyncLoad              ); 
+                                ( NOT AxesGroup.State.DataEnableSync.EnableSyncLoad ) OR // ST-FIX F24: not supported by the RC
+  ( AxesGroup.State.Initialized AND NOT ( AxesGroup.State.RobotData.RCSupportedFunctions.ReadLoadData AND AxesGroup.State.RobotData.RCSupportedFunctions.WriteLoadData )); 
                                                                                              
   _inSyncWorkAreaOk :=         ((     AxesGroup.State.SyncStatePlc     .InSync.WorkArea          )  AND 
                                 (     AxesGroup.State.SyncStateRc      .InSync.WorkArea          )) OR
-                                ( NOT AxesGroup.State.DataEnableSync.EnableSyncWorkArea          ); 
+                                ( NOT AxesGroup.State.DataEnableSync.EnableSyncWorkArea ) OR // ST-FIX F24: not supported by the RC
+  ( AxesGroup.State.Initialized AND NOT ( AxesGroup.State.RobotData.RCSupportedFunctions.ReadWorkArea AND AxesGroup.State.RobotData.RCSupportedFunctions.WriteWorkArea )); 
                                                                                              
   _inSyncSwLimitsOk :=         ((     AxesGroup.State.SyncStatePlc    .InSync.SwLimits           )  AND 
                                 (     AxesGroup.State.SyncStateRc      .InSync.SwLimits          )) OR
-                                ( NOT AxesGroup.State.DataEnableSync.EnableSyncSwLimits          ); 
+                                ( NOT AxesGroup.State.DataEnableSync.EnableSyncSwLimits ) OR // ST-FIX F24: not supported by the RC
+  ( AxesGroup.State.Initialized AND NOT ( AxesGroup.State.RobotData.RCSupportedFunctions.ReadRobotSWLimits AND AxesGroup.State.RobotData.RCSupportedFunctions.WriteRobotSWLimits )); 
                          
   _inSyncDefaultDynamicOk :=   ((     AxesGroup.State.SyncStatePlc     .InSync.DefaultDynamics   )  AND 
                                 (     AxesGroup.State.SyncStateRc      .InSync.DefaultDynamics   )) OR
-                                ( NOT AxesGroup.State.DataEnableSync.EnableSyncDefaultDynamics   ); 
+                                ( NOT AxesGroup.State.DataEnableSync.EnableSyncDefaultDynamics ) OR // ST-FIX F24: not supported by the RC
+  ( AxesGroup.State.Initialized AND NOT ( AxesGroup.State.RobotData.RCSupportedFunctions.ReadRobotDefaultDynamics AND AxesGroup.State.RobotData.RCSupportedFunctions.WriteRobotDefaultDynamics )); 
   
   _inSyncReferenceDynamicOk := ((     AxesGroup.State.SyncStatePlc     .InSync.ReferenceDynamics )  AND 
                                 (     AxesGroup.State.SyncStateRc      .InSync.ReferenceDynamics )) OR
-                                ( NOT AxesGroup.State.DataEnableSync.EnableSyncReferenceDynamics ); 
+                                ( NOT AxesGroup.State.DataEnableSync.EnableSyncReferenceDynamics ) OR // ST-FIX F24: not supported by the RC
+  ( AxesGroup.State.Initialized AND NOT ( AxesGroup.State.RobotData.RCSupportedFunctions.ReadRobotReferenceDynamics AND AxesGroup.State.RobotData.RCSupportedFunctions.WriteRobotReferenceDynamics )); 
                          
                          
   Synchronized := (( _inSyncFrameOk            ) AND      
@@ -2872,12 +3088,6 @@ END_VAR
          RETURN;
        END_IF
   
-       // Check More Data on RC than on PLC -> Synchronization not possible
-       IF (AxesGroup.State.ConfigurationData.HighestFrameIndex > AxesGroup.SystemData.FrameDataCount)
-       THEN
-         SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_FRAME_COUNT_RC_HIGHER_THAN_PLC, Overwrite := FALSE);
-         RETURN;
-  		 END_IF
        
        // wait for initialisation done
        IF  ((     AxesGroup.State.RobotData.RCSupportedFunctions. ReadFrameData ) AND
@@ -2885,6 +3095,13 @@ END_VAR
             (     AxesGroup.State.Initialized                                   ) AND 
             ( NOT Error                                                         ))  
        THEN
+         // ST-FIX F102: count check after the initialization (HighestXIndex of this connection)
+       // Check More Data on RC than on PLC -> Synchronization not possible
+       IF (AxesGroup.State.ConfigurationData.HighestFrameIndex > AxesGroup.SystemData.FrameDataCount)
+       THEN
+         SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_FRAME_COUNT_RC_HIGHER_THAN_PLC, Overwrite := FALSE);
+         RETURN;
+  		 END_IF
          // Check PLC frames < RC frames and SyncFrame enabled ?    
          IF (( AxesGroup.State.DataEnableSync.EnableSyncFrame      = TRUE                              )  AND
              ( AxesGroup.Parameter.Rob.Parameter.HighestFrameIndex > AxesGroup.SystemData.FrameDataMax ))        
@@ -2901,7 +3118,7 @@ END_VAR
                                  Para1       :=  '');
          
          // init frame number
-        _rSyncIdx := DINT_TO_USINT(AxesGroup.SystemData.FrameDataMin);
+        _rSyncIdx := LIMIT(1, DINT_TO_USINT(AxesGroup.SystemData.FrameDataMin), AxesGroup.State.UnifiedFrameIndex); // ST-FIX F21: index 0 is fixed on the RC
          // init count of unsynchronized elements
          AxesGroup.State.SyncStatePlc.UnSyncNo.Frame := 0;
          // set timeout
@@ -3046,7 +3263,7 @@ END_VAR
   
              SyncMode.SERVER_TO_CLIENT : 
   
-               FOR _idx := AxesGroup.SystemData.FrameDataMin TO AxesGroup.SystemData.FrameDataMax
+               FOR _idx := AxesGroup.SystemData.FrameDataMin TO MIN(AxesGroup.SystemData.FrameDataMax, RobotLibraryParameter.FRAME_MAX - 1) // ST-FIX F18
                DO
                  // Overwrite PLC data with RC data
                  FrameData[_idx] := _frameData[_idx];            
@@ -3085,7 +3302,7 @@ END_VAR
   				   SyncMode.CLIENT_TO_SERVER : ;
   
                // Check conflicts to solve ? 
-               FOR _rSyncIdx := 0 TO AxesGroup.State.UnifiedFrameIndex
+               FOR _rSyncIdx := 1 TO AxesGroup.State.UnifiedFrameIndex // ST-FIX F21: index 0 is fixed on the RC
                DO
                  IF ( AxesGroup.State.DataChanged.Frame[_rSyncIdx] )
                  THEN
@@ -3131,6 +3348,14 @@ END_VAR
              // invalid sync mode for startup
              SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID, Overwrite := TRUE );
    	       END_CASE
+         ELSE
+           // ST-FIX F94: the user resolves the conflict with the write / read functions - read the RC data again
+           IF ( CheckTimeout(_rTimer) = RobotLibraryConstants.OK )
+           THEN
+             AxesGroup.State.DataChanged.Frame := _dataChangedNone.Frame;
+             SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+            _rStep := 0; // -> read the RC data and compare again
+           END_IF
          END_IF
        END_IF  
   
@@ -3203,19 +3428,16 @@ END_VAR
     // --------------------------------------------
            
     10 : // check synchronisation active ? 
-         IF ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Frame[SyncTime.AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION)
-         THEN
-           RETURN;
-         END_IF
+         // ST-FIX F93: compare also with NO_SYNCHRONIZATION (no transfer, see the CASE below)
   
          // reset count of unsynchronised frames
          AxesGroup.State.SyncStatePlc.UnSyncNo.Frame := 0;
   
          // Check all frame datas
-         FOR _rSyncIdx := 0 TO AxesGroup.State.UnifiedFrameIndex
+         FOR _rSyncIdx := 1 TO AxesGroup.State.UnifiedFrameIndex // ST-FIX F21: index 0 is fixed on the RC
          DO
            // compare frame data
-           AxesGroup.State.DataChanged.Frame[_rSyncIdx] := NOT IsFrameDataEqual( Data1 := FrameData[_rSyncIdx].Data, Data2 := _frameData[_rSyncIdx].Data, IgnoreTimestamp := FALSE);
+           AxesGroup.State.DataChanged.Frame[_rSyncIdx] := NOT IsFrameDataEqual( Data1 := FrameData[_rSyncIdx].Data, Data2 := _frameData[_rSyncIdx].Data, IgnoreTimestamp := TRUE (* ST-FIX F57 *));
   
            // Check Frame data changed ? 
            IF (AxesGroup.State.DataChanged.Frame[_rSyncIdx])
@@ -3271,7 +3493,13 @@ END_VAR
            IF (( NOT AxesGroup.State.SyncStatePlc.InSync.Frame ) AND  
                ( NOT AxesGroup.State.SyncStateRc .InSync.Frame ))
            THEN
-             SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_FRAME_SYNC_BOTH_SIDES_CHANGED, Overwrite := TRUE);
+             // ST-FIX F58: CLIENT_TO_SERVER / SERVER_TO_CLIENT decide the direction also if both sides changed
+  CASE AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Frame[SyncTime.AFTER_START_UP] OF
+    SyncMode.CLIENT_TO_SERVER : _rStep := 11;
+    SyncMode.SERVER_TO_CLIENT : _rStep := 12;
+  ELSE
+    SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_FRAME_SYNC_BOTH_SIDES_CHANGED, Overwrite := TRUE);
+  END_CASE
            END_IF
          END_IF
   
@@ -3283,7 +3511,7 @@ END_VAR
          IF ( NOT AxesGroup.State.SyncStatePlc.InSync.Frame )
          THEN
            // search for changed index  
-           FOR _rSyncIdx := 0 TO AxesGroup.State.UnifiedFrameIndex
+           FOR _rSyncIdx := 1 TO AxesGroup.State.UnifiedFrameIndex // ST-FIX F21: index 0 is fixed on the RC
            DO
              IF ( AxesGroup.State.DataChanged.Frame[_rSyncIdx] )
              THEN
@@ -3311,7 +3539,8 @@ END_VAR
          IF ( NOT AxesGroup.State.SyncStateRc.InSync.Frame )
          THEN
            // get changed index 
-          _rSyncIdx := LIMIT(0, AxesGroup.State.SyncStateRc.UnSyncNo.Frame, AxesGroup.State.UnifiedFrameIndex);
+          _rSyncIdx := LIMIT(1, AxesGroup.State.SyncStateRc.UnSyncNo.Frame, // ST-FIX F21: index 0 is fixed on the RC
+   AxesGroup.State.UnifiedFrameIndex);
            // set timeout
            SetTimeout(PT := _rTimeout, rTimer := _rTimer);
            // inc step counter
@@ -3342,7 +3571,7 @@ END_VAR
          IF ( NOT AxesGroup.State.SyncStatePlc.InSync.Frame )
          THEN
            // search for changed index  
-           FOR _rSyncIdx := 0 TO AxesGroup.State.UnifiedFrameIndex
+           FOR _rSyncIdx := 1 TO AxesGroup.State.UnifiedFrameIndex // ST-FIX F21: index 0 is fixed on the RC
            DO
              IF ( AxesGroup.State.DataChanged.Frame[_rSyncIdx] )
              THEN
@@ -3370,7 +3599,8 @@ END_VAR
          IF ( NOT AxesGroup.State.SyncStateRc.InSync.Frame )
          THEN
            // get changed index 
-          _rSyncIdx := LIMIT(0, AxesGroup.State.SyncStateRc.UnSyncNo.Frame, AxesGroup.State.UnifiedFrameIndex);
+          _rSyncIdx := LIMIT(1, AxesGroup.State.SyncStateRc.UnSyncNo.Frame, // ST-FIX F21: index 0 is fixed on the RC
+   AxesGroup.State.UnifiedFrameIndex);
            // set timeout
            SetTimeout(PT := _rTimeout, rTimer := _rTimer);
            // inc step counter
@@ -3401,7 +3631,7 @@ END_VAR
          IF ( NOT AxesGroup.State.SyncStatePlc.InSync.Frame )
          THEN
            // search for changed index  
-           FOR _rSyncIdx := 0 TO AxesGroup.State.UnifiedFrameIndex
+           FOR _rSyncIdx := 1 TO AxesGroup.State.UnifiedFrameIndex // ST-FIX F21: index 0 is fixed on the RC
            DO
              IF ( AxesGroup.State.DataChanged.Frame[_rSyncIdx] )
              THEN
@@ -3429,7 +3659,8 @@ END_VAR
          IF ( NOT AxesGroup.State.SyncStateRc.InSync.Frame )
          THEN
            // get changed index 
-          _rSyncIdx := LIMIT(0, AxesGroup.State.SyncStateRc.UnSyncNo.Frame, AxesGroup.State.UnifiedFrameIndex);
+          _rSyncIdx := LIMIT(1, AxesGroup.State.SyncStateRc.UnSyncNo.Frame, // ST-FIX F21: index 0 is fixed on the RC
+   AxesGroup.State.UnifiedFrameIndex);
            // set timeout
            SetTimeout(PT := _rTimeout, rTimer := _rTimer);
            // inc step counter
@@ -3450,7 +3681,7 @@ END_VAR
          // set timeout
          SetTimeout(PT := _rTimeout, rTimer := _rTimer);
          // jump back
-        //_rStep := 10;
+        _rStep := 10; // ST-FIX F95: was commented out
   
   
     // ------------------------------------------
@@ -3498,7 +3729,13 @@ END_VAR
            // set timeout
            SetTimeout(PT := _rTimeout, rTimer := _rTimer);
            // inc step counter
-          _rStep := 10; // -> jump to after startup           
+          // ST-FIX F20: write the RC data back to reset DataChanged on the RC (spec 5.6.7.4.2)
+          IF ( AxesGroup.State.RobotData.RCSupportedFunctions.WriteFrameData )
+          THEN
+            _rStep := 30;
+          ELSE
+            _rStep := 10;
+          END_IF // -> jump to after startup           
          ELSE
            // check error ? 
            IF (_readFrameData.Error)
@@ -3636,12 +3873,6 @@ END_VAR
          RETURN;
        END_IF
        
-       // Check More Data on RC than on PLC -> Synchronization not possible
-       IF (AxesGroup.State.ConfigurationData.HighestToolIndex > AxesGroup.SystemData.LoadDataCount)
-       THEN
-         SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_LOAD_COUNT_RC_HIGHER_THAN_PLC, Overwrite := FALSE);
-         RETURN;
-  		 END_IF
   
        // wait for initialisation done
        IF  ((     AxesGroup.State.RobotData.RCSupportedFunctions. ReadLoadData ) AND
@@ -3649,6 +3880,13 @@ END_VAR
             (     AxesGroup.State.Initialized                                  ) AND 
             ( NOT Error                                                        ))  
        THEN
+         // ST-FIX F102: count check after the initialization (HighestXIndex of this connection)
+       // Check More Data on RC than on PLC -> Synchronization not possible
+       IF (AxesGroup.State.ConfigurationData.HighestLoadIndex > AxesGroup.SystemData.LoadDataCount) // ST-FIX F101
+       THEN
+         SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_LOAD_COUNT_RC_HIGHER_THAN_PLC, Overwrite := FALSE);
+         RETURN;
+  		 END_IF
          // Check PLC loads < RC Loads and SyncLoad enabled ?    
          IF (( AxesGroup.State.DataEnableSync.EnableSyncLoad      = TRUE                             )  AND
              ( AxesGroup.Parameter.Rob.Parameter.HighestLoadIndex > AxesGroup.SystemData.LoadDataMax ))        
@@ -3811,7 +4049,7 @@ END_VAR
              SyncMode.SERVER_TO_CLIENT : 
   
                // Overwrite PLC data with RC data
-               FOR _idx := AxesGroup.SystemData.LoadDataMin TO AxesGroup.SystemData.LoadDataMax
+               FOR _idx := AxesGroup.SystemData.LoadDataMin TO MIN(AxesGroup.SystemData.LoadDataMax, RobotLibraryParameter.LOAD_MAX - 1) // ST-FIX F18
                DO
                  // Overwrite PLC data with RC data
                  LoadData[_idx] := _loadData[_idx];            
@@ -3899,6 +4137,14 @@ END_VAR
              // invalid sync mode for startup
              SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID, Overwrite := TRUE );
    	       END_CASE
+         ELSE
+           // ST-FIX F94: the user resolves the conflict with the write / read functions - read the RC data again
+           IF ( CheckTimeout(_rTimer) = RobotLibraryConstants.OK )
+           THEN
+             AxesGroup.State.DataChanged.Load := _dataChangedNone.Load;
+             SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+            _rStep := 0; // -> read the RC data and compare again
+           END_IF
          END_IF
        END_IF  
   
@@ -3971,10 +4217,7 @@ END_VAR
     // --------------------------------------------
            
     10 : // check synchronisation active ? 
-         IF ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Load[SyncTime.AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION)
-         THEN
-           RETURN;
-         END_IF
+         // ST-FIX F93: compare also with NO_SYNCHRONIZATION (no transfer, see the CASE below)
          
          // reset count of unsynchronised Loads
          AxesGroup.State.SyncStatePlc.UnSyncNo.Load := 0;
@@ -3986,7 +4229,7 @@ END_VAR
          FOR _rSyncIdx := _idxStart TO AxesGroup.State.UnifiedLoadIndex // !!! Attention : 0 is not allowed - LoadData starts with 1 !!!  
          DO
            // compare Load data
-           AxesGroup.State.DataChanged.Load[_rSyncIdx] := NOT IsLoadDataEqual( Data1 := LoadData[_rSyncIdx].Data, Data2 := _loadData[_rSyncIdx].Data, IgnoreTimestamp := FALSE);
+           AxesGroup.State.DataChanged.Load[_rSyncIdx] := NOT IsLoadDataEqual( Data1 := LoadData[_rSyncIdx].Data, Data2 := _loadData[_rSyncIdx].Data, IgnoreTimestamp := TRUE (* ST-FIX F57 *));
   
            // Check Load data changed ? 
            IF (AxesGroup.State.DataChanged.Load[_rSyncIdx])
@@ -4042,7 +4285,13 @@ END_VAR
            IF (( NOT AxesGroup.State.SyncStatePlc.InSync.Load ) AND  
                ( NOT AxesGroup.State.SyncStateRc .InSync.Load ))
            THEN
-             SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_LOAD_SYNC_BOTH_SIDES_CHANGED, Overwrite :=  TRUE);
+             // ST-FIX F58: CLIENT_TO_SERVER / SERVER_TO_CLIENT decide the direction also if both sides changed
+  CASE AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Load[SyncTime.AFTER_START_UP] OF
+    SyncMode.CLIENT_TO_SERVER : _rStep := 11;
+    SyncMode.SERVER_TO_CLIENT : _rStep := 12;
+  ELSE
+    SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_LOAD_SYNC_BOTH_SIDES_CHANGED, Overwrite :=  TRUE);
+  END_CASE
            END_IF
          END_IF
   
@@ -4232,7 +4481,7 @@ END_VAR
          // set timeout
          SetTimeout(PT := _rTimeout, rTimer := _rTimer);
          // jump back
-        //_rStep := 10;
+        _rStep := 10; // ST-FIX F95: was commented out
   
   
     // ------------------------------------------
@@ -4280,7 +4529,13 @@ END_VAR
            // set timeout
            SetTimeout(PT := _rTimeout, rTimer := _rTimer);
            // inc step counter
-          _rStep := 10; // -> jump to after startup           
+          // ST-FIX F20: write the RC data back to reset DataChanged on the RC (spec 5.6.7.4.2)
+          IF ( AxesGroup.State.RobotData.RCSupportedFunctions.WriteLoadData )
+          THEN
+            _rStep := 30;
+          ELSE
+            _rStep := 10;
+          END_IF // -> jump to after startup           
          ELSE
            // check error ? 
            IF (_readLoadData.Error)
@@ -4614,6 +4869,14 @@ END_VAR
              // invalid sync mode for startup
              SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID, Overwrite := TRUE );
    	       END_CASE
+         ELSE
+           // ST-FIX F94: the user resolves the conflict with the write / read functions - read the RC data again
+           IF ( CheckTimeout(_rTimer) = RobotLibraryConstants.OK )
+           THEN
+             AxesGroup.State.DataChanged.DefaultDynamics := _dataChangedNone.DefaultDynamics;
+             SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+            _rStep := 0; // -> read the RC data and compare again
+           END_IF
          END_IF
        END_IF  
   
@@ -4683,13 +4946,10 @@ END_VAR
     // --------------------------------------------
            
     10 :// check synchronisation active ? 
-         IF ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.DefaultDynamics[SyncTime.AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION)
-         THEN
-           RETURN;
-         END_IF
+         // ST-FIX F93: compare also with NO_SYNCHRONIZATION (no transfer, see the CASE below)
          
          // compare DefaultDynamics data
-         AxesGroup.State.DataChanged.DefaultDynamics := NOT IsDefaultDynamicsEqual( Data1 := DefaultDynamics, Data2 := _defaultDynamics, IgnoreTimestamp := FALSE);
+         AxesGroup.State.DataChanged.DefaultDynamics := NOT IsDefaultDynamicsEqual( Data1 := DefaultDynamics, Data2 := _defaultDynamics, IgnoreTimestamp := TRUE (* ST-FIX F57 *));
   
          // Check DefaultDynamics data changed ? 
          IF (AxesGroup.State.DataChanged.DefaultDynamics)
@@ -4742,7 +5002,13 @@ END_VAR
            IF (( NOT AxesGroup.State.SyncStatePlc.InSync.DefaultDynamics ) AND  
                ( NOT AxesGroup.State.SyncStateRc .InSync.DefaultDynamics ))
            THEN
-             SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_DEFAULT_DYNAMICS_SYNC_BOTH_SIDES_CHANGED, Overwrite := TRUE);
+             // ST-FIX F58: CLIENT_TO_SERVER / SERVER_TO_CLIENT decide the direction also if both sides changed
+  CASE AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.DefaultDynamics[SyncTime.AFTER_START_UP] OF
+    SyncMode.CLIENT_TO_SERVER : _rStep := 11;
+    SyncMode.SERVER_TO_CLIENT : _rStep := 12;
+  ELSE
+    SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_DEFAULT_DYNAMICS_SYNC_BOTH_SIDES_CHANGED, Overwrite := TRUE);
+  END_CASE
            END_IF
          END_IF
   
@@ -4885,7 +5151,7 @@ END_VAR
          // set timeout
          SetTimeout(PT := _rTimeout, rTimer := _rTimer);
          // jump back
-        //_rStep := 10;
+        _rStep := 10; // ST-FIX F95: was commented out
   
   
     // ------------------------------------------
@@ -4928,7 +5194,13 @@ END_VAR
            // set timeout
            SetTimeout(PT := _rTimeout, rTimer := _rTimer);
            // inc step counter
-          _rStep := 10; // -> jump to after startup           
+          // ST-FIX F20: write the RC data back to reset DataChanged on the RC (spec 5.6.7.4.2)
+          IF ( AxesGroup.State.RobotData.RCSupportedFunctions.WriteRobotDefaultDynamics )
+          THEN
+            _rStep := 30;
+          ELSE
+            _rStep := 10;
+          END_IF // -> jump to after startup           
          ELSE
            // check error ? 
            IF (_readRobotDefaultDynamics.Error)
@@ -5252,6 +5524,14 @@ END_VAR
              // invalid sync mode for startup
              SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID, Overwrite := TRUE );
    	       END_CASE
+         ELSE
+           // ST-FIX F94: the user resolves the conflict with the write / read functions - read the RC data again
+           IF ( CheckTimeout(_rTimer) = RobotLibraryConstants.OK )
+           THEN
+             AxesGroup.State.DataChanged.ReferenceDynamics := _dataChangedNone.ReferenceDynamics;
+             SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+            _rStep := 0; // -> read the RC data and compare again
+           END_IF
          END_IF
        END_IF  
   
@@ -5321,13 +5601,10 @@ END_VAR
     // --------------------------------------------
            
     10 : // check synchronisation active ? 
-         IF ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.ReferenceDynamics[SyncTime.AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION)
-         THEN
-           RETURN;
-         END_IF
+         // ST-FIX F93: compare also with NO_SYNCHRONIZATION (no transfer, see the CASE below)
   
          // compare ReferenceDynamics data
-         AxesGroup.State.DataChanged.ReferenceDynamics := NOT IsReferenceDynamicsEqual( Data1 := ReferenceDynamics, Data2 := _referenceDynamics, IgnoreTimestamp := FALSE);
+         AxesGroup.State.DataChanged.ReferenceDynamics := NOT IsReferenceDynamicsEqual( Data1 := ReferenceDynamics, Data2 := _referenceDynamics, IgnoreTimestamp := TRUE (* ST-FIX F57 *));
   
          // Check ReferenceDynamics data changed ? 
          IF (AxesGroup.State.DataChanged.ReferenceDynamics)
@@ -5380,7 +5657,13 @@ END_VAR
            IF (( NOT AxesGroup.State.SyncStatePlc.InSync.ReferenceDynamics ) AND  
                ( NOT AxesGroup.State.SyncStateRc .InSync.ReferenceDynamics ))
            THEN
-             SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_REFERENCE_DYNAMICS_SYNC_BOTH_SIDES_CHANGED, Overwrite := TRUE);
+             // ST-FIX F58: CLIENT_TO_SERVER / SERVER_TO_CLIENT decide the direction also if both sides changed
+  CASE AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.ReferenceDynamics[SyncTime.AFTER_START_UP] OF
+    SyncMode.CLIENT_TO_SERVER : _rStep := 11;
+    SyncMode.SERVER_TO_CLIENT : _rStep := 12;
+  ELSE
+    SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_REFERENCE_DYNAMICS_SYNC_BOTH_SIDES_CHANGED, Overwrite := TRUE);
+  END_CASE
            END_IF
          END_IF
   
@@ -5523,7 +5806,7 @@ END_VAR
          // set timeout
          SetTimeout(PT := _rTimeout, rTimer := _rTimer);
          // jump back
-        //_rStep := 10;
+        _rStep := 10; // ST-FIX F95: was commented out
   
   
     // ------------------------------------------
@@ -5566,7 +5849,13 @@ END_VAR
            // set timeout
            SetTimeout(PT := _rTimeout, rTimer := _rTimer);
            // inc step counter
-          _rStep := 10; // -> jump to after startup           
+          // ST-FIX F20: write the RC data back to reset DataChanged on the RC (spec 5.6.7.4.2)
+          IF ( AxesGroup.State.RobotData.RCSupportedFunctions.WriteRobotReferenceDynamics )
+          THEN
+            _rStep := 30;
+          ELSE
+            _rStep := 10;
+          END_IF // -> jump to after startup           
          ELSE
            // check error ? 
            IF (_readRobotReferenceDynamics.Error)
@@ -5904,6 +6193,14 @@ END_VAR
              // invalid sync mode for startup
              SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID, Overwrite := TRUE );
    	       END_CASE
+         ELSE
+           // ST-FIX F94: the user resolves the conflict with the write / read functions - read the RC data again
+           IF ( CheckTimeout(_rTimer) = RobotLibraryConstants.OK )
+           THEN
+             AxesGroup.State.DataChanged.SwLimits := _dataChangedNone.SwLimits;
+             SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+            _rStep := 0; // -> read the RC data and compare again
+           END_IF
          END_IF
        END_IF  
   
@@ -5974,13 +6271,10 @@ END_VAR
     // --------------------------------------------
            
     10 : // check synchronisation active ? 
-         IF ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.SWLimits[SyncTime.AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION)
-         THEN
-           RETURN;
-         END_IF
+         // ST-FIX F93: compare also with NO_SYNCHRONIZATION (no transfer, see the CASE below)
   
          // compare SwLimits data
-         AxesGroup.State.DataChanged.SwLimits := NOT IsSwLimitsEqual( Data1 := SwLimits, Data2 := _swLimits, IgnoreTimestamp := FALSE);
+         AxesGroup.State.DataChanged.SwLimits := NOT IsSwLimitsEqual( Data1 := SwLimits, Data2 := _swLimits, IgnoreTimestamp := TRUE (* ST-FIX F57 *));
   
          // Check SwLimits data changed ? 
          IF (AxesGroup.State.DataChanged.SwLimits)
@@ -6033,7 +6327,13 @@ END_VAR
            IF (( NOT AxesGroup.State.SyncStatePlc.InSync.SwLimits ) AND  
                ( NOT AxesGroup.State.SyncStateRc .InSync.SwLimits ))
            THEN
-             SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_SW_LIMITS_SYNC_BOTH_SIDES_CHANGED, Overwrite := TRUE);
+             // ST-FIX F58: CLIENT_TO_SERVER / SERVER_TO_CLIENT decide the direction also if both sides changed
+  CASE AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.SWLimits[SyncTime.AFTER_START_UP] OF
+    SyncMode.CLIENT_TO_SERVER : _rStep := 11;
+    SyncMode.SERVER_TO_CLIENT : _rStep := 12;
+  ELSE
+    SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_SW_LIMITS_SYNC_BOTH_SIDES_CHANGED, Overwrite := TRUE);
+  END_CASE
            END_IF
          END_IF
   
@@ -6176,7 +6476,7 @@ END_VAR
          // set timeout
          SetTimeout(PT := _rTimeout, rTimer := _rTimer);
          // jump back
-        //_rStep := 10;
+        _rStep := 10; // ST-FIX F95: was commented out
   
   
     // ------------------------------------------
@@ -6219,7 +6519,13 @@ END_VAR
            // set timeout
            SetTimeout(PT := _rTimeout, rTimer := _rTimer);
            // inc step counter
-          _rStep := 10; // -> jump to after startup           
+          // ST-FIX F20: write the RC data back to reset DataChanged on the RC (spec 5.6.7.4.2)
+          IF ( AxesGroup.State.RobotData.RCSupportedFunctions.WriteRobotSWLimits )
+          THEN
+            _rStep := 30;
+          ELSE
+            _rStep := 10;
+          END_IF // -> jump to after startup           
          ELSE
            // check error ? 
            IF (_readRobotSWLimits.Error)
@@ -6347,12 +6653,6 @@ END_VAR
          RETURN;
        END_IF
        
-       // Check More Data on RC than on PLC -> Synchronization not possible
-       IF (AxesGroup.State.ConfigurationData.HighestToolIndex > AxesGroup.SystemData.ToolDataCount)
-       THEN
-         SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_TOOL_COUNT_RC_HIGHER_THAN_PLC, Overwrite := FALSE);
-         RETURN;
-  		 END_IF
   
        // wait for initialisation done
        IF  ((     AxesGroup.State.RobotData.RCSupportedFunctions. ReadToolData ) AND
@@ -6360,6 +6660,13 @@ END_VAR
             (     AxesGroup.State.Initialized                                  ) AND 
             ( NOT Error                                                        ))  
        THEN
+         // ST-FIX F102: count check after the initialization (HighestXIndex of this connection)
+       // Check More Data on RC than on PLC -> Synchronization not possible
+       IF (AxesGroup.State.ConfigurationData.HighestToolIndex > AxesGroup.SystemData.ToolDataCount)
+       THEN
+         SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_TOOL_COUNT_RC_HIGHER_THAN_PLC, Overwrite := FALSE);
+         RETURN;
+  		 END_IF
          // Check PLC tools < RC tools and SyncTool enabled ?    
          IF (( AxesGroup.State.DataEnableSync.EnableSyncTool      = TRUE                             )  AND
              ( AxesGroup.Parameter.Rob.Parameter.HighestToolIndex > AxesGroup.SystemData.ToolDataMax ))        
@@ -6376,7 +6683,7 @@ END_VAR
                                  Para1       :=  '');
          
          // init tool number
-        _rSyncIdx := DINT_TO_USINT(AxesGroup.SystemData.ToolDataMin); 
+        _rSyncIdx := LIMIT(1, DINT_TO_USINT(AxesGroup.SystemData.ToolDataMin), AxesGroup.State.UnifiedToolIndex); // ST-FIX F21: index 0 is fixed on the RC 
          // init count of unsynchronized elements
          AxesGroup.State.SyncStatePlc.UnSyncNo.Tool := 0;
          // set timeout
@@ -6522,7 +6829,7 @@ END_VAR
              SyncMode.SERVER_TO_CLIENT : 
   
              
-               FOR _idx := AxesGroup.SystemData.ToolDataMin TO AxesGroup.SystemData.ToolDataMax
+               FOR _idx := AxesGroup.SystemData.ToolDataMin TO MIN(AxesGroup.SystemData.ToolDataMax, RobotLibraryParameter.TOOL_MAX - 1) // ST-FIX F18
                DO
                  // Overwrite PLC data with RC data
                  ToolData[_idx] := _toolData[_idx];            
@@ -6560,7 +6867,7 @@ END_VAR
   				   SyncMode.CLIENT_TO_SERVER : ;
   
                // Check conflicts to solve ? 
-               FOR _rSyncIdx := 0 TO AxesGroup.State.UnifiedToolIndex
+               FOR _rSyncIdx := 1 TO AxesGroup.State.UnifiedToolIndex // ST-FIX F21: index 0 is fixed on the RC
                DO
                  IF ( AxesGroup.State.DataChanged.Tool[_rSyncIdx] )
                  THEN
@@ -6606,6 +6913,14 @@ END_VAR
              // invalid sync mode for startup
              SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID, Overwrite := TRUE );
    	       END_CASE
+         ELSE
+           // ST-FIX F94: the user resolves the conflict with the write / read functions - read the RC data again
+           IF ( CheckTimeout(_rTimer) = RobotLibraryConstants.OK )
+           THEN
+             AxesGroup.State.DataChanged.Tool := _dataChangedNone.Tool;
+             SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+            _rStep := 0; // -> read the RC data and compare again
+           END_IF
          END_IF
        END_IF  
   
@@ -6678,19 +6993,16 @@ END_VAR
     // --------------------------------------------
            
     10 :// check synchronisation active ? 
-         IF ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Tool[SyncTime.AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION)
-         THEN
-           RETURN;
-         END_IF
+         // ST-FIX F93: compare also with NO_SYNCHRONIZATION (no transfer, see the CASE below)
   
          // reset count of unsynchronised tools
          AxesGroup.State.SyncStatePlc.UnSyncNo.Tool := 0;
   
          // Check all tool datas
-         FOR _rSyncIdx := 0 TO AxesGroup.State.UnifiedToolIndex
+         FOR _rSyncIdx := 1 TO AxesGroup.State.UnifiedToolIndex // ST-FIX F21: index 0 is fixed on the RC
          DO
            // compare tool data
-           AxesGroup.State.DataChanged.Tool[_rSyncIdx] := NOT IsToolDataEqual( Data1 := ToolData[_rSyncIdx].Data, Data2 := _toolData[_rSyncIdx].Data, IgnoreTimestamp := FALSE);
+           AxesGroup.State.DataChanged.Tool[_rSyncIdx] := NOT IsToolDataEqual( Data1 := ToolData[_rSyncIdx].Data, Data2 := _toolData[_rSyncIdx].Data, IgnoreTimestamp := TRUE (* ST-FIX F57 *));
   
            // Check Tool data changed ? 
            IF (AxesGroup.State.DataChanged.Tool[_rSyncIdx])
@@ -6746,7 +7058,13 @@ END_VAR
            IF (( NOT AxesGroup.State.SyncStatePlc.InSync.Tool ) AND  
                ( NOT AxesGroup.State.SyncStateRc .InSync.Tool ))
            THEN
-             SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_TOOL_SYNC_BOTH_SIDES_CHANGED, Overwrite := TRUE);
+             // ST-FIX F58: CLIENT_TO_SERVER / SERVER_TO_CLIENT decide the direction also if both sides changed
+  CASE AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Tool[SyncTime.AFTER_START_UP] OF
+    SyncMode.CLIENT_TO_SERVER : _rStep := 11;
+    SyncMode.SERVER_TO_CLIENT : _rStep := 12;
+  ELSE
+    SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_TOOL_SYNC_BOTH_SIDES_CHANGED, Overwrite := TRUE);
+  END_CASE
            END_IF
          END_IF
   
@@ -6758,7 +7076,7 @@ END_VAR
          IF ( NOT AxesGroup.State.SyncStatePlc.InSync.Tool )
          THEN
            // search for changed index  
-           FOR _rSyncIdx := 0 TO AxesGroup.State.UnifiedToolIndex
+           FOR _rSyncIdx := 1 TO AxesGroup.State.UnifiedToolIndex // ST-FIX F21: index 0 is fixed on the RC
            DO
              IF ( AxesGroup.State.DataChanged.Tool[_rSyncIdx] )
              THEN
@@ -6786,7 +7104,8 @@ END_VAR
          IF ( NOT AxesGroup.State.SyncStateRc.InSync.Tool )
          THEN
            // get changed index 
-          _rSyncIdx :=  LIMIT(0, AxesGroup.State.SyncStateRc.UnSyncNo.Tool, AxesGroup.State.UnifiedToolIndex);
+          _rSyncIdx :=  LIMIT(1, AxesGroup.State.SyncStateRc.UnSyncNo.Tool, // ST-FIX F21: index 0 is fixed on the RC
+   AxesGroup.State.UnifiedToolIndex);
            // set timeout
            SetTimeout(PT := _rTimeout, rTimer := _rTimer);
            // inc step counter
@@ -6817,7 +7136,7 @@ END_VAR
          IF ( NOT AxesGroup.State.SyncStatePlc.InSync.Tool )
          THEN
            // search for changed index  
-           FOR _rSyncIdx := 0 TO AxesGroup.State.UnifiedToolIndex
+           FOR _rSyncIdx := 1 TO AxesGroup.State.UnifiedToolIndex // ST-FIX F21: index 0 is fixed on the RC
            DO
              IF ( AxesGroup.State.DataChanged.Tool[_rSyncIdx] )
              THEN
@@ -6845,7 +7164,8 @@ END_VAR
          IF ( NOT AxesGroup.State.SyncStateRc.InSync.Tool )
          THEN
            // get changed index 
-          _rSyncIdx := LIMIT(0, AxesGroup.State.SyncStateRc.UnSyncNo.Tool, AxesGroup.State.UnifiedToolIndex);
+          _rSyncIdx := LIMIT(1, AxesGroup.State.SyncStateRc.UnSyncNo.Tool, // ST-FIX F21: index 0 is fixed on the RC
+   AxesGroup.State.UnifiedToolIndex);
            // set timeout
            SetTimeout(PT := _rTimeout, rTimer := _rTimer);
            // inc step counter
@@ -6876,7 +7196,7 @@ END_VAR
          IF ( NOT AxesGroup.State.SyncStatePlc.InSync.Tool )
          THEN
            // search for changed index  
-           FOR _rSyncIdx := 0 TO AxesGroup.State.UnifiedToolIndex
+           FOR _rSyncIdx := 1 TO AxesGroup.State.UnifiedToolIndex // ST-FIX F21: index 0 is fixed on the RC
            DO
              IF ( AxesGroup.State.DataChanged.Tool[_rSyncIdx] )
              THEN
@@ -6904,7 +7224,8 @@ END_VAR
          IF ( NOT AxesGroup.State.SyncStateRc.InSync.Tool )
          THEN
            // get changed index 
-          _rSyncIdx := LIMIT(0, AxesGroup.State.SyncStateRc.UnSyncNo.Tool, AxesGroup.State.UnifiedToolIndex);
+          _rSyncIdx := LIMIT(1, AxesGroup.State.SyncStateRc.UnSyncNo.Tool, // ST-FIX F21: index 0 is fixed on the RC
+   AxesGroup.State.UnifiedToolIndex);
            // set timeout
            SetTimeout(PT := _rTimeout, rTimer := _rTimer);
            // inc step counter
@@ -6925,7 +7246,7 @@ END_VAR
          // set timeout
          SetTimeout(PT := _rTimeout, rTimer := _rTimer);
          // jump back
-        //_rStep := 10;
+        _rStep := 10; // ST-FIX F95: was commented out
   
   
     // ------------------------------------------
@@ -6973,7 +7294,13 @@ END_VAR
            // set timeout
            SetTimeout(PT := _rTimeout, rTimer := _rTimer);
            // inc step counter
-          _rStep := 10; // -> jump to after startup           
+          // ST-FIX F20: write the RC data back to reset DataChanged on the RC (spec 5.6.7.4.2)
+          IF ( AxesGroup.State.RobotData.RCSupportedFunctions.WriteToolData )
+          THEN
+            _rStep := 30;
+          ELSE
+            _rStep := 10;
+          END_IF // -> jump to after startup           
          ELSE
            // check error ? 
            IF (_readToolData.Error)
@@ -7109,12 +7436,6 @@ END_VAR
          RETURN;
        END_IF
        
-       // Check More Data on RC than on PLC -> Synchronization not possible
-       IF (AxesGroup.State.ConfigurationData.HighestWorkAreaIndex > AxesGroup.SystemData.WorkAreasCount)
-       THEN
-         SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_WORKAREA_COUNT_RC_HIGHER_THAN_PLC, Overwrite := FALSE);
-         RETURN;
-  		 END_IF
        
        // wait for initialisation done
        IF  ((     AxesGroup.State.RobotData.RCSupportedFunctions. ReadWorkArea ) AND
@@ -7122,6 +7443,13 @@ END_VAR
             (     AxesGroup.State.Initialized                                  ) AND 
             ( NOT Error                                                        ))  
        THEN
+         // ST-FIX F102: count check after the initialization (HighestXIndex of this connection)
+       // Check More Data on RC than on PLC -> Synchronization not possible
+       IF (AxesGroup.State.ConfigurationData.HighestWorkAreaIndex > AxesGroup.SystemData.WorkAreasCount)
+       THEN
+         SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_WORKAREA_COUNT_RC_HIGHER_THAN_PLC, Overwrite := FALSE);
+         RETURN;
+  		 END_IF
          // Check PLC WorkAreas < RC WorkAreas and SyncWorkArea enabled ?    
          IF (( AxesGroup.State.DataEnableSync.EnableSyncWorkArea      = TRUE                              )  AND
              ( AxesGroup.Parameter.Rob.Parameter.HighestWorkAreaIndex > AxesGroup.SystemData.WorkAreasMax ))        
@@ -7284,7 +7612,7 @@ END_VAR
              SyncMode.SERVER_TO_CLIENT : 
   
                // Overwrite PLC data with RC data
-               FOR _idx := AxesGroup.SystemData.WorkAreasMin TO AxesGroup.SystemData.WorkAreasMax
+               FOR _idx := AxesGroup.SystemData.WorkAreasMin TO MIN(AxesGroup.SystemData.WorkAreasMax, RobotLibraryParameter.WORK_AREAS_MAX - 1) // ST-FIX F18
                DO
                  // Overwrite PLC data with RC data
                  WorkAreas[_idx] := WorkAreas[_idx];            
@@ -7369,6 +7697,14 @@ END_VAR
              // invalid sync mode for startup
              SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_SYNC_MODE_INVALID, Overwrite := TRUE );
    	       END_CASE
+         ELSE
+           // ST-FIX F94: the user resolves the conflict with the write / read functions - read the RC data again
+           IF ( CheckTimeout(_rTimer) = RobotLibraryConstants.OK )
+           THEN
+             AxesGroup.State.DataChanged.WorkArea := _dataChangedNone.WorkArea;
+             SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+            _rStep := 0; // -> read the RC data and compare again
+           END_IF
          END_IF
        END_IF  
   
@@ -7441,10 +7777,7 @@ END_VAR
     // --------------------------------------------
            
     10 : // check synchronisation active ? 
-         IF ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.WorkAreas[SyncTime.AFTER_START_UP] = SyncMode.NO_SYNCHRONIZATION)
-         THEN
-           RETURN;
-         END_IF
+         // ST-FIX F93: compare also with NO_SYNCHRONIZATION (no transfer, see the CASE below)
          
          // reset count of unsynchronised WorkAreas
          AxesGroup.State.SyncStatePlc.UnSyncNo.WorkArea := 0;
@@ -7453,7 +7786,7 @@ END_VAR
          FOR _rSyncIdx := 0 TO AxesGroup.State.UnifiedWorkAreaIndex
          DO
            // compare WorkArea data
-           AxesGroup.State.DataChanged.WorkArea[_rSyncIdx] := NOT IsWorkAreaEqual( Data1 := WorkAreas[_rSyncIdx].Data, Data2 := _workAreas[_rSyncIdx].Data, IgnoreTimestamp := FALSE);
+           AxesGroup.State.DataChanged.WorkArea[_rSyncIdx] := NOT IsWorkAreaEqual( Data1 := WorkAreas[_rSyncIdx].Data, Data2 := _workAreas[_rSyncIdx].Data, IgnoreTimestamp := TRUE (* ST-FIX F57 *));
   
            // Check WorkArea data changed ? 
            IF (AxesGroup.State.DataChanged.WorkArea[_rSyncIdx])
@@ -7509,7 +7842,13 @@ END_VAR
            IF (( NOT AxesGroup.State.SyncStatePlc.InSync.WorkArea ) AND  
                ( NOT AxesGroup.State.SyncStateRc .InSync.WorkArea ))
            THEN
-             SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_WORK_AREA_SYNC_BOTH_SIDES_CHANGED, Overwrite := TRUE);
+             // ST-FIX F58: CLIENT_TO_SERVER / SERVER_TO_CLIENT decide the direction also if both sides changed
+  CASE AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.WorkAreas[SyncTime.AFTER_START_UP] OF
+    SyncMode.CLIENT_TO_SERVER : _rStep := 11;
+    SyncMode.SERVER_TO_CLIENT : _rStep := 12;
+  ELSE
+    SetWarning( WarningID := RobotLibraryWarningIdEnum.WARN_WORK_AREA_SYNC_BOTH_SIDES_CHANGED, Overwrite := TRUE);
+  END_CASE
            END_IF
          END_IF
   
@@ -7688,7 +8027,7 @@ END_VAR
          // set timeout
          SetTimeout(PT := _rTimeout, rTimer := _rTimer);
          // jump back
-        //_rStep := 10;
+        _rStep := 10; // ST-FIX F95: was commented out
   
   
     // ------------------------------------------
@@ -7736,7 +8075,13 @@ END_VAR
            // set timeout
            SetTimeout(PT := _rTimeout, rTimer := _rTimer);
            // inc step counter
-          _rStep := 10; // -> jump to after startup           
+          // ST-FIX F20: write the RC data back to reset DataChanged on the RC (spec 5.6.7.4.2)
+          IF ( AxesGroup.State.RobotData.RCSupportedFunctions.WriteWorkArea )
+          THEN
+            _rStep := 30;
+          ELSE
+            _rStep := 10;
+          END_IF // -> jump to after startup           
          ELSE
            // check error ? 
            IF (_readWorkArea.Error)
@@ -8063,7 +8408,40 @@ END_VAR
     // Reset Synchronized flag
     Synchronized := FALSE;
     // Set error 
-    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INIT_LOST_UNKNOWN_0x80A2, Overwrite := TRUE );
+    // ST-FIX F65: reason of the loss of the initialization (table 7-2): RI error of the RC in the
+    // telegram state (16#A1..16#AD), interface reset by the RC (16#80A7) or unknown (16#80A2)
+    IF (( AxesGroup.Cyclic.RobToPlc.TelegramState >= TelegramState.ERROR_161_TELEGRAM_CONTROL_MISMATCH_TELEGRAM_STATE ) AND
+        ( AxesGroup.Cyclic.RobToPlc.TelegramState <= TelegramState.ERROR_173_SERVER_CONNECTION_LOST                   ))
+    THEN
+      SetError( ErrorID := AxesGroup.Cyclic.RobToPlc.TelegramState, Overwrite := TRUE );
+      // Create log entry
+      CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                              MessageType := MessageType.CMD,
+                              Severity    := Severity.ERROR,
+                              MessageCode := ErrorID,
+                              MessageText := 'Initialization lost: RI error {1} of the RC',
+                              Para1       := TELEGRAM_STATE_TO_STRING(AxesGroup.Cyclic.RobToPlc.TelegramState));
+    ELSIF (( AxesGroup.Cyclic.RobToPlc.TelegramState = TelegramState.READY_FOR_INITIALIZATION ) OR
+           ( AxesGroup.Cyclic.RobToPlc.TelegramState = TelegramState.READY_TO_RESUME          ))
+    THEN
+      SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INTERFACE_WAS_RESET_AFTER_INIT_0x80A7, Overwrite := TRUE );
+      // Create log entry
+      CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                              MessageType := MessageType.CMD,
+                              Severity    := Severity.ERROR,
+                              MessageCode := ErrorID,
+                              MessageText := 'Initialization lost: interface was reset by the RC (state {1})',
+                              Para1       := TELEGRAM_STATE_TO_STRING(AxesGroup.Cyclic.RobToPlc.TelegramState));
+    ELSE
+      SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INIT_LOST_UNKNOWN_0x80A2, Overwrite := TRUE );
+      // Create log entry
+      CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                              MessageType := MessageType.CMD,
+                              Severity    := Severity.ERROR,
+                              MessageCode := ErrorID,
+                              MessageText := 'Initialization lost: unknown reason (state {1})',
+                              Para1       := TELEGRAM_STATE_TO_STRING(AxesGroup.Cyclic.RobToPlc.TelegramState));
+    END_IF
   END_IF
   
   
@@ -8136,22 +8514,49 @@ END_VAR
            AxesGroup.Cyclic.PlcToRob.FastStop := 0;
            // Reset Active command register
            AxesGroup.Acyclic.ActiveCommandRegister.Reset();
+           // ST-FIX F23: the RC is still initialized from the previous enable (ACR, SEQ/ACK)
+           // -> reset the interface on the RC as well
+           _restartReset := AxesGroup.Cyclic.RobToPlc.TelegramState = TelegramState.INITIALIZED;
+           IF ( _restartReset )
+           THEN
+             AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.RESET;
+           END_IF
          
            // check parameter valid
            IF ( CheckParameterValid(AxesGroup := AxesGroup) )
            THEN
              // take configuration parameter if not yet enabled
             _parCfg := ParCfg;
+            // ST-FIX F103: number of telegram sequences of this configuration (not of the previous enable)
+            IF ( _parCfg.Com.TwoSequences )
+            THEN
+              AxesGroup.State.SequenceCountSend := 1;
+            ELSE
+              AxesGroup.State.SequenceCountSend := 0;
+            END_IF
+            // ST-FIX F79: no error state of the RC seen yet in this initialization
+            _initErrorState := TelegramState.UNDEFINED;
              // inc step counter
             _stepCmd := _stepCmd + 1; 
            END_IF
          END_IF
        
-    01:  CASE AxesGroup.Cyclic.RobToPlc.TelegramState  OF
+    01:  // ST-FIX F23: wait until the RC left the state INITIALIZED of the previous enable
+  IF ( _restartReset )
+  THEN
+    IF ( AxesGroup.Cyclic.RobToPlc.TelegramState <> TelegramState.INITIALIZED )
+    THEN
+      _restartReset := FALSE;
+    END_IF
+  ELSE
+  CASE AxesGroup.Cyclic.RobToPlc.TelegramState  OF
   
            TelegramState.UNDEFINED : ;
            
            TelegramState.ERROR_161_TELEGRAM_CONTROL_MISMATCH_TELEGRAM_STATE..TelegramState.ERROR_172_TELEGRAM_NUMBER_NOT_SUPPORTED:
+  
+             // ST-FIX F79: remember the error state for the init timeout
+             _initErrorState := AxesGroup.Cyclic.RobToPlc.TelegramState;
   
              // clear error
              AxesGroup.Cyclic.PlcToRob.Control := ControlHalfByte.ACK_ERROR;        
@@ -8192,18 +8597,30 @@ END_VAR
   
          ELSE
            // TelegrammState in error          
-           SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INIT_LOST_UNKNOWN_0xA2, Overwrite := TRUE );
+           SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INIT_LOST_UNKNOWN_0x80A2, Overwrite := TRUE ); // ST-FIX F65: unknown state (16#A2 is the RI error of the RC)
+             // Create log entry
+             CreateLogMessagePara1 ( Timestamp   := SystemTime,
+                                     MessageType := MessageType.CMD,
+                                     Severity    := Severity.ERROR,
+                                     MessageCode := ErrorID,
+                                     MessageText := 'Initialization lost: unknown telegram state {1}',
+                                     Para1       := TELEGRAM_STATE_TO_STRING(AxesGroup.Cyclic.RobToPlc.TelegramState));
            ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
          END_CASE
+  END_IF
   
          // timeout exceeded ? 
          IF (CheckTimeout(_timerCmd) = RobotLibraryConstants.OK)
          THEN
            // Check Telegram State error ? 
-           IF (( AxesGroup.Cyclic.RobToPlc.TelegramState >= TelegramState.ERROR_161_TELEGRAM_CONTROL_MISMATCH_TELEGRAM_STATE ) OR
+           IF (( AxesGroup.Cyclic.RobToPlc.TelegramState >= TelegramState.ERROR_161_TELEGRAM_CONTROL_MISMATCH_TELEGRAM_STATE ) AND // ST-FIX F15
                ( AxesGroup.Cyclic.RobToPlc.TelegramState <= TelegramState.ERROR_173_SERVER_CONNECTION_LOST                   ))
            THEN
              ErrorID     := AxesGroup.Cyclic.RobToPlc.TelegramState;
+             ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
+           ELSIF ( _initErrorState <> TelegramState.UNDEFINED ) // ST-FIX F79: error state seen during the initialization
+           THEN
+             ErrorID     := _initErrorState;
              ErrorAddTxt := CONCAT('_stepCmd = ' , DINT_TO_STRING(_stepCmd));
            ELSE
              ErrorID     := RobotLibraryErrorIdEnum.ERR_TIMEOUT_CMD;
@@ -8396,7 +8813,8 @@ END_VAR
          
     08:  // Update Initialized state
          Initialized := NOT ERROR AND NOT Synchronized; {warning 'ToDo'}
-         Initialized := NOT Synchronized;
+         // ST-FIX F29: the next line overwrote the error check above
+         // Initialized := NOT Synchronized;
   
          // Wait for task disable
          IF ( NOT Enable)
@@ -8420,7 +8838,7 @@ END_VAR
 
 END_METHOD
 
-METHOD PRIVATE ParseRecvPayload
+METHOD PROTECTED ParseRecvPayload
 VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup   : AxesGroup;
@@ -8454,7 +8872,7 @@ END_VAR
 
 END_METHOD
 
-METHOD PRIVATE ParseRecvPayloadCyclic
+METHOD PROTECTED ParseRecvPayloadCyclic
 VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup: AxesGroup;
@@ -8463,7 +8881,7 @@ END_VAR
 
 END_METHOD
 
-METHOD PRIVATE ParseRecvPayloadCyclicOptional
+METHOD PROTECTED ParseRecvPayloadCyclicOptional
 VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup    : AxesGroup;
@@ -8603,7 +9021,7 @@ END_VAR
 
 END_METHOD
 
-METHOD PRIVATE ParseRecvPayloadHeader
+METHOD PROTECTED ParseRecvPayloadHeader
 VAR_IN_OUT
   /// Robot assignment of function
   AxesGroup    : AxesGroup;
@@ -8700,6 +9118,14 @@ VAR
  _seqCount         : DINT;
   /// current payload pointer of the current sequence
  _seqPayloadPtr    : UINT; 
+  /// ST-FIX F63: start of the payload of each sequence (behind its sequence header)
+ _rcvStart         : ARRAY[0..1] OF DINT;
+  /// ST-FIX F63: sequence that is processed first (lower Ack)
+ _rcvFirst         : DINT;
+  /// ST-FIX F63: loop counter over the sequences in Ack order
+ _rcvOrderIdx      : DINT;
+  /// ST-FIX F63: distance of the two Ack numbers
+ _rcvDiff          : DINT;
 END_VAR
 
   // Check 2nd sequence active ? 
@@ -8708,22 +9134,50 @@ END_VAR
    _seqCount := _seqCount + 1;
   END_IF
   
+  // ST-FIX F63: read the headers of all sequences, each from its own address (Fig. 5-205)
   FOR _seqIdx := 0 TO _seqCount
   DO
-    // Check 2nd sequence ? -> goto 2nd sequence payload address  
-    IF ( _seqIdx = SECONDARY_SEQUENCE )
+    IF ( _seqIdx = PRIMARY_SEQUENCE )
     THEN
       RecvData.PayloadPtr := CalculateSequencePayloadStartAdr(AxesGroup := AxesGroup, 
                                                               Direction := ComDirection.ROB_TO_PLC,
+                                                              Sequence  := SequenceFlag.PRIMARY_SEQUENCE);
+    ELSE
+      RecvData.PayloadPtr := CalculateSequencePayloadStartAdr(AxesGroup := AxesGroup, 
+                                                              Direction := ComDirection.ROB_TO_PLC,
                                                               Sequence  := SequenceFlag.SECONDARY_SEQUENCE);
-  	END_IF
+    END_IF
   
-    // parste sequence header
+    // parse sequence header
     Telegram.RobToPlc.Sequence[_seqIdx].Header.SEQ_ACK       := RecvData.GetUint();
     Telegram.RobToPlc.Sequence[_seqIdx].Header.PayloadLength := RecvData.GetUint();
+   _rcvStart[_seqIdx] := RecvData.PayloadPtr;
+  END_FOR
+  
+  // ST-FIX F63: the sequence with the lower Ack first (Fig. 5-207/5-208), numbers wrap 254 -> 1
+  _rcvFirst := 0;
+  IF ( _seqCount = 1 )
+  THEN
+   _rcvDiff := UINT_TO_DINT(Telegram.RobToPlc.Sequence[0].Header.SEQ_ACK)
+             - UINT_TO_DINT(Telegram.RobToPlc.Sequence[1].Header.SEQ_ACK);
+    IF ( _rcvDiff < 0 ) THEN _rcvDiff := _rcvDiff + 254; END_IF
+    IF (( _rcvDiff > 0 ) AND ( _rcvDiff < 127 )) THEN _rcvFirst := 1; END_IF
+  END_IF
+  
+  FOR _rcvOrderIdx := 0 TO _seqCount
+  DO
+    IF ( _rcvOrderIdx = 0 ) THEN _seqIdx := _rcvFirst; ELSE _seqIdx := 1 - _rcvFirst; END_IF
+  
+    // ST-FIX F5: every sequence starts with fragment 0
+    _fragIdx       := 0;
+    _seqPayloadPtr := 0;
+    RecvData.PayloadPtr := _rcvStart[_seqIdx];
     
     // check new data available ? 
-    IF ( Telegram.RobToPlc.Sequence[_seqIdx].Header.SEQ_ACK <> AxesGroup.State.LastACK[_seqIdx]) 
+    // ST-FIX F63: only the Ack of the Seq that was sent (Seq = Ack) carries the response of it;
+    // with two sequences the RC may send Ack 0 in the sequence it does not process
+    IF (( Telegram.RobToPlc.Sequence[_seqIdx].Header.SEQ_ACK <> AxesGroup.State.LastACK[_seqIdx]    ) AND
+        ( Telegram.RobToPlc.Sequence[_seqIdx].Header.SEQ_ACK  = AxesGroup.State.CurrentSEQ[_seqIdx] ))
     THEN
       // Check sequence payload available ? 
       IF (Telegram.RobToPlc.Sequence[_seqIdx].Header.PayloadLength > 0)
@@ -8844,7 +9298,7 @@ END_VAR
             // Create log entry
             CreateLogMessagePara1 ( Timestamp   := SystemTime,
                                     MessageType := MessageType.CMD,
-                                    Severity    := Severity.DEBUG,
+                                    Severity    := Severity.ERROR, // ST-FIX F52: responses are lost
                                     MessageCode := 0,
                                     MessageText := 'Fragment index out of range, _fragIdx = {1} ',
                                     Para1       :=  DINT_TO_STRING(_fragIdx));

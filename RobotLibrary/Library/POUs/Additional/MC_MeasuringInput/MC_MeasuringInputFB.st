@@ -40,6 +40,11 @@ VAR
   /// response data received
  _response        : MeasuringInputRecvData;      
 END_VAR
+            
+          
+VAR_OUTPUT
+  CommandAborted : BOOL;
+END_VAR
 
   SUPER^(AxesGroup := AxesGroup);
 
@@ -148,7 +153,7 @@ END_VAR
     // Parameter not valid
     CheckParameterValid := FALSE;
     // Set error
-    SetError( ErrorID := ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD, Overwrite := TRUE );
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD, Overwrite := TRUE );
     // Create log entry
     CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
                             MessageType := MessageType.CMD,
@@ -360,6 +365,12 @@ END_VAR
     SysDepMemSet(pDest := ADR(OutCmd), Value := 0, DataLen := SIZEOF(OutCmd));         
   END_IF
   
+  // ST-FIX F90: MeasuringID already while the measurement is active (abort by ID)
+  IF ( State = CmdMessageState.ACTIVE )
+  THEN
+    OutCmd.MeasuringID := _response.MeasuringID;
+  END_IF
+  
   IF ( State = CmdMessageState.DONE ) 
   THEN
     // Update results
@@ -479,6 +490,9 @@ END_VAR
     CmdMessageState.ERROR               : Error := TRUE;
                                           Busy  := FALSE;
   END_CASE
+  
+  // ST-FIX F45: output CommandAborted
+  CommandAborted := ( State = CmdMessageState.ABORTED );
 
 END_METHOD
 
@@ -717,6 +731,9 @@ END_VAR
 
   // call base implementation to parse the header from payload buffer
   ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
+  
+  // ST-FIX F100: missing (trailing zero) bytes of the payload are 0, no values of the previous response
+  SysDepMemSet( pDest := ADR(_response), Value := 0, DataLen := SIZEOF(_response));
   
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;
@@ -1847,6 +1864,9 @@ END_VAR
   Done               := FALSE;
   Busy               := FALSE;
   CommandBuffered    := FALSE;
+  
+  // ST-FIX F45
+  CommandAborted := FALSE;
 
 END_METHOD
 

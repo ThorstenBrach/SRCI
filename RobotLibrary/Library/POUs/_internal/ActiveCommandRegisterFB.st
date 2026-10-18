@@ -88,6 +88,17 @@ VAR
  _errorAcrEntry     : WORD := RobotLibraryErrorIdEnum.ERR_NO_FREE_ACR_ENTRY;  
 END_VAR
 
+  // ST-FIX F48: a command with a parameter error of the block is not added
+  IF ( pCommandFB <> 0 )
+  THEN
+    IF (( pCommandFB^.ErrorID = RobotLibraryErrorIdEnum.ERR_INVALID_PARAM_EXECUTION_MODE ) OR
+        ( pCommandFB^.ErrorID = RobotLibraryErrorIdEnum.ERR_PROCESSINGMODE_NOT_DEFINED   ))
+    THEN
+      AddCmd := 0;
+      RETURN;
+    END_IF
+  END_IF
+  
   // calculate the used length of the ACR 
   FOR _regIdx := 1 TO RegisterSize
   DO
@@ -191,7 +202,7 @@ END_VAR
       END_IF
                          
       // add payload to response
-      FOR _idx := Rsp.Header.PayloadPointer TO  Rsp.Header.PayloadLength -1
+      FOR _idx := Rsp.Header.PayloadPointer TO  Rsp.Header.PayloadPointer + Rsp.Header.PayloadLength -1
       DO
         Register[_regIdx].Response[ACTIVE_CMD].Timestamp     := SystemTime;
         Register[_regIdx].Response[ACTIVE_CMD].State         := BufferStateRsp.RECEIVING;

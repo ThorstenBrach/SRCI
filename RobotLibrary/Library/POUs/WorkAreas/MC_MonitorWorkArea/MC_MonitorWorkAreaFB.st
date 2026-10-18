@@ -355,8 +355,19 @@ END_VAR
            // reset the falling edge
           _enable_F();
           
+           // ST-FIX F77: commands not enabled (RobotTask not initialized) -> error like the Execute/Enable blocks
+           IF ( NOT AxesGroup.State.CMDsEnabled )
+           THEN
+             SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_COMMANDS_NOT_ENABLED, Overwrite := TRUE );
+             // Create log entry
+             CreateLogMessage ( Timestamp   := AxesGroup.State.SystemTime,
+                                MessageType := MessageType.CMD,
+                                Severity    := Severity.ERROR,
+                                MessageCode := ErrorID,
+                                MessageText := 'Commands not enabled (RobotTask not initialized)');
+             Error := TRUE;
            // Check function is supported and parameter are valid ?
-           IF (( CheckFunctionSupported( AxesGroup := AxesGroup )) AND
+           ELSIF (( CheckFunctionSupported( AxesGroup := AxesGroup )) AND
                ( CheckParameterValid   ( AxesGroup := AxesGroup )))
            THEN      
              // set busy flag
@@ -490,6 +501,9 @@ END_VAR
   // call base implementation to parse the header from payload buffer
   ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
   
+  // ST-FIX F100: missing (trailing zero) bytes of the payload are 0, no values of the previous response
+  SysDepMemSet( pDest := ADR(_response), Value := 0, DataLen := SIZEOF(_response));
+  
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;
   _response.State                := _rspHeader.State;
@@ -497,23 +511,16 @@ END_VAR
   _response.AlarmMessageCode     := _rspHeader.AlarmMessageCode;
   
   
-  // Check payload remaining ? 
-  IF ( ResponseData.IsPayloadRemaining)
-  THEN  
-    // Get Response.ActivationState
-   _response.ActivationState := ResponseData.GetWord();
-    // inc parameter counter
-   _parameterCnt := _parameterCnt + 1;
+  // ST-FIX F33
+  IF ( ResponseData.IsPayloadRemaining )
+  THEN
+    _response.ActivationState := ResponseData.GetWord();
+    _response.MonitoringState := SHR(_response.ActivationState, 1) AND 1;
+    _response.ActivationState := _response.ActivationState AND 1;
+    _parameterCnt := _parameterCnt + 1;
   END_IF
   
-  // Check payload remaining ? 
-  IF ( ResponseData.IsPayloadRemaining)
-  THEN  
-    // Get Response.MonitoringState
-   _response.MonitoringState := ResponseData.GetWord();
-    // inc parameter counter
-   _parameterCnt := _parameterCnt + 1;
-  END_IF
+  // ST-FIX F33: MonitoringState removed
   
   
   // Create logging

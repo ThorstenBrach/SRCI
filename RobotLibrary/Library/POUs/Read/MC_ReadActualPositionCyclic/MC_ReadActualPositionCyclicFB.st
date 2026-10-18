@@ -159,7 +159,7 @@ END_VAR
     CheckParameterValid := FALSE;
     
     // Check ToolNo available on RC ? 
-    IF ( ParCmd.ToolNo > AxesGroup.State.ConfigurationData.HighestToolIndex )
+    IF (( ParCmd.ToolNo > AxesGroup.State.ConfigurationData.HighestToolIndex ) AND ( ParCmd.ToolNo <= 254 )) // ST-FIX F98: outside -1..254 is a range error
     THEN
       SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_TOOLNO_UNAVAILABLE, Overwrite := TRUE );
     ELSE
@@ -187,7 +187,7 @@ END_VAR
     CheckParameterValid := FALSE;
   
     // Check FrameNo available on RC ? 
-    IF ( ParCmd.FrameNo > AxesGroup.State.ConfigurationData.HighestFrameIndex )
+    IF (( ParCmd.FrameNo > AxesGroup.State.ConfigurationData.HighestFrameIndex ) AND ( ParCmd.FrameNo <= 254 )) // ST-FIX F98: outside -1..254 is a range error
     THEN
       SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_FRAMENO_UNAVAILABLE, Overwrite := TRUE );
     ELSE
@@ -393,8 +393,8 @@ END_VAR
        
   
     01:  // Wait for FrameNo and ToolNo set
-         IF ((  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.CoordinateSystem.FrameNo = _parCmd.FrameNo )  AND
-             (  AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.CoordinateSystem.ToolNo  = _parCmd.ToolNo  )) OR
+         IF ((( AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.CoordinateSystem.FrameNo = _parCmd.FrameNo ) OR ( _parCmd.FrameNo = -1 )) (* ST-FIX F73 *)  AND
+             (( AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.CoordinateSystem.ToolNo = _parCmd.ToolNo ) OR ( _parCmd.ToolNo = -1 )) (* ST-FIX F73 *)) OR
              ( _parCmd.ReadCartesianPosition                                                 = FALSE           ) 
          THEN
            // busy 
@@ -404,8 +404,10 @@ END_VAR
            // Reset command outputs
            SysDepMemSet(pDest := ADR(OutCmd), Value := 0, DataLen := SIZEOF(OutCmd));         
            // set ToolNo and FrameNo
-           OutCmd.CurrentCoordinateSystem.FrameNo := AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.CoordinateSystem.FrameNo;
-           OutCmd.CurrentCoordinateSystem.ToolNo  := AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.CoordinateSystem.ToolNo;
+           OutCmd.CurrentCoordinateSystem.FrameNo := AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.CurrentCoordinateSystem.FrameNo; // ST-FIX F59
+           OutCmd.CoordinateSystem.FrameNo        := AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.CoordinateSystem.FrameNo;
+           OutCmd.CurrentCoordinateSystem.ToolNo  := AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.CurrentCoordinateSystem.ToolNo; // ST-FIX F59
+           OutCmd.CoordinateSystem.ToolNo         := AxesGroup.CyclicOptional.RobToPlc.CartesianPosition.CoordinateSystem.ToolNo;
            
            // Set cartesian position
            IF ( _parCmd.ReadCartesianPosition )  
@@ -448,7 +450,8 @@ END_VAR
            // Set extended joint position
            IF ( _parCmd.ReadJointPositionExt )  
            THEN         
-              OutCmd.ReadingCartesianPositionExt  := TRUE;         
+              // ST-FIX F82: own reading flag (was ReadingCartesianPositionExt)
+              OutCmd.ReadingJointPositionExt      := TRUE;         
               OutCmd.JointPosition.E2             := OutCmd.JointPositionExt.E2               := AxesGroup.CyclicOptional.RobToPlc.JointPositionExt.E2;
               OutCmd.JointPosition.E3             := OutCmd.JointPositionExt.E3               := AxesGroup.CyclicOptional.RobToPlc.JointPositionExt.E3;
               OutCmd.JointPosition.E4             := OutCmd.JointPositionExt.E4               := AxesGroup.CyclicOptional.RobToPlc.JointPositionExt.E4;

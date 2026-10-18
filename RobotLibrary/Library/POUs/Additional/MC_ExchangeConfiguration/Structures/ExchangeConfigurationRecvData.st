@@ -58,6 +58,8 @@ STRUCT
   /// •  0: Invalid
   /// • >1: Total system hours
   RCWorkingHours            : UDINT;
+  /// Number of server log entries (ST-FIX F32: bytes 28..29 of the response)
+  NumberOfServerLogs : UINT;
 END_STRUCT
 END_TYPE
 

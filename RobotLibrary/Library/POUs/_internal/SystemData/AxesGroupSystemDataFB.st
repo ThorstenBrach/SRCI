@@ -250,7 +250,7 @@ END_VAR
 
 VAR
   /// pointer to tool data
-  pToolData : POINTER TO TOOL;  
+  pToolData : POINTER TO Tool;  
 END_VAR
 
   // Check pointer is vaild ?
@@ -280,16 +280,12 @@ END_VAR
     RETURN;
   END_IF
   
-  {warning 'ToDo: Compiler Fehler'}
-  (*
-  
+  // ST-FIX F81: copy the tool into the ToolData array (was commented out)
   // Calculate pointer address for the index of the ToolData Array
   pToolData := ToolDataPtr + (( ToolNo - DINT_TO_UDINT(ToolDataMin)) * SIZEOF(Tool));
   // copy tool data to Array index
   pToolData^.Available := TRUE;
   pToolData^.Data := ToolData;
-  
-  *)
 
 END_METHOD
 

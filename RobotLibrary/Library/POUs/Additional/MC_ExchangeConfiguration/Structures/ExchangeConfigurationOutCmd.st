@@ -66,6 +66,8 @@ STRUCT
   /// •  0: Invalid
   /// • >1: Total system hours
   RCWorkingHours            : UDINT;
+  /// Number of server log entries (ST-FIX F32)
+  NumberOfServerLogs : UINT;
 END_STRUCT
 END_TYPE
 

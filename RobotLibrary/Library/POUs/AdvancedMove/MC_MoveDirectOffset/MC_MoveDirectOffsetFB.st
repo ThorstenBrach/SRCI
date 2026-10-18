@@ -80,6 +80,9 @@ END_VAR
   DataLen := LIMIT(1, SIZEOF(Payload) - PayloadPtr, SIZEOF(Payload)); 
   // Compare Payload-Array with Null-Byte-Array
   CheckAddParameter := SysDepMemCmp( pData1 := ADR(Payload) + PayloadPtr , pData2 := ADR(Null), DataLen := DataLen) <>  RobotLibraryConstants.OK ;
+  
+  // ST-FIX F28: payload order differs from the structure layout -> always add the parameter
+  CheckAddParameter := TRUE;
 
 END_METHOD
 
@@ -802,8 +805,7 @@ END_VAR
   
   // Check ParCmd.VelocityRate valid ? 
   IF  (( SysDepIsValidReal(ParCmd.VelocityRate) = FALSE )  OR
-      ((                   ParCmd.VelocityRate  <     0 )  AND 
-       (                   ParCmd.VelocityRate <>    -1 )) OR   
+      (* ST-FIX F96: every value < 0 is the default *)
        (                   ParCmd.VelocityRate  >   100 ))      
   THEN
     // Parameter not valid
@@ -823,8 +825,7 @@ END_VAR
   
   // Check ParCmd.AccelerationRate valid ? 
   IF  (( SysDepIsValidReal(ParCmd.AccelerationRate) = FALSE )  OR
-      ((                   ParCmd.AccelerationRate  <     0 )  AND 
-       (                   ParCmd.AccelerationRate <>    -1 )) OR   
+      (* ST-FIX F96: every value < 0 is the default *)
        (                   ParCmd.AccelerationRate  >   100 ))      
   THEN
     // Parameter not valid
@@ -844,8 +845,7 @@ END_VAR
   
   // Check ParCmd.DecelerationRate valid ? 
   IF  (( SysDepIsValidReal(ParCmd.DecelerationRate) = FALSE )  OR
-      ((                   ParCmd.DecelerationRate  <     0 )  AND 
-       (                   ParCmd.DecelerationRate <>    -1 )) OR   
+      (* ST-FIX F96: every value < 0 is the default *)
        (                   ParCmd.DecelerationRate  >   100 ))      
   THEN
     // Parameter not valid
@@ -865,8 +865,7 @@ END_VAR
   
   // Check ParCmd.JerkRate valid ? 
   IF  (( SysDepIsValidReal(ParCmd.JerkRate) = FALSE )  OR
-      ((                   ParCmd.JerkRate  <     0 )  AND 
-       (                   ParCmd.JerkRate <>    -1 )) OR   
+      (* ST-FIX F96: every value < 0 is the default *)
        (                   ParCmd.JerkRate  >   100 ))      
   THEN
     // Parameter not valid
@@ -894,7 +893,7 @@ END_VAR
     CheckParameterValid := FALSE;
     
     // Check ToolNo available on RC ? 
-    IF ( ParCmd.ToolNo > AxesGroup.State.ConfigurationData.HighestToolIndex )
+    IF (( ParCmd.ToolNo > AxesGroup.State.ConfigurationData.HighestToolIndex ) AND ( ParCmd.ToolNo <= 254 )) // ST-FIX F98: outside -1..254 is a range error
     THEN
       SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_TOOLNO_UNAVAILABLE, Overwrite := TRUE );
     ELSE
@@ -922,7 +921,7 @@ END_VAR
     CheckParameterValid := FALSE;
     
     // Check FrameNo available on RC ? 
-    IF ( ParCmd.FrameNo > AxesGroup.State.ConfigurationData.HighestFrameIndex )
+    IF (( ParCmd.FrameNo > AxesGroup.State.ConfigurationData.HighestFrameIndex ) AND ( ParCmd.FrameNo <= 254 )) // ST-FIX F98: outside -1..254 is a range error
     THEN
       SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_FRAMENO_UNAVAILABLE, Overwrite := TRUE );
     ELSE
@@ -1125,7 +1124,7 @@ END_VAR
       // Parameter not valid
       CheckParameterValid := FALSE;
       // Set error
-      SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_INVALID_PAR_CMD, Overwrite := TRUE );
+      SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_EMITTERID_NOT_ALLOWED (* ST-FIX F69 *), Overwrite := TRUE );
       // Create log entry
       CreateLogMessagePara2 ( Timestamp   := AxesGroup.State.SystemTime,
                               MessageType := MessageType.CMD,
@@ -1138,6 +1137,8 @@ END_VAR
       RETURN;
     END_IF
   END_FOR
+  
+  // ST-FIX F69: trigger IDs and SequenceFlag (table 7-1, 5.5.12.4, e.g. table 6-496)
 
 END_METHOD
 
@@ -1309,7 +1310,23 @@ END_VAR
 
   // set command parameter 
   _command.CmdTyp            :=  CmdType.MoveDirectOffset;
-  _command.ExecMode          :=  ExecMode;
+  // ST-FIX F51: ExecutionMode from AbortingMode and SequenceFlag (spec table 5-77)
+  IF ( SequenceFlag = SequenceFlagEnum.SECONDARY_SEQUENCE )
+  THEN
+    IF ( AbortingMode = AbortingModeEnum.ABORT )
+    THEN
+      _command.ExecMode := ExecutionMode.SEQUENCE_ABORT_OTHERS_SECONDARY;
+    ELSE
+      _command.ExecMode := ExecutionMode.SEQUENCE_SECONDARY;
+    END_IF
+  ELSE
+    IF ( AbortingMode = AbortingModeEnum.ABORT )
+    THEN
+      _command.ExecMode := ExecutionMode.SEQUENCE_ABORT_OTHERS_PRIMARY;
+    ELSE
+      _command.ExecMode := ExecutionMode.SEQUENCE_PRIMARY;
+    END_IF
+  END_IF
   _command.ParSeq            := _command.ParSeq;
   _command.Priority          :=  Priority;
   _command.EmitterID         := _parCmd.EmitterID;
@@ -2755,6 +2772,9 @@ END_VAR
 
   // call base implementation to parse the header from payload buffer
   ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
+  
+  // ST-FIX F100: missing (trailing zero) bytes of the payload are 0, no values of the previous response
+  SysDepMemSet( pDest := ADR(_response), Value := 0, DataLen := SIZEOF(_response));
   
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;

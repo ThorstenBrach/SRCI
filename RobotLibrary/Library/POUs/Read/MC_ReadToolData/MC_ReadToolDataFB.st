@@ -41,6 +41,12 @@ VAR
  _response        : ReadToolDataRecvData;      
 END_VAR
 
+            
+          
+VAR_INPUT
+  UpdateSystemData : BOOL := TRUE; // ST-FIX F16: FALSE for the internal instances of MC_RobotTaskFB (synchronisation)
+END_VAR
+
   SUPER^(AxesGroup := AxesGroup);
 
 END_FUNCTION_BLOCK
@@ -152,7 +158,7 @@ END_VAR
     CheckParameterValid := FALSE;
     
     // Check ToolNo available on RC ? 
-    IF ( ParCmd.ToolNo > AxesGroup.State.ConfigurationData.HighestToolIndex )
+    IF (( ParCmd.ToolNo > AxesGroup.State.ConfigurationData.HighestToolIndex ) AND ( ParCmd.ToolNo <= 254 )) // ST-FIX F98: outside -1..254 is a range error
     THEN
       SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_TOOLNO_UNAVAILABLE, Overwrite := TRUE );
     ELSE
@@ -348,10 +354,13 @@ END_VAR
            IF (_response.State >= CmdMessageState.DONE )
            THEN           
              // Update the ToolData in user defined system datas 
-             AxesGroup.SystemData.UpdateToolData( Caller     := THIS^,
+             IF UpdateSystemData AND ( _response.State = CmdMessageState.DONE ) // ST-FIX F16
+  THEN
+  AxesGroup.SystemData.UpdateToolData( Caller     := THIS^,
                                                   SystemTime := AxesGroup.State.SystemTime,
                                                   ToolNo     := OutCmd.ToolNoReturn, 
-                                                  ToolData   := OutCmd.ToolData);                     
+                                                  ToolData   := OutCmd.ToolData);
+  END_IF                     
              // set timeout
              SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
              // inc step counter
@@ -480,6 +489,9 @@ END_VAR
 
   // call base implementation to parse the header from payload buffer
   ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
+  
+  // ST-FIX F100: missing (trailing zero) bytes of the payload are 0, no values of the previous response
+  SysDepMemSet( pDest := ADR(_response), Value := 0, DataLen := SIZEOF(_response));
   
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;
@@ -612,8 +624,8 @@ END_VAR
   // Check payload remaining ? 
   IF ( ResponseData.IsPayloadRemaining)
   THEN  
-    // Get Response.DataChanged
-   _response.DataChanged := ResponseData.GetBool();
+    // Get Response.ToolData.ToolNoReturn (ST-FIX F27)
+   _response.ToolNoReturn := ResponseData.GetUsint();
     // inc parameter counter
    _parameterCnt := _parameterCnt + 1;
   END_IF
@@ -622,8 +634,8 @@ END_VAR
   // Check payload remaining ? 
   IF ( ResponseData.IsPayloadRemaining)
   THEN  
-    // Get Response.ToolData.ToolNoReturn
-   _response.ToolNoReturn := ResponseData.GetUsint();
+    // Get Response.DataChanged (ST-FIX F27)
+   _response.DataChanged := ResponseData.GetBool();
     // inc parameter counter
    _parameterCnt := _parameterCnt + 1;
   END_IF

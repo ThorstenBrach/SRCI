@@ -249,8 +249,7 @@ END_VAR
            // Done, Aborted or Error ?
            IF (_response.State >= CmdMessageState.DONE )
            THEN
-             // Reset FastStop counter
-             AxesGroup.Cyclic.PlcToRob.FastStop := 0; 
+             // ST-FIX F76: FastStop half byte is not reset (the RC counts every change as stopping commands) 
              // set timeout
              SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
              // inc step counter
@@ -340,6 +339,9 @@ END_VAR
 
   // call base implementation to parse the header from payload buffer
   ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
+  
+  // ST-FIX F100: missing (trailing zero) bytes of the payload are 0, no values of the previous response
+  SysDepMemSet( pDest := ADR(_response), Value := 0, DataLen := SIZEOF(_response));
   
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;

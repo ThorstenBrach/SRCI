@@ -420,8 +420,24 @@ END_VAR
 // Byte 46 : USINT  - ResistanceForceMode
 
   // set command parameter 
-  _command.CmdTyp                    :=  CmdType.ShiftPosition;
-  _command.ExecMode                  :=  ExecMode;
+  _command.CmdTyp                    :=  CmdType.SoftSwitchTCP; // ST-FIX F35
+  // ST-FIX F51: ExecutionMode from AbortingMode and SequenceFlag (spec table 5-77)
+  IF ( SequenceFlag = SequenceFlagEnum.SECONDARY_SEQUENCE )
+  THEN
+    IF ( AbortingMode = AbortingModeEnum.ABORT )
+    THEN
+      _command.ExecMode := ExecutionMode.SEQUENCE_ABORT_OTHERS_SECONDARY;
+    ELSE
+      _command.ExecMode := ExecutionMode.SEQUENCE_SECONDARY;
+    END_IF
+  ELSE
+    IF ( AbortingMode = AbortingModeEnum.ABORT )
+    THEN
+      _command.ExecMode := ExecutionMode.SEQUENCE_ABORT_OTHERS_PRIMARY;
+    ELSE
+      _command.ExecMode := ExecutionMode.SEQUENCE_PRIMARY;
+    END_IF
+  END_IF
   _command.ParSeq                    := _command.ParSeq;
   _command.Priority                  :=  Priority;
   
@@ -1065,6 +1081,9 @@ END_VAR
 
   // call base implementation to parse the header from payload buffer
   ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
+  
+  // ST-FIX F100: missing (trailing zero) bytes of the payload are 0, no values of the previous response
+  SysDepMemSet( pDest := ADR(_response), Value := 0, DataLen := SIZEOF(_response));
   
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;

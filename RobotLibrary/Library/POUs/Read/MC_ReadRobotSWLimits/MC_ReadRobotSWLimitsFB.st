@@ -42,6 +42,12 @@ VAR
  _response        : ReadRobotSWLimitsRecvData;      
 END_VAR
 
+            
+          
+VAR_INPUT
+  UpdateSystemData : BOOL := TRUE; // ST-FIX F16: FALSE for the internal instances of MC_RobotTaskFB (synchronisation)
+END_VAR
+
   SUPER^(AxesGroup := AxesGroup);
 
 END_FUNCTION_BLOCK
@@ -219,6 +225,9 @@ END_VAR
     // Update results
     OutCmd.LimitValues := _response.LimitValues;
   END_IF
+  
+  // ST-FIX F32
+  OutCmd.DataChanged := _response.DataChanged;
 
 END_METHOD
 
@@ -273,7 +282,10 @@ END_VAR
            IF (_response.State >= CmdMessageState.DONE )
            THEN
              // Update the WorAreas in user defined system datas 
-             AxesGroup.SystemData.UpdateSWLimits(LimitValues := OutCmd.LimitValues);
+             IF UpdateSystemData AND ( _response.State = CmdMessageState.DONE ) // ST-FIX F16
+  THEN
+  AxesGroup.SystemData.UpdateSWLimits(LimitValues := OutCmd.LimitValues);
+  END_IF
              // set timeout
              SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
              // inc step counter
@@ -467,6 +479,9 @@ END_VAR
 
   // call base implementation to parse the header from payload buffer
   ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
+  
+  // ST-FIX F100: missing (trailing zero) bytes of the payload are 0, no values of the previous response
+  SysDepMemSet( pDest := ADR(_response), Value := 0, DataLen := SIZEOF(_response));
   
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;
@@ -735,6 +750,13 @@ END_VAR
   END_IF
   
    
+  // ST-FIX F32
+  IF ( ResponseData.IsPayloadRemaining )
+  THEN
+    _response.DataChanged := ResponseData.GetBool();
+    _parameterCnt := _parameterCnt + 1;
+  END_IF
+  
   // Create logging
   ParseResponsePayloadLog(ResponseData := ResponseData, Timestamp := Timestamp, ParameterCnt := _parameterCnt);
 

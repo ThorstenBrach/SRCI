@@ -212,7 +212,11 @@ TYPE RobotLibraryInfoIdEnum :
   INFO_FIRST_MOTION_REDUCED_VELOCITY  := 16#6C08,
   
   /// Server An RC internal error occurred during execution of this command. Check the message log for additional information
-  INFO_INTERNAL_ERROR_DURING_CMD := 16#8FFF
+  INFO_INTERNAL_ERROR_DURING_CMD := 16#8FFF,
+  /// ST-FIX F75: table 7-4
+  INFO_SERVER_LOG_OLDEST_OVERWRITTEN := 16#6C70,
+  /// ST-FIX F75: table 7-4
+  INFO_TRIGGER_PARAMETERS_NOT_USED := 16#6D54
 
 )WORD;
 END_TYPE

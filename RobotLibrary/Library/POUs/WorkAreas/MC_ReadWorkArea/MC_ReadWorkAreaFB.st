@@ -40,6 +40,11 @@ VAR
   /// response data received
  _response        : ReadWorkAreaRecvData;      
 END_VAR
+            
+          
+VAR_INPUT
+  UpdateSystemData : BOOL := TRUE; // ST-FIX F16: FALSE for the internal instances of MC_RobotTaskFB (synchronisation)
+END_VAR
 
   SUPER^(AxesGroup := AxesGroup);
 
@@ -345,10 +350,13 @@ END_VAR
            IF (_response.State >= CmdMessageState.DONE )
            THEN
              // Update the WorAreas in user defined system datas 
-             AxesGroup.SystemData.UpdateWorAreas( Caller       := THIS^,
+             IF UpdateSystemData AND ( _response.State = CmdMessageState.DONE ) // ST-FIX F16
+  THEN
+  AxesGroup.SystemData.UpdateWorAreas( Caller       := THIS^,
                                                   SystemTime   := AxesGroup.State.SystemTime,
                                                   WorkAreaNo   := OutCmd.WorkAreaNoReturn, 
-                                                  WorkAreaData := OutCmd.WorkAreaData);                     
+                                                  WorkAreaData := OutCmd.WorkAreaData);
+  END_IF                     
              // set timeout
              SetTimeout(PT := _timeoutCmd, rTimer := _timerCmd);
              // inc step counter
@@ -576,6 +584,9 @@ END_VAR
   // call base implementation to parse the header from payload buffer
   ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
   
+  // ST-FIX F100: missing (trailing zero) bytes of the payload are 0, no values of the previous response
+  SysDepMemSet( pDest := ADR(_response), Value := 0, DataLen := SIZEOF(_response));
+  
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;
   _response.State                := _rspHeader.State;
@@ -663,14 +674,7 @@ END_VAR
   END_IF
   
   
-  // Check payload remaining ? 
-  IF ( ResponseData.IsPayloadRemaining)
-  THEN  
-    // Get Response.WorkAreaData.DefinitionMode
-   _response.WorkAreaData.DefinitionMode := ResponseData.GetUsint();
-    // inc parameter counter
-   _parameterCnt := _parameterCnt + 1;
-  END_IF
+  // ST-FIX F33: WorkAreaData.DefinitionMode removed
   
   
   // Check payload remaining ? 

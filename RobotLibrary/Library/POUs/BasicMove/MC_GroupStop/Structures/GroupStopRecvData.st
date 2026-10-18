@@ -22,6 +22,8 @@
 // -------------------------------------------------------------------------
 TYPE GroupStopRecvData EXTENDS RspHeader :
 STRUCT
+  /// Sequence whose commands were aborted (ST-FIX F32: byte 4 of the response (spec GroupStop))
+  AbortedSequence : SINT;
 END_STRUCT
 END_TYPE
 

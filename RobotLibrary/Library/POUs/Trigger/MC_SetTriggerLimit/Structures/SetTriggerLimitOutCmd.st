@@ -34,6 +34,8 @@ STRUCT
   /// Unique system-generated ID of the trigger function when the function is called by user.
   /// For more information see chapter 5.5.12.4.
   FollowID               : DINT;  
+  /// Actual values of the monitored data (spec output Data) (ST-FIX F45)
+  Data : ARRAY[0..11] OF REAL;
 END_STRUCT
 END_TYPE
 

@@ -80,6 +80,18 @@ END_VAR
   // On execution started
   IF ( _enable_R.Q )
   THEN
+    // ST-FIX F23: a new enable ends a pending cancel / error clear of the previous enable
+    _cancel := FALSE;
+    _stepCancel := 0;
+    _clearError := FALSE;
+    _stepClearError := 0;
+    // ST-FIX F78: an error of the previous enable that is still being cleared (falling edge, up
+    // to 5 s) is cleared now - otherwise the block (start only without Error) consumes the
+    // rising edge and the new enable is ignored (not sent, no Busy, no Error)
+    IF ( Error ) AND ( ErrorID <> RobotLibraryErrorIdEnum.ERR_COMMANDS_NOT_ENABLED )
+    THEN
+      Reset();
+    END_IF
     OnExecStart(AxesGroup := AxesGroup);
   END_IF
   
@@ -235,6 +247,28 @@ VAR_IN_OUT
   AxesGroup : AxesGroup; 
 END_VAR
 
+  // ST-FIX F71: Priority (1 = very high ... 4 = low, table 7-1)
+  IF ( Priority < PriorityLevel.VERY_HIGH )
+  THEN
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_PRIORITY_TOO_HIGH, Overwrite := TRUE );
+    // Create log entry
+    CreateLogMessage ( Timestamp   := AxesGroup.State.SystemTime,
+                       MessageType := MessageType.CMD,
+                       Severity    := Severity.ERROR,
+                       MessageCode := ErrorID,
+                       MessageText := 'Invalid input Priority: higher than VERY_HIGH');
+    Error := TRUE;
+  ELSIF ( Priority > PriorityLevel.LOW )
+  THEN
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_PRIORITY_TOO_LOW, Overwrite := TRUE );
+    // Create log entry
+    CreateLogMessage ( Timestamp   := AxesGroup.State.SystemTime,
+                       MessageType := MessageType.CMD,
+                       Severity    := Severity.ERROR,
+                       MessageCode := ErrorID,
+                       MessageText := 'Invalid input Priority: lower than LOW');
+    Error := TRUE;
+  END_IF
 
 END_METHOD
 

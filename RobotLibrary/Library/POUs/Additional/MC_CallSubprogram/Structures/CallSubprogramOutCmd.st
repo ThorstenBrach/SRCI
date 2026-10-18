@@ -39,6 +39,8 @@ STRUCT
   InProgress         : BOOL;
   /// Acyclic output parameters of the subprogram Array length adjusts to transmitted data (max 190 bytes)
   ReturnData         : ARRAY[0..RobotLibraryParameter.SUB_PROGRAM_DATA_MAX] OF BYTE;
+  /// Progress of the subprogram [%] (spec output Progress) (ST-FIX F45)
+  Progress : UINT;
 END_STRUCT
 END_TYPE
 

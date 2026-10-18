@@ -69,6 +69,9 @@ END_VAR
   DataLen := LIMIT(1, SIZEOF(Payload) - PayloadPtr, SIZEOF(Payload)); 
   // Compare Payload-Array with Null-Byte-Array
   CheckAddParameter := SysDepMemCmp( pData1 := ADR(Payload) + PayloadPtr , pData2 := ADR(Null), DataLen := DataLen) <>  RobotLibraryConstants.OK ;
+  
+  // ST-FIX F28: payload order differs from the structure layout -> always add the parameter
+  CheckAddParameter := TRUE;
 
 END_METHOD
 
@@ -884,7 +887,33 @@ END_VAR
 
   // set command parameter 
   _command.CmdTyp   :=  CmdType.WriteWorkArea;
-  _command.ExecMode :=  ExecMode;
+  // ST-FIX F51: ExecutionMode from ProcessingMode (and SequenceFlag), spec table 5-77
+  CASE ProcessingMode OF
+    ProcessingModeEnum.BUFFERED, ProcessingModeEnum.TRIGGER_BUFFERED:
+      _command.ExecMode := ExecutionMode.SEQUENCE_PRIMARY;
+    ProcessingModeEnum.ABORTING, ProcessingModeEnum.TRIGGER_ABORTING:
+      _command.ExecMode := ExecutionMode.SEQUENCE_ABORT_OTHERS_PRIMARY;
+    ProcessingModeEnum.PARALLEL, ProcessingModeEnum.TRIGGER_ONCE:
+      _command.ExecMode := ExecutionMode.PARALLEL;
+    ProcessingModeEnum.CONTINUOUS, ProcessingModeEnum.TRIGGER_CONTINUOUS:
+      _command.ExecMode := ExecutionMode.CONTINUOUS;
+    ProcessingModeEnum.TRIGGER_MULTIPLE:
+      _command.ExecMode := ExecutionMode.TRIGGER_MULTIPLE;
+    ProcessingModeEnum.DEACTIVATE:
+      _command.ExecMode := ExecutionMode.STOP_PARALLEL_CONTINUOUS_TRIGGER;
+  ELSE
+    // undefined ProcessingMode -> error, not sent (ST-FIX F49)
+    _command.ExecMode := ExecMode;
+    SetError( ErrorID := RobotLibraryErrorIdEnum.ERR_PROCESSINGMODE_NOT_DEFINED, Overwrite := TRUE );
+    // Create log entry
+    CreateLogMessagePara1 ( Timestamp   := AxesGroup.State.SystemTime,
+                            MessageType := MessageType.CMD,
+                            Severity    := Severity.ERROR,
+                            MessageCode := ErrorID,
+                            MessageText := 'Invalid Parameter ProcessingMode = {1}',
+                            Para1       := PROCESSING_MODE_TO_STRING(ProcessingMode));
+    OnUpdateStateFlags( State := CmdMessageState.ERROR );
+  END_CASE
   _command.ParSeq   := _command.ParSeq;
   _command.Priority :=  Priority;
                     
@@ -968,14 +997,7 @@ END_VAR
   END_IF
   
   
-  // Check parameter must be added ? 
-  IF ( CheckAddParameter(CreateCommandPayload.PayloadPtr))
-  THEN
-    // add command.WorkAreaData.DefinitionMode
-    CreateCommandPayload.AddUsint(_command.WorkAreaData.DefinitionMode);
-    // inc parameter counter
-   _parameterCnt := _parameterCnt + 1;  
-  END_IF
+  // ST-FIX F33: WorkAreaData.DefinitionMode removed
   
   
   // Check parameter must be added ? 
@@ -2094,6 +2116,9 @@ END_VAR
 
   // call base implementation to parse the header from payload buffer
   ResponseData.PayloadPtr := SUPER^.ParseResponsePayload(ResponseData := ResponseData, Timestamp := Timestamp);
+  
+  // ST-FIX F100: missing (trailing zero) bytes of the payload are 0, no values of the previous response
+  SysDepMemSet( pDest := ADR(_response), Value := 0, DataLen := SIZEOF(_response));
   
   // copy parsed header to response
   _response.ParSeq               := _rspHeader.ParSeq;
