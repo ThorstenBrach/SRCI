@@ -3720,6 +3720,17 @@ END_VAR
          THEN
            // reset execution
           _readFrameData.Execute := FALSE;
+           // ST-FIX F107: AUTOMATIC - the PLC data were changed while the RC data were read: the PLC
+           // change is the most recent one and is written to the RC instead of being overwritten
+           IF ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Frame[SyncTime.AFTER_START_UP] = SyncMode.AUTOMATIC ) AND
+              ( NOT IsFrameDataEqual( Data1 := FrameData[_rSyncIdx].Data, Data2 := _frameData[_rSyncIdx].Data, IgnoreTimestamp := TRUE ))
+           THEN
+             // set timeout
+             SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+             // -> write PLC data to RC
+            _rStep := 30;
+             RETURN;
+           END_IF
            // update internal frame data
            FrameData[_rSyncIdx].Data := _readFrameData.OutCmd.FrameData;         
           _frameData[_rSyncIdx].Data := _readFrameData.OutCmd.FrameData;
@@ -4520,6 +4531,17 @@ END_VAR
          THEN
            // reset execution
           _readLoadData.Execute := FALSE;
+           // ST-FIX F107: AUTOMATIC - the PLC data were changed while the RC data were read: the PLC
+           // change is the most recent one and is written to the RC instead of being overwritten
+           IF ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Load[SyncTime.AFTER_START_UP] = SyncMode.AUTOMATIC ) AND
+              ( NOT IsLoadDataEqual( Data1 := LoadData[_rSyncIdx].Data, Data2 := _loadData[_rSyncIdx].Data, IgnoreTimestamp := TRUE ))
+           THEN
+             // set timeout
+             SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+             // -> write PLC data to RC
+            _rStep := 30;
+             RETURN;
+           END_IF
            // update internal Load data
            LoadData[_rSyncIdx].Data := _readLoadData.OutCmd.LoadData;         
           _loadData[_rSyncIdx].Data := _readLoadData.OutCmd.LoadData;
@@ -5188,6 +5210,17 @@ END_VAR
          THEN
            // reset execution
           _readRobotDefaultDynamics.Execute := FALSE;
+           // ST-FIX F107: AUTOMATIC - the PLC data were changed while the RC data were read: the PLC
+           // change is the most recent one and is written to the RC instead of being overwritten
+           IF ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.DefaultDynamics[SyncTime.AFTER_START_UP] = SyncMode.AUTOMATIC ) AND
+              ( NOT IsDefaultDynamicsEqual( Data1 := DefaultDynamics, Data2 := _defaultDynamics, IgnoreTimestamp := TRUE ))
+           THEN
+             // set timeout
+             SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+             // -> write PLC data to RC
+            _rStep := 30;
+             RETURN;
+           END_IF
            // update internal DefaultDynamics data
            DefaultDynamics := _readRobotDefaultDynamics.OutCmd.DynamicValues;         
           _defaultDynamics := _readRobotDefaultDynamics.OutCmd.DynamicValues;
@@ -5843,6 +5876,17 @@ END_VAR
          THEN
            // reset execution
           _readRobotReferenceDynamics.Execute := FALSE;
+           // ST-FIX F107: AUTOMATIC - the PLC data were changed while the RC data were read: the PLC
+           // change is the most recent one and is written to the RC instead of being overwritten
+           IF ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.ReferenceDynamics[SyncTime.AFTER_START_UP] = SyncMode.AUTOMATIC ) AND
+              ( NOT IsReferenceDynamicsEqual( Data1 := ReferenceDynamics, Data2 := _referenceDynamics, IgnoreTimestamp := TRUE ))
+           THEN
+             // set timeout
+             SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+             // -> write PLC data to RC
+            _rStep := 30;
+             RETURN;
+           END_IF
            // update internal ReferenceDynamics data
            ReferenceDynamics := _readRobotReferenceDynamics.OutCmd.DynamicValues;         
           _referenceDynamics := _readRobotReferenceDynamics.OutCmd.DynamicValues;
@@ -6513,6 +6557,17 @@ END_VAR
          THEN
            // reset execution
           _readRobotSWLimits.Execute := FALSE;
+           // ST-FIX F107: AUTOMATIC - the PLC data were changed while the RC data were read: the PLC
+           // change is the most recent one and is written to the RC instead of being overwritten
+           IF ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.SWLimits[SyncTime.AFTER_START_UP] = SyncMode.AUTOMATIC ) AND
+              ( NOT IsSwLimitsEqual( Data1 := SwLimits, Data2 := _swLimits, IgnoreTimestamp := TRUE ))
+           THEN
+             // set timeout
+             SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+             // -> write PLC data to RC
+            _rStep := 30;
+             RETURN;
+           END_IF
            // update internal SwLimits data
            SwLimits := _readRobotSWLimits.OutCmd.LimitValues;         
           _swLimits := _readRobotSWLimits.OutCmd.LimitValues;
@@ -7285,6 +7340,17 @@ END_VAR
          THEN
            // reset execution
           _readToolData.Execute := FALSE;
+           // ST-FIX F107: AUTOMATIC - the PLC data were changed while the RC data were read: the PLC
+           // change is the most recent one and is written to the RC instead of being overwritten
+           IF ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.Tool[SyncTime.AFTER_START_UP] = SyncMode.AUTOMATIC ) AND
+              ( NOT IsToolDataEqual( Data1 := ToolData[_rSyncIdx].Data, Data2 := _toolData[_rSyncIdx].Data, IgnoreTimestamp := TRUE ))
+           THEN
+             // set timeout
+             SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+             // -> write PLC data to RC
+            _rStep := 30;
+             RETURN;
+           END_IF
            // update internal tool data
            ToolData[_rSyncIdx].Data := _readToolData.OutCmd.ToolData;         
           _toolData[_rSyncIdx].Data := _readToolData.OutCmd.ToolData;
@@ -8066,6 +8132,17 @@ END_VAR
          THEN
            // reset execution
           _readWorkArea.Execute := FALSE;
+           // ST-FIX F107: AUTOMATIC - the PLC data were changed while the RC data were read: the PLC
+           // change is the most recent one and is written to the RC instead of being overwritten
+           IF ( AxesGroup.Parameter.Plc.Parameter.SynchronizationModes.WorkAreas[SyncTime.AFTER_START_UP] = SyncMode.AUTOMATIC ) AND
+              ( NOT IsWorkAreaEqual( Data1 := WorkAreas[_rSyncIdx].Data, Data2 := _workAreas[_rSyncIdx].Data, IgnoreTimestamp := TRUE ))
+           THEN
+             // set timeout
+             SetTimeout(PT := _rTimeout, rTimer := _rTimer);
+             // -> write PLC data to RC
+            _rStep := 30;
+             RETURN;
+           END_IF
            // update internal WorkArea data
            WorkAreas[_rSyncIdx].Data := _readWorkArea.OutCmd.WorkAreaData;         
           _workAreas[_rSyncIdx].Data := _readWorkArea.OutCmd.WorkAreaData;

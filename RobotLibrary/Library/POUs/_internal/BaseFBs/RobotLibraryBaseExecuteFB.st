@@ -48,11 +48,17 @@ VAR
   _executeIn : BOOL;
   _executeHold : BOOL;
 END_VAR
+VAR
+  /// ST-FIX F104: rising edge of the Execute input (also while Busy)
+  _executeRestart_R : R_TRIG;
+END_VAR
 
   // ST-FIX F50: a falling edge of Execute must not cancel the command (spec 5.5.x "Output
   // status"): Execute is held internally while Busy; Done/Error/CommandAborted of a command
   // whose Execute is already FALSE are shown for one cycle, then the block resets
   _executeIn := Execute;
+  // ST-FIX F104: rising edge of the Execute input also while Busy (Execute is held, F50)
+  _executeRestart_R(CLK := Execute);
   Execute     := Execute OR _executeHold;
   SUPER^(AxesGroup := AxesGroup);
   _executeHold := Busy;

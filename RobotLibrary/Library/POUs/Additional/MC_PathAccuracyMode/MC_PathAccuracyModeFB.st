@@ -505,6 +505,8 @@ END_VAR
     // Encountered an error during execution
     CmdMessageState.ERROR               : Error := TRUE;
                                           Busy  := FALSE;
+                                          // ST-FIX F106: error response without payload
+                                          Enabled            := FALSE;
   END_CASE
 
 END_METHOD

@@ -659,7 +659,19 @@ END_VAR
          END_IF
        
   
-    01:  // Wait for responce received
+    01:
+         // ST-FIX F104: ProcessingMode DEACTIVATE + new rising edge of Execute while the command runs
+         // (continuous / triggered): the same command again with execution mode Stop, the RC ends it with DONE
+         IF ( _executeRestart_R.Q ) AND ( ProcessingMode = ProcessingModeEnum.DEACTIVATE )
+         THEN
+           // inc parameter sequence
+          _command.ParSeq := _command.ParSeq + 1;
+           // update command data (execution mode Stop)
+           CommandData := CreateCommandPayload(AxesGroup := AxesGroup);
+           // notify active command register
+           AxesGroup.Acyclic.ActiveCommandRegister.NotifyParameterChanged := _uniqueID;
+         END_IF
+          // Wait for responce received
          IF ( _responseReceived )
          THEN
            // reset response received flag

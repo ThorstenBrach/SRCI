@@ -113,6 +113,10 @@ VAR
   /// ST-FIX F74: message of the command for the message buffer
   _alarmMessage : AlarmMessage;
 END_VAR
+VAR
+  /// ST-FIX F105: block type and command name for the messages
+  _messageSource : STRING;
+END_VAR
 
   OnCall               (AxesGroup := AxesGroup);
   OnExecRun            (AxesGroup := AxesGroup);
@@ -331,6 +335,14 @@ END_VAR
   _info_R   ( CLK := InfoID    <> RobotLibraryConstants.OK );
   
   
+  // ST-FIX F105: the user defined command name belongs into the message text (spec 5.5.11,
+  // table 5-47 "[Robot] [Client] [MoveLinAbs] [MoveToP1] [text]")
+  _messageSource := MyType;
+  IF ( Name <> '' )
+  THEN
+    _messageSource := CONCAT(MyType, CONCAT(' [', CONCAT(Name, ']')));
+  END_IF
+  
   // ST-FIX F74: every message of the command - also the client-side ones (e.g. parameter errors,
   // before: only with the severity of the last response of the RC) - goes into the message
   // buffer, with ACR entry and command type
@@ -346,7 +358,7 @@ END_VAR
     _alarmMessage.MessageCode := ErrorID;
     _alarmMessage.AcrID       := UDINT_TO_UINT(_uniqueID);
     _alarmMessage.CmdType     := _cmdHeader.CmdTyp;
-    _alarmMessage.MessageText := CONCAT(MyType, CONCAT(' : ', MESSAGE_CODE_TO_STRING(ErrorID)));
+    _alarmMessage.MessageText := CONCAT(_messageSource, CONCAT(' : ', MESSAGE_CODE_TO_STRING(ErrorID))); // ST-FIX F105
     AxesGroup.MessageLog.AddMessageLog( MessageLog := _alarmMessage );
   END_IF
   IF ( _warning_R.Q ) AND ( LogLevel < Severity.WARNING )
@@ -361,7 +373,7 @@ END_VAR
     _alarmMessage.MessageCode := WarningID;
     _alarmMessage.AcrID       := UDINT_TO_UINT(_uniqueID);
     _alarmMessage.CmdType     := _cmdHeader.CmdTyp;
-    _alarmMessage.MessageText := CONCAT(MyType, CONCAT(' : ', MESSAGE_CODE_TO_STRING(WarningID)));
+    _alarmMessage.MessageText := CONCAT(_messageSource, CONCAT(' : ', MESSAGE_CODE_TO_STRING(WarningID))); // ST-FIX F105
     AxesGroup.MessageLog.AddMessageLog( MessageLog := _alarmMessage );
   END_IF
   IF ( _info_R.Q ) AND ( LogLevel < Severity.INFO )
@@ -376,7 +388,7 @@ END_VAR
     _alarmMessage.MessageCode := InfoID;
     _alarmMessage.AcrID       := UDINT_TO_UINT(_uniqueID);
     _alarmMessage.CmdType     := _cmdHeader.CmdTyp;
-    _alarmMessage.MessageText := CONCAT(MyType, CONCAT(' : ', MESSAGE_CODE_TO_STRING(InfoID)));
+    _alarmMessage.MessageText := CONCAT(_messageSource, CONCAT(' : ', MESSAGE_CODE_TO_STRING(InfoID))); // ST-FIX F105
     AxesGroup.MessageLog.AddMessageLog( MessageLog := _alarmMessage );
   END_IF
    
