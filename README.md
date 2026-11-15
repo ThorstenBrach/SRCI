@@ -30,6 +30,7 @@ specification V1.5.9. More about SRCI: [PROFIBUS & PROFINET International – Ro
 | Repository | What it is |
 |---|---|
 | **[SRCI_CLIENT_PLC](https://github.com/ThorstenBrach/SRCI_CLIENT_PLC)** | The PLC library: IEC 61131-3 client for TwinCAT 3 and CODESYS 3.5 (library, sources, PLCopen XML, examples). 119 function blocks of the Core, Extended and Optional profiles |
+| **[SRCI_CLIENT_PLC_DEV](https://github.com/ThorstenBrach/SRCI_CLIENT_PLC_DEV)** (private) | Development repository of the PLC library: TcUnit test suite with the SRCI SDK in the loop (unit, SDK and generated methodology tests of every function block) |
 | **[SRCI_CLIENT_PY](https://github.com/ThorstenBrach/SRCI_CLIENT_PY)** | The Python client `srci-client` (`import srci`): the same function blocks with the same names, for Python 3.12+ |
 | **[SRCI_CLIENT_PY_DEV](https://github.com/ThorstenBrach/SRCI_CLIENT_PY_DEV)** (private) | Development repository of the Python client: generators (PLC library to Python), tests against the specification and the SRCI SDK; contains SRCI_CLIENT_PY as a submodule |
 | **[SRCI_CLIENT_CPP](https://github.com/ThorstenBrach/SRCI_CLIENT_CPP)** (planned) | The C++ client library: generated from the PLC library like the Python client, same function blocks in C++ syntax |
