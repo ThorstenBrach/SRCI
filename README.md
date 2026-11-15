@@ -31,6 +31,7 @@ specification V1.5.9. More about SRCI: [PROFIBUS & PROFINET International – Ro
 |---|---|
 | **[SRCI_CLIENT_PLC](https://github.com/ThorstenBrach/SRCI_CLIENT_PLC)** | The PLC library: IEC 61131-3 client for TwinCAT 3 and CODESYS 3.5 (library, sources, PLCopen XML, examples). 119 function blocks of the Core, Extended and Optional profiles |
 | **[SRCI_CLIENT_PY](https://github.com/ThorstenBrach/SRCI_CLIENT_PY)** | The Python client `srci-client` (`import srci`): the same function blocks with the same names, for Python 3.12+ |
+| **[SRCI_CLIENT_PY_DEV](https://github.com/ThorstenBrach/SRCI_CLIENT_PY_DEV)** (private) | Development repository of the Python client: generators (PLC library to Python), tests against the specification and the SRCI SDK; contains SRCI_CLIENT_PY as a submodule |
 | **[SRCI_CLIENT_CPP](https://github.com/ThorstenBrach/SRCI_CLIENT_CPP)** (planned) | The C++ client library: generated from the PLC library like the Python client, same function blocks in C++ syntax |
 | **[SRCI_CLIENT_CS](https://github.com/ThorstenBrach/SRCI_CLIENT_CS)** (planned) | The C# client library: generated from the PLC library like the Python client, same function blocks in C# syntax |
 | **[SRCI_CLIENT_PY_HMI](https://github.com/ThorstenBrach/SRCI_CLIENT_PY_HMI)** | Teach pendant in the browser (NiceGUI) on top of the Python client: switch on, jog, teach points, run programs |
