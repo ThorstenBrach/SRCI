@@ -1,0 +1,26 @@
+name: Documentation / wiki
+description: Something in the wiki is wrong, missing or unclear.
+labels: [documentation]
+body:
+  - type: input
+    id: page
+    attributes:
+      label: "Page"
+      description: "Link to the wiki page"
+      placeholder: "https://github.com/ThorstenBrach/SRCI/wiki/..."
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: "What is wrong or missing?"
+      description: ""
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: "Proposal"
+      description: ""
+    validations:
+      required: false

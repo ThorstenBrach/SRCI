@@ -1,0 +1,31 @@
+name: Feature request
+description: Propose something new or an improvement.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please [search the existing issues](https://github.com/ThorstenBrach/SRCI/issues?q=is%3Aissue) first. For a security problem
+        (e.g. a robot that moves unexpectedly) do **not** open a public issue - use the link
+        "Report a security problem" on the previous page.
+  - type: textarea
+    id: feature
+    attributes:
+      label: "What should be added or changed?"
+      description: ""
+    validations:
+      required: true
+  - type: textarea
+    id: use_case
+    attributes:
+      label: "Use case"
+      description: "In which application would you use it?"
+    validations:
+      required: true
+  - type: textarea
+    id: spec
+    attributes:
+      label: "Reference to the specification"
+      description: "Chapter / table of the SRCI specification, if any."
+    validations:
+      required: false

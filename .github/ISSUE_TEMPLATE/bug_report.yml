@@ -1,0 +1,62 @@
+name: Bug report
+description: Something does not work as described.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please [search the existing issues](https://github.com/ThorstenBrach/SRCI/issues?q=is%3Aissue) first. For a security problem
+        (e.g. a robot that moves unexpectedly) do **not** open a public issue - use the link
+        "Report a security problem" on the previous page.
+  - type: input
+    id: component
+    attributes:
+      label: "Component"
+      description: "Which part does it concern (wiki page, landing page, ...)?"
+      placeholder: "e.g. wiki page Concepts-Sequences"
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: "Current behavior"
+      description: "What happens? Include error / warning IDs (e.g. 16#8C04)."
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: "Expected behavior"
+      description: "What did you expect, ideally with a reference to the specification (chapter / table)?"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: "Steps to reproduce"
+      description: "Minimal steps or code."
+      placeholder: 1. ...
+    validations:
+      required: true
+  - type: textarea
+    id: robot
+    attributes:
+      label: "Robot / RC"
+      description: "Robot, firmware or simulator used."
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: "Log output / telegrams"
+      description: "Message log, client log or captured telegrams."
+      render: shell
+    validations:
+      required: false
+  - type: checkboxes
+    id: confidential
+    attributes:
+      label: Confidential content
+      options:
+        - label: The issue contains no confidential documents, passwords or IP addresses of production systems.
+          required: true

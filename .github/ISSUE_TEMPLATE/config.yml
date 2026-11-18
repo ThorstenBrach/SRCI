@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation (wiki)
+    url: https://github.com/ThorstenBrach/SRCI/wiki
+    about: User manual, concepts, function blocks and robot vendor pages.
+  - name: Report a security problem
+    url: https://github.com/ThorstenBrach/SRCI/security/advisories/new
+    about: Please report security problems privately, not as a public issue.

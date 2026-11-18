@@ -1,0 +1,86 @@
+name: Experience with a robot
+description: Share what worked and what did not with a robot of a vendor.
+labels: [community]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you! Your results help other users and are added to the vendor pages of the wiki.
+  - type: input
+    id: vendor
+    attributes:
+      label: "Robot vendor and model"
+      description: ""
+      placeholder: "e.g. JAKA MiniCobo"
+    validations:
+      required: true
+  - type: input
+    id: firmware
+    attributes:
+      label: "Controller firmware"
+      description: "Version of the robot controller software"
+      placeholder: "e.g. 3.3.15"
+    validations:
+      required: true
+  - type: input
+    id: srci_version
+    attributes:
+      label: "SRCI version reported by the robot"
+      description: ""
+      placeholder: "e.g. 1.1"
+    validations:
+      required: false
+  - type: dropdown
+    id: profile
+    attributes:
+      label: "Profile reported by the robot"
+      options:
+        - "Core"
+        - "Extended"
+        - "Core with some Extended functions"
+        - "unknown"
+    validations:
+      required: true
+  - type: input
+    id: fieldbus
+    attributes:
+      label: "Fieldbus and telegram length"
+      description: ""
+      placeholder: "e.g. PROFINET, 256 bytes, cycle 8 ms"
+    validations:
+      required: true
+  - type: textarea
+    id: client
+    attributes:
+      label: "Client side"
+      description: "PLC library / Python client and version, engineering tool."
+    validations:
+      required: true
+  - type: textarea
+    id: works
+    attributes:
+      label: "What works"
+      description: "Commands that run as expected."
+    validations:
+      required: true
+  - type: textarea
+    id: refused
+    attributes:
+      label: "What is refused or behaves differently"
+      description: "Commands, parameter values and the error / warning IDs."
+    validations:
+      required: false
+  - type: textarea
+    id: settings
+    attributes:
+      label: "Settings that matter"
+      description: "e.g. LifeSign timeout, blending, operation mode, robot-side settings."
+    validations:
+      required: false
+  - type: checkboxes
+    id: confidential
+    attributes:
+      label: Confidential content
+      options:
+        - label: The issue contains no confidential documents, passwords or IP addresses of production systems.
+          required: true
