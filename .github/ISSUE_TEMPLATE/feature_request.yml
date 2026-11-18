@@ -12,7 +12,6 @@ body:
     id: feature
     attributes:
       label: "What should be added or changed?"
-      description: ""
     validations:
       required: true
   - type: textarea

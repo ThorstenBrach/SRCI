@@ -14,13 +14,11 @@ body:
     id: problem
     attributes:
       label: "What is wrong or missing?"
-      description: ""
     validations:
       required: true
   - type: textarea
     id: proposal
     attributes:
       label: "Proposal"
-      description: ""
     validations:
       required: false

@@ -10,7 +10,6 @@ body:
     id: vendor
     attributes:
       label: "Robot vendor and model"
-      description: ""
       placeholder: "e.g. JAKA MiniCobo"
     validations:
       required: true
@@ -26,7 +25,6 @@ body:
     id: srci_version
     attributes:
       label: "SRCI version reported by the robot"
-      description: ""
       placeholder: "e.g. 1.1"
     validations:
       required: false
@@ -45,7 +43,6 @@ body:
     id: fieldbus
     attributes:
       label: "Fieldbus and telegram length"
-      description: ""
       placeholder: "e.g. PROFINET, 256 bytes, cycle 8 ms"
     validations:
       required: true
